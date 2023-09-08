@@ -4,16 +4,29 @@
 
 #include "../../src/cube.h"
 
+void
+check(cube_t cube, char *name)
+{
+	printf("%s is%s consistent\n", name, isconsistent(cube) ? "" : " NOT");
+	printf("%s is%s solved\n", name, issolved(cube) ? "" : " NOT");
+}
+
+void
+check2(cube_t cube1, char *name1, cube_t cube2, char *name2)
+{
+	printf("%s and %s are%s equal\n", name1, name2,
+	    equal(cube1, cube2) ? "" : " NOT");
+}
+
 int main() {
-	cube_t z, s;
+	cube_t zero = (cube_t){0};
 
-	s = solvedcube;
-	printf("Solved %s consistent\n", isconsistent(s) ? "is" : "is NOT");
-	printf("Solved %s solved\n", issolved(s) ? "is" : "is NOT");
+	check(solvedcube, "Solved");
+	check(zero, "Zero");
 
-	z = (cube_t){0};
-	printf("Zero %s consistent\n", isconsistent(z) ? "is" : "is NOT");
-	printf("Zero %s solved\n", issolved(z) ? "is" : "is NOT");
+	check2(solvedcube, "Solved", solvedcube, "Solved");
+	check2(solvedcube, "Solved", zero, "Zero");
+	check2(zero, "Zero", solvedcube, "Solved");
 
 	return 0;
 }

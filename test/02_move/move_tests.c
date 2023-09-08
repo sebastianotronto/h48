@@ -27,7 +27,7 @@ int main() {
 	for (i = 0; i < n; i++)
 		cube = move(cube, moves[i]);
 
-	if (cube.e == errorcube.e && cube.c == errorcube.c) {
+	if (iserror(cube)) {
 		printf("Error moving cube\n");
 	} else if (!isconsistent(cube)) {
 		printf("Moved cube is inconsistent\n");

@@ -2,3 +2,6 @@ Solved is consistent
 Solved is solved
 Zero is NOT consistent
 Zero is NOT solved
+Solved and Solved are equal
+Solved and Zero are NOT equal
+Zero and Solved are NOT equal

@@ -15,7 +15,7 @@ int main() {
 
 	cube = readcube(str);
 
-	if (cube.e == errorcube.e && cube.c == errorcube.c) {
+	if (iserror(cube)) {
 		printf("Error reading cube\n");
 	} else if (!isconsistent(cube)) {
 		printf("Cube is inconsistent\n");
