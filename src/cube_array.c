@@ -155,7 +155,6 @@ static uint8_t readep(char *);
 static uint8_t readmove(char);
 static uint8_t readmodifier(char);
 static int permsign(uint8_t *, int);
-static cube_t compose(cube_t, cube_t);
 
 static uint8_t
 readco(char *str)
@@ -708,5 +707,17 @@ inverse(cube_t c)
 
 inverse_inconsistent:
 	fprintf(stderr, "inverse error, inconsistent cube\n");
+	return errorcube;
+}
+
+cube_t
+compose(cube_t c1, cube_t c2)
+{
+	return errorcube;
+}
+
+cube_t
+transform(cube_t c, trans_t t)
+{
 	return errorcube;
 }
