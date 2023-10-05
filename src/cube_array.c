@@ -25,6 +25,7 @@ The third bit is needed because x+y+1 can exceed 4.
 #include <stdio.h>
 #endif
 
+#include "constants.h"
 #include "cube.h"
 
 #define _c_ufr      0U
@@ -713,6 +714,32 @@ inverse_inconsistent:
 cube_t
 compose(cube_t c1, cube_t c2)
 {
+	uint8_t i, piece, orien, aux, auy;
+	cube_t ret = {0};
+
+#ifdef DEBUG
+	if (!isconsistent(c1) || !isconsistent(c2))
+		goto compose_inconsistent;
+#endif
+
+	for (i = 0; i < 12; i++) {
+		piece = c2.e[i] & _pbits;
+		orien = (c2.e[i] ^ c1.e[piece]) & _eobit;
+		ret.e[i] = (c1.e[piece] & _pbits) | orien;
+	}
+
+	for (i = 0; i < 8; i++) {
+		piece = c2.c[i] & _pbits;
+		aux = (c2.c[i] & _cobits) + (c1.c[piece] & _cobits);
+		auy = (aux + _ctwist_cw) >> 2U;
+		orien = (aux + auy) & _cobits2;
+		ret.c[i] = (c1.c[piece] & _pbits) | orien;
+	}
+
+	return ret;
+
+compose_inconsistent:
+	fprintf(stderr, "compose error, inconsistent cube\n");
 	return errorcube;
 }
 

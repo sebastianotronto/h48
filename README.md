@@ -5,14 +5,15 @@ Work in progress.
 TODO:
 
 * transformations
+* setup benchmarks
 * coordinates: co, eo, epsep, cpsep_sym, cocpsep_sym, cphtr_sym, cocphtr_sym
 * pruning tables (1 bit per entry + fallback)
 * solve.c
 
 Optimizations:
 
-* multi-move (up to 4/5 moves at once)
 * avx2_cube.c
+* multi-move (up to 4/5 moves at once)
 
 Things I need to learn:
 
