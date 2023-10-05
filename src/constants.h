@@ -36,7 +36,7 @@
 #define LDr 14
 #define LBr 15
 #define FUr 16
-#define FRr 16
+#define FRr 17
 #define FDr 18
 #define FLr 19
 #define BUr 20

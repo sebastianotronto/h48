@@ -4,7 +4,6 @@ Work in progress.
 
 TODO:
 
-* finish second half of transformations
 * implement writecubesrc() to make it easy to implement transformations
 * implement transformations
 * setup benchmarks
