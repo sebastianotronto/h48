@@ -9,10 +9,13 @@ SRC="src/cube_array.c"
 TESTBIN="test/run"
 TESTOUT="test/last.out"
 TESTERR="test/last.err"
+CUBEOBJ="test/cube.o"
+
+$CC -c $SRC -o $CUBEOBJ
 
 for t in test/*; do
 	if [ ! -d $t ]; then continue; fi
-	$CC -o $TESTBIN $t/*.c $SRC || exit 1;
+	$CC -o $TESTBIN $t/*.c $CUBEOBJ || exit 1;
 	for cin in $t/*.in; do
 		c=$(echo "$cin" | sed 's/\.in//')
 		cout=$c.out
@@ -29,4 +32,4 @@ for t in test/*; do
 done
 
 echo "All tests passed!"
-rm -rf $TESTBIN $TESTOUT $TESTERR
+rm -rf $TESTBIN $TESTOUT $TESTERR $CUBEOBJ

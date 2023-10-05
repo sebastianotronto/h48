@@ -1,3 +1,4 @@
 test/*/runtest
 test/run
 test/last.*
+test/*.o
