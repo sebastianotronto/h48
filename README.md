@@ -4,7 +4,9 @@ Work in progress.
 
 TODO:
 
-* transformations
+* finish second half of transformations
+* implement writecubesrc() to make it easy to implement transformations
+* implement transformations
 * setup benchmarks
 * coordinates: co, eo, epsep, cpsep_sym, cocpsep_sym, cphtr_sym, cocphtr_sym
 * pruning tables (1 bit per entry + fallback)

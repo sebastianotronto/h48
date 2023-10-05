@@ -16,8 +16,8 @@ int main() {
 
 	if (iserror(inv)) {
 		printf("Error inverting cube\n");
-	} else if (!isconsistent(inv)) {
-		printf("Inverted cube is inconsistent\n");
+	} else if (!issolvable(inv)) {
+		printf("Inverted cube is not solvable\n");
 	} else {
 		writecube(inv, str);
 		printf("%s\n", str);

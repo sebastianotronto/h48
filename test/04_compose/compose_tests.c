@@ -19,8 +19,8 @@ int main() {
 
 	if (iserror(c3)) {
 		printf("Error composing cubes\n");
-	} else if (!isconsistent(c3)) {
-		printf("Composed cube is inconsistent\n");
+	} else if (!issolvable(c3)) {
+		printf("Composed cube is not solvable\n");
 	} else {
 		writecube(c3, str);
 		printf("%s\n", str);

@@ -11,7 +11,10 @@ extern cube_t solvedcube;
 cube_t readcube(char *);
 void writecube(cube_t, char *);
 
-bool isconsistent(cube_t);
+/* Writes a cube in C source code format */
+void writecubesrc(cube_t, char *);
+
+bool issolvable(cube_t);
 bool equal(cube_t, cube_t);
 bool issolved(cube_t);
 bool iserror(cube_t);

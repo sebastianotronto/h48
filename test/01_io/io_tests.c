@@ -17,8 +17,8 @@ int main() {
 
 	if (iserror(cube)) {
 		printf("Error reading cube\n");
-	} else if (!isconsistent(cube)) {
-		printf("Cube is inconsistent\n");
+	} else if (!issolvable(cube)) {
+		printf("Cube is not solvable\n");
 	} else {
 		writecube(cube, str);
 		printf("%s\n", str);

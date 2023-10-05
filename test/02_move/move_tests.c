@@ -29,8 +29,8 @@ int main() {
 
 	if (iserror(cube)) {
 		printf("Error moving cube\n");
-	} else if (!isconsistent(cube)) {
-		printf("Moved cube is inconsistent\n");
+	} else if (!issolvable(cube)) {
+		printf("Moved cube is not solvable\n");
 	} else {
 		writecube(cube, str);
 		printf("%s\n", str);

@@ -149,6 +149,7 @@ cube_t solvedcube = {
 
 static cube_t errorcube = { .e = {0}, .c = {0} };
 
+static bool isconsistent(cube_t);
 static uint8_t readco(char *);
 static uint8_t readcp(char *);
 static uint8_t readeo(char *);
@@ -402,58 +403,41 @@ permsign(uint8_t *a, int n)
 	return ret % 2;
 }
 
-bool
-isconsistent(cube_t cube)
+static bool
+isconsistent(cube_t c)
 {
-	int8_t p, psum, eosum, co, cosum;
+	uint8_t i, p, e;
 	bool found[12];
-	int i;
 
-	psum = 0;
 	for (i = 0; i < 12; i++)
 		found[i] = false;
 	for (i = 0; i < 12; i++) {
-		p = cube.e[i] & _pbits;
+		p = c.e[i] & _pbits;
+		e = c.e[i] & ~_pbits;
 		if (p >= 12)
 			goto inconsistent_ep;
+		if (e != 0 && e != _eobit)
+			goto inconsistent_eo;
 		found[p] = true;
 	}
 	for (i = 0; i < 12; i++)
 		if (!found[i])
 			goto inconsistent_ep;
-	psum = permsign(cube.e, 12);
 
 	for (i = 0; i < 8; i++)
 		found[i] = false;
 	for (i = 0; i < 8; i++) {
-		p = cube.c[i] & _pbits;
+		p = c.c[i] & _pbits;
+		e = c.c[i] & ~_pbits;
 		if (p >= 8)
 			goto inconsistent_cp;
+		if (e != 0 && e != _ctwist_cw && e != _ctwist_ccw)
+			goto inconsistent_co;
 		found[p] = true;
 	}
 	for (i = 0; i < 8; i++)
 		if (!found[i])
-			goto inconsistent_cp;
-	psum += permsign(cube.c, 8);
-
-	if (psum % 2 != 0)
-		goto inconsistent_parity;
-
-	eosum = 0;
-	for (i = 0; i < 12; i++)
-		eosum += (cube.e[i] & _eobit) >> _eoshift;
-	if (eosum % 2 != 0)
-		goto inconsistent_eo;
-
-	cosum = 0;
-	for (i = 0; i < 8; i++) {
-		co = (cube.c[i] & _cobits) >> _coshift;
-		if (co > 2)
 			goto inconsistent_co;
-		cosum += co;
-	}
-	if (cosum % 3 != 0)
-		goto inconsistent_co;
 
 	return true;
 
@@ -461,28 +445,70 @@ inconsistent_ep:
 #ifdef DEBUG
 	fprintf(stderr, "Inconsistent EP\n");
 #endif
-	goto inconsistent_return;
+	return false;
 inconsistent_cp:
 #ifdef DEBUG
 	fprintf(stderr, "Inconsistent CP\n");
 #endif
-	goto inconsistent_return;
-inconsistent_parity:
-#ifdef DEBUG
-	fprintf(stderr, "Inconsistent parity\n");
-#endif
-	goto inconsistent_return;
+	return false;
 inconsistent_eo:
 #ifdef DEBUG
 	fprintf(stderr, "Inconsistent EO\n");
 #endif
-	goto inconsistent_return;
+	return false;
 inconsistent_co:
 #ifdef DEBUG
 	fprintf(stderr, "Inconsistent CO\n");
 #endif
-	goto inconsistent_return;
-inconsistent_return:
+	return false;
+}
+
+bool
+issolvable(cube_t cube)
+{
+	int8_t i, eo, co;
+
+#ifdef DEBUG
+	if (!isconsistent(cube))
+		goto issolvable_inconsistent;
+#endif
+
+	if (permsign(cube.e, 12) != permsign(cube.c, 8))
+		goto issolvable_parity;
+
+	eo = 0;
+	for (i = 0; i < 12; i++)
+		eo += (cube.e[i] & _eobit) >> _eoshift;
+	if (eo % 2 != 0)
+		goto issolvable_eo;
+
+	co = 0;
+	for (i = 0; i < 8; i++)
+		co += (cube.c[i] & _cobits) >> _coshift;
+	if (co % 3 != 0)
+		goto issolvable_co;
+
+	return true;
+
+issolvable_inconsistent:
+#ifdef DEBUG
+	fprintf(stderr, "issolvable: cube is inconsistent\n");
+#endif
+	return false;
+issolvable_parity:
+#ifdef DEBUG
+	fprintf(stderr, "EP and CP parities are different\n");
+#endif
+	return false;
+issolvable_eo:
+#ifdef DEBUG
+	fprintf(stderr, "Odd number of flipped edges\n");
+#endif
+	return false;
+issolvable_co:
+#ifdef DEBUG
+	fprintf(stderr, "Sum of corner orientation is not multiple of 3\n");
+#endif
 	return false;
 }
 

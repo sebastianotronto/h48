@@ -7,7 +7,7 @@
 void
 check(cube_t cube, char *name)
 {
-	printf("%s is%s consistent\n", name, isconsistent(cube) ? "" : " NOT");
+	printf("%s is%s solvable\n", name, issolvable(cube) ? "" : " NOT");
 	printf("%s is%s solved\n", name, issolved(cube) ? "" : " NOT");
 }
 
