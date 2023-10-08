@@ -22,7 +22,7 @@ int main() {
 	}
 
 	fgets(str, STRLENMAX, stdin);
-	cube = readcube(str);
+	cube = readcube(H48, str);
 
 	for (i = 0; i < n; i++)
 		cube = move(cube, moves[i]);
@@ -32,7 +32,7 @@ int main() {
 	} else if (!issolvable(cube)) {
 		printf("Moved cube is not solvable\n");
 	} else {
-		writecube(cube, str);
+		writecube(H48, cube, str);
 		printf("%s\n", str);
 	}
 

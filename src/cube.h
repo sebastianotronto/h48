@@ -7,12 +7,11 @@ typedef uint8_t trans_t;
 
 extern cube_t solvedcube;
 
-/* For the textual representation of the cube, see utils/FORMAT.txt */
-cube_t readcube(char *);
-void writecube(cube_t, char *);
-
-/* Writes a cube in C source code format */
-void writecubesrc(cube_t, char *);
+/* Not all formats are supported for both read and write. */
+/* See utils/FORMAT.txt for details. */
+typedef enum {H48, SRC} format_t;
+cube_t readcube(format_t, char *);
+void writecube(format_t, cube_t, char *);
 
 bool issolvable(cube_t);
 bool equal(cube_t, cube_t);

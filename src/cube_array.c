@@ -156,6 +156,10 @@ static uint8_t readeo(char *);
 static uint8_t readep(char *);
 static uint8_t readmove(char);
 static uint8_t readmodifier(char);
+static cube_t readcube_H48(char *);
+static void writecube_H48(cube_t, char *);
+static int writepiece_SRC(uint8_t, char *);
+static void writecube_SRC(cube_t, char *);
 static int permsign(uint8_t *, int);
 
 static uint8_t
@@ -219,8 +223,8 @@ readep(char *str)
 	return _error;
 }
 
-cube_t
-readcube(char *buf)
+static cube_t
+readcube_H48(char *buf)
 {
 	int i;
 	uint8_t piece, orient;
@@ -231,10 +235,10 @@ readcube(char *buf)
 		while (*b == ' ' || *b == '\t' || *b == '\n')
 			b++;
 		if ((piece = readep(b)) == _error)
-			goto readcube_error;
+			return errorcube;
 		b += 2;
 		if ((orient = readeo(b)) == _error)
-			goto readcube_error;
+			return errorcube;
 		b++;
 		ret.e[i] = piece | orient;
 	}
@@ -242,35 +246,45 @@ readcube(char *buf)
 		while (*b == ' ' || *b == '\t' || *b == '\n')
 			b++;
 		if ((piece = readcp(b)) == _error)
-			goto readcube_error;
+			return errorcube;
 		b += 3;
 		if ((orient = readco(b)) == _error)
-			goto readcube_error;
+			return errorcube;
 		b++;
 		ret.c[i] = piece | orient;
 	}
 
 	return ret;
-
-readcube_error:
-#ifdef DEBUG
-	fprintf(stderr, "readcube error\n");
-#endif
-	return errorcube;
 }
 
-void
-writecube(cube_t cube, char *buf)
+cube_t
+readcube(format_t format, char *buf)
 {
-	char *errormsg;
-	uint8_t piece, orient;
-	size_t len;
-	int i;
+	cube_t ret;
 
-	if (!isconsistent(cube)) {
-		errormsg = "ERROR: cannot write inconsistent cube";
-		goto writecube_error;
+	switch (format) {
+	case H48:
+		ret = readcube_H48(buf);
+		break;
+	default:
+	#ifdef DEBUG
+		fprintf(stderr, "Cannot read cube in the given format\n");
+	#endif
+		ret = errorcube;
 	}
+
+#ifdef DEBUG
+	if (iserror(ret))
+		fprintf(stderr, "readcube error\n");
+#endif
+	return ret;
+}
+
+static void
+writecube_H48(cube_t cube, char *buf)
+{
+	uint8_t piece, orient;
+	int i;
 
 	for (i = 0; i < 12; i++) {
 		piece = cube.e[i] & _pbits;
@@ -291,6 +305,73 @@ writecube(cube_t cube, char *buf)
 	}
 
 	buf[48+39] = '\0';
+}
+
+static int
+writepiece_SRC(uint8_t piece, char *buf)
+{
+	char digits[3];
+	int i, len = 0;
+
+	while (piece != 0) {
+		digits[len++] = (piece % 10) + '0';
+		piece /= 10;
+	}
+
+	if (len == 0)
+		digits[len++] = '0';
+
+	for (i = 0; i < len; i++)
+		buf[i] = digits[len-i-1];
+
+	buf[len] = ',';
+	buf[len+1] = ' ';
+
+	return len+2;
+}
+
+static void
+writecube_SRC(cube_t cube, char *buf)
+{
+	int i, ptr;
+
+	memcpy(buf, "{\n\t.c = {", 9);
+	ptr = 9;
+
+	for (i = 0; i < 8; i++)
+		ptr += writepiece_SRC(cube.c[i], buf + ptr);
+
+	memcpy(buf+ptr-2, "},\n\t.e = {", 10);
+	ptr += 8;
+
+	for (i = 0; i < 12; i++)
+		ptr += writepiece_SRC(cube.e[i], buf + ptr);
+
+	memcpy(buf+ptr-2, "}\n}\0", 4);
+}
+
+void
+writecube(format_t format, cube_t cube, char *buf)
+{
+	char *errormsg;
+	size_t len;
+
+	if (!isconsistent(cube)) {
+		errormsg = "ERROR: cannot write inconsistent cube";
+		goto writecube_error;
+	}
+
+	switch (format) {
+	case H48:
+		writecube_H48(cube, buf);
+		break;
+	case SRC:
+		writecube_SRC(cube, buf);
+		break;
+	default:
+		errormsg = "ERROR: cannot write cube in the given format";
+		goto writecube_error;
+	}
 
 	return;
 
@@ -303,7 +384,6 @@ writecube_error:
 	buf[len] = '\n';
 	buf[len+1] = '\0';
 }
-
 
 static uint8_t
 readmove(char c)

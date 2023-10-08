@@ -11,7 +11,7 @@ int main() {
 	cube_t cube, inv;
 
 	fgets(str, STRLENMAX, stdin);
-	cube = readcube(str);
+	cube = readcube(H48, str);
 	inv = inverse(cube);
 
 	if (iserror(inv)) {
@@ -19,7 +19,7 @@ int main() {
 	} else if (!issolvable(inv)) {
 		printf("Inverted cube is not solvable\n");
 	} else {
-		writecube(inv, str);
+		writecube(H48, inv, str);
 		printf("%s\n", str);
 	}
 
