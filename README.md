@@ -4,8 +4,8 @@ Work in progress.
 
 TODO:
 
-* implement writecubesrc() to make it easy to implement transformations
-* implement transformations
+* test SRC: scrambled cube, rename directory in io_SRC_write
+* implement transformations (use write to SRC to make life easier)
 * setup benchmarks
 * coordinates: co, eo, epsep, cpsep_sym, cocpsep_sym, cphtr_sym, cocphtr_sym
 * pruning tables (1 bit per entry + fallback)
