@@ -4,15 +4,14 @@ Work in progress.
 
 TODO:
 
-* implement transformations (use write to SRC to make life easier)
 * setup benchmarks
+* AVX2 compile-time switch
 * coordinates: co, eo, epsep, cpsep_sym, cocpsep_sym, cphtr_sym, cocphtr_sym
 * pruning tables (1 bit per entry + fallback)
 * solve.c
 
 Optimizations:
 
-* avx2_cube.c
 * multi-move (up to 4/5 moves at once)
 
 Things I need to learn:

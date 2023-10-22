@@ -23,9 +23,10 @@ while read -r line; do
 	i=$((i+1))
 
 	mirrored="mirrored $trans_piece"
+	move2m="$(echo ${move2} | tr 'LR' 'RL')3"
 
 	file1="$(ls | grep move_*_${move1}.txt)"
-	file2="$(ls | grep move_*_${move2}.txt)"
+	file2="$(ls | grep move_*_${move2m}.txt)"
 	echo "$mirrored" >"$outdir/${i}_${trans_piece}m_${move1}.in"
 	cat "$file1" >>"$outdir/${i}_${trans_piece}m_${move1}.in"
 	cp "$file2" "$outdir/${i}_${trans_piece}m_${move1}.out"
