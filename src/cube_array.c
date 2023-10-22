@@ -120,6 +120,57 @@ static char *movestr[] = {
 	[B3] = "B'",
 };
 
+static char *transstr[] = {
+	[UFr] = "rotation UF",
+	[UFm] = "mirrored UF",
+	[ULr] = "rotation UL",
+	[ULm] = "mirrored UL",
+	[UBr] = "rotation UB",
+	[UBm] = "mirrored UB",
+	[URr] = "rotation UR",
+	[URm] = "mirrored UR",
+	[DFr] = "rotation DF",
+	[DFm] = "mirrored DF",
+	[DLr] = "rotation DL",
+	[DLm] = "mirrored DL",
+	[DBr] = "rotation DB",
+	[DBm] = "mirrored DB",
+	[DRr] = "rotation DR",
+	[DRm] = "mirrored DR",
+	[RUr] = "rotation RU",
+	[RUm] = "mirrored RU",
+	[RFr] = "rotation RF",
+	[RFm] = "mirrored RF",
+	[RDr] = "rotation RD",
+	[RDm] = "mirrored RD",
+	[RBr] = "rotation RB",
+	[RBm] = "mirrored RB",
+	[LUr] = "rotation LU",
+	[LUm] = "mirrored LU",
+	[LFr] = "rotation LF",
+	[LFm] = "mirrored LF",
+	[LDr] = "rotation LD",
+	[LDm] = "mirrored LD",
+	[LBr] = "rotation LB",
+	[LBm] = "mirrored LB",
+	[FUr] = "rotation FU",
+	[FUm] = "mirrored FU",
+	[FRr] = "rotation FR",
+	[FRm] = "mirrored FR",
+	[FDr] = "rotation FD",
+	[FDm] = "mirrored FD",
+	[FLr] = "rotation FL",
+	[FLm] = "mirrored FL",
+	[BUr] = "rotation BU",
+	[BUm] = "mirrored BU",
+	[BRr] = "rotation BR",
+	[BRm] = "mirrored BR",
+	[BDr] = "rotation BD",
+	[BDm] = "mirrored BD",
+	[BLr] = "rotation BL",
+	[BLm] = "mirrored BL",
+};
+
 cube_t solvedcube = {
 	.c = {
 		[_c_ufr] = _c_ufr,
@@ -452,6 +503,21 @@ readmoves_error:
 	return -1;
 }
 
+trans_t
+readtrans(char *buf)
+{
+	uint8_t t;
+
+	for (t = 0; t < 48; t++)
+		if (!strncmp(buf, transstr[t], 11))
+			return t;
+
+#ifdef DEBUG
+	fprintf(stderr, "readtrans error\n");
+#endif
+	return errortrans;
+}
+
 void
 writemoves(move_t *m, int n, char *buf)
 {
@@ -469,6 +535,15 @@ writemoves(move_t *m, int n, char *buf)
 	*b = '\0';
 }
 
+void
+writetrans(trans_t t, char *buf)
+{
+	if (t >= 48)
+		memcpy(buf, "error trans", 11);
+	else
+		memcpy(buf, transstr[t], 11);
+	buf[11] = '\0';
+}
 
 static int
 permsign(uint8_t *a, int n)

@@ -21,7 +21,12 @@ bool iserror(cube_t);
 int readmoves(char *, move_t *);
 void writemoves(move_t *, int, char *);
 
+trans_t readtrans(char *);
+void writetrans(trans_t, char *);
+
 cube_t move(cube_t, move_t);
 cube_t inverse(cube_t);
 cube_t compose(cube_t, cube_t);
+
+/* See utils/TRANSFORMATIONS.txt for how transformations are applied */
 cube_t transform(cube_t, trans_t);

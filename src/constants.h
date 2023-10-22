@@ -69,3 +69,7 @@
 #define BRm 45
 #define BDm 46
 #define BLm 47
+
+/* Errors */
+#define errormove 99U
+#define errortrans 99U
