@@ -4,8 +4,6 @@ Work in progress.
 
 TODO:
 
-* write script to generate tests for trans (see utils/transform_moves.txt)
-* add tests for transformation
 * implement transformations (use write to SRC to make life easier)
 * setup benchmarks
 * coordinates: co, eo, epsep, cpsep_sym, cocpsep_sym, cphtr_sym, cocphtr_sym
