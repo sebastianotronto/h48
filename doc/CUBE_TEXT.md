@@ -1,8 +1,10 @@
+# Textual representation of the cube
+
 The functions readcube() and writecube() use different formats to read
 and write a cube to text. Not all formats are supported for both input
 and output.
 
-# H48 - standard format for h48 (read, write)
+## H48 - standard format for h48 (read, write)
 
 Each edge is represented by two letters denoting the sides it belongs to
 and one number denoting its orientation (0 oriented, 1 mis-oriented).
@@ -25,7 +27,7 @@ The cube after the moves R'U'F looks like this:
 FL1 BR0 DB0 UR1 UF0 UB0 DL0 FR0 UL1 DF1 BL0 DR0
 UBL1 DBR1 UFR2 DFR2 DFL2 UBL2 UFL2 DBL0
 
-# SRC - representation of the object in C code for cube_array (write)
+## SRC - representation of the object in C code for cube_array (write)
 
 The exact format depends on the internal cube representation. It is
 guaranteed that, if OUT is the output in this format, the line

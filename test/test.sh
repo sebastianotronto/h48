@@ -5,7 +5,7 @@ CC="cc -DDEBUG -std=c99 -pthread -pedantic -Wall -Wextra \
 if [ $(uname) != "OpenBSD" ]; then
 	CC="$CC -fsanitize=address -fsanitize=undefined"
 fi
-SRC="src/cube_array.c"
+SRC="src/cube.c"
 TESTBIN="test/run"
 TESTOUT="test/last.out"
 TESTERR="test/last.err"

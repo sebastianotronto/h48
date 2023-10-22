@@ -3,7 +3,6 @@
 #include <stdio.h>
 
 #include "../../src/cube.h"
-#include "../../src/constants.h"
 
 #define STRLENMAX 10000
 

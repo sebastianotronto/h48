@@ -1,22 +1,3 @@
-/*
-In this implementation of the cube.h interface, the cube is represented
-by two arrays of 8-bit unsigned integers, one for centers and one for
-corners.  The 4 leas-significant digits of each bit determine the piece,
-the other 4 are used for orientation or kept to 0.
-
-Edges:
-	xxxopppp (x = unused, o = orientation, p = piece)
-
-Corners:
-	xooxpppp (x = unused, o = orientation, p = piece)
-
-The two bits for CO are shifted to make it possible to perform mod 3
-operations (sum, inverse) using only addition and bitwise operators.
-See below for details.
-
-The third bit is needed because x+y+1 can exceed 4.
-*/
-
 #include <inttypes.h>
 #include <stdbool.h>
 #include <string.h>
@@ -25,7 +6,6 @@ The third bit is needed because x+y+1 can exceed 4.
 #include <stdio.h>
 #endif
 
-#include "constants.h"
 #include "cube.h"
 
 #define _c_ufr      0U
