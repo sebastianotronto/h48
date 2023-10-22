@@ -605,8 +605,10 @@ issolvable(cube_t cube)
 	int8_t i, eo, co;
 
 #ifdef DEBUG
-	if (!isconsistent(cube))
-		goto issolvable_inconsistent;
+	if (!isconsistent(cube)) {
+		fprintf(stderr, "issolvable: cube is inconsistent\n");
+		return false;
+	}
 #endif
 
 	if (permsign(cube.e, 12) != permsign(cube.c, 8))
@@ -626,11 +628,6 @@ issolvable(cube_t cube)
 
 	return true;
 
-issolvable_inconsistent:
-#ifdef DEBUG
-	fprintf(stderr, "issolvable: cube is inconsistent\n");
-#endif
-	return false;
 issolvable_parity:
 #ifdef DEBUG
 	fprintf(stderr, "EP and CP parities are different\n");
@@ -683,8 +680,10 @@ move(cube_t c, move_t m)
 	uint8_t aux, auy, auz;
 
 #ifdef DEBUG
-	if (!isconsistent(c))
-		goto move_inconsistent;
+	if (!isconsistent(c)) {
+		fprintf(stderr, "move error, inconsistent cube\n");
+		goto move_error;
+	}
 #endif
 
 #define PERM4(r, i, j, k, l) \
@@ -830,15 +829,12 @@ move(cube_t c, move_t m)
 
 		return ret;
 	default:
-		goto move_unknown;
+#ifdef DEBUG
+		fprintf(stderr, "mover error, unknown move\n");
+#endif
+		goto move_error;
 	}
 
-move_inconsistent:
-	fprintf(stderr, "move error, inconsistent cube\n");
-	goto move_error;
-move_unknown:
-	fprintf(stderr, "mover error, unknown move\n");
-	goto move_error;
 move_error:
 	return errorcube;
 }
@@ -850,8 +846,10 @@ inverse(cube_t c)
 	cube_t ret = {0};
 
 #ifdef DEBUG
-	if (!isconsistent(c))
-		goto inverse_inconsistent;
+	if (!isconsistent(c)) {
+		fprintf(stderr, "inverse error, inconsistent cube\n");
+		return errorcube;
+	}
 #endif
 
 	for (i = 0; i < 12; i++) {
@@ -867,10 +865,6 @@ inverse(cube_t c)
 	}
 
 	return ret;
-
-inverse_inconsistent:
-	fprintf(stderr, "inverse error, inconsistent cube\n");
-	return errorcube;
 }
 
 cube_t
@@ -880,8 +874,10 @@ compose(cube_t c1, cube_t c2)
 	cube_t ret = {0};
 
 #ifdef DEBUG
-	if (!isconsistent(c1) || !isconsistent(c2))
-		goto compose_inconsistent;
+	if (!isconsistent(c1) || !isconsistent(c2)) {
+		fprintf(stderr, "compose error, inconsistent cube\n");
+		return errorcube;
+	}
 #endif
 
 	for (i = 0; i < 12; i++) {
@@ -899,10 +895,6 @@ compose(cube_t c1, cube_t c2)
 	}
 
 	return ret;
-
-compose_inconsistent:
-	fprintf(stderr, "compose error, inconsistent cube\n");
-	return errorcube;
 }
 
 static cube_t
@@ -1122,10 +1114,14 @@ transform(cube_t c, trans_t t)
 	cube_t ret;
 
 #ifdef DEBUG
-	if (!isconsistent(c))
-		goto transform_inconsistent;
-	if (t >= 48)
-		goto transform_errortrans;
+	if (!isconsistent(c)) {
+		fprintf(stderr, "transform error, inconsistent cube\n");
+		return errorcube;
+	}
+	if (t >= 48) {
+		fprintf(stderr, "transform error, unknown transformation\n");
+		return errorcube;
+	}
 #endif
 
 	ret = compose(solvedcube, trans_move_cube[t]);
@@ -1138,11 +1134,4 @@ transform(cube_t c, trans_t t)
 		ret = flipallcorners(ret);
 
 	return ret;
-
-transform_inconsistent:
-	fprintf(stderr, "transform error, inconsistent cube\n");
-	return errorcube;
-transform_errortrans:
-	fprintf(stderr, "transform error, unknown transformation\n");
-	return errorcube;
 }

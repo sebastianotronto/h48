@@ -1,5 +1,6 @@
+benchmark/results.txt
+benchmark/run
 test/*/runtest
 test/run
 test/last.*
-test/*.o
 *.o

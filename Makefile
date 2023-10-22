@@ -2,7 +2,7 @@
 
 CFLAGS    = -std=c99 -pthread -pedantic -Wall -Wextra \
 	    -Wno-unused-parameter -O3
-DBGFLAGS  = -std=c99 -pthread -pedantic -Wall -Wextra \
+DBGFLAGS  = -DDEBUG -std=c99 -pthread -pedantic -Wall -Wextra \
             -Wno-unused-parameter -Wno-unused-function -g3 \
 	    -fsanitize=address -fsanitize=undefined
 
@@ -10,16 +10,19 @@ CC = cc
 
 all: solve
 
-solve: clean
-	${CC} ${CFLAGS} -o solve src/*.c
+cube.o: clean
+	${CC} ${CFLAGS} -c -o cube.o src/*.c
 
-debug:
-	${CC} ${DBGFLAGS} -o solve src/*.c
+debugcube.o:
+	${CC} ${DBGFLAGS} -c -o debugcube.o src/*.c
 
 clean:
 	rm -rf solve
 
-test:
+test: debugcube.o
 	./test/test.sh
 
-.PHONY: all debug clean test
+benchmark: cube.o
+	./benchmark/bench.sh
+
+.PHONY: all clean test benchmark
