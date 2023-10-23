@@ -17,7 +17,7 @@ debugcube.o:
 	${CC} ${DBGFLAGS} -c -o debugcube.o src/*.c
 
 clean:
-	rm -rf solve
+	rm -rf *.o
 
 test: debugcube.o
 	./test/test.sh

@@ -4,7 +4,6 @@ Work in progress.
 
 TODO:
 
-* setup benchmarks
 * AVX2 compile-time switch
 * coordinates: co, eo, epsep, cpsep_sym, cocpsep_sym, cphtr_sym, cocphtr_sym
 * pruning tables (1 bit per entry + fallback)
