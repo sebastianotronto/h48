@@ -10,6 +10,8 @@ typedef struct {
 typedef uint8_t move_t;
 typedef uint8_t trans_t;
 
+extern move_t inverse_move[];
+extern trans_t inverse_trans[];
 extern cube_t solvedcube;
 
 /* Functions *****************************************************************/
