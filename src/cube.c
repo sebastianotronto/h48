@@ -152,30 +152,8 @@ static char *transstr[] = {
 };
 
 cube_t solvedcube = {
-	.c = {
-		[_c_ufr] = _c_ufr,
-		[_c_ubl] = _c_ubl,
-		[_c_dfl] = _c_dfl,
-		[_c_dbr] = _c_dbr,
-		[_c_ufl] = _c_ufl,
-		[_c_ubr] = _c_ubr,
-		[_c_dfr] = _c_dfr,
-		[_c_dbl] = _c_dbl
-	},
-	.e = {
-		[_e_uf] = _e_uf,
-		[_e_ub] = _e_ub,
-		[_e_db] = _e_db,
-		[_e_df] = _e_df,
-		[_e_ur] = _e_ur,
-		[_e_ul] = _e_ul,
-		[_e_dl] = _e_dl,
-		[_e_dr] = _e_dr,
-		[_e_fr] = _e_fr,
-		[_e_fl] = _e_fl,
-		[_e_bl] = _e_bl,
-		[_e_br] = _e_br
-	}
+	.c = {0, 1, 2, 3, 4, 5, 6, 7},
+	.e = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}
 };
 
 static cube_t errorcube = { .e = {0}, .c = {0} };

@@ -1,4 +1,44 @@
-/* Constants *****************************************************************/
+/* Types *********************************************************************/
+
+/* TODO: ifdef for different implementations */
+/* See doc/CUBE_INTERNAL.md for a description of the cube format */
+typedef struct {
+	uint8_t c[8];
+	uint8_t e[12];
+} cube_t;
+
+typedef uint8_t move_t;
+typedef uint8_t trans_t;
+
+extern cube_t solvedcube;
+
+/* Functions *****************************************************************/
+
+/* Not all formats are supported for both read and write. */
+/* See doc/CUBE_TEXT.md for details. */
+typedef enum {H48, SRC} format_t;
+cube_t readcube(format_t, char *);
+void writecube(format_t, cube_t, char *);
+
+bool issolvable(cube_t);
+bool equal(cube_t, cube_t);
+bool issolved(cube_t);
+bool iserror(cube_t);
+
+int readmoves(char *, move_t *);
+void writemoves(move_t *, int, char *);
+
+trans_t readtrans(char *);
+void writetrans(trans_t, char *);
+
+cube_t move(cube_t, move_t);
+cube_t inverse(cube_t);
+cube_t compose(cube_t, cube_t);
+
+/* See doc/TRANSFORMATIONS.md for how transformations are applied */
+cube_t transform(cube_t, trans_t);
+
+/* Constants for moves and transformations ***********************************/
 
 /* Standard moves */
 #define U  0U
@@ -76,42 +116,3 @@
 #define errormove 99U
 #define errortrans 99U
 
-/* Types *********************************************************************/
-
-/* TODO: ifdef for different implementations */
-/* See doc/CUBE_INTERNAL.md for a description of the cube format */
-typedef struct {
-	uint8_t c[8];
-	uint8_t e[12];
-} cube_t;
-
-typedef uint8_t move_t;
-typedef uint8_t trans_t;
-
-extern cube_t solvedcube;
-
-/* Functions *****************************************************************/
-
-/* Not all formats are supported for both read and write. */
-/* See doc/CUBE_TEXT.md for details. */
-typedef enum {H48, SRC} format_t;
-cube_t readcube(format_t, char *);
-void writecube(format_t, cube_t, char *);
-
-bool issolvable(cube_t);
-bool equal(cube_t, cube_t);
-bool issolved(cube_t);
-bool iserror(cube_t);
-
-int readmoves(char *, move_t *);
-void writemoves(move_t *, int, char *);
-
-trans_t readtrans(char *);
-void writetrans(trans_t, char *);
-
-cube_t move(cube_t, move_t);
-cube_t inverse(cube_t);
-cube_t compose(cube_t, cube_t);
-
-/* See doc/TRANSFORMATIONS.md for how transformations are applied */
-cube_t transform(cube_t, trans_t);
