@@ -1,0 +1,1 @@
+CUBETYPE = CUBE_$(TYPE)

@@ -1,5 +1,7 @@
 # See LICENSE file for copyright and license details.
 
+include config.mk
+
 CFLAGS    = -std=c99 -pthread -pedantic -Wall -Wextra \
 	    -Wno-unused-parameter -O3
 DBGFLAGS  = -DDEBUG -std=c99 -pthread -pedantic -Wall -Wextra \
@@ -8,13 +10,13 @@ DBGFLAGS  = -DDEBUG -std=c99 -pthread -pedantic -Wall -Wextra \
 
 CC = cc
 
-all: solve
+all: cube.o debugcube.o
 
 cube.o: clean
-	${CC} ${CFLAGS} -c -o cube.o src/*.c
+	${CC} -D${CUBETYPE} ${CFLAGS} -c -o cube.o src/cube.c
 
 debugcube.o:
-	${CC} ${DBGFLAGS} -c -o debugcube.o src/*.c
+	${CC} -D${CUBETYPE} ${DBGFLAGS} -c -o debugcube.o src/cube.c
 
 clean:
 	rm -rf *.o
