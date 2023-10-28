@@ -2,6 +2,10 @@
 #include <stdbool.h>
 #include <string.h>
 
+#ifdef CUBE_AVX2
+#include <immintrin.h>
+#endif
+
 #ifdef DEBUG
 #include <stdio.h>
 #endif
@@ -9,6 +13,12 @@
 #include "cube.h"
 
 #include "_constants.c"
+
+#ifdef CUBE_AVX2
+#include "_base_avx2.c"
+#else
+#include "_base_arr.c"
+#endif
 
 static bool isconsistent(cube_t);
 static cube_t flipallcorners(cube_t);
@@ -90,7 +100,7 @@ readcube_H48(char *buf)
 {
 	int i;
 	uint8_t piece, orient;
-	cube_t ret = {0};
+	cube_t ret = zerocube;
 	char *b = buf;
 
 	for (i = 0; i < 12; i++) {
@@ -102,7 +112,7 @@ readcube_H48(char *buf)
 		if ((orient = readeo(b)) == _error)
 			return errorcube;
 		b++;
-		ret.e[i] = piece | orient;
+		set_edge(&ret, i, piece | orient);
 	}
 	for (i = 0; i < 8; i++) {
 		while (*b == ' ' || *b == '\t' || *b == '\n')
@@ -113,7 +123,7 @@ readcube_H48(char *buf)
 		if ((orient = readco(b)) == _error)
 			return errorcube;
 		b++;
-		ret.c[i] = piece | orient;
+		set_corner(&ret, i, piece | orient);
 	}
 
 	return ret;
@@ -145,23 +155,25 @@ readcube(format_t format, char *buf)
 static void
 writecube_H48(cube_t cube, char *buf)
 {
-	uint8_t piece, orient;
+	uint8_t piece, perm, orient;
 	int i;
 
 	for (i = 0; i < 12; i++) {
-		piece = cube.e[i] & _pbits;
-		orient = (cube.e[i] & _eobit) >> _eoshift;
-		buf[4*i    ] = edgestr[piece][0];
-		buf[4*i + 1] = edgestr[piece][1];
+		piece = get_edge(cube, i);
+		perm = piece & _pbits;
+		orient = (piece & _eobit) >> _eoshift;
+		buf[4*i    ] = edgestr[perm][0];
+		buf[4*i + 1] = edgestr[perm][1];
 		buf[4*i + 2] = orient + '0';
 		buf[4*i + 3] = ' ';
 	}
 	for (i = 0; i < 8; i++) {
-		piece = cube.c[i] & _pbits;
-		orient = (cube.c[i] & _cobits) >> _coshift;
-		buf[48 + 5*i    ] = cornerstr[piece][0];
-		buf[48 + 5*i + 1] = cornerstr[piece][1];
-		buf[48 + 5*i + 2] = cornerstr[piece][2];
+		piece = get_corner(cube, i);
+		perm = piece & _pbits;
+		orient = (piece & _cobits) >> _coshift;
+		buf[48 + 5*i    ] = cornerstr[perm][0];
+		buf[48 + 5*i + 1] = cornerstr[perm][1];
+		buf[48 + 5*i + 2] = cornerstr[perm][2];
 		buf[48 + 5*i + 3] = orient + '0';
 		buf[48 + 5*i + 4] = ' ';
 	}
@@ -196,18 +208,23 @@ static void
 writecube_SRC(cube_t cube, char *buf)
 {
 	int i, ptr;
+	uint8_t piece;
 
 	memcpy(buf, "{\n\t.c = {", 9);
 	ptr = 9;
 
-	for (i = 0; i < 8; i++)
-		ptr += writepiece_SRC(cube.c[i], buf + ptr);
+	for (i = 0; i < 8; i++) {
+		piece = get_corner(cube, i);
+		ptr += writepiece_SRC(piece, buf + ptr);
+	}
 
 	memcpy(buf+ptr-2, "},\n\t.e = {", 10);
 	ptr += 8;
 
-	for (i = 0; i < 12; i++)
-		ptr += writepiece_SRC(cube.e[i], buf + ptr);
+	for (i = 0; i < 12; i++) {
+		piece = get_edge(cube, i);
+		ptr += writepiece_SRC(piece, buf + ptr);
+	}
 
 	memcpy(buf+ptr-2, "}\n}\0", 4);
 }
@@ -364,7 +381,7 @@ permsign(uint8_t *a, int n)
 
 	for (i = 0; i < n; i++)
 		for (j = i+1; j < n; j++)
-			ret += (a[i] & _pbits) > (a[j] & _pbits) ? 1 : 0;
+			ret += a[i] > a[j] ? 1 : 0;
 
 	return ret % 2;
 }
@@ -372,14 +389,15 @@ permsign(uint8_t *a, int n)
 static bool
 isconsistent(cube_t c)
 {
-	uint8_t i, p, e;
+	uint8_t i, p, e, piece;
 	bool found[12];
 
 	for (i = 0; i < 12; i++)
 		found[i] = false;
 	for (i = 0; i < 12; i++) {
-		p = c.e[i] & _pbits;
-		e = c.e[i] & ~_pbits;
+		piece = get_edge(c, i);
+		p = piece & _pbits;
+		e = piece & _eobit;
 		if (p >= 12)
 			goto inconsistent_ep;
 		if (e != 0 && e != _eobit)
@@ -393,8 +411,9 @@ isconsistent(cube_t c)
 	for (i = 0; i < 8; i++)
 		found[i] = false;
 	for (i = 0; i < 8; i++) {
-		p = c.c[i] & _pbits;
-		e = c.c[i] & ~_pbits;
+		piece = get_corner(c, i);
+		p = piece & _pbits;
+		e = piece & _cobits;
 		if (p >= 8)
 			goto inconsistent_cp;
 		if (e != 0 && e != _ctwist_cw && e != _ctwist_ccw)
@@ -432,7 +451,7 @@ inconsistent_co:
 bool
 issolvable(cube_t cube)
 {
-	int8_t i, eo, co;
+	uint8_t i, eo, co, piece, e[12], c[8];
 
 #ifdef DEBUG
 	if (!isconsistent(cube)) {
@@ -441,18 +460,27 @@ issolvable(cube_t cube)
 	}
 #endif
 
-	if (permsign(cube.e, 12) != permsign(cube.c, 8))
+	for (i = 0; i < 12; i++)
+		e[i] = get_edge(cube, i) & _pbits;
+	for (i = 0; i < 8; i++)
+		c[i] = get_corner(cube, i) & _pbits;
+
+	if (permsign(e, 12) != permsign(c, 8))
 		goto issolvable_parity;
 
 	eo = 0;
-	for (i = 0; i < 12; i++)
-		eo += (cube.e[i] & _eobit) >> _eoshift;
+	for (i = 0; i < 12; i++) {
+		piece = get_edge(cube, i);
+		eo += (piece & _eobit) >> _eoshift;
+	}
 	if (eo % 2 != 0)
 		goto issolvable_eo;
 
 	co = 0;
-	for (i = 0; i < 8; i++)
-		co += (cube.c[i] & _cobits) >> _coshift;
+	for (i = 0; i < 8; i++) {
+		piece = get_corner(cube, i);
+		co += (piece & _cobits) >> _coshift;
+	}
 	if (co % 3 != 0)
 		goto issolvable_co;
 
@@ -478,6 +506,15 @@ issolvable_co:
 bool
 equal(cube_t cube1, cube_t cube2)
 {
+#ifdef CUBE_AVX2
+	uint32_t mask;
+	__m256i cmp;
+
+	cmp = _mm256_cmpeq_epi8(cube1, cube2);
+	mask = _mm256_movemask_epi8(cmp);
+
+	return mask == 0xffffffffU;
+#else
 	uint8_t i;
 
 	for (i = 0; i < 12; i++)
@@ -489,6 +526,7 @@ equal(cube_t cube1, cube_t cube2)
 			return false;
 
 	return true;
+#endif
 }
 
 bool
@@ -506,9 +544,6 @@ iserror(cube_t cube)
 cube_t
 move(cube_t c, move_t m)
 {
-	cube_t ret;
-	uint8_t aux, auy, auz;
-
 #ifdef DEBUG
 	if (!isconsistent(c)) {
 		fprintf(stderr, "move error, inconsistent cube\n");
@@ -516,154 +551,11 @@ move(cube_t c, move_t m)
 	}
 #endif
 
-#define PERM4(r, i, j, k, l) \
-    aux = r[i];              \
-    r[i] = r[l];             \
-    r[l] = r[k];             \
-    r[k] = r[j];             \
-    r[j] = aux;
-#define PERM22(r, i, j, k, l) \
-    aux = r[i];               \
-    r[i] = r[j];              \
-    r[j] = aux;               \
-    aux = r[k];               \
-    r[k] = r[l];              \
-    r[l] = aux;
-#define CO(a, b)                         \
-    aux = (a & _cobits) + (b & _cobits); \
-    auy = (aux + _ctwist_cw) >> 2U;      \
-    auz = (aux + auy) & _cobits2;        \
-    a = (a & _pbits) | auz;
-#define CO4(r, i, j, k, l) \
-    CO(r[i], _ctwist_cw)   \
-    CO(r[j], _ctwist_cw)   \
-    CO(r[k], _ctwist_ccw)  \
-    CO(r[l], _ctwist_ccw)
-#define EO4(r, i, j, k, l) \
-    r[i] ^= _eobit;        \
-    r[j] ^= _eobit;        \
-    r[k] ^= _eobit;        \
-    r[l] ^= _eobit;
-
-	ret = c;
-
-	switch (m) {
-	case U:
-		PERM4(ret.e, _e_uf, _e_ul, _e_ub, _e_ur)
-		PERM4(ret.c, _c_ufr, _c_ufl, _c_ubl, _c_ubr)
-
-		return ret;
-	case U2:
-		PERM22(ret.e, _e_uf, _e_ub, _e_ul, _e_ur)
-		PERM22(ret.c, _c_ufr, _c_ubl, _c_ufl, _c_ubr)
-
-		return ret;
-	case U3:
-		PERM4(ret.e, _e_uf, _e_ur, _e_ub, _e_ul)
-		PERM4(ret.c, _c_ufr, _c_ubr, _c_ubl, _c_ufl)
-
-		return ret;
-	case D:
-		PERM4(ret.e, _e_df, _e_dr, _e_db, _e_dl)
-		PERM4(ret.c, _c_dfr, _c_dbr, _c_dbl, _c_dfl)
-
-		return ret;
-	case D2:
-		PERM22(ret.e, _e_df, _e_db, _e_dr, _e_dl)
-		PERM22(ret.c, _c_dfr, _c_dbl, _c_dbr, _c_dfl)
-
-		return ret;
-	case D3:
-		PERM4(ret.e, _e_df, _e_dl, _e_db, _e_dr)
-		PERM4(ret.c, _c_dfr, _c_dfl, _c_dbl, _c_dbr)
-
-		return ret;
-	case R:
-		PERM4(ret.e, _e_ur, _e_br, _e_dr, _e_fr)
-		PERM4(ret.c, _c_ufr, _c_ubr, _c_dbr, _c_dfr)
-
-		CO4(ret.c, _c_ubr, _c_dfr, _c_ufr, _c_dbr)
-
-		return ret;
-	case R2:
-		PERM22(ret.e, _e_ur, _e_dr, _e_fr, _e_br)
-		PERM22(ret.c, _c_ufr, _c_dbr, _c_ubr, _c_dfr)
-
-		return ret;
-	case R3:
-		PERM4(ret.e, _e_ur, _e_fr, _e_dr, _e_br)
-		PERM4(ret.c, _c_ufr, _c_dfr, _c_dbr, _c_ubr)
-
-		CO4(ret.c, _c_ubr, _c_dfr, _c_ufr, _c_dbr)
-
-		return ret;
-	case L:
-		PERM4(ret.e, _e_ul, _e_fl, _e_dl, _e_bl)
-		PERM4(ret.c, _c_ufl, _c_dfl, _c_dbl, _c_ubl)
-
-		CO4(ret.c, _c_ufl, _c_dbl, _c_dfl, _c_ubl)
-
-		return ret;
-	case L2:
-		PERM22(ret.e, _e_ul, _e_dl, _e_fl, _e_bl)
-		PERM22(ret.c, _c_ufl, _c_dbl, _c_ubl, _c_dfl)
-
-		return ret;
-	case L3:
-		PERM4(ret.e, _e_ul, _e_bl, _e_dl, _e_fl)
-		PERM4(ret.c, _c_ufl, _c_ubl, _c_dbl, _c_dfl)
-
-		CO4(ret.c, _c_ufl, _c_dbl, _c_dfl, _c_ubl)
-
-		return ret;
-	case F:
-		PERM4(ret.e, _e_uf, _e_fr, _e_df, _e_fl)
-		PERM4(ret.c, _c_ufr, _c_dfr, _c_dfl, _c_ufl)
-
-		EO4(ret.e, _e_uf, _e_fr, _e_df, _e_fl)
-		CO4(ret.c, _c_ufr, _c_dfl, _c_dfr, _c_ufl)
-
-		return ret;
-	case F2:
-		PERM22(ret.e, _e_uf, _e_df, _e_fr, _e_fl)
-		PERM22(ret.c, _c_ufr, _c_dfl, _c_ufl, _c_dfr)
-
-		return ret;
-	case F3:
-		PERM4(ret.e, _e_uf, _e_fl, _e_df, _e_fr)
-		PERM4(ret.c, _c_ufr, _c_ufl, _c_dfl, _c_dfr)
-
-		EO4(ret.e, _e_uf, _e_fr, _e_df, _e_fl)
-		CO4(ret.c, _c_ufr, _c_dfl, _c_dfr, _c_ufl)
-
-		return ret;
-	case B:
-		PERM4(ret.e, _e_ub, _e_bl, _e_db, _e_br)
-		PERM4(ret.c, _c_ubr, _c_ubl, _c_dbl, _c_dbr)
-
-		EO4(ret.e, _e_ub, _e_br, _e_db, _e_bl)
-		CO4(ret.c, _c_ubl, _c_dbr, _c_dbl, _c_ubr)
-
-		return ret;
-	case B2:
-		PERM22(ret.e, _e_ub, _e_db, _e_br, _e_bl)
-		PERM22(ret.c, _c_ubr, _c_dbl, _c_ubl, _c_dbr)
-
-		return ret;
-	case B3:
-		PERM4(ret.e, _e_ub, _e_br, _e_db, _e_bl)
-		PERM4(ret.c, _c_ubr, _c_dbr, _c_dbl, _c_ubl)
-
-		EO4(ret.e, _e_ub, _e_br, _e_db, _e_bl)
-		CO4(ret.c, _c_ubl, _c_dbr, _c_dbl, _c_ubr)
-
-		return ret;
-	default:
-#ifdef DEBUG
-		fprintf(stderr, "mover error, unknown move\n");
+#ifdef CUBE_AVX2
+#include "_move_logic_avx2.c"
+#else
+#include "_move_logic_arr.c"
 #endif
-		goto move_error;
-	}
 
 move_error:
 	return errorcube;
@@ -672,8 +564,9 @@ move_error:
 cube_t
 inverse(cube_t c)
 {
+	/* TODO: optimize for avx2 */
 	uint8_t i, piece, orien;
-	cube_t ret = {0};
+	cube_t ret = zerocube;
 
 #ifdef DEBUG
 	if (!isconsistent(c)) {
@@ -683,15 +576,15 @@ inverse(cube_t c)
 #endif
 
 	for (i = 0; i < 12; i++) {
-		piece = c.e[i & _pbits];
+		piece = get_edge(c, i);
 		orien = piece & _eobit;
-		ret.e[piece & _pbits] = i | orien;
+		set_edge(&ret, piece & _pbits, i | orien);
 	}
 
 	for (i = 0; i < 8; i++) {
-		piece = c.c[i & _pbits];
+		piece = get_corner(c, i);
 		orien = ((piece << 1) | (piece >> 1)) & _cobits2;
-		ret.c[piece & _pbits] = i | orien;
+		set_corner(&ret, piece & _pbits, i | orien);
 	}
 
 	return ret;
@@ -700,8 +593,9 @@ inverse(cube_t c)
 cube_t
 compose(cube_t c1, cube_t c2)
 {
-	uint8_t i, piece, orien, aux, auy;
-	cube_t ret = {0};
+	/* TODO: optimize for avx2 */
+	uint8_t i, piece1, piece2, p, orien, aux, auy;
+	cube_t ret = zerocube;
 
 #ifdef DEBUG
 	if (!isconsistent(c1) || !isconsistent(c2)) {
@@ -711,17 +605,21 @@ compose(cube_t c1, cube_t c2)
 #endif
 
 	for (i = 0; i < 12; i++) {
-		piece = c2.e[i] & _pbits;
-		orien = (c2.e[i] ^ c1.e[piece]) & _eobit;
-		ret.e[i] = (c1.e[piece] & _pbits) | orien;
+		piece2 = get_edge(c2, i);
+		p = piece2 & _pbits;
+		piece1 = get_edge(c1, p);
+		orien = (piece2 ^ piece1) & _eobit;
+		set_edge(&ret, i, (piece1 & _pbits) | orien);
 	}
 
 	for (i = 0; i < 8; i++) {
-		piece = c2.c[i] & _pbits;
-		aux = (c2.c[i] & _cobits) + (c1.c[piece] & _cobits);
+		piece2 = get_corner(c2, i);
+		p = piece2 & _pbits;
+		piece1 = get_corner(c1, p);
+		aux = (piece2 & _cobits) + (piece1 & _cobits);
 		auy = (aux + _ctwist_cw) >> 2U;
 		orien = (aux + auy) & _cobits2;
-		ret.c[i] = (c1.c[piece] & _pbits) | orien;
+		set_corner(&ret, i, (piece1 & _pbits) | orien);
 	}
 
 	return ret;
@@ -730,14 +628,16 @@ compose(cube_t c1, cube_t c2)
 static cube_t
 flipallcorners(cube_t c)
 {
+/* TODO: optimize for avx2, can be a couple of instructions */
+
 	uint8_t i, piece, orien;
 	cube_t ret;
 
 	ret = c;
 	for (i = 0; i < 8; i++) {
-		piece = ret.c[i];
+		piece = get_corner(c, i);
 		orien = ((piece << 1) | (piece >> 1)) & _cobits2;
-		ret.c[i] = (piece & _pbits) | orien;
+		set_corner(&ret, i, (piece & _pbits) | orien);
 	}
 
 	return ret;
@@ -746,8 +646,6 @@ flipallcorners(cube_t c)
 cube_t
 transform(cube_t c, trans_t t)
 {
-#include "_trans_move_arr.c"
-
 	cube_t ret;
 
 #ifdef DEBUG
@@ -759,6 +657,12 @@ transform(cube_t c, trans_t t)
 		fprintf(stderr, "transform error, unknown transformation\n");
 		return errorcube;
 	}
+#endif
+
+#ifdef CUBE_AVX2
+#include "_trans_move_avx2.c"
+#else
+#include "_trans_move_arr.c"
 #endif
 
 	ret = compose(solvedcube, trans_move_cube[t]);

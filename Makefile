@@ -1,14 +1,4 @@
-# See LICENSE file for copyright and license details.
-
 include config.mk
-
-CFLAGS    = -std=c99 -pthread -pedantic -Wall -Wextra \
-	    -Wno-unused-parameter -O3
-DBGFLAGS  = -DDEBUG -std=c99 -pthread -pedantic -Wall -Wextra \
-            -Wno-unused-parameter -Wno-unused-function -g3 \
-	    -fsanitize=address -fsanitize=undefined
-
-CC = cc
 
 all: cube.o debugcube.o
 

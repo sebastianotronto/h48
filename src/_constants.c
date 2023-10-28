@@ -104,13 +104,6 @@ trans_t inverse_trans[] = {
 	[BRm] = RDm,
 };
 
-cube_t solvedcube = {
-	.c = {0, 1, 2, 3, 4, 5, 6, 7},
-	.e = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}
-};
-
-static cube_t errorcube = { .e = {0}, .c = {0} };
-
 static char *cornerstr[] = {
 	[_c_ufr] = "UFR",
 	[_c_ubl] = "UBL",

@@ -1,11 +1,11 @@
 /* Types *********************************************************************/
 
-/* TODO: ifdef for different implementations */
 /* See doc/CUBE_INTERNAL.md for a description of the cube format */
-typedef struct {
-	uint8_t c[8];
-	uint8_t e[12];
-} cube_t;
+#ifdef CUBE_AVX2
+typedef __m256i cube_t;
+#else
+typedef struct { uint8_t c[8]; uint8_t e[12]; } cube_t;
+#endif
 
 typedef uint8_t move_t;
 typedef uint8_t trans_t;
