@@ -32,7 +32,7 @@
 #define _eflip      0x10U
 #define _error      0xFFU
 
-move_t inverse_move[] = {
+static move_t inverse_move_arr[] = {
 	[U]  = U3,
 	[U2] = U2,
 	[U3] = U,
@@ -53,7 +53,7 @@ move_t inverse_move[] = {
 	[B3] = B,
 };
 
-trans_t inverse_trans[] = {
+static trans_t inverse_trans_arr[] = {
 	[UFr] = UFr,
 	[ULr] = URr,
 	[UBr] = UBr,

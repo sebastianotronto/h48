@@ -14,10 +14,38 @@
 
 #include "_constants.c"
 
+cube_arr_t solvedcube_arr = {
+	.c = {0, 1, 2, 3, 4, 5, 6, 7, 0, 0, 0, 0, 0, 0, 0, 0},
+	.e = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0, 0, 0, 0}
+};
+cube_arr_t zerocube_arr = { .e = {0}, .c = {0} };
+
 #ifdef CUBE_AVX2
-#include "_base_avx2.c"
+
+#define setsolved(cube) cube = _mm256_loadu_si256((__m256i_u *)&solvedcube_arr)
+#define setzero(cube)   cube = _mm256_setzero_si256()
+#define _c _mm256_set_epi64x(0, 0, 0, 0xFF)
+#define _e _mm256_set_epi64x(0, 0xFF, 0, 0)
+/* TODO: in the next 4 macros, all 0 should be i, but must be constant! */
+#define get_edge(cube, i)    _mm256_extract_epi8(cube, 0+16)
+#define get_corner(cube, i)  _mm256_extract_epi8(cube, 0)
+#define set_edge(cube, i, p) _mm256_or_si256( \
+    _mm256_andnot_si256(cube, _mm256_slli_si256(_e, 0)), \
+    _mm256_and_si256(_mm256_set1_epi8(p), _mm256_slli_si256(_e, 0)))
+#define set_corner(cube, i, p) _mm256_or_si256( \
+    _mm256_andnot_si256(cube, _mm256_slli_si256(_c, 0)), \
+    _mm256_and_si256(_mm256_set1_epi8(p), _mm256_slli_si256(_c, 0)))
+
 #else
-#include "_base_arr.c"
+
+#define setsolved(cube) cube = solvedcube_arr
+#define setzero(cube)   cube = zerocube_arr
+#define _c _mm256_set_epi64x(0, 0, 0, 0xFF)
+#define get_edge(cube, i)      (cube).e[(i)]
+#define get_corner(cube, i)    (cube).c[(i)]
+#define set_edge(cube, i, p)   (cube).e[(i)] = (p)
+#define set_corner(cube, i, p) (cube).c[(i)] = (p)
+
 #endif
 
 static bool isconsistent(cube_t);
@@ -33,6 +61,22 @@ static void writecube_H48(cube_t, char *);
 static int writepiece_SRC(uint8_t, char *);
 static void writecube_SRC(cube_t, char *);
 static int permsign(uint8_t *, int);
+
+cube_t
+solvedcube(void)
+{
+	cube_t solved;
+	setsolved(solved);
+	return solved;
+}
+
+cube_t
+zerocube(void)
+{
+	cube_t solved;
+	setzero(solved);
+	return solved;
+}
 
 static uint8_t
 readco(char *str)
@@ -100,30 +144,34 @@ readcube_H48(char *buf)
 {
 	int i;
 	uint8_t piece, orient;
-	cube_t ret = zerocube;
-	char *b = buf;
+	cube_t ret, err;
+	char *b;
+	
+	setzero(ret);
+	setzero(err);
+	b = buf;
 
 	for (i = 0; i < 12; i++) {
 		while (*b == ' ' || *b == '\t' || *b == '\n')
 			b++;
 		if ((piece = readep(b)) == _error)
-			return errorcube;
+			return err;
 		b += 2;
 		if ((orient = readeo(b)) == _error)
-			return errorcube;
+			return err;
 		b++;
-		set_edge(&ret, i, piece | orient);
+		set_edge(ret, i, piece | orient);
 	}
 	for (i = 0; i < 8; i++) {
 		while (*b == ' ' || *b == '\t' || *b == '\n')
 			b++;
 		if ((piece = readcp(b)) == _error)
-			return errorcube;
+			return err;
 		b += 3;
 		if ((orient = readco(b)) == _error)
-			return errorcube;
+			return err;
 		b++;
-		set_corner(&ret, i, piece | orient);
+		set_corner(ret, i, piece | orient);
 	}
 
 	return ret;
@@ -142,7 +190,7 @@ readcube(format_t format, char *buf)
 	#ifdef DEBUG
 		fprintf(stderr, "Cannot read cube in the given format\n");
 	#endif
-		ret = errorcube;
+		setzero(ret);
 	}
 
 #ifdef DEBUG
@@ -373,6 +421,18 @@ writetrans(trans_t t, char *buf)
 	buf[11] = '\0';
 }
 
+move_t
+inverse_move(move_t m)
+{
+	return inverse_move_arr[m];
+}
+
+trans_t
+inverse_trans(trans_t t)
+{
+	return inverse_trans_arr[t];
+}
+
 static int
 permsign(uint8_t *a, int n)
 {
@@ -532,18 +592,24 @@ equal(cube_t cube1, cube_t cube2)
 bool
 issolved(cube_t cube)
 {
-	return equal(cube, solvedcube);
+	cube_t solved;
+	setsolved(solved);
+	return equal(cube, solved);
 }
 
 bool
 iserror(cube_t cube)
 {
-	return equal(cube, errorcube);
+	cube_t err;
+	setzero(err);
+	return equal(cube, err);
 }
 
 cube_t
 move(cube_t c, move_t m)
 {
+	cube_t err;
+
 #ifdef DEBUG
 	if (!isconsistent(c)) {
 		fprintf(stderr, "move error, inconsistent cube\n");
@@ -558,7 +624,8 @@ move(cube_t c, move_t m)
 #endif
 
 move_error:
-	return errorcube;
+	setzero(err);
+	return err;
 }
 
 cube_t
@@ -566,25 +633,27 @@ inverse(cube_t c)
 {
 	/* TODO: optimize for avx2 */
 	uint8_t i, piece, orien;
-	cube_t ret = zerocube;
+	cube_t ret;
+
+	setzero(ret);
 
 #ifdef DEBUG
 	if (!isconsistent(c)) {
 		fprintf(stderr, "inverse error, inconsistent cube\n");
-		return errorcube;
+		return ret;
 	}
 #endif
 
 	for (i = 0; i < 12; i++) {
 		piece = get_edge(c, i);
 		orien = piece & _eobit;
-		set_edge(&ret, piece & _pbits, i | orien);
+		set_edge(ret, piece & _pbits, i | orien);
 	}
 
 	for (i = 0; i < 8; i++) {
 		piece = get_corner(c, i);
 		orien = ((piece << 1) | (piece >> 1)) & _cobits2;
-		set_corner(&ret, piece & _pbits, i | orien);
+		set_corner(ret, piece & _pbits, i | orien);
 	}
 
 	return ret;
@@ -595,12 +664,14 @@ compose(cube_t c1, cube_t c2)
 {
 	/* TODO: optimize for avx2 */
 	uint8_t i, piece1, piece2, p, orien, aux, auy;
-	cube_t ret = zerocube;
+	cube_t ret;
+
+	setzero(ret);
 
 #ifdef DEBUG
 	if (!isconsistent(c1) || !isconsistent(c2)) {
 		fprintf(stderr, "compose error, inconsistent cube\n");
-		return errorcube;
+		return ret;
 	}
 #endif
 
@@ -609,7 +680,7 @@ compose(cube_t c1, cube_t c2)
 		p = piece2 & _pbits;
 		piece1 = get_edge(c1, p);
 		orien = (piece2 ^ piece1) & _eobit;
-		set_edge(&ret, i, (piece1 & _pbits) | orien);
+		set_edge(ret, i, (piece1 & _pbits) | orien);
 	}
 
 	for (i = 0; i < 8; i++) {
@@ -619,7 +690,7 @@ compose(cube_t c1, cube_t c2)
 		aux = (piece2 & _cobits) + (piece1 & _cobits);
 		auy = (aux + _ctwist_cw) >> 2U;
 		orien = (aux + auy) & _cobits2;
-		set_corner(&ret, i, (piece1 & _pbits) | orien);
+		set_corner(ret, i, (piece1 & _pbits) | orien);
 	}
 
 	return ret;
@@ -637,7 +708,7 @@ flipallcorners(cube_t c)
 	for (i = 0; i < 8; i++) {
 		piece = get_corner(c, i);
 		orien = ((piece << 1) | (piece >> 1)) & _cobits2;
-		set_corner(&ret, i, (piece & _pbits) | orien);
+		set_corner(ret, i, (piece & _pbits) | orien);
 	}
 
 	return ret;
@@ -646,16 +717,17 @@ flipallcorners(cube_t c)
 cube_t
 transform(cube_t c, trans_t t)
 {
-	cube_t ret;
+	cube_t ret, solved;
 
 #ifdef DEBUG
+	setzero(ret);
 	if (!isconsistent(c)) {
 		fprintf(stderr, "transform error, inconsistent cube\n");
-		return errorcube;
+		return ret;
 	}
 	if (t >= 48) {
 		fprintf(stderr, "transform error, unknown transformation\n");
-		return errorcube;
+		return ret;
 	}
 #endif
 
@@ -665,7 +737,9 @@ transform(cube_t c, trans_t t)
 #include "_trans_move_arr.c"
 #endif
 
-	ret = compose(solvedcube, trans_move_cube[t]);
+	setsolved(solved);
+
+	ret = compose(solved, trans_move_cube[t]);
 	ret = compose(ret, c);
 	ret = compose(ret, trans_move_cube_inverse[t]);
 

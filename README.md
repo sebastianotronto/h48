@@ -11,11 +11,16 @@ $ make test
 
 ## TODO:
 
+### Tests
+
+* inverse_move
+* inverse_trans
+
 ### AVX2
 
-* static `solvedcube` and co don't work, turn into functions?
+* fix base get_ and set_ macros (constant arguments?)
 * implement missing stuff (moves, transform)
-* optimize things that use _base functions
+* optimize things that use get_ and set_
 
 ### More features
 

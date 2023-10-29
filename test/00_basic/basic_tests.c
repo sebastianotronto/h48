@@ -19,14 +19,16 @@ check2(cube_t cube1, char *name1, cube_t cube2, char *name2)
 }
 
 int main() {
-	cube_t zero = (cube_t){0};
+	cube_t zero, solved;
 
-	check(solvedcube, "Solved");
+	zero = zerocube();
+	solved = solvedcube();
+	check(solved, "Solved");
 	check(zero, "Zero");
 
-	check2(solvedcube, "Solved", solvedcube, "Solved");
-	check2(solvedcube, "Solved", zero, "Zero");
-	check2(zero, "Zero", solvedcube, "Solved");
+	check2(solved, "Solved", solved, "Solved");
+	check2(solved, "Solved", zero, "Zero");
+	check2(zero, "Zero", solved, "Solved");
 
 	return 0;
 }

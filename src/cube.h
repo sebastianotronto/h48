@@ -1,20 +1,28 @@
 /* Types *********************************************************************/
 
 /* See doc/CUBE_INTERNAL.md for a description of the cube format */
+typedef struct {
+	uint8_t c[16];
+	uint8_t e[16];
+} cube_arr_t;
 #ifdef CUBE_AVX2
 typedef __m256i cube_t;
 #else
-typedef struct { uint8_t c[8]; uint8_t e[12]; } cube_t;
+typedef cube_arr_t cube_t;
 #endif
 
 typedef uint8_t move_t;
 typedef uint8_t trans_t;
 
-extern move_t inverse_move[];
-extern trans_t inverse_trans[];
-extern cube_t solvedcube;
-
 /* Functions *****************************************************************/
+
+int readmoves(char *, move_t *);
+void writemoves(move_t *, int, char *);
+trans_t readtrans(char *);
+void writetrans(trans_t, char *);
+
+move_t inverse_move(move_t);
+trans_t inverse_trans(trans_t);
 
 /* Not all formats are supported for both read and write. */
 /* See doc/CUBE_TEXT.md for details. */
@@ -22,22 +30,16 @@ typedef enum {H48, SRC} format_t;
 cube_t readcube(format_t, char *);
 void writecube(format_t, cube_t, char *);
 
+cube_t solvedcube(void);
+cube_t zerocube(void);
 bool issolvable(cube_t);
 bool equal(cube_t, cube_t);
 bool issolved(cube_t);
 bool iserror(cube_t);
 
-int readmoves(char *, move_t *);
-void writemoves(move_t *, int, char *);
-
-trans_t readtrans(char *);
-void writetrans(trans_t, char *);
-
 cube_t move(cube_t, move_t);
 cube_t inverse(cube_t);
 cube_t compose(cube_t, cube_t);
-
-/* See doc/TRANSFORMATIONS.md for how transformations are applied */
 cube_t transform(cube_t, trans_t);
 
 /* Constants for moves and transformations ***********************************/

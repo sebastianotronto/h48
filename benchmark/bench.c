@@ -53,7 +53,7 @@ setup_cubes(void)
 	move_t m;
 
 	for (i = 0; i < GEN_CUBES; i++) {
-		gen_cubes[i] = solvedcube;
+		gen_cubes[i] = solvedcube();
 		for (j = 0; j < 30; j++) {
 			m = (move_t)rand() % 18;
 			gen_cubes[i] = move(gen_cubes[i], m);
@@ -68,7 +68,7 @@ run_moves(void)
 	cube_t c;
 	char str[1000];
 
-	c = solvedcube;
+	c = solvedcube();
 	for (i = 0; i < MOVES; i++)
 		c = move(c, gen_moves[i % GEN_MOVES]);
 
@@ -85,7 +85,7 @@ run_trans(void)
 	cube_t c;
 	char str[1000];
 
-	c = solvedcube;
+	c = solvedcube();
 	for (i = 0; i < TRANS; i++)
 		c = transform(c, gen_trans[i % GEN_TRANS]);
 
@@ -102,7 +102,7 @@ run_comp(void)
 	cube_t c;
 	char str[1000];
 
-	c = solvedcube;
+	c = solvedcube();
 	for (i = 0; i < COMP; i++)
 		c = compose(c, gen_cubes[i % GEN_CUBES]);
 
