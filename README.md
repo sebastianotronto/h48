@@ -16,6 +16,32 @@ $ make test
 * inverse_move
 * inverse_trans
 
+### Simple additions
+
+* Write to AVX2-src format
+* move() that takes a string (alg) as input
+
+### Changes
+
+* write one function (static inline or public?) for each move (and trans)
+* only call the specific functions in performance-critical steps (i.e. solve
+  - if the functions are static inline, all performance-critical steps must
+  be internal to cube.c)
+* this also enables skipping some unnecessary work (e.g. flip edges, twist
+  corners) for many moves (and mirror transformations)
+* add benchmarks with moves / trans called directly instead of via the
+  generic function
+* keep generic move and trans functions with big switch case
+* bring back constants into cube.c, and maybe also moves (TBD: what to
+  do with architecture-specific code? leave in separate files like now,
+  use just one file for each architecture...)
+
+### Documentation and interface
+
+* remove the constant #define's from cube.h (write a comment instead)
+* reconsider content of cube.h, remove some stuff
+* remove doc folder, inline documentation as comments in cube.h or cube.c
+
 ### AVX2
 
 * fix base get_ and set_ macros (constant arguments?)

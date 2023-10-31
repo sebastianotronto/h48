@@ -1,5 +1,5 @@
 config.mk
-benchmark/results.txt
+benchmark/results
 benchmark/run
 test/*/runtest
 test/run
