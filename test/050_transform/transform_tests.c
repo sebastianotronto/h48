@@ -14,7 +14,7 @@ int main() {
 	fgets(str, STRLENMAX, stdin);
 	t = readtrans(str);
 
-	if (t == errortrans) {
+	if (t >= 48) {
 		printf("Error reading trans\n");
 		return 1;
 	}
