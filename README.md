@@ -13,51 +13,29 @@ $ make test
 
 ## TODO:
 
-### Tests
+### Make AVX2 work
 
-* inverse_move
-* inverse_trans
-
-### Simple additions
-
-* Write to AVX2-src format
-* move() that takes a string (alg) as input
-
-### Changes
-
-* write one function (static inline or public?) for each move (and trans)
-* only call the specific functions in performance-critical steps (i.e. solve
-  - if the functions are static inline, all performance-critical steps must
-  be internal to cube.c)
-* this also enables skipping some unnecessary work (e.g. flip edges, twist
-  corners) for many moves (and mirror transformations)
-* add benchmarks with moves / trans called directly instead of via the
-  generic function
-* keep generic move and trans functions with big switch case
-* bring back constants into cube.c, and maybe also moves (TBD: what to
-  do with architecture-specific code? leave in separate files like now,
-  use just one file for each architecture...)
+* writecube to AVX2-src format (+ tests)
+* generate moves and transformations with scripts in utils/
+* fix base get_ and set_ macros (constant arguments?)
+* optimize things that use get_ and set_
 
 ### Documentation and interface
 
 * inline some documentation as comments in cube.h or cube.c
 * README.md (maybe convert to txt?) becomes the reference documentation
 
-### AVX2
-
-* fix base get_ and set_ macros (constant arguments?)
-* implement missing stuff (moves, transform)
-* optimize things that use get_ and set_
-
 ### More features
 
+* move() that takes a string (alg) as input
 * coordinates: co, eo, epsep, cpsep_sym, cocpsep_sym, cphtr_sym, cocphtr_sym
+
+### Solving
+
+* Fixed depth
 * pruning tables (1 bit per entry + fallback)
-* solve.c
-
-### Optimizations:
-
-* multi-move (up to 4/5 moves at once)
+* Takes as parameters the amount of memory to use and a FILE for the tables
+* Use multi-move (up to 4/5 moves at once)
 
 ### Things I need to learn:
 

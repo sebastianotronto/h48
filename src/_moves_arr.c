@@ -27,79 +27,164 @@
     r[k] ^= _eobit;        \
     r[l] ^= _eobit;
 
-uint8_t aux, auy, auz;
-cube_t ret = c;
+static inline cube_t
+inline_move_U(cube_t c)
+{
+	uint8_t aux;
+	cube_t ret = c;
 
-switch (m) {
-case U:
 	PERM4(ret.e, _e_uf, _e_ul, _e_ub, _e_ur)
 	PERM4(ret.c, _c_ufr, _c_ufl, _c_ubl, _c_ubr)
 
 	return ret;
-case U2:
+}
+
+static inline cube_t
+inline_move_U2(cube_t c)
+{
+	uint8_t aux;
+	cube_t ret = c;
+
 	PERM22(ret.e, _e_uf, _e_ub, _e_ul, _e_ur)
 	PERM22(ret.c, _c_ufr, _c_ubl, _c_ufl, _c_ubr)
 
 	return ret;
-case U3:
+}
+
+static inline cube_t
+inline_move_U3(cube_t c)
+{
+	uint8_t aux;
+	cube_t ret = c;
+
 	PERM4(ret.e, _e_uf, _e_ur, _e_ub, _e_ul)
 	PERM4(ret.c, _c_ufr, _c_ubr, _c_ubl, _c_ufl)
 
 	return ret;
-case D:
+}
+
+static inline cube_t
+inline_move_D(cube_t c)
+{
+	uint8_t aux;
+	cube_t ret = c;
+
 	PERM4(ret.e, _e_df, _e_dr, _e_db, _e_dl)
 	PERM4(ret.c, _c_dfr, _c_dbr, _c_dbl, _c_dfl)
 
 	return ret;
-case D2:
+}
+
+static inline cube_t
+inline_move_D2(cube_t c)
+{
+	uint8_t aux;
+	cube_t ret = c;
+
 	PERM22(ret.e, _e_df, _e_db, _e_dr, _e_dl)
 	PERM22(ret.c, _c_dfr, _c_dbl, _c_dbr, _c_dfl)
 
 	return ret;
-case D3:
+}
+
+static inline cube_t
+inline_move_D3(cube_t c)
+{
+	uint8_t aux;
+	cube_t ret = c;
+
 	PERM4(ret.e, _e_df, _e_dl, _e_db, _e_dr)
 	PERM4(ret.c, _c_dfr, _c_dfl, _c_dbl, _c_dbr)
 
 	return ret;
-case R:
+}
+
+static inline cube_t
+inline_move_R(cube_t c)
+{
+	uint8_t aux, auy, auz;
+	cube_t ret = c;
+
 	PERM4(ret.e, _e_ur, _e_br, _e_dr, _e_fr)
 	PERM4(ret.c, _c_ufr, _c_ubr, _c_dbr, _c_dfr)
 
 	CO4(ret.c, _c_ubr, _c_dfr, _c_ufr, _c_dbr)
 
 	return ret;
-case R2:
+}
+
+static inline cube_t
+inline_move_R2(cube_t c)
+{
+	uint8_t aux;
+	cube_t ret = c;
+
 	PERM22(ret.e, _e_ur, _e_dr, _e_fr, _e_br)
 	PERM22(ret.c, _c_ufr, _c_dbr, _c_ubr, _c_dfr)
 
 	return ret;
-case R3:
+}
+
+static inline cube_t
+inline_move_R3(cube_t c)
+{
+	uint8_t aux, auy, auz;
+	cube_t ret = c;
+
 	PERM4(ret.e, _e_ur, _e_fr, _e_dr, _e_br)
 	PERM4(ret.c, _c_ufr, _c_dfr, _c_dbr, _c_ubr)
 
 	CO4(ret.c, _c_ubr, _c_dfr, _c_ufr, _c_dbr)
 
 	return ret;
-case L:
+}
+
+static inline cube_t
+inline_move_L(cube_t c)
+{
+	uint8_t aux, auy, auz;
+	cube_t ret = c;
+
 	PERM4(ret.e, _e_ul, _e_fl, _e_dl, _e_bl)
 	PERM4(ret.c, _c_ufl, _c_dfl, _c_dbl, _c_ubl)
 
 	CO4(ret.c, _c_ufl, _c_dbl, _c_dfl, _c_ubl)
 
 	return ret;
-case L2:
+}
+
+static inline cube_t
+inline_move_L2(cube_t c)
+{
+	uint8_t aux;
+	cube_t ret = c;
+
 	PERM22(ret.e, _e_ul, _e_dl, _e_fl, _e_bl)
 	PERM22(ret.c, _c_ufl, _c_dbl, _c_ubl, _c_dfl)
 
 	return ret;
-case L3:
+}
+
+static inline cube_t
+inline_move_L3(cube_t c)
+{
+	uint8_t aux, auy, auz;
+	cube_t ret = c;
+
 	PERM4(ret.e, _e_ul, _e_bl, _e_dl, _e_fl)
 	PERM4(ret.c, _c_ufl, _c_ubl, _c_dbl, _c_dfl)
 
 	CO4(ret.c, _c_ufl, _c_dbl, _c_dfl, _c_ubl)
 
 	return ret;
-case F:
+}
+
+static inline cube_t
+inline_move_F(cube_t c)
+{
+	uint8_t aux, auy, auz;
+	cube_t ret = c;
+
 	PERM4(ret.e, _e_uf, _e_fr, _e_df, _e_fl)
 	PERM4(ret.c, _c_ufr, _c_dfr, _c_dfl, _c_ufl)
 
@@ -107,12 +192,26 @@ case F:
 	CO4(ret.c, _c_ufr, _c_dfl, _c_dfr, _c_ufl)
 
 	return ret;
-case F2:
+}
+
+static inline cube_t
+inline_move_F2(cube_t c)
+{
+	uint8_t aux;
+	cube_t ret = c;
+
 	PERM22(ret.e, _e_uf, _e_df, _e_fr, _e_fl)
 	PERM22(ret.c, _c_ufr, _c_dfl, _c_ufl, _c_dfr)
 
 	return ret;
-case F3:
+}
+
+static inline cube_t
+inline_move_F3(cube_t c)
+{
+	uint8_t aux, auy, auz;
+	cube_t ret = c;
+
 	PERM4(ret.e, _e_uf, _e_fl, _e_df, _e_fr)
 	PERM4(ret.c, _c_ufr, _c_ufl, _c_dfl, _c_dfr)
 
@@ -120,7 +219,14 @@ case F3:
 	CO4(ret.c, _c_ufr, _c_dfl, _c_dfr, _c_ufl)
 
 	return ret;
-case B:
+}
+
+static inline cube_t
+inline_move_B(cube_t c)
+{
+	uint8_t aux, auy, auz;
+	cube_t ret = c;
+
 	PERM4(ret.e, _e_ub, _e_bl, _e_db, _e_br)
 	PERM4(ret.c, _c_ubr, _c_ubl, _c_dbl, _c_dbr)
 
@@ -128,12 +234,26 @@ case B:
 	CO4(ret.c, _c_ubl, _c_dbr, _c_dbl, _c_ubr)
 
 	return ret;
-case B2:
+}
+
+static inline cube_t
+inline_move_B2(cube_t c)
+{
+	uint8_t aux;
+	cube_t ret = c;
+
 	PERM22(ret.e, _e_ub, _e_db, _e_br, _e_bl)
 	PERM22(ret.c, _c_ubr, _c_dbl, _c_ubl, _c_dbr)
 
 	return ret;
-case B3:
+}
+
+static inline cube_t
+inline_move_B3(cube_t c)
+{
+	uint8_t aux, auy, auz;
+	cube_t ret = c;
+
 	PERM4(ret.e, _e_ub, _e_br, _e_db, _e_bl)
 	PERM4(ret.c, _c_ubr, _c_dbr, _c_dbl, _c_ubl)
 
@@ -141,9 +261,4 @@ case B3:
 	CO4(ret.c, _c_ubl, _c_dbr, _c_dbl, _c_ubr)
 
 	return ret;
-default:
-#ifdef DEBUG
-	fprintf(stderr, "mover error, unknown move\n");
-#endif
-	goto move_error;
 }
