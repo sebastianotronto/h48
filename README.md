@@ -15,10 +15,7 @@ $ make test
 
 ### Make AVX2 work
 
-* inline moves for avx2
 * fix base get_ and set_ macros (constant arguments?)
-* optimize inverse for avx2
-* other things to optimize?
 
 ### Documentation and interface
 
@@ -37,10 +34,13 @@ $ make test
 * Takes as parameters the amount of memory to use and a FILE for the tables
 * Use multi-move (up to 4/5 moves at once)
 
-### Things I need to learn:
+### Future optimizations
 
-* Inspect compiled assembly
-* Use valgrind tool cachegrind and other profiling tools
+* CO is the worst part of moving, transforming and inverting. Try basing
+  everything on representing the cube without CO and apply it only at the
+  end to check that it is actually solved.
+* see if vcube's method to flip all corners is better
+* find a better way for computing the inverse?
 
 ## Internal representation of the cube
 

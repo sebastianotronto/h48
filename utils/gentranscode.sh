@@ -23,7 +23,6 @@ genfuncs() {
 	for f in transform_??_???.txt; do
 		trans="$(echo $f | sed 's/.*_// ; s/\.txt//')"
 		printf 'static inline cube_t\ninline_trans_%s' "$trans"
-		[ "$1" = "-i" ] && printf '_inverse'
 		printf '(cube_t c)\n{\n'
 		printf '\tcube_t ret;\n\n'
 		printf '\tcube_t tn = '

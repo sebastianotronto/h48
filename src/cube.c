@@ -269,6 +269,7 @@ static char *transstr[] = {
 	[BLm] = "mirrored BL",
 };
 
+static inline cube_t inline_compose(cube_t, cube_t);
 static bool isconsistent(cube_t);
 static cube_t flipallcorners(cube_t);
 static uint8_t readco(char *);
@@ -909,17 +910,48 @@ cube_t
 inverse(cube_t c)
 {
 	/* TODO: optimize for avx2 */
-	uint8_t i, piece, orien;
 	cube_t ret;
-
-	setzero(ret);
 
 #ifdef DEBUG
 	if (!isconsistent(c)) {
 		fprintf(stderr, "inverse error, inconsistent cube\n");
+		setzero(ret);
 		return ret;
 	}
 #endif
+
+#ifdef CUBE_AVX2
+	/* Method taken from Andrew Skalski's vcube[1]. The addition sequence
+	 * was generated using [2].
+	 * [1] https://github.com/Voltara/vcube
+	 * [2] http://wwwhomes.uni-bielefeld.de/achim/addition_chain.html
+	 */
+	cube_t v3, vi;
+
+	v3 = _mm256_shuffle_epi8(c, c);
+	v3 = _mm256_shuffle_epi8(v3, c);
+	vi = _mm256_shuffle_epi8(v3, v3);
+	vi = _mm256_shuffle_epi8(vi, vi);
+	vi = _mm256_shuffle_epi8(vi, vi);
+	vi = _mm256_shuffle_epi8(vi, v3);
+	vi = _mm256_shuffle_epi8(vi, vi);
+	vi = _mm256_shuffle_epi8(vi, vi);
+	vi = _mm256_shuffle_epi8(vi, vi);
+	vi = _mm256_shuffle_epi8(vi, c);
+	vi = _mm256_shuffle_epi8(vi, vi);
+	vi = _mm256_shuffle_epi8(vi, vi);
+	vi = _mm256_shuffle_epi8(vi, vi);
+	vi = _mm256_shuffle_epi8(vi, vi);
+	vi = _mm256_shuffle_epi8(vi, vi);
+	vi = _mm256_shuffle_epi8(vi, v3);
+	vi = _mm256_shuffle_epi8(vi, vi);
+	ret = _mm256_shuffle_epi8(vi, c);
+	
+	return flipallcorners(ret);
+#else
+	uint8_t i, piece, orien;
+
+	setzero(ret);
 
 	for (i = 0; i < 12; i++) {
 		piece = get_edge(c, i);
@@ -932,12 +964,13 @@ inverse(cube_t c)
 		orien = ((piece << 1) | (piece >> 1)) & _cobits2;
 		set_corner(ret, piece & _pbits, i | orien);
 	}
+#endif
 
 	return ret;
 }
 
-cube_t
-compose(cube_t c1, cube_t c2)
+static inline cube_t
+inline_compose(cube_t c1, cube_t c2)
 {
 	cube_t ret;
 
@@ -989,6 +1022,12 @@ compose(cube_t c1, cube_t c2)
 #endif
 
 	return ret;
+}
+
+cube_t
+compose(cube_t c1, cube_t c2)
+{
+	return inline_compose(c1, c2);
 }
 
 cube_t
