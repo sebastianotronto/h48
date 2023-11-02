@@ -126,10 +126,12 @@ cube_arr_t zerocube_arr = { .e = {0}, .c = {0} };
 
 #ifdef CUBE_AVX2
 
-#define setsolved(cube) cube = _mm256_loadu_si256((__m256i_u *)&solvedcube_arr)
-#define setzero(cube)   cube = _mm256_setzero_si256()
+#define _co_avx2 _mm256_set_epi64x(0, 0xF0F0F0F0F0F0F0F0, 0, 0)
+#define _eo_avx2 _mm256_set_epi64x(0, 0, 0xF0F0F0F0, 0xF0F0F0F0F0F0F0F0)
 #define _c _mm256_set_epi64x(0, 0, 0, 0xFF)
 #define _e _mm256_set_epi64x(0, 0xFF, 0, 0)
+#define setsolved(cube) cube = _mm256_loadu_si256((__m256i_u *)&solvedcube_arr)
+#define setzero(cube)   cube = _mm256_setzero_si256()
 /* TODO: in the next 4 macros, all 0 should be i, but must be constant! */
 #define get_edge(cube, i)    _mm256_extract_epi8(cube, 0+16)
 #define get_corner(cube, i)  _mm256_extract_epi8(cube, 0)

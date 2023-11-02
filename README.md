@@ -15,7 +15,7 @@ $ make test
 
 ### Make AVX2 work
 
-* generate moves and transformations with scripts in utils/
+* inline moves for avx2
 * fix base get_ and set_ macros (constant arguments?)
 * optimize things that use get_ and set_
 

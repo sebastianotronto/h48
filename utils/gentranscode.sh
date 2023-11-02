@@ -1,6 +1,8 @@
 #!/bin/sh
 
-gcc -DDEBUG h48_to_src.c ../src/cube.c -o h48_to_src
+type="${1:-src}"
+
+gcc -DDEBUG h48_to_"$type".c ../src/cube.c -o h48_to_"$type"
 gcc -DDEBUG invert.c ../src/cube.c -o invert
 
 # Old version
@@ -9,9 +11,9 @@ genarray() {
 		trans="$(echo $f | sed 's/.*_// ; s/\.txt//')"
 		printf '[%s] = ' "$trans"
 		if [ "$1" = "-i" ]; then
-			./invert <"$f" | ./h48_to_src
+			./invert <"$f" | ./h48_to_"$type"
 		else
-			./h48_to_src <"$f"
+			./h48_to_"$type" <"$f"
 		fi
 		printf ',\n'
 	done
@@ -23,15 +25,12 @@ genfuncs() {
 		printf 'static inline cube_t\ninline_trans_%s' "$trans"
 		[ "$1" = "-i" ] && printf '_inverse'
 		printf '(cube_t c)\n{\n'
-		printf '\tcube_t ret;\n'
-		printf '\tcube_t tn = {\n'
-		./h48_to_src <"$f" | sed 's/^/\t/' | \
-			tail -n 3 | head -n 2
-		printf '\t};\n\tcube_t ti = {\n'
-		./invert <"$f" | ./h48_to_src | sed 's/^/\t/' | \
-			tail -n 3 | head -n 2
-		printf '\t};\n\n'
-		printf '\tret = compose(tn, c);\n'
+		printf '\tcube_t ret;\n\n'
+		printf '\tcube_t tn = '
+		./h48_to_"$type" <"$f" | sed '2,4s/^/\t/'
+		printf ';\n\tcube_t ti = '
+		./invert <"$f" | ./h48_to_"$type" | sed '2,4 s/^/\t/'
+		printf ';\n\n\tret = compose(tn, c);\n'
 		printf '\tret = compose(ret, ti);\n'
 		if [ -n "$(echo "$trans" | grep "m")" ]; then
 			printf '\tret = flipallcorners(ret);\n'
@@ -41,4 +40,4 @@ genfuncs() {
 }
 
 genfuncs
-rm -f h48_to_src invert
+rm -f h48_to_"$type" invert
