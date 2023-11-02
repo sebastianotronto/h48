@@ -17,7 +17,8 @@ $ make test
 
 * inline moves for avx2
 * fix base get_ and set_ macros (constant arguments?)
-* optimize things that use get_ and set_
+* optimize inverse for avx2
+* other things to optimize?
 
 ### Documentation and interface
 
@@ -38,11 +39,8 @@ $ make test
 
 ### Things I need to learn:
 
-* Use AVX2 instructions, in particular
-  [_mm256_shuffle_epi8](https://www.intel.com/content/www/us/en/docs/cpp-compiler/developer-guide-reference/2021-10/mm256-shuffle-epi8.html))
 * Inspect compiled assembly
 * Use valgrind tool cachegrind and other profiling tools
-
 
 ## Internal representation of the cube
 

@@ -939,18 +939,35 @@ inverse(cube_t c)
 cube_t
 compose(cube_t c1, cube_t c2)
 {
-	/* TODO: optimize for avx2 */
-	uint8_t i, piece1, piece2, p, orien, aux, auy;
 	cube_t ret;
-
-	setzero(ret);
 
 #ifdef DEBUG
 	if (!isconsistent(c1) || !isconsistent(c2)) {
 		fprintf(stderr, "compose error, inconsistent cube\n");
+		setzero(ret);
 		return ret;
 	}
 #endif
+
+#ifdef CUBE_AVX2
+	cube_t shuf, eo, eodone, co2, aux, auy1, auy2, cw, auz1, auz2, coclean;
+
+	co2 = _mm256_and_si256(c2, _co_avx2);
+	eo = _mm256_and_si256(c2, _eo_avx2);
+	shufd = _mm256_shuffle_epi8(c1, c2);
+	eodone = _mm256_(shufd, eo);
+	aux = _mm256_add_epi8(c1, co2);
+	cw = _mm256_set_epi64x(0, 0x2020202020202020, 0, 0);
+	auy1 = _mm256_add_epi8(aux, cw);
+	auy2 = _mm256_srli_si256(auy1, 2);
+	auz1 = _mm256_add_epi8(aux, auy2);
+	auz2 = _mm256_and_si256(auz1, _co_avx2);
+	coclean = _mm256_andnot_si256(eodone, _co_avx2);
+	ret = _mm256_or_si256(coclean, auz2);
+#else
+	uint8_t i, piece1, piece2, p, orien, aux, auy;
+
+	setzero(ret);
 
 	for (i = 0; i < 12; i++) {
 		piece2 = get_edge(c2, i);
@@ -969,6 +986,7 @@ compose(cube_t c1, cube_t c2)
 		orien = (aux + auy) & _cobits2;
 		set_corner(ret, i, (piece1 & _pbits) | orien);
 	}
+#endif
 
 	return ret;
 }
