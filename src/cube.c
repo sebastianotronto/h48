@@ -276,6 +276,7 @@ static uint8_t readep(char *);
 static uint8_t readmove(char);
 static uint8_t readmodifier(char);
 static cube_t readcube_H48(char *);
+static void writecube_AVX(cube_t, char *);
 static void writecube_H48(cube_t, char *);
 static int writepiece_SRC(uint8_t, char *);
 static void writecube_SRC(cube_t, char *);
@@ -420,6 +421,32 @@ readcube(format_t format, char *buf)
 }
 
 static void
+writecube_AVX(cube_t cube, char *buf)
+{
+	int i, ptr;
+	uint8_t piece;
+
+	memcpy(buf, "_mm256_set_epi8(\n\t0, 0, 0, 0, ", 30);
+	ptr = 30;
+
+	for (i = 11; i >= 0; i--) {
+		piece = get_edge(cube, i);
+		ptr += writepiece_SRC(piece, buf + ptr);
+	}
+
+	memcpy(buf+ptr-2, ",\n\t0, 0, 0, 0, 0, 0, 0, 0, ", 27);
+	ptr += 25;
+
+	for (i = 7; i >= 0; i--) {
+		piece = get_corner(cube, i);
+		ptr += writepiece_SRC(piece, buf + ptr);
+	}
+
+	memcpy(buf+ptr-2, "\n)\0", 3);
+}
+
+
+static void
 writecube_H48(cube_t cube, char *buf)
 {
 	uint8_t piece, perm, orient;
@@ -508,6 +535,9 @@ writecube(format_t format, cube_t cube, char *buf)
 	}
 
 	switch (format) {
+	case AVX:
+		writecube_AVX(cube, buf);
+		break;
 	case H48:
 		writecube_H48(cube, buf);
 		break;

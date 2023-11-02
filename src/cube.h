@@ -16,9 +16,9 @@ void writemoves(move_t *, int, char *);
 trans_t readtrans(char *);
 void writetrans(trans_t, char *);
 
-typedef enum {H48, SRC} format_t;
+typedef enum {AVX, H48, SRC} format_t;
 cube_t readcube(format_t, char *);        /* Supports: H48 */
-void writecube(format_t, cube_t, char *); /* Supports: H48, SRC */
+void writecube(format_t, cube_t, char *); /* Supports: AVX, H48, SRC */
 
 cube_t solvedcube(void);
 cube_t zerocube(void);

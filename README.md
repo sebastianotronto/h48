@@ -15,7 +15,6 @@ $ make test
 
 ### Make AVX2 work
 
-* writecube to AVX2-src format (+ tests)
 * generate moves and transformations with scripts in utils/
 * fix base get_ and set_ macros (constant arguments?)
 * optimize things that use get_ and set_
