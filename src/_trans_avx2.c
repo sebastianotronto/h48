@@ -7,7 +7,7 @@ flipallcorners(cube_t c)
 	shright = _mm256_srli_si256(c, 1);
 	summed = _mm256_or_si256(shleft, shright);
 	newco = _mm256_and_si256(summed, _co_avx2);
-	cleanco = _mm256_andnot_si256_(c, _co_avx2);
+	cleanco = _mm256_andnot_si256(c, _co_avx2);
 	ret = _mm256_and_si256(cleanco, newco);
 
 	return ret;

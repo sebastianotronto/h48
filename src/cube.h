@@ -3,6 +3,7 @@ typedef struct {
 	uint8_t e[16];
 } cube_arr_t;
 #ifdef CUBE_AVX2
+#include <immintrin.h>
 typedef __m256i cube_t;
 #else
 typedef cube_arr_t cube_t;

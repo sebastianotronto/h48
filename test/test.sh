@@ -1,10 +1,14 @@
 #!/bin/sh
 
 CC="cc -DDEBUG -std=c99 -pthread -pedantic -Wall -Wextra \
-    -Wno-unused-parameter -Wno-unused-function -g3"
-if [ $(uname) != "OpenBSD" ]; then
+    -Wno-unused-parameter -Wno-unused-function -g3 -D$CUBETYPE"
+if [ "$CUBETYPE" = "CUBE_AVX2" ]; then
+	CC="$CC -mavx2"
+fi
+if [ "$(uname)" != "OpenBSD" ]; then
 	CC="$CC -fsanitize=address -fsanitize=undefined"
 fi
+
 TESTBIN="test/run"
 TESTOUT="test/last.out"
 TESTERR="test/last.err"

@@ -15,7 +15,13 @@ $ make test
 
 ### Make AVX2 work
 
-* fix base get_ and set_ macros (constant arguments?)
+* fix inverse, flipallcorners
+
+### Cleanup / refactor
+
+* see planner
+* change all set_epi to setr_epi
+* change epi8 to epi64x (shorter!)
 
 ### Documentation and interface
 
@@ -41,6 +47,7 @@ $ make test
   end to check that it is actually solved.
 * see if vcube's method to flip all corners is better
 * find a better way for computing the inverse?
+* Improve avx2 instructions in general
 
 ## Internal representation of the cube
 

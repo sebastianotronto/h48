@@ -6,10 +6,6 @@
 #include <stdio.h>
 #endif
 
-#ifdef AVX2
-#include <immintrin.h>
-#endif
-
 #include "cube.h"
 
 #define U  0U
@@ -118,6 +114,11 @@
 #define _eflip      0x10U
 #define _error      0xFFU
 
+#define get_edge(cube, i)      (cube).e[(i)]
+#define get_corner(cube, i)    (cube).c[(i)]
+#define set_edge(cube, i, p)   (cube).e[(i)] = (p)
+#define set_corner(cube, i, p) (cube).c[(i)] = (p)
+
 cube_arr_t solvedcube_arr = {
 	.c = {0, 1, 2, 3, 4, 5, 6, 7, 0, 0, 0, 0, 0, 0, 0, 0},
 	.e = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0, 0, 0, 0}
@@ -126,39 +127,53 @@ cube_arr_t zerocube_arr = { .e = {0}, .c = {0} };
 
 #ifdef CUBE_AVX2
 
-#define _co_avx2 _mm256_set_epi64x(0, 0xF0F0F0F0F0F0F0F0, 0, 0)
-#define _eo_avx2 _mm256_set_epi64x(0, 0, 0xF0F0F0F0, 0xF0F0F0F0F0F0F0F0)
-#define _c _mm256_set_epi64x(0, 0, 0, 0xFF)
-#define _e _mm256_set_epi64x(0, 0xFF, 0, 0)
+#define _co_avx2 _mm256_set_epi8( \
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
+    0, 0, 0, 0, 0, 0, 0, 0, \
+    0x70, 0x70, 0x70, 0x70, 0x70, 0x70, 0x70, 0x70) 
+#define _eo_avx2 _mm256_set_epi8( \
+    0, 0, 0, 0, 0x70, 0x70, 0x70, 0x70, \
+    0x70, 0x70, 0x70, 0x70, 0x70, 0x70, 0x70, 0x70, \
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 #define setsolved(cube) cube = _mm256_loadu_si256((__m256i_u *)&solvedcube_arr)
 #define setzero(cube)   cube = _mm256_setzero_si256()
-/* TODO: in the next 4 macros, all 0 should be i, but must be constant! */
-#define get_edge(cube, i)    _mm256_extract_epi8(cube, 0+16)
-#define get_corner(cube, i)  _mm256_extract_epi8(cube, 0)
-#define set_edge(cube, i, p) _mm256_or_si256( \
-    _mm256_andnot_si256(cube, _mm256_slli_si256(_e, 0)), \
-    _mm256_and_si256(_mm256_set1_epi8(p), _mm256_slli_si256(_e, 0)))
-#define set_corner(cube, i, p) _mm256_or_si256( \
-    _mm256_andnot_si256(cube, _mm256_slli_si256(_c, 0)), \
-    _mm256_and_si256(_mm256_set1_epi8(p), _mm256_slli_si256(_c, 0)))
 
 #include "_moves_avx2.c"
 #include "_trans_avx2.c"
+
+static cube_t
+arrtocube(cube_arr_t a)
+{
+	return _mm256_loadu_si256((__m256i_u *)&a);
+}
+
+static void
+cubetoarr(cube_t c, cube_arr_t *a)
+{
+	_mm256_storeu_si256((__m256i_u *)a, c);
+}
 
 #else
 
 #define setsolved(cube) cube = solvedcube_arr
 #define setzero(cube)   cube = zerocube_arr
-#define get_edge(cube, i)      (cube).e[(i)]
-#define get_corner(cube, i)    (cube).c[(i)]
-#define set_edge(cube, i, p)   (cube).e[(i)] = (p)
-#define set_corner(cube, i, p) (cube).c[(i)] = (p)
+
+static cube_t
+arrtocube(cube_arr_t a)
+{
+	return a;
+}
+
+static void
+cubetoarr(cube_t c, cube_arr_t *a)
+{
+	memcpy(a, &c, sizeof(cube_t));
+}
 
 #include "_moves_arr.c"
 #include "_trans_arr.c"
 
 #endif
-
 
 static char *cornerstr[] = {
 	[_c_ufr] = "UFR",
@@ -279,10 +294,10 @@ static uint8_t readep(char *);
 static uint8_t readmove(char);
 static uint8_t readmodifier(char);
 static cube_t readcube_H48(char *);
-static void writecube_AVX(cube_t, char *);
-static void writecube_H48(cube_t, char *);
+static void writecube_AVX(cube_arr_t, char *);
+static void writecube_H48(cube_arr_t, char *);
 static int writepiece_SRC(uint8_t, char *);
-static void writecube_SRC(cube_t, char *);
+static void writecube_SRC(cube_arr_t, char *);
 static int permsign(uint8_t *, int);
 
 cube_t
@@ -367,10 +382,10 @@ readcube_H48(char *buf)
 {
 	int i;
 	uint8_t piece, orient;
-	cube_t ret, err;
+	cube_arr_t ret = {0};
+	cube_t err;
 	char *b;
 	
-	setzero(ret);
 	setzero(err);
 	b = buf;
 
@@ -397,7 +412,7 @@ readcube_H48(char *buf)
 		set_corner(ret, i, piece | orient);
 	}
 
-	return ret;
+	return arrtocube(ret);
 }
 
 cube_t
@@ -424,7 +439,7 @@ readcube(format_t format, char *buf)
 }
 
 static void
-writecube_AVX(cube_t cube, char *buf)
+writecube_AVX(cube_arr_t cube, char *buf)
 {
 	int i, ptr;
 	uint8_t piece;
@@ -448,9 +463,8 @@ writecube_AVX(cube_t cube, char *buf)
 	memcpy(buf+ptr-2, "\n)\0", 3);
 }
 
-
 static void
-writecube_H48(cube_t cube, char *buf)
+writecube_H48(cube_arr_t cube, char *buf)
 {
 	uint8_t piece, perm, orient;
 	int i;
@@ -502,7 +516,7 @@ writepiece_SRC(uint8_t piece, char *buf)
 }
 
 static void
-writecube_SRC(cube_t cube, char *buf)
+writecube_SRC(cube_arr_t cube, char *buf)
 {
 	int i, ptr;
 	uint8_t piece;
@@ -529,6 +543,7 @@ writecube_SRC(cube_t cube, char *buf)
 void
 writecube(format_t format, cube_t cube, char *buf)
 {
+	cube_arr_t a;
 	char *errormsg;
 	size_t len;
 
@@ -537,15 +552,17 @@ writecube(format_t format, cube_t cube, char *buf)
 		goto writecube_error;
 	}
 
+	cubetoarr(cube, &a);
+
 	switch (format) {
 	case AVX:
-		writecube_AVX(cube, buf);
+		writecube_AVX(a, buf);
 		break;
 	case H48:
-		writecube_H48(cube, buf);
+		writecube_H48(a, buf);
 		break;
 	case SRC:
-		writecube_SRC(cube, buf);
+		writecube_SRC(a, buf);
 		break;
 	default:
 		errormsg = "ERROR: cannot write cube in the given format";
@@ -687,10 +704,13 @@ permsign(uint8_t *a, int n)
 }
 
 static bool
-isconsistent(cube_t c)
+isconsistent(cube_t cube)
 {
+	cube_arr_t c;
 	uint8_t i, p, e, piece;
 	bool found[12];
+
+	cubetoarr(cube, &c);
 
 	for (i = 0; i < 12; i++)
 		found[i] = false;
@@ -751,7 +771,8 @@ inconsistent_co:
 bool
 issolvable(cube_t cube)
 {
-	uint8_t i, eo, co, piece, e[12], c[8];
+	cube_arr_t c;
+	uint8_t i, eo, co, piece, edges[12], corners[8];
 
 #ifdef DEBUG
 	if (!isconsistent(cube)) {
@@ -760,17 +781,19 @@ issolvable(cube_t cube)
 	}
 #endif
 
-	for (i = 0; i < 12; i++)
-		e[i] = get_edge(cube, i) & _pbits;
-	for (i = 0; i < 8; i++)
-		c[i] = get_corner(cube, i) & _pbits;
+	cubetoarr(cube, &c);
 
-	if (permsign(e, 12) != permsign(c, 8))
+	for (i = 0; i < 12; i++)
+		edges[i] = get_edge(c, i) & _pbits;
+	for (i = 0; i < 8; i++)
+		corners[i] = get_corner(c, i) & _pbits;
+
+	if (permsign(edges, 12) != permsign(corners, 8))
 		goto issolvable_parity;
 
 	eo = 0;
 	for (i = 0; i < 12; i++) {
-		piece = get_edge(cube, i);
+		piece = get_edge(c, i);
 		eo += (piece & _eobit) >> _eoshift;
 	}
 	if (eo % 2 != 0)
@@ -778,7 +801,7 @@ issolvable(cube_t cube)
 
 	co = 0;
 	for (i = 0; i < 8; i++) {
-		piece = get_corner(cube, i);
+		piece = get_corner(c, i);
 		co += (piece & _cobits) >> _coshift;
 	}
 	if (co % 3 != 0)
@@ -909,7 +932,6 @@ move_error:
 cube_t
 inverse(cube_t c)
 {
-	/* TODO: optimize for avx2 */
 	cube_t ret;
 
 #ifdef DEBUG
@@ -926,7 +948,7 @@ inverse(cube_t c)
 	 * [1] https://github.com/Voltara/vcube
 	 * [2] http://wwwhomes.uni-bielefeld.de/achim/addition_chain.html
 	 */
-	cube_t v3, vi;
+	cube_t v3, vi, vo, vp;
 
 	v3 = _mm256_shuffle_epi8(c, c);
 	v3 = _mm256_shuffle_epi8(v3, c);
@@ -945,7 +967,12 @@ inverse(cube_t c)
 	vi = _mm256_shuffle_epi8(vi, vi);
 	vi = _mm256_shuffle_epi8(vi, v3);
 	vi = _mm256_shuffle_epi8(vi, vi);
-	ret = _mm256_shuffle_epi8(vi, c);
+	vi = _mm256_shuffle_epi8(vi, c);
+
+	vo = _mm256_and_si256(c, _mm256_or_si256(_eo_avx2, _co_avx2));
+	vo = _mm256_shuffle_epi8(vo, vi);
+	vp = _mm256_andnot_si256(_mm256_or_si256(_eo_avx2, _co_avx2), vi);
+	ret = _mm256_or_si256(vp, vo);
 	
 	return flipallcorners(ret);
 #else
@@ -983,19 +1010,30 @@ inline_compose(cube_t c1, cube_t c2)
 #endif
 
 #ifdef CUBE_AVX2
-	cube_t shuf, eo, eodone, co2, aux, auy1, auy2, cw, auz1, auz2, coclean;
+	cube_t s, eo2, ed, co1, co2, aux, auy1, auy2, cw, cwccw, auz1, auz2,
+	    coclean;
 
+	eo2 = _mm256_and_si256(c2, _eo_avx2);
+	s = _mm256_shuffle_epi8(c1, c2);
+	ed = _mm256_xor_si256(s, eo2);
+	co1 = _mm256_and_si256(s, _co_avx2);
 	co2 = _mm256_and_si256(c2, _co_avx2);
-	eo = _mm256_and_si256(c2, _eo_avx2);
-	shufd = _mm256_shuffle_epi8(c1, c2);
-	eodone = _mm256_(shufd, eo);
-	aux = _mm256_add_epi8(c1, co2);
-	cw = _mm256_set_epi64x(0, 0x2020202020202020, 0, 0);
+	aux = _mm256_add_epi8(co1, co2);
+	cw = _mm256_set_epi8(
+	    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	    0, 0, 0, 0, 0, 0, 0, 0,
+	    0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20, 0x20
+	);
 	auy1 = _mm256_add_epi8(aux, cw);
-	auy2 = _mm256_srli_si256(auy1, 2);
+	auy2 = _mm256_srli_epi32(auy1, 2);
 	auz1 = _mm256_add_epi8(aux, auy2);
-	auz2 = _mm256_and_si256(auz1, _co_avx2);
-	coclean = _mm256_andnot_si256(eodone, _co_avx2);
+	cwccw = _mm256_set_epi8(
+	    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+	    0, 0, 0, 0, 0, 0, 0, 0,
+	    0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60
+	);
+	auz2 = _mm256_and_si256(auz1, cwccw);
+	coclean = _mm256_andnot_si256(_co_avx2, ed);
 	ret = _mm256_or_si256(coclean, auz2);
 #else
 	uint8_t i, piece1, piece2, p, orien, aux, auy;

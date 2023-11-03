@@ -14,6 +14,7 @@ check(cube_t cube, char *name)
 void
 check2(cube_t cube1, char *name1, cube_t cube2, char *name2)
 {
+fprintf(stderr, "check2 %s %s\n", name1, name2);
 	printf("%s and %s are%s equal\n", name1, name2,
 	    equal(cube1, cube2) ? "" : " NOT");
 }

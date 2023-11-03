@@ -12,9 +12,9 @@ clean:
 	rm -rf *.o
 
 test: debugcube.o
-	./test/test.sh
+	CUBETYPE=${CUBETYPE} ./test/test.sh
 
 benchmark: cube.o
-	./benchmark/bench.sh
+	CUBETYPE=${CUBETYPE} ./benchmark/bench.sh
 
 .PHONY: all clean test benchmark
