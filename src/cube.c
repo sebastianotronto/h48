@@ -130,10 +130,14 @@ cube_arr_t zerocube_arr = { .e = {0}, .c = {0} };
 #define _co_avx2 _mm256_set_epi8( \
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
     0, 0, 0, 0, 0, 0, 0, 0, \
-    0x70, 0x70, 0x70, 0x70, 0x70, 0x70, 0x70, 0x70) 
+    0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0, 0xF0) 
+#define _co2_avx2 _mm256_set_epi8( \
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
+    0, 0, 0, 0, 0, 0, 0, 0, \
+    0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60) 
 #define _eo_avx2 _mm256_set_epi8( \
-    0, 0, 0, 0, 0x70, 0x70, 0x70, 0x70, \
-    0x70, 0x70, 0x70, 0x70, 0x70, 0x70, 0x70, 0x70, \
+    0, 0, 0, 0, 0x10, 0x10, 0x10, 0x10, \
+    0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, 0x10, \
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 #define setsolved(cube) cube = _mm256_loadu_si256((__m256i_u *)&solvedcube_arr)
 #define setzero(cube)   cube = _mm256_setzero_si256()
@@ -959,6 +963,7 @@ inverse(cube_t c)
 	vi = _mm256_shuffle_epi8(vi, vi);
 	vi = _mm256_shuffle_epi8(vi, vi);
 	vi = _mm256_shuffle_epi8(vi, vi);
+	vi = _mm256_shuffle_epi8(vi, vi);
 	vi = _mm256_shuffle_epi8(vi, c);
 	vi = _mm256_shuffle_epi8(vi, vi);
 	vi = _mm256_shuffle_epi8(vi, vi);
@@ -969,9 +974,9 @@ inverse(cube_t c)
 	vi = _mm256_shuffle_epi8(vi, vi);
 	vi = _mm256_shuffle_epi8(vi, c);
 
-	vo = _mm256_and_si256(c, _mm256_or_si256(_eo_avx2, _co_avx2));
+	vo = _mm256_and_si256(c, _mm256_or_si256(_eo_avx2, _co2_avx2));
 	vo = _mm256_shuffle_epi8(vo, vi);
-	vp = _mm256_andnot_si256(_mm256_or_si256(_eo_avx2, _co_avx2), vi);
+	vp = _mm256_andnot_si256(_mm256_or_si256(_eo_avx2, _co2_avx2), vi);
 	ret = _mm256_or_si256(vp, vo);
 	
 	return flipallcorners(ret);
@@ -1016,8 +1021,8 @@ inline_compose(cube_t c1, cube_t c2)
 	eo2 = _mm256_and_si256(c2, _eo_avx2);
 	s = _mm256_shuffle_epi8(c1, c2);
 	ed = _mm256_xor_si256(s, eo2);
-	co1 = _mm256_and_si256(s, _co_avx2);
-	co2 = _mm256_and_si256(c2, _co_avx2);
+	co1 = _mm256_and_si256(s, _co2_avx2);
+	co2 = _mm256_and_si256(c2, _co2_avx2);
 	aux = _mm256_add_epi8(co1, co2);
 	cw = _mm256_set_epi8(
 	    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
@@ -1033,7 +1038,7 @@ inline_compose(cube_t c1, cube_t c2)
 	    0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60, 0x60
 	);
 	auz2 = _mm256_and_si256(auz1, cwccw);
-	coclean = _mm256_andnot_si256(_co_avx2, ed);
+	coclean = _mm256_andnot_si256(_co2_avx2, ed);
 	ret = _mm256_or_si256(coclean, auz2);
 #else
 	uint8_t i, piece1, piece2, p, orien, aux, auy;

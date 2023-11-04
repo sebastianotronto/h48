@@ -1,14 +1,15 @@
 static inline cube_t
 flipallcorners(cube_t c)
 {
-	cube_t shleft, shright, summed, newco, cleanco, ret;
+	cube_t co, shleft, shright, summed, newco, cleanco, ret;
 
-	shleft = _mm256_slli_si256(c, 1);
-	shright = _mm256_srli_si256(c, 1);
+	co = _mm256_and_si256(c, _co2_avx2);
+	shleft = _mm256_slli_epi32(co, 1);
+	shright = _mm256_srli_epi32(co, 1);
 	summed = _mm256_or_si256(shleft, shright);
-	newco = _mm256_and_si256(summed, _co_avx2);
-	cleanco = _mm256_andnot_si256(c, _co_avx2);
-	ret = _mm256_and_si256(cleanco, newco);
+	newco = _mm256_and_si256(summed, _co2_avx2);
+	cleanco = _mm256_xor_si256(c, co);
+	ret = _mm256_or_si256(cleanco, newco);
 
 	return ret;
 }

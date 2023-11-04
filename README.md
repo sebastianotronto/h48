@@ -13,10 +13,6 @@ $ make test
 
 ## TODO:
 
-### Make AVX2 work
-
-* fix inverse, flipallcorners
-
 ### Cleanup / refactor
 
 * see planner
