@@ -1,12 +1,12 @@
 #!/bin/sh
 
-CFLAGS="-std=c99 -pthread -pedantic -Wall -Wextra -Wno-unused-parameter -O3"
-DBGFLAGS="-DDEBUG -std=c99 -pthread -pedantic -Wall -Wextra -Wno-unused-parameter -Wno-unused-function -g3 -fsanitize=address -fsanitize=undefined"
+STD="-std=c99"
+WFLAGS="-pedantic -Wall -Wextra -Wno-unused-parameter"
+[ "$TYPE" = "AVX2" ] && AVX="-mavx2"
+[ "$(uname)" = "Linux" ] && SAN="-fsanitize=address -fsanitize=undefined"
 
-if [ "$TYPE" = "AVX2" ]; then
-	CFLAGS="$CFLAGS -mavx2"
-	DBGFLAGS="$DBGFLAGS -mavx2"
-fi
+CFLAGS="$STD $WFLAGS $AVX -O3"
+DBGFLAGS="$STD $WFLAGS $AVX -g3 -DDEBUG"
 
 {
 echo "CUBETYPE = CUBE_$TYPE";

@@ -5,7 +5,7 @@ all: cube.o debugcube.o
 cube.o: clean
 	${CC} -D${CUBETYPE} ${CFLAGS} -c -o cube.o src/cube.c
 
-debugcube.o:
+debugcube.o: clean
 	${CC} -D${CUBETYPE} ${DBGFLAGS} -c -o debugcube.o src/cube.c
 
 clean:

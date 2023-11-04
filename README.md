@@ -4,12 +4,29 @@ Work in progress. There is some documentation at the bottom of this page,
 but do not believe it. Everything is in a state of flux and can change
 without notice.
 
-## Running tests
+## Building and running tests
+
+First run
 
 ```
-$ ./configure.sh # Run 'TYPE=AVX2 ./configure.sh' to use AVX2 instead
+$ ./configure.sh
+```
+
+or `TYPE=AVX2 ./configure.sh` if you want to use AVX2 instructions.
+
+Then
+
+```
 $ make test
 ```
+
+to run the tests. You can also run
+
+```
+$ make benchmark
+```
+
+for benchmarks.
 
 ## TODO:
 
