@@ -1,16 +1,11 @@
-# Set TYPE="AVX2" manually for advanced vector instructions
-CUBETYPE = CUBE_${TYPE}
+include config.mk
 
-CFLAGS = -std=c99 -pthread -pedantic -Wall -Wextra -Wno-unused-parameter -O3 -mavx2
-DBGFLAGS = -DDEBUG -std=c99 -pthread -pedantic -Wall -Wextra -Wno-unused-parameter -Wno-unused-function -g3 -fsanitize=address -fsanitize=undefined -mavx2
-
-CC = cc
 all: cube.o debugcube.o
 
 cube.o: clean
 	${CC} -D${CUBETYPE} ${CFLAGS} -c -o cube.o src/cube.c
 
-debugcube.o: clean
+debugcube.o:
 	${CC} -D${CUBETYPE} ${DBGFLAGS} -c -o debugcube.o src/cube.c
 
 clean:

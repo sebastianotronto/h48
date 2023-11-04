@@ -4,22 +4,12 @@ Work in progress. There is some documentation at the bottom of this page,
 but do not believe it. Everything is in a state of flux and can change
 without notice.
 
-## Building and running tests
-
-Tests:
+## Running tests
 
 ```
+$ ./configure.sh # Run 'TYPE=AVX2 ./configure.sh' to use AVX2 instead
 $ make test
 ```
-
-Benchmarks:
-
-```
-$ make benchmark
-```
-
-Prefix each make instruction with `TYPE=AVX2` to try the AVX2 version
-(e.g. `TYPE=AVX2 make benchmark`).
 
 ## TODO:
 
