@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <time.h>
 
-#include "../src/cube.h"
+#include "../cube.h"
 
 #define MOVES 100000000
 #define TRANS 100000000

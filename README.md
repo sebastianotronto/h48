@@ -30,12 +30,6 @@ for benchmarks.
 
 ## TODO:
 
-### Cleanup / refactor
-
-* see planner
-* change all set_epi to setr_epi
-* change epi8 to epi64x (shorter!)
-
 ### Documentation and interface
 
 * inline some documentation as comments in cube.h or cube.c
@@ -52,6 +46,11 @@ for benchmarks.
 * pruning tables (1 bit per entry + fallback)
 * Takes as parameters the amount of memory to use and a FILE for the tables
 * Use multi-move (up to 4/5 moves at once)
+
+### cube.h changes
+
+* Consider removing zerocube() from the api
+* prefix public functions with nissy_ or something similar
 
 ### Future optimizations
 

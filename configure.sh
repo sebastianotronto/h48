@@ -1,7 +1,7 @@
 #!/bin/sh
 
 STD="-std=c99"
-WFLAGS="-pedantic -Wall -Wextra -Wno-unused-parameter"
+WFLAGS="-pedantic -Wall -Wextra -Wno-unused-parameter -Wno-unused-function"
 [ "$TYPE" = "AVX2" ] && AVX="-mavx2"
 [ "$(uname)" = "Linux" ] && SAN="-fsanitize=address -fsanitize=undefined"
 

@@ -2,8 +2,8 @@
 
 type="${1:-src}"
 
-gcc -DDEBUG h48_to_"$type".c ../src/cube.c -o h48_to_"$type"
-gcc -DDEBUG invert.c ../src/cube.c -o invert
+gcc -DDEBUG h48_to_"$type".c ../cube.c -o h48_to_"$type"
+gcc -DDEBUG invert.c ../cube.c -o invert
 
 # Old version
 genarray() {
@@ -22,7 +22,7 @@ genarray() {
 genfuncs() {
 	for f in transform_??_???.txt; do
 		trans="$(echo $f | sed 's/.*_// ; s/\.txt//')"
-		printf 'static inline cube_t\ninline_trans_%s' "$trans"
+		printf 'static inline cube_t\n_trans_%s' "$trans"
 		printf '(cube_t c)\n{\n'
 		printf '\tcube_t ret;\n\n'
 		printf '\tcube_t tn = '
@@ -32,7 +32,7 @@ genfuncs() {
 		printf ';\n\n\tret = compose(tn, c);\n'
 		printf '\tret = compose(ret, ti);\n'
 		if [ -n "$(echo "$trans" | grep "m")" ]; then
-			printf '\tret = flipallcorners(ret);\n'
+			printf '\tret = _invertco(ret);\n'
 		fi
 		printf '\n\treturn ret;\n}\n\n'
 	done

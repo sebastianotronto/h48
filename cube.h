@@ -1,12 +1,11 @@
-typedef struct {
-	uint8_t c[16];
-	uint8_t e[16];
-} cube_arr_t;
 #ifdef CUBE_AVX2
 #include <immintrin.h>
 typedef __m256i cube_t;
 #else
-typedef cube_arr_t cube_t;
+typedef struct {
+	uint8_t c[16]; /* Only the first 8 are used, the rest is padding */
+	uint8_t e[16]; /* Only the first 12 are used, the rest is padding */
+} cube_t;
 #endif
 
 typedef uint8_t move_t;

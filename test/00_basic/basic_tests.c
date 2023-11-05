@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <stdio.h>
 
-#include "../../src/cube.h"
+#include "../../cube.h"
 
 void
 check(cube_t cube, char *name)

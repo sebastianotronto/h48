@@ -3,10 +3,10 @@ include config.mk
 all: cube.o debugcube.o
 
 cube.o: clean
-	${CC} -D${CUBETYPE} ${CFLAGS} -c -o cube.o src/cube.c
+	${CC} -D${CUBETYPE} ${CFLAGS} -c -o cube.o cube.c
 
 debugcube.o: clean
-	${CC} -D${CUBETYPE} ${DBGFLAGS} -c -o debugcube.o src/cube.c
+	${CC} -D${CUBETYPE} ${DBGFLAGS} -c -o debugcube.o cube.c
 
 clean:
 	rm -rf *.o
