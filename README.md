@@ -20,7 +20,14 @@ Then
 $ make test
 ```
 
-to run the tests. You can also run
+to run the tests. You can also run only the tests that match a chosen
+regex, for example:
+
+```
+$ TEST=coord make test
+```
+
+You can also run
 
 ```
 $ make benchmark

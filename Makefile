@@ -12,7 +12,7 @@ clean:
 	rm -rf *.o
 
 test: debugcube.o
-	CUBETYPE=${CUBETYPE} ./test/test.sh
+	CUBETYPE=${CUBETYPE} TEST=${TEST} ./test/test.sh
 
 benchmark: cube.o
 	CUBETYPE=${CUBETYPE} ./benchmark/bench.sh
