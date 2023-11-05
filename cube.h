@@ -31,3 +31,5 @@ cube_t move(cube_t, move_t);
 cube_t inverse(cube_t);
 cube_t compose(cube_t, cube_t);
 cube_t transform(cube_t, trans_t);
+
+int16_t coord_eo(cube_t);

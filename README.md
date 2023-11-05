@@ -30,30 +30,54 @@ for benchmarks.
 
 ## TODO:
 
-### Documentation and interface
+### Coordinates
 
-* inline some documentation as comments in cube.h or cube.c
-* README.md (maybe convert to txt?) becomes the reference documentation
+* [done] eo
+* co
+* ep
+* epsep
+* cp
+* cpsep
+* cphtr
 
-### More features
-
-* move() that takes a string (alg) as input
-* coordinates: co, eo, epsep, cpsep_sym, cocpsep_sym, cphtr_sym, cocphtr_sym
+What about symcoord?
 
 ### Solving
 
-* Fixed depth
-* pruning tables (1 bit per entry + fallback)
-* Takes as parameters the amount of memory to use and a FILE for the tables
-* Use multi-move (up to 4/5 moves at once)
+All solving functions take a cube and some parameters as input.
+
+* Depth [uint, <= 20]: all solvers work at fixed depth. The caller
+  implementation can implement an A* search.
+* Full [bool]: if false, stop at first solution found, otherwise
+  find all solutions at that depth.
+* Table [uint8_t *]: table with all the necessare pre-computed info.
+  The table can be generated with a companion function, but reading
+  from and writing to file is delegated to the caller implementation.
+
+Implement the following solvers:
+* Slow: basic solver without any table.
+* H48: one-bit-per-entry table + fallback, 48 symmetries and so on.
+  See planner.
+* nxopt31: mostly for comparison.
+* other nxopt solvers: make generic and take the type as parameter.
+* Step solver: take a coordinate function and a moveset as a parameter.
 
 ### cube.h changes
 
 * Consider removing zerocube() from the api
 * prefix public functions with nissy_ or something similar
+* move() that takes a string (alg) as input
 
-### Future optimizations
+### Documentation and interface
 
+* inline some documentation as comments in source code
+* README.md (maybe convert to txt?) becomes the reference documentation
+
+### Optimizations
+
+* Trans: don't do full compose, for some trans composing perm is enough.
+  Split out sumco() as a separate function and refactor, optimize.
+* Use multi-move (up to 4/5 moves at once)
 * CO is the worst part of moving, transforming and inverting. Try basing
   everything on representing the cube without CO and apply it only at the
   end to check that it is actually solved.

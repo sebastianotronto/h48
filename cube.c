@@ -2104,6 +2104,19 @@ _compose(cube_t c1, cube_t c2)
 	return ret;
 }
 
+static inline int16_t
+_coord_eo(cube_t c)
+{
+	cube_t eo, shifted;
+	int mask;
+
+	eo = _mm256_and_si256(c, _eo_avx2);
+	shifted = _mm256_slli_epi32(eo, 3);
+	mask = _mm256_movemask_epi8(shifted);
+
+	return (int16_t)(mask >> 17);
+}
+
 
 /******************************************************************************
 Section: portable fast methods
@@ -3420,6 +3433,19 @@ _compose(cube_t c1, cube_t c2)
 	return ret;
 }
 
+static inline int16_t
+_coord_eo(cube_t c)
+{
+	int i, p;
+	int16_t ret;
+
+	ret = 0;
+	for (i = 1, p = 1; i < 12; i++, p *= 2)
+		ret += p * (c.e[i] >> 4);
+
+	return ret;
+}
+
 
 #endif
 
@@ -3695,4 +3721,10 @@ transform(cube_t c, trans_t t)
 #endif
 		return zerocube();
 	}
+}
+
+int16_t
+coord_eo(cube_t c)
+{
+	return _coord_eo(c);
 }
