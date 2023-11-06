@@ -37,6 +37,12 @@ for benchmarks.
 
 ## TODO:
 
+### Simple solver
+
+* tests
+* finish implementation
+* benchmarks
+
 ### Coordinates
 
 * [done] eo
@@ -55,8 +61,10 @@ All solving functions take a cube and some parameters as input.
 
 * Depth [uint, <= 20]: all solvers work at fixed depth. The caller
   implementation can implement an A* search.
-* Full [bool]: if false, stop at first solution found, otherwise
-  find all solutions at that depth.
+* max [int]: the maximum number of solutions to find. Set to a negative
+  value for all solutions.
+* sol [move_t *]: the array for returning the solutions. The caller
+  should make sure that it can hold at least max * depth values.
 * Table [uint8_t *]: table with all the necessare pre-computed info.
   The table can be generated with a companion function, but reading
   from and writing to file is delegated to the caller implementation.

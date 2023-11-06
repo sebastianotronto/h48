@@ -1,6 +1,6 @@
 #!/bin/sh
 
-CC="cc -std=c99 -pthread -O3 -D$CUBETYPE"
+CC="cc -std=c99 -O3 -D$CUBETYPE"
 if [ "$CUBETYPE" = "CUBE_AVX2" ]; then
         CC="$CC -mavx2"
 fi

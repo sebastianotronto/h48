@@ -2,7 +2,7 @@
 
 re="${TEST:-$@}"
 
-CC="cc -DDEBUG -std=c99 -pthread -pedantic -Wall -Wextra \
+CC="cc -DDEBUG -std=c99 -pedantic -Wall -Wextra \
     -Wno-unused-parameter -Wno-unused-function -g3 -D$CUBETYPE"
 if [ "$CUBETYPE" = "CUBE_AVX2" ]; then
 	CC="$CC -mavx2"

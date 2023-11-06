@@ -33,3 +33,6 @@ cube_t compose(cube_t, cube_t);
 cube_t transform(cube_t, trans_t);
 
 int16_t coord_eo(cube_t);
+
+/* Solvers return -1 in case of error, the number of solutions otherwise */
+int solve_small(cube_t, uint8_t, int, move_t *);

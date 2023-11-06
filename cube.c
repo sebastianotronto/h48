@@ -2129,33 +2129,33 @@ in the previous section(s) for unsupported architectures.
 #else
 
 #define PERM4(r, i, j, k, l) \
-    aux = r[i];              \
-    r[i] = r[l];             \
-    r[l] = r[k];             \
-    r[k] = r[j];             \
-    r[j] = aux;
+	aux = r[i];          \
+	r[i] = r[l];         \
+	r[l] = r[k];         \
+	r[k] = r[j];         \
+	r[j] = aux;
 #define PERM22(r, i, j, k, l) \
-    aux = r[i];               \
-    r[i] = r[j];              \
-    r[j] = aux;               \
-    aux = r[k];               \
-    r[k] = r[l];              \
-    r[l] = aux;
-#define CO(a, b)                         \
-    aux = (a & _cobits) + (b & _cobits); \
-    auy = (aux + _ctwist_cw) >> 2U;      \
-    auz = (aux + auy) & _cobits2;        \
-    a = (a & _pbits) | auz;
-#define CO4(r, i, j, k, l) \
-    CO(r[i], _ctwist_cw)   \
-    CO(r[j], _ctwist_cw)   \
-    CO(r[k], _ctwist_ccw)  \
-    CO(r[l], _ctwist_ccw)
+	aux = r[i];           \
+	r[i] = r[j];          \
+	r[j] = aux;           \
+	aux = r[k];           \
+	r[k] = r[l];          \
+	r[l] = aux;
+#define CO(a, b)                             \
+	aux = (a & _cobits) + (b & _cobits); \
+	auy = (aux + _ctwist_cw) >> 2U;      \
+	auz = (aux + auy) & _cobits2;        \
+	a = (a & _pbits) | auz;
+#define CO4(r, i, j, k, l)    \
+	CO(r[i], _ctwist_cw)  \
+	CO(r[j], _ctwist_cw)  \
+	CO(r[k], _ctwist_ccw) \
+	CO(r[l], _ctwist_ccw)
 #define EO4(r, i, j, k, l) \
-    r[i] ^= _eobit;        \
-    r[j] ^= _eobit;        \
-    r[k] ^= _eobit;        \
-    r[l] ^= _eobit;
+	r[i] ^= _eobit;    \
+	r[j] ^= _eobit;    \
+	r[k] ^= _eobit;    \
+	r[l] ^= _eobit;
 
 static cube_t _arraytocube(cube_array_t);
 static void _cubetoarray(cube_t, cube_array_t *);
@@ -3727,4 +3727,61 @@ int16_t
 coord_eo(cube_t c)
 {
 	return _coord_eo(c);
+}
+
+/******************************************************************************
+Section: solvers
+
+This is a continuation of the generic methods section. Here you can find the
+implementation of all the solving algorithms.
+******************************************************************************/
+
+typedef struct {
+	cube_t cube;
+	uint8_t d;
+	int max;
+	move_t *sol;
+	int ns;
+	int nm;
+	move_t m[20];
+} dfs_arg_t;
+
+int
+solve_small_dfs(dfs_arg_t arg)
+{
+	if (arg.ns == arg.max)
+		return 0;
+
+	if (issolved(arg.cube)) {
+		if (arg.nm != arg.d)
+			return 0;
+		memcpy(&arg.sol[arg.d*arg.ns], arg.m, arg.d * sizeof(move_t));
+		return 1;
+	}
+
+	/* TODO: loop over moves and recur */
+	return 0;
+}
+
+int
+solve_small(cube_t cube, uint8_t depth, int max, move_t *sol)
+{
+	dfs_arg_t arg;
+
+	if (!issolvable(cube) || depth > 20)
+		return -1;
+
+	arg = (dfs_arg_t) {
+		.cube = cube,
+		.d = depth,
+		.max = max,
+		.sol = sol,
+		.ns = 0,
+		.nm = 0,
+		.m = {0}
+	};
+
+	return solve_small_dfs(arg);
+
+	return 0;
 }
