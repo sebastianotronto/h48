@@ -3,8 +3,8 @@
 typedef __m256i cube_t;
 #else
 typedef struct {
-	uint8_t c[16]; /* Only the first 8 are used, the rest is padding */
-	uint8_t e[16]; /* Only the first 12 are used, the rest is padding */
+	uint8_t c[8];
+	uint8_t e[12];
 } cube_t;
 #endif
 

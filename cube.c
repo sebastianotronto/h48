@@ -246,8 +246,8 @@ state of the cube that are used in debugging.
 ******************************************************************************/
 
 typedef struct {
-	uint8_t c[16];
-	uint8_t e[16];
+	uint8_t c[8];
+	uint8_t e[12];
 } cube_array_t;
 
 #define get_edge(cube, i)      (cube).e[(i)]
@@ -255,7 +255,6 @@ typedef struct {
 #define set_edge(cube, i, p)   (cube).e[(i)] = (p)
 #define set_corner(cube, i, p) (cube).c[(i)] = (p)
 
-static void setzero_array(cube_array_t *);
 static bool equal_array(cube_array_t, cube_array_t);
 static bool iserror_array(cube_array_t);
 static bool isconsistent_array(cube_array_t);
@@ -275,16 +274,10 @@ static uint8_t readmove(char);
 static uint8_t readmodifier(char);
 
 cube_array_t _solvedcube_array = {
-	.c = {0, 1, 2, 3, 4, 5, 6, 7, 0, 0, 0, 0, 0, 0, 0, 0},
-	.e = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0, 0, 0, 0}
+	.c = {0, 1, 2, 3, 4, 5, 6, 7},
+	.e = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}
 };
 cube_array_t _zerocube_array = { .e = {0}, .c = {0} };
-
-static void
-setzero_array(cube_array_t *arr)
-{
-	memset(arr, 0, 32);
-}
 
 static bool
 equal_array(cube_array_t c1, cube_array_t c2)
@@ -407,7 +400,7 @@ readcube_array(format_t format, char *buf)
 		break;
 	default:
 		DBG_LOG("Cannot read cube in the given format\n");
-		setzero_array(&arr);
+		return _zerocube_array;
 	}
 
 	DBG_ASSERT(!iserror_array(arr), arr, "readcube error\n");
@@ -1984,13 +1977,23 @@ _trans_BLm(cube_t c)
 static cube_t
 _arraytocube(cube_array_t a)
 {
-	return _mm256_loadu_si256((__m256i_u *)&a);
+	uint8_t aux[32];
+
+	memset(aux, 0, 32);
+	memcpy(aux, &a.c, 8);
+	memcpy(aux + 16, &a.e, 12);
+
+	return _mm256_loadu_si256((__m256i_u *)&aux);
 }
 
 static void
 _cubetoarray(cube_t c, cube_array_t *a)
 {
-	_mm256_storeu_si256((__m256i_u *)a, c);
+	uint8_t aux[32];
+
+	_mm256_storeu_si256((__m256i_u *)aux, c);
+	memcpy(&a->c, aux, 8);
+	memcpy(&a->e, aux + 16, 12);
 }
 
 static inline bool
@@ -2136,8 +2139,8 @@ in the previous section(s) for unsupported architectures.
 	r[l] ^= _eobit;
 
 static const cube_t _solvedcube = {
-	.c = {0, 1, 2, 3, 4, 5, 6, 7, 0, 0, 0, 0, 0, 0, 0, 0},
-	.e = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0, 0, 0, 0}
+	.c = {0, 1, 2, 3, 4, 5, 6, 7},
+	.e = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}
 };
 static const cube_t _zerocube = { .e = {0}, .c = {0} };
 

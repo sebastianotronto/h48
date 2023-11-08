@@ -84,6 +84,8 @@ Implement the following solvers:
 
 ### cube.h changes
 
+* better documentation: add parameter names, one-line comment
+  for each function
 * prefix public functions with nissy_ or something similar
 * move() that takes a string (alg) as input
 * Add single moves and transformations to the interface? (performance!)
