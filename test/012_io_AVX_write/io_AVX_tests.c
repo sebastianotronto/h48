@@ -2,6 +2,10 @@
 #include <stdint.h>
 #include <stdio.h>
 
+#ifdef CUBE_AVX2
+#include <immintrin.h>
+#endif
+
 #include "../../cube.h"
 
 #define STRLENMAX 10000

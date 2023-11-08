@@ -3,6 +3,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef CUBE_AVX2
+#include <immintrin.h>
+#endif
+
 #include "../../cube.h"
 
 void

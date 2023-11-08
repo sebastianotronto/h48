@@ -37,16 +37,17 @@ for benchmarks.
 
 ## TODO:
 
-### Trivial things
+### Generic solver
 
-* Remove unnecessary prototypes for static functions
-* getpiece and similar macros: remove? make functions?
-
-### Simple solver
-
-* tests
 * finish implementation
+* tests: solve full cube (max 7-8 moves?)
+* more tests: eo and other stuff
 * benchmarks
+
+### Add NISS
+
+* Add mask to moves (e.g. U | NISS where NISS = 32 or something)
+* Adapt readmoves and writemoves
 
 ### Coordinates
 

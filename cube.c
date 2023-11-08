@@ -2,6 +2,10 @@
 #include <stdbool.h>
 #include <string.h>
 
+#ifdef CUBE_AVX2
+#include <immintrin.h>
+#endif
+
 #ifdef DEBUG
 #include <stdio.h>
 #define DBG_LOG(...) fprintf(stderr, __VA_ARGS__)
@@ -250,11 +254,6 @@ typedef struct {
 	uint8_t e[12];
 } cube_array_t;
 
-#define get_edge(cube, i)      (cube).e[(i)]
-#define get_corner(cube, i)    (cube).c[(i)]
-#define set_edge(cube, i, p)   (cube).e[(i)] = (p)
-#define set_corner(cube, i, p) (cube).c[(i)] = (p)
-
 static bool equal_array(cube_array_t, cube_array_t);
 static bool iserror_array(cube_array_t);
 static bool isconsistent_array(cube_array_t);
@@ -372,7 +371,7 @@ readcube_array_H48(char *buf)
 		if ((orient = readeo(b)) == _error)
 			return _zerocube_array;
 		b++;
-		set_edge(ret, i, piece | orient);
+		ret.e[i] = piece | orient;
 	}
 	for (i = 0; i < 8; i++) {
 		while (*b == ' ' || *b == '\t' || *b == '\n')
@@ -383,7 +382,7 @@ readcube_array_H48(char *buf)
 		if ((orient = readco(b)) == _error)
 			return _zerocube_array;
 		b++;
-		set_corner(ret, i, piece | orient);
+		ret.c[i] = piece | orient;
 	}
 
 	return ret;
@@ -441,7 +440,7 @@ writecube_array_AVX(cube_array_t cube, char *buf)
 	ptr = 30;
 
 	for (i = 11; i >= 0; i--) {
-		piece = get_edge(cube, i);
+		piece = cube.e[i];
 		ptr += writepiece_SRC(piece, buf + ptr);
 	}
 
@@ -449,7 +448,7 @@ writecube_array_AVX(cube_array_t cube, char *buf)
 	ptr += 25;
 
 	for (i = 7; i >= 0; i--) {
-		piece = get_corner(cube, i);
+		piece = cube.c[i];
 		ptr += writepiece_SRC(piece, buf + ptr);
 	}
 
@@ -463,7 +462,7 @@ writecube_array_H48(cube_array_t cube, char *buf)
 	int i;
 
 	for (i = 0; i < 12; i++) {
-		piece = get_edge(cube, i);
+		piece = cube.e[i];
 		perm = piece & _pbits;
 		orient = (piece & _eobit) >> _eoshift;
 		buf[4*i    ] = edgestr[perm][0];
@@ -472,7 +471,7 @@ writecube_array_H48(cube_array_t cube, char *buf)
 		buf[4*i + 3] = ' ';
 	}
 	for (i = 0; i < 8; i++) {
-		piece = get_corner(cube, i);
+		piece = cube.c[i];
 		perm = piece & _pbits;
 		orient = (piece & _cobits) >> _coshift;
 		buf[48 + 5*i    ] = cornerstr[perm][0];
@@ -495,7 +494,7 @@ writecube_array_SRC(cube_array_t cube, char *buf)
 	ptr = 9;
 
 	for (i = 0; i < 8; i++) {
-		piece = get_corner(cube, i);
+		piece = cube.c[i];
 		ptr += writepiece_SRC(piece, buf + ptr);
 	}
 
@@ -503,7 +502,7 @@ writecube_array_SRC(cube_array_t cube, char *buf)
 	ptr += 8;
 
 	for (i = 0; i < 12; i++) {
-		piece = get_edge(cube, i);
+		piece = cube.e[i];
 		ptr += writepiece_SRC(piece, buf + ptr);
 	}
 
@@ -673,7 +672,7 @@ isconsistent_array(cube_array_t c)
 	for (i = 0; i < 12; i++)
 		found[i] = false;
 	for (i = 0; i < 12; i++) {
-		piece = get_edge(c, i);
+		piece = c.e[i];
 		p = piece & _pbits;
 		e = piece & _eobit;
 		if (p >= 12)
@@ -689,7 +688,7 @@ isconsistent_array(cube_array_t c)
 	for (i = 0; i < 8; i++)
 		found[i] = false;
 	for (i = 0; i < 8; i++) {
-		piece = get_corner(c, i);
+		piece = c.c[i];
 		p = piece & _pbits;
 		e = piece & _cobits;
 		if (p >= 8)
@@ -727,16 +726,16 @@ issolvable_array(cube_array_t c)
 	    "issolvable: cube is inconsistent\n");
 
 	for (i = 0; i < 12; i++)
-		edges[i] = get_edge(c, i) & _pbits;
+		edges[i] = c.e[i] & _pbits;
 	for (i = 0; i < 8; i++)
-		corners[i] = get_corner(c, i) & _pbits;
+		corners[i] = c.c[i] & _pbits;
 
 	if (permsign(edges, 12) != permsign(corners, 8))
 		goto issolvable_parity;
 
 	eo = 0;
 	for (i = 0; i < 12; i++) {
-		piece = get_edge(c, i);
+		piece = c.e[i];
 		eo += (piece & _eobit) >> _eoshift;
 	}
 	if (eo % 2 != 0)
@@ -744,7 +743,7 @@ issolvable_array(cube_array_t c)
 
 	co = 0;
 	for (i = 0; i < 8; i++) {
-		piece = get_corner(c, i);
+		piece = c.c[i];
 		co += (piece & _cobits) >> _coshift;
 	}
 	if (co % 3 != 0)
@@ -2395,9 +2394,9 @@ _invertco(cube_t c)
 
 	ret = c;
 	for (i = 0; i < 8; i++) {
-		piece = get_corner(c, i);
+		piece = c.c[i];
 		orien = ((piece << 1) | (piece >> 1)) & _cobits2;
-		set_corner(ret, i, (piece & _pbits) | orien);
+		ret.c[i] = (piece & _pbits) | orien;
 	}
 
 	return ret;
@@ -3377,15 +3376,15 @@ _inverse(cube_t c)
 	ret = _zerocube;
 
 	for (i = 0; i < 12; i++) {
-		piece = get_edge(c, i);
+		piece = c.e[i];
 		orien = piece & _eobit;
-		set_edge(ret, piece & _pbits, i | orien);
+		ret.e[piece & _pbits] = i | orien;
 	}
 
 	for (i = 0; i < 8; i++) {
-		piece = get_corner(c, i);
+		piece = c.c[i];
 		orien = ((piece << 1) | (piece >> 1)) & _cobits2;
-		set_corner(ret, piece & _pbits, i | orien);
+		ret.c[piece & _pbits] = i | orien;
 	}
 
 	return ret;
@@ -3400,21 +3399,21 @@ _compose(cube_t c1, cube_t c2)
 	ret = _zerocube;
 
 	for (i = 0; i < 12; i++) {
-		piece2 = get_edge(c2, i);
+		piece2 = c2.e[i];
 		p = piece2 & _pbits;
-		piece1 = get_edge(c1, p);
+		piece1 = c1.e[p];
 		orien = (piece2 ^ piece1) & _eobit;
-		set_edge(ret, i, (piece1 & _pbits) | orien);
+		ret.e[i] = (piece1 & _pbits) | orien;
 	}
 
 	for (i = 0; i < 8; i++) {
-		piece2 = get_corner(c2, i);
+		piece2 = c2.c[i];
 		p = piece2 & _pbits;
-		piece1 = get_corner(c1, p);
+		piece1 = c1.c[p];
 		aux = (piece2 & _cobits) + (piece1 & _cobits);
 		auy = (aux + _ctwist_cw) >> 2U;
 		orien = (aux + auy) & _cobits2;
-		set_corner(ret, i, (piece1 & _pbits) | orien);
+		ret.c[i] = (piece1 & _pbits) | orien;
 	}
 
 	return ret;
@@ -3692,24 +3691,29 @@ implementation of all the solving algorithms.
 
 typedef struct {
 	cube_t cube;
-	uint8_t d;
-	int max;
-	move_t *sol;
-	int ns;
-	int nm;
-	move_t m[20];
+	int (*estimate)(cube_t);
+	uint8_t depth;
+	int maxsols;
+	move_t *sols;
+	int nsols;
+	int nmoves;
+	move_t moves[20];
 } dfs_arg_t;
 
 int
-solve_small_dfs(dfs_arg_t arg)
+solve_generic_dfs(dfs_arg_t arg)
 {
-	if (arg.ns == arg.max)
+	int bound = arg.estimate(arg.cube);
+
+	if (arg.nsols == arg.maxsols || bound + arg.nmoves > arg.depth)
 		return 0;
 
-	if (issolved(arg.cube)) {
-		if (arg.nm != arg.d)
+	if (bound == 0) {
+		if (arg.nmoves != arg.depth)
 			return 0;
-		memcpy(&arg.sol[arg.d*arg.ns], arg.m, arg.d * sizeof(move_t));
+		memcpy(&arg.sols[arg.depth * arg.nsols],
+		       arg.moves,
+		       arg.depth * sizeof(move_t));
 		return 1;
 	}
 
@@ -3718,7 +3722,13 @@ solve_small_dfs(dfs_arg_t arg)
 }
 
 int
-solve_small(cube_t cube, uint8_t depth, int max, move_t *sol)
+solve_generic(
+	cube_t cube,
+	int (*estimate)(cube_t),
+	uint8_t depth,
+	int maxsols,
+	move_t *sols
+)
 {
 	dfs_arg_t arg;
 
@@ -3727,15 +3737,16 @@ solve_small(cube_t cube, uint8_t depth, int max, move_t *sol)
 
 	arg = (dfs_arg_t) {
 		.cube = cube,
-		.d = depth,
-		.max = max,
-		.sol = sol,
-		.ns = 0,
-		.nm = 0,
-		.m = {0}
+		.estimate = estimate,
+		.depth = depth,
+		.maxsols = maxsols,
+		.sols = sols,
+		.nsols = 0,
+		.nmoves = 0,
+		.moves = {0}
 	};
 
-	return solve_small_dfs(arg);
+	return solve_generic_dfs(arg);
 
 	return 0;
 }
