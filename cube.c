@@ -94,9 +94,6 @@ Section: constants and strings
 #define BDm 46
 #define BLm 47
 
-#define errormove 99U
-#define errortrans 99U
-
 #define _c_ufr      0U
 #define _c_ubl      1U
 #define _c_dfl      2U
@@ -620,7 +617,7 @@ readtrans(char *buf)
 			return t;
 
 	DBG_LOG("readtrans error\n");
-	return errortrans;
+	return _error;
 }
 
 void

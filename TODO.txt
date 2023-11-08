@@ -1,0 +1,69 @@
+### Generic solver
+
+* finish implementation
+* tests: solve full cube (max 7-8 moves?)
+* more tests: eo and other stuff
+* benchmarks
+
+### Coordinates
+
+* [done] eo
+* co
+* ep
+* epsep
+* cp
+* cpsep
+* cphtr
+
+What about symcoord?
+
+### Solving
+
+All solving functions take a cube and some parameters as input.
+
+* Depth [uint, <= 20]: all solvers work at fixed depth. The caller
+  implementation can implement an A* search.
+* max [int]: the maximum number of solutions to find. Set to a negative
+  value for all solutions.
+* sol [move_t *]: the array for returning the solutions. The caller
+  should make sure that it can hold at least max * depth values.
+* Table [uint8_t *]: table with all the necessare pre-computed info.
+  The table can be generated with a companion function, but reading
+  from and writing to file is delegated to the caller implementation.
+
+Implement the following solvers:
+* Slow: basic solver without any table.
+* H48: one-bit-per-entry table + fallback, 48 symmetries and so on.
+  See planner.
+* nxopt31: mostly for comparison.
+* other nxopt solvers: make generic and take the type as parameter.
+* Step solver: take a coordinate function and a moveset as a parameter.
+
+### cube.h changes
+
+* better documentation: add parameter names, one-line comment
+  for each function
+* prefix public functions with nissy_ or something similar
+* move() that takes a string (alg) as input
+* readtrans() should work like readmoves (read multiple, return n)
+* Add single moves and transformations to the interface? (performance!)
+
+### Optimizations
+
+* Trans: don't do full compose, for some trans composing perm is enough.
+  Split out sumco() as a separate function and refactor, optimize.
+* Use multi-move (up to 4/5 moves at once)
+* CO is the worst part of moving, transforming and inverting. Try basing
+  everything on representing the cube without CO and apply it only at the
+  end to check that it is actually solved.
+* see if vcube's method to flip all corners is better
+* find a better way for computing the inverse?
+* Improve avx2 instructions in general
+
+### Improvements and other things
+
+* NISS: Add mask to moves (e.g. U | NISS where NISS = 32 or something);
+  adapt readmoves and writemoves.
+* Consider adding centers and other moves (for avx2: centers in the
+  same lane as corners, numbered from 9 to 14)
+* rename to: libnissy? (also change all references to cube.c in doc)

@@ -1,5 +1,8 @@
 #!/bin/sh
 
+cc -mavx2 utils/detect-immintrin.c && detected="AVX2" && rm a.out
+TYPE=${TYPE-"$detected"}
+
 STD="-std=c99"
 WFLAGS="-pedantic -Wall -Wextra -Wno-unused-parameter -Wno-unused-function"
 [ "$TYPE" = "AVX2" ] && AVX="-mavx2"
