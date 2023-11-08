@@ -169,9 +169,44 @@ int16_t coord_eo(cube_t); /* Edge orientation */
 /******************************************************************************
 Solvers
 
-Solvers return -1 in case of error, the number of solutions otherwise
+All solvers work at fixed depth, i.e. they will only find solutions of the
+specified length. Iterating over the possible lengths, if desired, is left as
+an implementation detail for the user of this library.
 
-TODO
+The solutions are returned as a list of moves, which can then be converted to
+a string using writemoves().
+
+Unless specified otherwise, all the solutions are not trivially simplifiable.
+This means that sequences like U U2 or R L R will not appear in any solution.
+Moreover, two consecutive parallel moves are always going to be sorted in
+increasing order. For example, L R2 may never appear in a solution, but R2 L
+could.
+
+Solvers return -1 in case of error, the number of solutions found otherwise.
+
+TODO NISS / INVERSE / LINEAR as a mask?
+
+All solvers take at least the following parameters, satisfying the conditions
+in square brackets:
+	- cube_t cube [issolvable(cube)]: The cube to solve.
+	- uint8_t depth [depth <= 20]: The lenght of the solution.
+	- int maxsols: The maximum number of solutions to find. The solver
+	  stops when the limit is reached. If set to a negative number, all
+	  the solutions are found.
+	- move_t *ret: The array where the moves of the solutions are stored.
+	  There is no separator between different solutions; to read the
+	  solutions, use the fact that all solutions has the same length: the
+	  i-th move of the j-th solution is ret[j*depth + i].
+
+Some solvers take other parameters. See below for details.
 ******************************************************************************/
 
-int solve_generic(cube_t, int (*)(cube_t), uint8_t, int, move_t *);
+int solve_generic(
+	cube_t cube,
+	uint8_t depth,
+	int maxsols,
+	move_t *ret
+	int (*estimate)(cube_t),
+);
+
+int solve_light(cube_t, int

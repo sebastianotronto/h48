@@ -3688,19 +3688,51 @@ implementation of all the solving algorithms.
 
 typedef struct {
 	cube_t cube;
-	int (*estimate)(cube_t);
 	uint8_t depth;
 	int maxsols;
 	move_t *sols;
 	int nsols;
 	int nmoves;
 	move_t moves[20];
+	int (*estimate)(cube_t);
 } dfs_arg_t;
 
-int
+static bool
+allowednextmove(dfs_arg_t arg, move_t m)
+{
+	int n;
+	move_t mbase, l1base, l2base, maxis, l1axis, l2axis;
+
+	n = arg.nmoves;
+
+	if (n == 0)
+		return true;
+
+	mbase = m / 3;
+	maxis = mbase / 2;
+	l1base = arg.moves[n-1] / 3;
+	l1axis = l1base / 2;
+
+	if (mbase == l1base || (maxis == l1axis && mbase < l1base))
+		return false;
+
+	if (n == 1)
+		return true;
+
+	l2base = arg.moves[n-2] / 3;
+	l2axis = l1base / 2;
+
+	return l1axis != l2axis || mbase != l2base;
+}
+
+static int
 solve_generic_dfs(dfs_arg_t arg)
 {
-	int bound = arg.estimate(arg.cube);
+	dfs_arg_t nextarg;
+	int bound, ret;
+	move_t m;
+
+	bound = arg.estimate(arg.cube);
 
 	if (arg.nsols == arg.maxsols || bound + arg.nmoves > arg.depth)
 		return 0;
@@ -3714,36 +3746,43 @@ solve_generic_dfs(dfs_arg_t arg)
 		return 1;
 	}
 
-	/* TODO: loop over moves and recur */
-	return 0;
+	memcpy(&nextarg, &arg, sizeof(dfs_arg_t));
+	nextarg.nmoves = arg.nmoves + 1;
+	for (m = 0, ret = 0; m < 18; m++) {
+		if (allowednextmove(arg, m)) {
+			nextarg.cube = move(arg.cube, m);
+			nextarg.moves[arg.nmoves] = m;
+			ret += solve_generic_dfs(nextarg);
+		}
+	}
+
+	return ret;
 }
 
 int
 solve_generic(
 	cube_t cube,
-	int (*estimate)(cube_t),
 	uint8_t depth,
 	int maxsols,
 	move_t *sols
+	int (*estimate)(cube_t),
 )
 {
 	dfs_arg_t arg;
 
-	if (!issolvable(cube) || depth > 20)
+	if (!issolvable(cube) || depth > 20 || estimate == NULL)
 		return -1;
 
 	arg = (dfs_arg_t) {
 		.cube = cube,
-		.estimate = estimate,
 		.depth = depth,
 		.maxsols = maxsols,
 		.sols = sols,
 		.nsols = 0,
 		.nmoves = 0,
 		.moves = {0}
+		.estimate = estimate,
 	};
 
 	return solve_generic_dfs(arg);
-
-	return 0;
 }
