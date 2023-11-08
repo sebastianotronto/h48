@@ -1,11 +1,11 @@
-### Generic solver
+## Generic solver
 
 * finish implementation
 * tests: solve full cube (max 7-8 moves?)
 * more tests: eo and other stuff
 * benchmarks
 
-### Coordinates
+## Coordinates
 
 * [done] eo
 * co
@@ -17,7 +17,10 @@
 
 What about symcoord?
 
-### Solving
+## More I/O
+
+
+## Solving
 
 All solving functions take a cube and some parameters as input.
 
@@ -31,7 +34,8 @@ All solving functions take a cube and some parameters as input.
   The table can be generated with a companion function, but reading
   from and writing to file is delegated to the caller implementation.
 
-Implement the following solvers:
+### Implement the following solvers:
+
 * Slow: basic solver without any table.
 * H48: one-bit-per-entry table + fallback, 48 symmetries and so on.
   See planner.
@@ -39,16 +43,31 @@ Implement the following solvers:
 * other nxopt solvers: make generic and take the type as parameter.
 * Step solver: take a coordinate function and a moveset as a parameter.
 
-### cube.h changes
+### New method:
+
+* 48 symmetries, cocsep (or chtr, or similar) + epsep + some EO
+* 1 bit per entry + fallback
+* store necessary stuff (e.g. ttrep) all interleaved in the same table
+
+### Other considerations:
+
+* Reconsider going corners-first, so there is no need to sumco()
+
+## cube.h changes
 
 * better documentation: add parameter names, one-line comment
   for each function
-* prefix public functions with nissy_ or something similar
+* prefix public functions with libnissy_ or something similar
 * move() that takes a string (alg) as input
 * readtrans() should work like readmoves (read multiple, return n)
 * Add single moves and transformations to the interface? (performance!)
+* More I/O:
+  nissy
+  ascii art (color = 1 letter)
+  twizzle binary https://www.experiments.cubing.net/cubing.js/spec/binary/
+  reid?
 
-### Optimizations
+## Optimizations
 
 * Trans: don't do full compose, for some trans composing perm is enough.
   Split out sumco() as a separate function and refactor, optimize.
@@ -60,10 +79,21 @@ Implement the following solvers:
 * find a better way for computing the inverse?
 * Improve avx2 instructions in general
 
-### Improvements and other things
+## Improvements and other things
 
 * NISS: Add mask to moves (e.g. U | NISS where NISS = 32 or something);
   adapt readmoves and writemoves.
 * Consider adding centers and other moves (for avx2: centers in the
   same lane as corners, numbered from 9 to 14)
 * rename to: libnissy? (also change all references to cube.c in doc)
+
+## "Front-end"
+
+* Write adapter code for other languages:
+  python
+  hare
+  rust, go
+  dart ffi, js
+  java
+* add also example code (e.g. an optimal solver) in examples/
+* solver in C: use pthread_cancel
