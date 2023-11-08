@@ -37,6 +37,11 @@ for benchmarks.
 
 ## TODO:
 
+### Trivial things
+
+* Remove unnecessary prototypes for static functions
+* getpiece and similar macros: remove? make functions?
+
 ### Simple solver
 
 * tests
@@ -79,9 +84,9 @@ Implement the following solvers:
 
 ### cube.h changes
 
-* Consider removing zerocube() from the api
 * prefix public functions with nissy_ or something similar
 * move() that takes a string (alg) as input
+* Add single moves and transformations to the interface? (performance!)
 
 ### Documentation and interface
 

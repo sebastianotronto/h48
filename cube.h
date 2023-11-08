@@ -21,7 +21,6 @@ cube_t readcube(format_t, char *);        /* Supports: H48 */
 void writecube(format_t, cube_t, char *); /* Supports: AVX, H48, SRC */
 
 cube_t solvedcube(void);
-cube_t zerocube(void);
 bool issolvable(cube_t);
 bool equal(cube_t, cube_t);
 bool issolved(cube_t);

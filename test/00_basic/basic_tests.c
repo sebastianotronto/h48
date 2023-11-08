@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "../../cube.h"
 
@@ -22,7 +23,7 @@ fprintf(stderr, "check2 %s %s\n", name1, name2);
 int main() {
 	cube_t zero, solved;
 
-	zero = zerocube();
+	memset(&zero, 0, sizeof(cube_t));
 	solved = solvedcube();
 	check(solved, "Solved");
 	check(zero, "Zero");

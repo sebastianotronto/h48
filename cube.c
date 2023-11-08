@@ -4,6 +4,15 @@
 
 #ifdef DEBUG
 #include <stdio.h>
+#define DBG_LOG(...) fprintf(stderr, __VA_ARGS__)
+#define DBG_ASSERT(condition, retval, ...) \
+	if (!(condition)) {                \
+		DBG_LOG(__VA_ARGS__);      \
+		return retval;             \
+	}
+#else
+#define DBG_LOG(...)
+#define DBG_ASSERT(condition, retval, ...)
 #endif
 
 #include "cube.h"
@@ -265,11 +274,11 @@ static void writecube_array_SRC(cube_array_t, char *);
 static uint8_t readmove(char);
 static uint8_t readmodifier(char);
 
-cube_array_t solvedcube_array = {
+cube_array_t _solvedcube_array = {
 	.c = {0, 1, 2, 3, 4, 5, 6, 7, 0, 0, 0, 0, 0, 0, 0, 0},
 	.e = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0, 0, 0, 0}
 };
-cube_array_t zerocube_array = { .e = {0}, .c = {0} };
+cube_array_t _zerocube_array = { .e = {0}, .c = {0} };
 
 static void
 setzero_array(cube_array_t *arr)
@@ -295,7 +304,7 @@ equal_array(cube_array_t c1, cube_array_t c2)
 static bool
 iserror_array(cube_array_t arr)
 {
-	return equal_array(arr, zerocube_array);
+	return equal_array(arr, _zerocube_array);
 }
 
 static uint8_t
@@ -308,9 +317,7 @@ readco(char *str)
 	if (*str == '2')
 		return _ctwist_ccw;
 
-#ifdef DEBUG
-	fprintf(stderr, "Error reading CO\n");
-#endif
+	DBG_LOG("Error reading CO\n");
 	return _error;
 }
 
@@ -324,9 +331,7 @@ readcp(char *str)
 		    !strncmp(str, cornerstralt[c], 3))
 			return c;
 
-#ifdef DEBUG
-	fprintf(stderr, "Error reading CP\n");
-#endif
+	DBG_LOG("Error reading CP\n");
 	return _error;
 }
 
@@ -338,9 +343,7 @@ readeo(char *str)
 	if (*str == '1')
 		return _eflip;
 
-#ifdef DEBUG
-	fprintf(stderr, "Error reading EO\n");
-#endif
+	DBG_LOG("Error reading EO\n");
 	return _error;
 }
 
@@ -353,9 +356,7 @@ readep(char *str)
 		if (!strncmp(str, edgestr[e], 2))
 			return e;
 
-#ifdef DEBUG
-	fprintf(stderr, "Error reading EP\n");
-#endif
+	DBG_LOG("Error reading EP\n");
 	return _error;
 }
 
@@ -373,10 +374,10 @@ readcube_array_H48(char *buf)
 		while (*b == ' ' || *b == '\t' || *b == '\n')
 			b++;
 		if ((piece = readep(b)) == _error)
-			return zerocube_array;
+			return _zerocube_array;
 		b += 2;
 		if ((orient = readeo(b)) == _error)
-			return zerocube_array;
+			return _zerocube_array;
 		b++;
 		set_edge(ret, i, piece | orient);
 	}
@@ -384,10 +385,10 @@ readcube_array_H48(char *buf)
 		while (*b == ' ' || *b == '\t' || *b == '\n')
 			b++;
 		if ((piece = readcp(b)) == _error)
-			return zerocube_array;
+			return _zerocube_array;
 		b += 3;
 		if ((orient = readco(b)) == _error)
-			return zerocube_array;
+			return _zerocube_array;
 		b++;
 		set_corner(ret, i, piece | orient);
 	}
@@ -405,16 +406,11 @@ readcube_array(format_t format, char *buf)
 		arr = readcube_array_H48(buf);
 		break;
 	default:
-#ifdef DEBUG
-		fprintf(stderr, "Cannot read cube in the given format\n");
-#endif
+		DBG_LOG("Cannot read cube in the given format\n");
 		setzero_array(&arr);
 	}
 
-#ifdef DEBUG
-	if (iserror_array(arr))
-		fprintf(stderr, "readcube error\n");
-#endif
+	DBG_ASSERT(!iserror_array(arr), arr, "readcube error\n");
 	return arr;
 }
 
@@ -550,9 +546,7 @@ writecube_array(format_t format, cube_array_t a, char *buf)
 	return;
 
 writecube_error:
-#ifdef DEBUG
-	fprintf(stderr, "writecube error, see stdout for details\n");
-#endif
+	DBG_LOG("writecube error, see stdout for details\n");
 	len = strlen(errormsg);
 	memcpy(buf, errormsg, len);
 	buf[len] = '\n';
@@ -620,9 +614,7 @@ readmoves(char *buf, move_t *m)
 	return n;
 
 readmoves_error:
-#ifdef DEBUG
-	fprintf(stderr, "readmoves error\n");
-#endif
+	DBG_LOG("readmoves error\n");
 	return -1;
 }
 
@@ -635,9 +627,7 @@ readtrans(char *buf)
 		if (!strncmp(buf, transstr[t], 11))
 			return t;
 
-#ifdef DEBUG
-	fprintf(stderr, "readtrans error\n");
-#endif
+	DBG_LOG("readtrans error\n");
 	return errortrans;
 }
 
@@ -722,24 +712,16 @@ isconsistent_array(cube_array_t c)
 	return true;
 
 inconsistent_ep:
-#ifdef DEBUG
-	fprintf(stderr, "Inconsistent EP\n");
-#endif
+	DBG_LOG("Inconsistent EP\n");
 	return false;
 inconsistent_cp:
-#ifdef DEBUG
-	fprintf(stderr, "Inconsistent CP\n");
-#endif
+	DBG_LOG("Inconsistent CP\n");
 	return false;
 inconsistent_eo:
-#ifdef DEBUG
-	fprintf(stderr, "Inconsistent EO\n");
-#endif
+	DBG_LOG("Inconsistent EO\n");
 	return false;
 inconsistent_co:
-#ifdef DEBUG
-	fprintf(stderr, "Inconsistent CO\n");
-#endif
+	DBG_LOG("Inconsistent CO\n");
 	return false;
 }
 
@@ -748,12 +730,8 @@ issolvable_array(cube_array_t c)
 {
 	uint8_t i, eo, co, piece, edges[12], corners[8];
 
-#ifdef DEBUG
-	if (!isconsistent_array(c)) {
-		fprintf(stderr, "issolvable: cube is inconsistent\n");
-		return false;
-	}
-#endif
+	DBG_ASSERT(isconsistent_array(c), false,
+	    "issolvable: cube is inconsistent\n");
 
 	for (i = 0; i < 12; i++)
 		edges[i] = get_edge(c, i) & _pbits;
@@ -782,19 +760,13 @@ issolvable_array(cube_array_t c)
 	return true;
 
 issolvable_parity:
-#ifdef DEBUG
-	fprintf(stderr, "EP and CP parities are different\n");
-#endif
+	DBG_LOG("EP and CP parities are different\n");
 	return false;
 issolvable_eo:
-#ifdef DEBUG
-	fprintf(stderr, "Odd number of flipped edges\n");
-#endif
+	DBG_LOG("Odd number of flipped edges\n");
 	return false;
 issolvable_co:
-#ifdef DEBUG
-	fprintf(stderr, "Sum of corner orientation is not multiple of 3\n");
-#endif
+	DBG_LOG("Sum of corner orientation is not multiple of 3\n");
 	return false;
 }
 
@@ -813,6 +785,12 @@ Note: the #ifdef below is closed in the next section.
 #define _co2_avx2 _mm256_set_epi64x(0, 0, 0, 0x6060606060606060)
 #define _cocw_avx2 _mm256_set_epi64x(0, 0, 0, 0x2020202020202020)
 #define _eo_avx2 _mm256_set_epi64x(0x10101010, 0x1010101010101010, 0, 0)
+#define _zerocube _mm256_set_epi64x(0, 0, 0, 0);
+#define _solvedcube _mm256_set_epi8(                      \
+	0, 0, 0, 0, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, \
+	0, 0, 0, 0, 0, 0, 0, 0, 7, 6, 5, 4, 3, 2, 1, 0    \
+)
+	
 
 static cube_t _arraytocube(cube_array_t);
 static void _cubetoarray(cube_t, cube_array_t *);
@@ -2157,6 +2135,12 @@ in the previous section(s) for unsupported architectures.
 	r[k] ^= _eobit;    \
 	r[l] ^= _eobit;
 
+static const cube_t _solvedcube = {
+	.c = {0, 1, 2, 3, 4, 5, 6, 7, 0, 0, 0, 0, 0, 0, 0, 0},
+	.e = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 0, 0, 0, 0}
+};
+static const cube_t _zerocube = { .e = {0}, .c = {0} };
+
 static cube_t _arraytocube(cube_array_t);
 static void _cubetoarray(cube_t, cube_array_t *);
 static inline bool _equal(cube_t, cube_t);
@@ -3387,7 +3371,7 @@ _inverse(cube_t c)
 	cube_t ret;
 	uint8_t i, piece, orien;
 
-	ret = _arraytocube(zerocube_array);
+	ret = _zerocube;
 
 	for (i = 0; i < 12; i++) {
 		piece = get_edge(c, i);
@@ -3410,7 +3394,7 @@ _compose(cube_t c1, cube_t c2)
 	cube_t ret;
 	uint8_t i, piece1, piece2, p, orien, aux, auy;
 
-	ret = _arraytocube(zerocube_array);
+	ret = _zerocube;
 
 	for (i = 0; i < 12; i++) {
 		piece2 = get_edge(c2, i);
@@ -3460,24 +3444,13 @@ of them are public functions from cube.h
 cube_t
 solvedcube(void)
 {
-	cube_t solved;
-	solved = _arraytocube(solvedcube_array);
-	return solved;
-}
-
-cube_t
-zerocube(void)
-{
-	cube_t solved;
-	solved = _arraytocube(zerocube_array);
-	return solved;
+	return _solvedcube;
 }
 
 cube_t
 readcube(format_t format, char *buf)
 {
-	cube_array_t arr;
-	arr = readcube_array(format, buf);
+	cube_array_t arr = readcube_array(format, buf);
 	return _arraytocube(arr);
 }
 
@@ -3522,20 +3495,14 @@ equal(cube_t c1, cube_t c2)
 bool
 issolved(cube_t cube)
 {
-	cube_t solved;
-	solved = _arraytocube(solvedcube_array);
-	return equal(cube, solved);
+	return equal(cube, _solvedcube);
 }
 
 cube_t
 move(cube_t c, move_t m)
 {
-#ifdef DEBUG
-	if (!isconsistent(c)) {
-		fprintf(stderr, "move error, inconsistent cube\n");
-		return _arraytocube(zerocube_array);
-	}
-#endif
+	DBG_ASSERT(isconsistent(c), _zerocube,
+	    "move error: inconsistent cube\n");
 
 	switch (m) {
 	case U:
@@ -3575,22 +3542,16 @@ move(cube_t c, move_t m)
 	case B3:
 		return _move_B3(c);
 	default:
-#ifdef DEBUG
-		fprintf(stderr, "mover error, unknown move\n");
-#endif
-		return _arraytocube(zerocube_array);
+		DBG_LOG("mover error, unknown move\n");
+		return _zerocube;
 	}
 }
 
 cube_t
 inverse(cube_t c)
 {
-#ifdef DEBUG
-	if (!isconsistent(c)) {
-		fprintf(stderr, "inverse error, inconsistent cube\n");
-		return zerocube();
-	}
-#endif
+	DBG_ASSERT(isconsistent(c), _zerocube,
+	    "inverse error: inconsistent cube\n");
 
 	return _inverse(c);
 }
@@ -3598,12 +3559,8 @@ inverse(cube_t c)
 cube_t
 compose(cube_t c1, cube_t c2)
 {
-#ifdef DEBUG
-	if (!isconsistent(c1) || !isconsistent(c2)) {
-		fprintf(stderr, "compose error, inconsistent cube\n");
-		return zerocube();
-	}
-#endif
+	DBG_ASSERT(isconsistent(c1) && isconsistent(c2),
+	    _zerocube, "compose error: inconsistent cube\n")
 
 	return _compose(c1, c2);
 }
@@ -3611,12 +3568,8 @@ compose(cube_t c1, cube_t c2)
 cube_t
 transform(cube_t c, trans_t t)
 {
-#ifdef DEBUG
-	if (!isconsistent(c)) {
-		fprintf(stderr, "transform error, inconsistent cube\n");
-		return zerocube();
-	}
-#endif
+	DBG_ASSERT(isconsistent(c), _zerocube,
+	    "transform error: inconsistent cube\n");
 
 	switch (t) {
 	case UFr:
@@ -3716,10 +3669,8 @@ transform(cube_t c, trans_t t)
 	case BLm:
 		return _trans_BLm(c);
 	default:
-#ifdef DEBUG
-		fprintf(stderr, "transform error, unknown transformation\n");
-#endif
-		return zerocube();
+		DBG_LOG("transform error, unknown transformation\n");
+		return _zerocube;
 	}
 }
 
