@@ -1,3 +1,58 @@
+## Big changes
+
+### cube type changess
+
+* rename cube_t to cube_internal_t and cube_array_t to cube_t
+* include only cube_t typedef in cube.h, remove ifdef from cube.h
+* rework public functions: for many the simple implementation
+  in the first section of cube.c is fine, other should first
+  convert and then call the internal function
+* for CO: move to bits 5 and 6, no need for padding bit
+
+### Remove stuff from API, use more strings
+
+* Remove move_t and trans_t
+* Remove all functions related to trans, not useful for users
+  (or maybe keep and let use transform? can see some use
+  for it, in strange cases)
+* Removes functions that read or write moves
+* All functions should take strings instead of moves
+* Performance is worse, more stuff must be done internally,
+  expose only stuf that users are likely to use
+* Benchmark: add some simple benchmarking functions to nissy.h,
+  bench.c becomes very short
+
+### More for moves
+
+* keep move(cube_t, move), but prefer direct inline moves over it
+* define macro to loop over moves e.g. #define FOREACHMOVE(action)
+
+### API goals:
+
+* manipulate move sequences (invert, unniss, cleanup, mirror / transform...)
+* solvers (optimal, generic, coordinates)
+* print cube (in various formats)
+* print ptables (or layout data in such a way that can be printed
+  easily, e.g. first bytes are null-terminated strig and can be
+  printed by user)
+
+### Solvers
+
+* Actually do A*, no fixed depth
+* Use threading (see below)
+* Return strings, newline separated (see nissy_ffi)
+* Instead of depth, I need the following parameters:
+  int minmoves
+  int maxmoves
+  a parameter for all solutions / nmax / optimal / -O n
+* How to make the above nicer? can it be done with a minimal
+  amount of parameters (e.g. at most 2)?
+
+### Rename to libnissy
+
+* prefix public functions with libnissy_ or something similar
+* move() that takes a string (alg) as input
+
 ## Solving
 
 ### Generic solver
@@ -7,6 +62,8 @@
 * benchmarks
 
 ### Coordinates
+
+TODO: specify in the comments that coordinates return 0 if solved
 
 * [done] eo
 * co
@@ -42,21 +99,16 @@ What about symcoord?
 
 * Reconsider going corners-first, so there is no need to sumco()
 
-## cube.h changes
+### Pruning tables
 
-* better documentation: add parameter names, one-line comment
-  for each function
-* prefix public functions with libnissy_ or something similar
-* move() that takes a string (alg) as input
-* readtrans() should work like readmoves (read multiple, return n)
-* Add single moves and transformations to the interface? (performance!)
-* More I/O:
-  nissy
-  ascii art (color = 1 letter)
-  twizzle binary https://www.experiments.cubing.net/cubing.js/spec/binary/
-  reid?
+* ptable should contain some extra data at the beginning:
+  an integer (size)
+  a checksum
+  some summary info, maybe even in text form
 
 ## Optimizations
+
+### General things
 
 * Trans: don't do full compose, for some trans composing perm is enough.
   Split out sumco() as a separate function and refactor, optimize.
@@ -68,13 +120,26 @@ What about symcoord?
 * find a better way for computing the inverse?
 * Improve avx2 instructions in general
 
+### Threading
+
+* THREADS build time option for the number of threads. If set to one,
+  do not include any threading library or code. Try detecting at build
+  time, or set to a sane default (e.g. 8? 16?) for generic builds.
+* pthread or threads.h? I am more familiar with pthread, but threads.h
+  is standard (from C11, so it requires switching to it from C99).
+  Does using threads.h help in any way (e.g. building on Windows)?
+
 ## Improvements and other things
 
 * NISS: Add mask to moves (e.g. U | NISS where NISS = 32 or something);
   adapt readmoves and writemoves.
 * Consider adding centers and other moves (for avx2: centers in the
   same lane as corners, numbered from 9 to 14)
-* rename to: libnissy? (also change all references to cube.c in doc)
+* More I/O:
+  nissy
+  ascii art (color = 1 letter)
+  twizzle binary https://www.experiments.cubing.net/cubing.js/spec/binary/
+  reid?
 
 ## "Front-end"
 
@@ -85,4 +150,3 @@ What about symcoord?
   dart ffi, js
   java
 * add also example code (e.g. an optimal solver) in examples/
-* solver in C: use pthread_cancel
