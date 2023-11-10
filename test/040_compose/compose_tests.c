@@ -15,9 +15,9 @@ int main() {
 	cube_t c1, c2, c3;
 
 	fgets(str, STRLENMAX, stdin);
-	c1 = readcube(H48, str);
+	c1 = readcube("H48", str);
 	fgets(str, STRLENMAX, stdin);
-	c2 = readcube(H48, str);
+	c2 = readcube("H48", str);
 
 	c3 = compose(c1, c2);
 
@@ -26,7 +26,7 @@ int main() {
 	} else if (!issolvable(c3)) {
 		printf("Composed cube is not solvable\n");
 	} else {
-		writecube(H48, c3, str);
+		writecube("H48", c3, str);
 		printf("%s\n", str);
 	}
 

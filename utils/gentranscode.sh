@@ -22,17 +22,17 @@ genarray() {
 genfuncs() {
 	for f in transform_??_???.txt; do
 		trans="$(echo $f | sed 's/.*_// ; s/\.txt//')"
-		printf 'static inline cube_t\n_trans_%s' "$trans"
-		printf '(cube_t c)\n{\n'
-		printf '\tcube_t ret;\n\n'
-		printf '\tcube_t tn = '
+		printf 'static inline cube_fast_t\n_trans_%s' "$trans"
+		printf '(cube_fast_t c)\n{\n'
+		printf '\tcube_fast_t ret;\n\n'
+		printf '\tcube_fast_t tn = '
 		./h48_to_"$type" <"$f" | sed '2,4s/^/\t/'
-		printf ';\n\tcube_t ti = '
+		printf ';\n\tcube_fast_t ti = '
 		./invert <"$f" | ./h48_to_"$type" | sed '2,4 s/^/\t/'
-		printf ';\n\n\tret = compose(tn, c);\n'
-		printf '\tret = compose(ret, ti);\n'
+		printf ';\n\n\tret = compose_fast(tn, c);\n'
+		printf '\tret = compose_fast(ret, ti);\n'
 		if [ -n "$(echo "$trans" | grep "m")" ]; then
-			printf '\tret = _invertco(ret);\n'
+			printf '\tret = invertco_fast(ret);\n'
 		fi
 		printf '\n\treturn ret;\n}\n\n'
 	done

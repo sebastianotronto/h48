@@ -11,30 +11,22 @@
 #define STRLENMAX 10000
 
 int main() {
-	char str[STRLENMAX];
-	trans_t t;
+	char cubestr[STRLENMAX], transtr[STRLENMAX];
 	cube_t cube;
 
-	fgets(str, STRLENMAX, stdin);
-	t = readtrans(str);
+	fgets(transtr, STRLENMAX, stdin);
+	fgets(cubestr, STRLENMAX, stdin);
+	cube = readcube("H48", cubestr);
 
-	if (t >= 48) {
-		printf("Error reading trans\n");
-		return 1;
-	}
-
-	fgets(str, STRLENMAX, stdin);
-	cube = readcube(H48, str);
-
-	cube = transform(cube, t);
+	cube = applytrans(cube, transtr);
 
 	if (iserror(cube)) {
 		printf("Error transforming cube\n");
 	} else if (!issolvable(cube)) {
 		printf("Transformed cube is not solvable\n");
 	} else {
-		writecube(H48, cube, str);
-		printf("%s\n", str);
+		writecube("H48", cube, cubestr);
+		printf("%s\n", cubestr);
 	}
 
 	return 0;

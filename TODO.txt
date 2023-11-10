@@ -1,30 +1,11 @@
-## Big changes
+## Big change
 
-### cube type changess
-
-* rename cube_t to cube_internal_t and cube_array_t to cube_t
-* include only cube_t typedef in cube.h, remove ifdef from cube.h
-* rework public functions: for many the simple implementation
-  in the first section of cube.c is fine, other should first
-  convert and then call the internal function
-* for CO: move to bits 5 and 6, no need for padding bit
-
-### Remove stuff from API, use more strings
-
-* Remove move_t and trans_t
-* Remove all functions related to trans, not useful for users
-  (or maybe keep and let use transform? can see some use
-  for it, in strange cases)
-* Removes functions that read or write moves
-* All functions should take strings instead of moves
-* Performance is worse, more stuff must be done internally,
-  expose only stuf that users are likely to use
+* Add tests for multiple moves
 * Benchmark: add some simple benchmarking functions to nissy.h,
   bench.c becomes very short
 
 ### More for moves
 
-* keep move(cube_t, move), but prefer direct inline moves over it
 * define macro to loop over moves e.g. #define FOREACHMOVE(action)
 
 ### API goals:
@@ -131,6 +112,8 @@ What about symcoord?
 
 ## Improvements and other things
 
+* add centers (and moves...)
+* for CO: move to bits 5 and 6, no need for padding bit
 * NISS: Add mask to moves (e.g. U | NISS where NISS = 32 or something);
   adapt readmoves and writemoves.
 * Consider adding centers and other moves (for avx2: centers in the
@@ -150,3 +133,18 @@ What about symcoord?
   dart ffi, js
   java
 * add also example code (e.g. an optimal solver) in examples/
+
+## More documentation?
+
+* Add documentation comments inside cube.c?
+* Copy this to cube.c
+
+Transformations can be either simple rotations or a rotation composed
+with a mirroring.  A composed rotation + mirror is obtained by applying
+the corresponding rotation to the solved cube mirrored along the M plane.
+
+For example, to apply the transformation RBm (mirrored RB) to a cube C:
+	1. Apply a mirror along the M plane to the solved cube
+	2. Rotate the mirrored cube with z' y2
+	3. Apply the cube C to the transformed solved cube
+	4. Apply the transformations of step 1a and 1b in reverse

@@ -22,7 +22,7 @@
 #include "cube.h"
 
 /******************************************************************************
-Section: constants and strings
+Section: constants, strings and other stuff
 ******************************************************************************/
 
 #define U  0U
@@ -238,62 +238,2734 @@ static char *transstr[] = {
 };
 
 /******************************************************************************
-Section: cube_array
+Section: AVX2 fast methods
 
-This section contains non-optimized functions that operate on the cube in
-array format. These utilities are not used in performance-critical parts;
-for example, all I/O related stuff is here, as well as some checks on the
-state of the cube that are used in debugging.
+This section contains performance-critical methods that rely on AVX2
+intructions such as routines for moving or transforming the cube.
+
+Note: the #ifdef below is closed in the next section.
 ******************************************************************************/
 
-typedef struct {
-	uint8_t c[8];
-	uint8_t e[12];
-} cube_array_t;
+#ifdef CUBE_AVX2
 
-static bool equal_array(cube_array_t, cube_array_t);
-static bool iserror_array(cube_array_t);
-static bool isconsistent_array(cube_array_t);
-static bool issolvable_array(cube_array_t);
+typedef __m256i cube_fast_t;
+
+#define _co_avx2 _mm256_set_epi64x(0, 0, 0, 0xF0F0F0F0F0F0F0F0)
+#define _co2_avx2 _mm256_set_epi64x(0, 0, 0, 0x6060606060606060)
+#define _cocw_avx2 _mm256_set_epi64x(0, 0, 0, 0x2020202020202020)
+#define _eo_avx2 _mm256_set_epi64x(0x10101010, 0x1010101010101010, 0, 0)
+#define zero_fast _mm256_set_epi64x(0, 0, 0, 0);
+
+static cube_fast_t cubetofast(cube_t);
+static cube_t fasttocube(cube_fast_t);
+static inline bool equal_fast(cube_fast_t, cube_fast_t);
+static inline cube_fast_t invertco_fast(cube_fast_t);
+static inline cube_fast_t inverse_fast(cube_fast_t);
+static inline cube_fast_t compose_fast(cube_fast_t, cube_fast_t);
+
+static inline cube_fast_t
+_move_U(cube_fast_t c)
+{
+	cube_fast_t m = _mm256_set_epi8(
+		0, 0, 0, 0, 11, 10, 9, 8, 7, 6, 0, 1, 3, 2, 5, 4,
+		0, 0, 0, 0, 0, 0, 0, 0, 7, 6, 1, 0, 3, 2, 4, 5
+	);
+
+	return _mm256_shuffle_epi8(c, m);
+}
+
+static inline cube_fast_t
+_move_U2(cube_fast_t c)
+{
+	cube_fast_t m = _mm256_set_epi8(
+		0, 0, 0, 0, 11, 10, 9, 8, 7, 6, 4, 5, 3, 2, 0, 1,
+		0, 0, 0, 0, 0, 0, 0, 0, 7, 6, 4, 5, 3, 2, 0, 1
+	);
+
+	return _mm256_shuffle_epi8(c, m);
+}
+
+static inline cube_fast_t
+_move_U3(cube_fast_t c)
+{
+	cube_fast_t m = _mm256_set_epi8(
+		0, 0, 0, 0, 11, 10, 9, 8, 7, 6, 1, 0, 3, 2, 4, 5,
+		0, 0, 0, 0, 0, 0, 0, 0, 7, 6, 0, 1, 3, 2, 5, 4
+	);
+
+	return _mm256_shuffle_epi8(c, m);
+}
+
+static inline cube_fast_t
+_move_D(cube_fast_t c)
+{
+	cube_fast_t m = _mm256_set_epi8(
+		0, 0, 0, 0, 11, 10, 9, 8, 3, 2, 5, 4, 6, 7, 1, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 5, 4, 6, 7, 1, 0
+	);
+
+	return _mm256_shuffle_epi8(c, m);
+}
+
+static inline cube_fast_t
+_move_D2(cube_fast_t c)
+{
+	cube_fast_t m = _mm256_set_epi8(
+		0, 0, 0, 0, 11, 10, 9, 8, 6, 7, 5, 4, 2, 3, 1, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 6, 7, 5, 4, 2, 3, 1, 0
+	);
+
+	return _mm256_shuffle_epi8(c, m);
+}
+
+static inline cube_fast_t
+_move_D3(cube_fast_t c)
+{
+	cube_fast_t m = _mm256_set_epi8(
+		0, 0, 0, 0, 11, 10, 9, 8, 2, 3, 5, 4, 7, 6, 1, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 5, 4, 7, 6, 1, 0
+	);
+
+	return _mm256_shuffle_epi8(c, m);
+}
+
+static inline cube_fast_t
+_move_R(cube_fast_t c)
+{
+	cube_fast_t m = _mm256_set_epi8(
+		0, 0, 0, 0, 4, 10, 9, 7, 11, 6, 5, 8, 3, 2, 1, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 7, 35, 32, 4, 69, 2, 1, 70
+	);
+
+	return compose_fast(c, m);
+}
+
+static inline cube_fast_t
+_move_R2(cube_fast_t c)
+{
+	cube_fast_t m = _mm256_set_epi8(
+		0, 0, 0, 0, 8, 10, 9, 11, 4, 6, 5, 7, 3, 2, 1, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 7, 5, 6, 4, 0, 2, 1, 3
+	);
+
+	return _mm256_shuffle_epi8(c, m);
+}
+
+static inline cube_fast_t
+_move_R3(cube_fast_t c)
+{
+	cube_fast_t m = _mm256_set_epi8(
+		0, 0, 0, 0, 7, 10, 9, 4, 8, 6, 5, 11, 3, 2, 1, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 7, 32, 35, 4, 70, 2, 1, 69
+	);
+
+	return compose_fast(c, m);
+}
+
+static inline cube_fast_t
+_move_L(cube_fast_t c)
+{
+	cube_fast_t m = _mm256_set_epi8(
+		0, 0, 0, 0, 11, 6, 5, 8, 7, 9, 10, 4, 3, 2, 1, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 34, 6, 5, 33, 3, 68, 71, 0
+	);
+
+	return compose_fast(c, m);
+}
+
+static inline cube_fast_t
+_move_L2(cube_fast_t c)
+{
+	cube_fast_t m = _mm256_set_epi8(
+		0, 0, 0, 0, 11, 9, 10, 8, 7, 5, 6, 4, 3, 2, 1, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 4, 6, 5, 7, 3, 1, 2, 0
+	);
+
+	return _mm256_shuffle_epi8(c, m);
+}
+
+static inline cube_fast_t
+_move_L3(cube_fast_t c)
+{
+	cube_fast_t m = _mm256_set_epi8(
+		0, 0, 0, 0, 11, 5, 6, 8, 7, 10, 9, 4, 3, 2, 1, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 33, 6, 5, 34, 3, 71, 68, 0
+	);
+
+	return compose_fast(c, m);
+}
+
+static inline cube_fast_t
+_move_F(cube_fast_t c)
+{
+	cube_fast_t m = _mm256_set_epi8(
+		0, 0, 0, 0, 11, 10, 19, 16, 7, 6, 5, 4, 24, 2, 1, 25,
+		0, 0, 0, 0, 0, 0, 0, 0, 7, 64, 5, 66, 3, 38, 1, 36
+	);
+
+	return compose_fast(c, m);
+}
+
+static inline cube_fast_t
+_move_F2(cube_fast_t c)
+{
+	cube_fast_t m = _mm256_set_epi8(
+		0, 0, 0, 0, 11, 10, 8, 9, 7, 6, 5, 4, 0, 2, 1, 3,
+		0, 0, 0, 0, 0, 0, 0, 0, 7, 4, 5, 6, 3, 0, 1, 2
+	);
+
+	return _mm256_shuffle_epi8(c, m);
+}
+
+static inline cube_fast_t
+_move_F3(cube_fast_t c)
+{
+	cube_fast_t m = _mm256_set_epi8(
+		0, 0, 0, 0, 11, 10, 16, 19, 7, 6, 5, 4, 25, 2, 1, 24,
+		0, 0, 0, 0, 0, 0, 0, 0, 7, 66, 5, 64, 3, 36, 1, 38
+	);
+
+	return compose_fast(c, m);
+}
+
+static inline cube_fast_t
+_move_B(cube_fast_t c)
+{
+	cube_fast_t m = _mm256_set_epi8(
+		0, 0, 0, 0, 18, 17, 9, 8, 7, 6, 5, 4, 3, 26, 27, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 65, 6, 67, 4, 39, 2, 37, 0
+	);
+
+	return compose_fast(c, m);
+}
+
+static inline cube_fast_t
+_move_B2(cube_fast_t c)
+{
+	cube_fast_t m = _mm256_set_epi8(
+		0, 0, 0, 0, 10, 11, 9, 8, 7, 6, 5, 4, 3, 1, 2, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 5, 6, 7, 4, 1, 2, 3, 0
+	);
+
+	return _mm256_shuffle_epi8(c, m);
+}
+
+static inline cube_fast_t
+_move_B3(cube_fast_t c)
+{
+	cube_fast_t m = _mm256_set_epi8(
+		0, 0, 0, 0, 17, 18, 9, 8, 7, 6, 5, 4, 3, 27, 26, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 67, 6, 65, 4, 37, 2, 39, 0
+	);
+
+	return compose_fast(c, m);
+}
+
+static inline cube_fast_t
+_trans_UFr(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 7, 6, 5, 4, 3, 2, 1, 0
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 7, 6, 5, 4, 3, 2, 1, 0
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_ULr(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 24, 27, 26, 25, 3, 2, 1, 0, 6, 7, 4, 5,
+		0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 0, 1, 6, 7, 5, 4
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 26, 25, 24, 27, 2, 3, 0, 1, 7, 6, 5, 4,
+		0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 1, 0, 7, 6, 4, 5
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_UBr(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 9, 8, 11, 10, 6, 7, 4, 5, 2, 3, 0, 1,
+		0, 0, 0, 0, 0, 0, 0, 0, 6, 7, 4, 5, 2, 3, 0, 1
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 9, 8, 11, 10, 6, 7, 4, 5, 2, 3, 0, 1,
+		0, 0, 0, 0, 0, 0, 0, 0, 6, 7, 4, 5, 2, 3, 0, 1
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_URr(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 26, 25, 24, 27, 2, 3, 0, 1, 7, 6, 5, 4,
+		0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 1, 0, 7, 6, 4, 5
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 24, 27, 26, 25, 3, 2, 1, 0, 6, 7, 4, 5,
+		0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 0, 1, 6, 7, 5, 4
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_DFr(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 10, 11, 8, 9, 5, 4, 7, 6, 0, 1, 2, 3,
+		0, 0, 0, 0, 0, 0, 0, 0, 5, 4, 7, 6, 1, 0, 3, 2
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 10, 11, 8, 9, 5, 4, 7, 6, 0, 1, 2, 3,
+		0, 0, 0, 0, 0, 0, 0, 0, 5, 4, 7, 6, 1, 0, 3, 2
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_DLr(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 27, 24, 25, 26, 1, 0, 3, 2, 5, 4, 7, 6,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 2, 5, 4, 6, 7
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 27, 24, 25, 26, 1, 0, 3, 2, 5, 4, 7, 6,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 2, 5, 4, 6, 7
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_DBr(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 8, 9, 10, 11, 4, 5, 6, 7, 1, 0, 3, 2,
+		0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 6, 7, 0, 1, 2, 3
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 8, 9, 10, 11, 4, 5, 6, 7, 1, 0, 3, 2,
+		0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 6, 7, 0, 1, 2, 3
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_DRr(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 25, 26, 27, 24, 0, 1, 2, 3, 4, 5, 6, 7,
+		0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 3, 4, 5, 7, 6
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 25, 26, 27, 24, 0, 1, 2, 3, 4, 5, 6, 7,
+		0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 3, 4, 5, 7, 6
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_RUr(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 3, 2, 1, 0, 25, 26, 27, 24, 21, 22, 23, 20,
+		0, 0, 0, 0, 0, 0, 0, 0, 39, 36, 38, 37, 66, 65, 67, 64
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 21, 22, 23, 20, 17, 18, 19, 16, 11, 10, 9, 8,
+		0, 0, 0, 0, 0, 0, 0, 0, 71, 69, 68, 70, 33, 35, 34, 32
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_RFr(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 18, 17, 16, 19, 22, 21, 20, 23, 25, 26, 27, 24,
+		0, 0, 0, 0, 0, 0, 0, 0, 65, 66, 67, 64, 39, 36, 37, 38
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 17, 18, 19, 16, 20, 23, 22, 21, 24, 27, 26, 25,
+		0, 0, 0, 0, 0, 0, 0, 0, 67, 64, 65, 66, 37, 38, 39, 36
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_RDr(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 1, 0, 3, 2, 26, 25, 24, 27, 22, 21, 20, 23,
+		0, 0, 0, 0, 0, 0, 0, 0, 36, 39, 37, 38, 65, 66, 64, 67
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 20, 23, 22, 21, 16, 19, 18, 17, 9, 8, 11, 10,
+		0, 0, 0, 0, 0, 0, 0, 0, 70, 68, 69, 71, 32, 34, 35, 33
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_RBr(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 16, 19, 18, 17, 21, 22, 23, 20, 26, 25, 24, 27,
+		0, 0, 0, 0, 0, 0, 0, 0, 66, 65, 64, 67, 36, 39, 38, 37
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 16, 19, 18, 17, 21, 22, 23, 20, 26, 25, 24, 27,
+		0, 0, 0, 0, 0, 0, 0, 0, 66, 65, 64, 67, 36, 39, 38, 37
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_LUr(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 2, 3, 0, 1, 27, 24, 25, 26, 20, 23, 22, 21,
+		0, 0, 0, 0, 0, 0, 0, 0, 38, 37, 39, 36, 67, 64, 66, 65
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 23, 20, 21, 22, 18, 17, 16, 19, 10, 11, 8, 9,
+		0, 0, 0, 0, 0, 0, 0, 0, 69, 71, 70, 68, 35, 33, 32, 34
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_LFr(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 17, 18, 19, 16, 20, 23, 22, 21, 24, 27, 26, 25,
+		0, 0, 0, 0, 0, 0, 0, 0, 67, 64, 65, 66, 37, 38, 39, 36
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 18, 17, 16, 19, 22, 21, 20, 23, 25, 26, 27, 24,
+		0, 0, 0, 0, 0, 0, 0, 0, 65, 66, 67, 64, 39, 36, 37, 38
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_LDr(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 0, 1, 2, 3, 24, 27, 26, 25, 23, 20, 21, 22,
+		0, 0, 0, 0, 0, 0, 0, 0, 37, 38, 36, 39, 64, 67, 65, 66
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 22, 21, 20, 23, 19, 16, 17, 18, 8, 9, 10, 11,
+		0, 0, 0, 0, 0, 0, 0, 0, 68, 70, 71, 69, 34, 32, 33, 35
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_LBr(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 19, 16, 17, 18, 23, 20, 21, 22, 27, 24, 25, 26,
+		0, 0, 0, 0, 0, 0, 0, 0, 64, 67, 66, 65, 38, 37, 36, 39
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 19, 16, 17, 18, 23, 20, 21, 22, 27, 24, 25, 26,
+		0, 0, 0, 0, 0, 0, 0, 0, 64, 67, 66, 65, 38, 37, 36, 39
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_FUr(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 6, 7, 4, 5, 10, 11, 8, 9, 17, 18, 19, 16,
+		0, 0, 0, 0, 0, 0, 0, 0, 35, 33, 34, 32, 71, 69, 70, 68
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 6, 7, 4, 5, 10, 11, 8, 9, 17, 18, 19, 16,
+		0, 0, 0, 0, 0, 0, 0, 0, 35, 33, 34, 32, 71, 69, 70, 68
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_FRr(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 21, 22, 23, 20, 17, 18, 19, 16, 11, 10, 9, 8,
+		0, 0, 0, 0, 0, 0, 0, 0, 71, 69, 68, 70, 33, 35, 34, 32
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 3, 2, 1, 0, 25, 26, 27, 24, 21, 22, 23, 20,
+		0, 0, 0, 0, 0, 0, 0, 0, 39, 36, 38, 37, 66, 65, 67, 64
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_FDr(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 4, 5, 6, 7, 11, 10, 9, 8, 18, 17, 16, 19,
+		0, 0, 0, 0, 0, 0, 0, 0, 33, 35, 32, 34, 69, 71, 68, 70
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 7, 6, 5, 4, 8, 9, 10, 11, 16, 19, 18, 17,
+		0, 0, 0, 0, 0, 0, 0, 0, 34, 32, 35, 33, 70, 68, 71, 69
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_FLr(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 23, 20, 21, 22, 18, 17, 16, 19, 10, 11, 8, 9,
+		0, 0, 0, 0, 0, 0, 0, 0, 69, 71, 70, 68, 35, 33, 32, 34
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 2, 3, 0, 1, 27, 24, 25, 26, 20, 23, 22, 21,
+		0, 0, 0, 0, 0, 0, 0, 0, 38, 37, 39, 36, 67, 64, 66, 65
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_BUr(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 7, 6, 5, 4, 8, 9, 10, 11, 16, 19, 18, 17,
+		0, 0, 0, 0, 0, 0, 0, 0, 34, 32, 35, 33, 70, 68, 71, 69
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 4, 5, 6, 7, 11, 10, 9, 8, 18, 17, 16, 19,
+		0, 0, 0, 0, 0, 0, 0, 0, 33, 35, 32, 34, 69, 71, 68, 70
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_BRr(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 22, 21, 20, 23, 19, 16, 17, 18, 8, 9, 10, 11,
+		0, 0, 0, 0, 0, 0, 0, 0, 68, 70, 71, 69, 34, 32, 33, 35
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 0, 1, 2, 3, 24, 27, 26, 25, 23, 20, 21, 22,
+		0, 0, 0, 0, 0, 0, 0, 0, 37, 38, 36, 39, 64, 67, 65, 66
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_BDr(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 5, 4, 7, 6, 9, 8, 11, 10, 19, 16, 17, 18,
+		0, 0, 0, 0, 0, 0, 0, 0, 32, 34, 33, 35, 68, 70, 69, 71
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 5, 4, 7, 6, 9, 8, 11, 10, 19, 16, 17, 18,
+		0, 0, 0, 0, 0, 0, 0, 0, 32, 34, 33, 35, 68, 70, 69, 71
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_BLr(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 20, 23, 22, 21, 16, 19, 18, 17, 9, 8, 11, 10,
+		0, 0, 0, 0, 0, 0, 0, 0, 70, 68, 69, 71, 32, 34, 35, 33
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 1, 0, 3, 2, 26, 25, 24, 27, 22, 21, 20, 23,
+		0, 0, 0, 0, 0, 0, 0, 0, 36, 39, 37, 38, 65, 66, 64, 67
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_UFm(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 10, 11, 8, 9, 6, 7, 4, 5, 3, 2, 1, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 1, 0, 7, 6, 5, 4
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 10, 11, 8, 9, 6, 7, 4, 5, 3, 2, 1, 0,
+		0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 1, 0, 7, 6, 5, 4
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_ULm(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 25, 26, 27, 24, 3, 2, 1, 0, 7, 6, 5, 4,
+		0, 0, 0, 0, 0, 0, 0, 0, 7, 6, 4, 5, 2, 3, 1, 0
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 25, 26, 27, 24, 3, 2, 1, 0, 7, 6, 5, 4,
+		0, 0, 0, 0, 0, 0, 0, 0, 7, 6, 4, 5, 2, 3, 1, 0
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_UBm(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 8, 9, 10, 11, 7, 6, 5, 4, 2, 3, 0, 1,
+		0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 0, 1, 6, 7, 4, 5
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 8, 9, 10, 11, 7, 6, 5, 4, 2, 3, 0, 1,
+		0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 0, 1, 6, 7, 4, 5
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_URm(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 27, 24, 25, 26, 2, 3, 0, 1, 6, 7, 4, 5,
+		0, 0, 0, 0, 0, 0, 0, 0, 6, 7, 5, 4, 3, 2, 0, 1
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 27, 24, 25, 26, 2, 3, 0, 1, 6, 7, 4, 5,
+		0, 0, 0, 0, 0, 0, 0, 0, 6, 7, 5, 4, 3, 2, 0, 1
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_DFm(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 11, 10, 9, 8, 4, 5, 6, 7, 0, 1, 2, 3,
+		0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 2, 5, 4, 7, 6
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 11, 10, 9, 8, 4, 5, 6, 7, 0, 1, 2, 3,
+		0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 2, 5, 4, 7, 6
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_DLm(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 26, 25, 24, 27, 1, 0, 3, 2, 4, 5, 6, 7,
+		0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 7, 6, 1, 0, 2, 3
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 24, 27, 26, 25, 0, 1, 2, 3, 5, 4, 7, 6,
+		0, 0, 0, 0, 0, 0, 0, 0, 5, 4, 6, 7, 0, 1, 3, 2
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_DBm(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 9, 8, 11, 10, 5, 4, 7, 6, 1, 0, 3, 2,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 9, 8, 11, 10, 5, 4, 7, 6, 1, 0, 3, 2,
+		0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_DRm(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 24, 27, 26, 25, 0, 1, 2, 3, 5, 4, 7, 6,
+		0, 0, 0, 0, 0, 0, 0, 0, 5, 4, 6, 7, 0, 1, 3, 2
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 26, 25, 24, 27, 1, 0, 3, 2, 4, 5, 6, 7,
+		0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 7, 6, 1, 0, 2, 3
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_RUm(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 3, 2, 1, 0, 24, 27, 26, 25, 20, 23, 22, 21,
+		0, 0, 0, 0, 0, 0, 0, 0, 35, 32, 34, 33, 70, 69, 71, 68
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 22, 21, 20, 23, 18, 17, 16, 19, 11, 10, 9, 8,
+		0, 0, 0, 0, 0, 0, 0, 0, 33, 35, 34, 32, 71, 69, 68, 70
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_RFm(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 18, 17, 16, 19, 23, 20, 21, 22, 24, 27, 26, 25,
+		0, 0, 0, 0, 0, 0, 0, 0, 69, 70, 71, 68, 35, 32, 33, 34
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 18, 17, 16, 19, 23, 20, 21, 22, 24, 27, 26, 25,
+		0, 0, 0, 0, 0, 0, 0, 0, 37, 38, 39, 36, 67, 64, 65, 66
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_RDm(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 1, 0, 3, 2, 27, 24, 25, 26, 23, 20, 21, 22,
+		0, 0, 0, 0, 0, 0, 0, 0, 32, 35, 33, 34, 69, 70, 68, 71
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 23, 20, 21, 22, 19, 16, 17, 18, 9, 8, 11, 10,
+		0, 0, 0, 0, 0, 0, 0, 0, 32, 34, 35, 33, 70, 68, 69, 71
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_RBm(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 16, 19, 18, 17, 20, 23, 22, 21, 27, 24, 25, 26,
+		0, 0, 0, 0, 0, 0, 0, 0, 70, 69, 68, 71, 32, 35, 34, 33
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 19, 16, 17, 18, 22, 21, 20, 23, 26, 25, 24, 27,
+		0, 0, 0, 0, 0, 0, 0, 0, 36, 39, 38, 37, 66, 65, 64, 67
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_LUm(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 2, 3, 0, 1, 26, 25, 24, 27, 21, 22, 23, 20,
+		0, 0, 0, 0, 0, 0, 0, 0, 34, 33, 35, 32, 71, 68, 70, 69
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 20, 23, 22, 21, 17, 18, 19, 16, 10, 11, 8, 9,
+		0, 0, 0, 0, 0, 0, 0, 0, 35, 33, 32, 34, 69, 71, 70, 68
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_LFm(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 17, 18, 19, 16, 21, 22, 23, 20, 25, 26, 27, 24,
+		0, 0, 0, 0, 0, 0, 0, 0, 71, 68, 69, 70, 33, 34, 35, 32
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 17, 18, 19, 16, 21, 22, 23, 20, 25, 26, 27, 24,
+		0, 0, 0, 0, 0, 0, 0, 0, 39, 36, 37, 38, 65, 66, 67, 64
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_LDm(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 0, 1, 2, 3, 25, 26, 27, 24, 22, 21, 20, 23,
+		0, 0, 0, 0, 0, 0, 0, 0, 33, 34, 32, 35, 68, 71, 69, 70
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 21, 22, 23, 20, 16, 19, 18, 17, 8, 9, 10, 11,
+		0, 0, 0, 0, 0, 0, 0, 0, 34, 32, 33, 35, 68, 70, 71, 69
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_LBm(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 19, 16, 17, 18, 22, 21, 20, 23, 26, 25, 24, 27,
+		0, 0, 0, 0, 0, 0, 0, 0, 68, 71, 70, 69, 34, 33, 32, 35
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 16, 19, 18, 17, 20, 23, 22, 21, 27, 24, 25, 26,
+		0, 0, 0, 0, 0, 0, 0, 0, 38, 37, 36, 39, 64, 67, 66, 65
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_FUm(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 7, 6, 5, 4, 11, 10, 9, 8, 17, 18, 19, 16,
+		0, 0, 0, 0, 0, 0, 0, 0, 39, 37, 38, 36, 67, 65, 66, 64
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 7, 6, 5, 4, 11, 10, 9, 8, 17, 18, 19, 16,
+		0, 0, 0, 0, 0, 0, 0, 0, 71, 69, 70, 68, 35, 33, 34, 32
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_FRm(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 20, 23, 22, 21, 17, 18, 19, 16, 10, 11, 8, 9,
+		0, 0, 0, 0, 0, 0, 0, 0, 67, 65, 64, 66, 37, 39, 38, 36
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 2, 3, 0, 1, 26, 25, 24, 27, 21, 22, 23, 20,
+		0, 0, 0, 0, 0, 0, 0, 0, 66, 65, 67, 64, 39, 36, 38, 37
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_FDm(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 5, 4, 7, 6, 10, 11, 8, 9, 18, 17, 16, 19,
+		0, 0, 0, 0, 0, 0, 0, 0, 37, 39, 36, 38, 65, 67, 64, 66
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 6, 7, 4, 5, 9, 8, 11, 10, 16, 19, 18, 17,
+		0, 0, 0, 0, 0, 0, 0, 0, 70, 68, 71, 69, 34, 32, 35, 33
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_FLm(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 22, 21, 20, 23, 18, 17, 16, 19, 11, 10, 9, 8,
+		0, 0, 0, 0, 0, 0, 0, 0, 65, 67, 66, 64, 39, 37, 36, 38
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 3, 2, 1, 0, 24, 27, 26, 25, 20, 23, 22, 21,
+		0, 0, 0, 0, 0, 0, 0, 0, 67, 64, 66, 65, 38, 37, 39, 36
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_BUm(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 6, 7, 4, 5, 9, 8, 11, 10, 16, 19, 18, 17,
+		0, 0, 0, 0, 0, 0, 0, 0, 38, 36, 39, 37, 66, 64, 67, 65
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 5, 4, 7, 6, 10, 11, 8, 9, 18, 17, 16, 19,
+		0, 0, 0, 0, 0, 0, 0, 0, 69, 71, 68, 70, 33, 35, 32, 34
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_BRm(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 23, 20, 21, 22, 19, 16, 17, 18, 9, 8, 11, 10,
+		0, 0, 0, 0, 0, 0, 0, 0, 64, 66, 67, 65, 38, 36, 37, 39
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 1, 0, 3, 2, 27, 24, 25, 26, 23, 20, 21, 22,
+		0, 0, 0, 0, 0, 0, 0, 0, 64, 67, 65, 66, 37, 38, 36, 39
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_BDm(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 4, 5, 6, 7, 8, 9, 10, 11, 19, 16, 17, 18,
+		0, 0, 0, 0, 0, 0, 0, 0, 36, 38, 37, 39, 64, 66, 65, 67
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 4, 5, 6, 7, 8, 9, 10, 11, 19, 16, 17, 18,
+		0, 0, 0, 0, 0, 0, 0, 0, 68, 70, 69, 71, 32, 34, 33, 35
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_BLm(cube_fast_t c)
+{
+	cube_fast_t ret;
+
+	cube_fast_t tn = _mm256_set_epi8(
+		0, 0, 0, 0, 21, 22, 23, 20, 16, 19, 18, 17, 8, 9, 10, 11,
+		0, 0, 0, 0, 0, 0, 0, 0, 66, 64, 65, 67, 36, 38, 39, 37
+	);
+	cube_fast_t ti = _mm256_set_epi8(
+		0, 0, 0, 0, 0, 1, 2, 3, 25, 26, 27, 24, 22, 21, 20, 23,
+		0, 0, 0, 0, 0, 0, 0, 0, 65, 66, 64, 67, 36, 39, 37, 38
+	);
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static cube_fast_t
+cubetofast(cube_t a)
+{
+	uint8_t aux[32];
+
+	memset(aux, 0, 32);
+	memcpy(aux, &a.corner, 8);
+	memcpy(aux + 16, &a.edge, 12);
+
+	return _mm256_loadu_si256((__m256i_u *)&aux);
+}
+
+static cube_t
+fasttocube(cube_fast_t c)
+{
+	cube_t a;
+	uint8_t aux[32];
+
+	_mm256_storeu_si256((__m256i_u *)aux, c);
+	memcpy(&a.corner, aux, 8);
+	memcpy(&a.edge, aux + 16, 12);
+
+	return a;
+}
+
+static inline bool
+equal_fast(cube_fast_t c1, cube_fast_t c2)
+{
+	uint32_t mask;
+	__m256i cmp;
+
+	cmp = _mm256_cmpeq_epi8(c1, c2);
+	mask = _mm256_movemask_epi8(cmp);
+
+	return mask == 0xffffffffU;
+}
+
+static inline cube_fast_t
+invertco_fast(cube_fast_t c)
+{
+        cube_fast_t co, shleft, shright, summed, newco, cleanco, ret;
+
+        co = _mm256_and_si256(c, _co2_avx2);
+        shleft = _mm256_slli_epi32(co, 1);
+        shright = _mm256_srli_epi32(co, 1);
+        summed = _mm256_or_si256(shleft, shright);
+        newco = _mm256_and_si256(summed, _co2_avx2);
+        cleanco = _mm256_xor_si256(c, co);
+        ret = _mm256_or_si256(cleanco, newco);
+
+        return ret;
+}
+
+static inline cube_fast_t
+inverse_fast(cube_fast_t c)
+{
+	/* Method taken from Andrew Skalski's vcube[1]. The addition sequence
+	 * was generated using [2].
+	 * [1] https://github.com/Voltara/vcube
+	 * [2] http://wwwhomes.uni-bielefeld.de/achim/addition_chain.html
+	 */
+	cube_fast_t v3, vi, vo, vp, ret;
+
+	v3 = _mm256_shuffle_epi8(c, c);
+	v3 = _mm256_shuffle_epi8(v3, c);
+	vi = _mm256_shuffle_epi8(v3, v3);
+	vi = _mm256_shuffle_epi8(vi, vi);
+	vi = _mm256_shuffle_epi8(vi, vi);
+	vi = _mm256_shuffle_epi8(vi, v3);
+	vi = _mm256_shuffle_epi8(vi, vi);
+	vi = _mm256_shuffle_epi8(vi, vi);
+	vi = _mm256_shuffle_epi8(vi, vi);
+	vi = _mm256_shuffle_epi8(vi, vi);
+	vi = _mm256_shuffle_epi8(vi, c);
+	vi = _mm256_shuffle_epi8(vi, vi);
+	vi = _mm256_shuffle_epi8(vi, vi);
+	vi = _mm256_shuffle_epi8(vi, vi);
+	vi = _mm256_shuffle_epi8(vi, vi);
+	vi = _mm256_shuffle_epi8(vi, vi);
+	vi = _mm256_shuffle_epi8(vi, v3);
+	vi = _mm256_shuffle_epi8(vi, vi);
+	vi = _mm256_shuffle_epi8(vi, c);
+
+	vo = _mm256_and_si256(c, _mm256_or_si256(_eo_avx2, _co2_avx2));
+	vo = _mm256_shuffle_epi8(vo, vi);
+	vp = _mm256_andnot_si256(_mm256_or_si256(_eo_avx2, _co2_avx2), vi);
+	ret = _mm256_or_si256(vp, vo);
+	
+	return invertco_fast(ret);
+}
+
+static inline cube_fast_t
+compose_fast(cube_fast_t c1, cube_fast_t c2)
+{
+	cube_fast_t ret;
+
+	cube_fast_t s, eo2, ed, co1, co2, aux, auy1, auy2, auz1, auz2, coclean;
+
+	eo2 = _mm256_and_si256(c2, _eo_avx2);
+	s = _mm256_shuffle_epi8(c1, c2);
+	ed = _mm256_xor_si256(s, eo2);
+	co1 = _mm256_and_si256(s, _co2_avx2);
+	co2 = _mm256_and_si256(c2, _co2_avx2);
+	aux = _mm256_add_epi8(co1, co2);
+	auy1 = _mm256_add_epi8(aux, _cocw_avx2);
+	auy2 = _mm256_srli_epi32(auy1, 2);
+	auz1 = _mm256_add_epi8(aux, auy2);
+	auz2 = _mm256_and_si256(auz1, _co2_avx2);
+	coclean = _mm256_andnot_si256(_co2_avx2, ed);
+	ret = _mm256_or_si256(coclean, auz2);
+
+	return ret;
+}
+
+static inline int64_t
+coord_fast_eo(cube_fast_t c)
+{
+	cube_fast_t eo, shifted;
+	int64_t mask;
+
+	eo = _mm256_and_si256(c, _eo_avx2);
+	shifted = _mm256_slli_epi32(eo, 3);
+	mask = _mm256_movemask_epi8(shifted);
+
+	return mask >> 17;
+}
+
+
+/******************************************************************************
+Section: portable fast methods
+
+This section contains performance-critical methods that do not use
+advanced CPU instructions. They are used as an alternative to the ones
+in the previous section(s) for unsupported architectures.
+******************************************************************************/
+
+#else
+
+typedef cube_t cube_fast_t;
+
+#define PERM4(r, i, j, k, l) \
+	aux = r[i];          \
+	r[i] = r[l];         \
+	r[l] = r[k];         \
+	r[k] = r[j];         \
+	r[j] = aux;
+#define PERM22(r, i, j, k, l) \
+	aux = r[i];           \
+	r[i] = r[j];          \
+	r[j] = aux;           \
+	aux = r[k];           \
+	r[k] = r[l];          \
+	r[l] = aux;
+#define CO(a, b)                             \
+	aux = (a & _cobits) + (b & _cobits); \
+	auy = (aux + _ctwist_cw) >> 2U;      \
+	auz = (aux + auy) & _cobits2;        \
+	a = (a & _pbits) | auz;
+#define CO4(r, i, j, k, l)    \
+	CO(r[i], _ctwist_cw)  \
+	CO(r[j], _ctwist_cw)  \
+	CO(r[k], _ctwist_ccw) \
+	CO(r[l], _ctwist_ccw)
+#define EO4(r, i, j, k, l) \
+	r[i] ^= _eobit;    \
+	r[j] ^= _eobit;    \
+	r[k] ^= _eobit;    \
+	r[l] ^= _eobit;
+
+static const cube_fast_t zero_fast = { .corner = {0}, .edge = {0} };
+
+static cube_fast_t cubetofast(cube_t);
+static cube_t fasttocube(cube_fast_t);
+static inline bool equal_fast(cube_fast_t, cube_fast_t);
+static inline cube_fast_t invertco_fast(cube_fast_t);
+static inline cube_fast_t inverse_fast(cube_fast_t);
+static inline cube_fast_t compose_fast(cube_fast_t, cube_fast_t);
+
+static inline cube_fast_t
+_move_U(cube_fast_t c)
+{
+	uint8_t aux;
+	cube_fast_t ret = c;
+
+	PERM4(ret.edge, _e_uf, _e_ul, _e_ub, _e_ur)
+	PERM4(ret.corner, _c_ufr, _c_ufl, _c_ubl, _c_ubr)
+
+	return ret;
+}
+
+static inline cube_fast_t
+_move_U2(cube_fast_t c)
+{
+	uint8_t aux;
+	cube_fast_t ret = c;
+
+	PERM22(ret.edge, _e_uf, _e_ub, _e_ul, _e_ur)
+	PERM22(ret.corner, _c_ufr, _c_ubl, _c_ufl, _c_ubr)
+
+	return ret;
+}
+
+static inline cube_fast_t
+_move_U3(cube_fast_t c)
+{
+	uint8_t aux;
+	cube_fast_t ret = c;
+
+	PERM4(ret.edge, _e_uf, _e_ur, _e_ub, _e_ul)
+	PERM4(ret.corner, _c_ufr, _c_ubr, _c_ubl, _c_ufl)
+
+	return ret;
+}
+
+static inline cube_fast_t
+_move_D(cube_fast_t c)
+{
+	uint8_t aux;
+	cube_fast_t ret = c;
+
+	PERM4(ret.edge, _e_df, _e_dr, _e_db, _e_dl)
+	PERM4(ret.corner, _c_dfr, _c_dbr, _c_dbl, _c_dfl)
+
+	return ret;
+}
+
+static inline cube_fast_t
+_move_D2(cube_fast_t c)
+{
+	uint8_t aux;
+	cube_fast_t ret = c;
+
+	PERM22(ret.edge, _e_df, _e_db, _e_dr, _e_dl)
+	PERM22(ret.corner, _c_dfr, _c_dbl, _c_dbr, _c_dfl)
+
+	return ret;
+}
+
+static inline cube_fast_t
+_move_D3(cube_fast_t c)
+{
+	uint8_t aux;
+	cube_fast_t ret = c;
+
+	PERM4(ret.edge, _e_df, _e_dl, _e_db, _e_dr)
+	PERM4(ret.corner, _c_dfr, _c_dfl, _c_dbl, _c_dbr)
+
+	return ret;
+}
+
+static inline cube_fast_t
+_move_R(cube_fast_t c)
+{
+	uint8_t aux, auy, auz;
+	cube_fast_t ret = c;
+
+	PERM4(ret.edge, _e_ur, _e_br, _e_dr, _e_fr)
+	PERM4(ret.corner, _c_ufr, _c_ubr, _c_dbr, _c_dfr)
+
+	CO4(ret.corner, _c_ubr, _c_dfr, _c_ufr, _c_dbr)
+
+	return ret;
+}
+
+static inline cube_fast_t
+_move_R2(cube_fast_t c)
+{
+	uint8_t aux;
+	cube_fast_t ret = c;
+
+	PERM22(ret.edge, _e_ur, _e_dr, _e_fr, _e_br)
+	PERM22(ret.corner, _c_ufr, _c_dbr, _c_ubr, _c_dfr)
+
+	return ret;
+}
+
+static inline cube_fast_t
+_move_R3(cube_fast_t c)
+{
+	uint8_t aux, auy, auz;
+	cube_fast_t ret = c;
+
+	PERM4(ret.edge, _e_ur, _e_fr, _e_dr, _e_br)
+	PERM4(ret.corner, _c_ufr, _c_dfr, _c_dbr, _c_ubr)
+
+	CO4(ret.corner, _c_ubr, _c_dfr, _c_ufr, _c_dbr)
+
+	return ret;
+}
+
+static inline cube_fast_t
+_move_L(cube_fast_t c)
+{
+	uint8_t aux, auy, auz;
+	cube_fast_t ret = c;
+
+	PERM4(ret.edge, _e_ul, _e_fl, _e_dl, _e_bl)
+	PERM4(ret.corner, _c_ufl, _c_dfl, _c_dbl, _c_ubl)
+
+	CO4(ret.corner, _c_ufl, _c_dbl, _c_dfl, _c_ubl)
+
+	return ret;
+}
+
+static inline cube_fast_t
+_move_L2(cube_fast_t c)
+{
+	uint8_t aux;
+	cube_fast_t ret = c;
+
+	PERM22(ret.edge, _e_ul, _e_dl, _e_fl, _e_bl)
+	PERM22(ret.corner, _c_ufl, _c_dbl, _c_ubl, _c_dfl)
+
+	return ret;
+}
+
+static inline cube_fast_t
+_move_L3(cube_fast_t c)
+{
+	uint8_t aux, auy, auz;
+	cube_fast_t ret = c;
+
+	PERM4(ret.edge, _e_ul, _e_bl, _e_dl, _e_fl)
+	PERM4(ret.corner, _c_ufl, _c_ubl, _c_dbl, _c_dfl)
+
+	CO4(ret.corner, _c_ufl, _c_dbl, _c_dfl, _c_ubl)
+
+	return ret;
+}
+
+static inline cube_fast_t
+_move_F(cube_fast_t c)
+{
+	uint8_t aux, auy, auz;
+	cube_fast_t ret = c;
+
+	PERM4(ret.edge, _e_uf, _e_fr, _e_df, _e_fl)
+	PERM4(ret.corner, _c_ufr, _c_dfr, _c_dfl, _c_ufl)
+
+	EO4(ret.edge, _e_uf, _e_fr, _e_df, _e_fl)
+	CO4(ret.corner, _c_ufr, _c_dfl, _c_dfr, _c_ufl)
+
+	return ret;
+}
+
+static inline cube_fast_t
+_move_F2(cube_fast_t c)
+{
+	uint8_t aux;
+	cube_fast_t ret = c;
+
+	PERM22(ret.edge, _e_uf, _e_df, _e_fr, _e_fl)
+	PERM22(ret.corner, _c_ufr, _c_dfl, _c_ufl, _c_dfr)
+
+	return ret;
+}
+
+static inline cube_fast_t
+_move_F3(cube_fast_t c)
+{
+	uint8_t aux, auy, auz;
+	cube_fast_t ret = c;
+
+	PERM4(ret.edge, _e_uf, _e_fl, _e_df, _e_fr)
+	PERM4(ret.corner, _c_ufr, _c_ufl, _c_dfl, _c_dfr)
+
+	EO4(ret.edge, _e_uf, _e_fr, _e_df, _e_fl)
+	CO4(ret.corner, _c_ufr, _c_dfl, _c_dfr, _c_ufl)
+
+	return ret;
+}
+
+static inline cube_fast_t
+_move_B(cube_fast_t c)
+{
+	uint8_t aux, auy, auz;
+	cube_fast_t ret = c;
+
+	PERM4(ret.edge, _e_ub, _e_bl, _e_db, _e_br)
+	PERM4(ret.corner, _c_ubr, _c_ubl, _c_dbl, _c_dbr)
+
+	EO4(ret.edge, _e_ub, _e_br, _e_db, _e_bl)
+	CO4(ret.corner, _c_ubl, _c_dbr, _c_dbl, _c_ubr)
+
+	return ret;
+}
+
+static inline cube_fast_t
+_move_B2(cube_fast_t c)
+{
+	uint8_t aux;
+	cube_fast_t ret = c;
+
+	PERM22(ret.edge, _e_ub, _e_db, _e_br, _e_bl)
+	PERM22(ret.corner, _c_ubr, _c_dbl, _c_ubl, _c_dbr)
+
+	return ret;
+}
+
+static inline cube_fast_t
+_move_B3(cube_fast_t c)
+{
+	uint8_t aux, auy, auz;
+	cube_fast_t ret = c;
+
+	PERM4(ret.edge, _e_ub, _e_br, _e_db, _e_bl)
+	PERM4(ret.corner, _c_ubr, _c_dbr, _c_dbl, _c_ubl)
+
+	EO4(ret.edge, _e_ub, _e_br, _e_db, _e_bl)
+	CO4(ret.corner, _c_ubl, _c_dbr, _c_dbl, _c_ubr)
+
+	return ret;
+}
+
+static inline cube_fast_t
+invertco_fast(cube_fast_t c)
+{
+	uint8_t i, piece, orien;
+	cube_fast_t ret;
+
+	ret = c;
+	for (i = 0; i < 8; i++) {
+		piece = c.corner[i];
+		orien = ((piece << 1) | (piece >> 1)) & _cobits2;
+		ret.corner[i] = (piece & _pbits) | orien;
+	}
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_UFr(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {0, 1, 2, 3, 4, 5, 6, 7},
+		.edge = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}
+	};
+	cube_fast_t ti = {
+		.corner = {0, 1, 2, 3, 4, 5, 6, 7},
+		.edge = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_ULr(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {4, 5, 7, 6, 1, 0, 2, 3},
+		.edge = {5, 4, 7, 6, 0, 1, 2, 3, 25, 26, 27, 24}
+	};
+	cube_fast_t ti = {
+		.corner = {5, 4, 6, 7, 0, 1, 3, 2},
+		.edge = {4, 5, 6, 7, 1, 0, 3, 2, 27, 24, 25, 26}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_UBr(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {1, 0, 3, 2, 5, 4, 7, 6},
+		.edge = {1, 0, 3, 2, 5, 4, 7, 6, 10, 11, 8, 9}
+	};
+	cube_fast_t ti = {
+		.corner = {1, 0, 3, 2, 5, 4, 7, 6},
+		.edge = {1, 0, 3, 2, 5, 4, 7, 6, 10, 11, 8, 9}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_URr(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {5, 4, 6, 7, 0, 1, 3, 2},
+		.edge = {4, 5, 6, 7, 1, 0, 3, 2, 27, 24, 25, 26}
+	};
+	cube_fast_t ti = {
+		.corner = {4, 5, 7, 6, 1, 0, 2, 3},
+		.edge = {5, 4, 7, 6, 0, 1, 2, 3, 25, 26, 27, 24}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_DFr(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {2, 3, 0, 1, 6, 7, 4, 5},
+		.edge = {3, 2, 1, 0, 6, 7, 4, 5, 9, 8, 11, 10}
+	};
+	cube_fast_t ti = {
+		.corner = {2, 3, 0, 1, 6, 7, 4, 5},
+		.edge = {3, 2, 1, 0, 6, 7, 4, 5, 9, 8, 11, 10}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_DLr(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {7, 6, 4, 5, 2, 3, 1, 0},
+		.edge = {6, 7, 4, 5, 2, 3, 0, 1, 26, 25, 24, 27}
+	};
+	cube_fast_t ti = {
+		.corner = {7, 6, 4, 5, 2, 3, 1, 0},
+		.edge = {6, 7, 4, 5, 2, 3, 0, 1, 26, 25, 24, 27}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_DBr(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {3, 2, 1, 0, 7, 6, 5, 4},
+		.edge = {2, 3, 0, 1, 7, 6, 5, 4, 11, 10, 9, 8}
+	};
+	cube_fast_t ti = {
+		.corner = {3, 2, 1, 0, 7, 6, 5, 4},
+		.edge = {2, 3, 0, 1, 7, 6, 5, 4, 11, 10, 9, 8}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_DRr(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {6, 7, 5, 4, 3, 2, 0, 1},
+		.edge = {7, 6, 5, 4, 3, 2, 1, 0, 24, 27, 26, 25}
+	};
+	cube_fast_t ti = {
+		.corner = {6, 7, 5, 4, 3, 2, 0, 1},
+		.edge = {7, 6, 5, 4, 3, 2, 1, 0, 24, 27, 26, 25}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_RUr(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {64, 67, 65, 66, 37, 38, 36, 39},
+		.edge = {20, 23, 22, 21, 24, 27, 26, 25, 0, 1, 2, 3}
+	};
+	cube_fast_t ti = {
+		.corner = {32, 34, 35, 33, 70, 68, 69, 71},
+		.edge = {8, 9, 10, 11, 16, 19, 18, 17, 20, 23, 22, 21}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_RFr(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {38, 37, 36, 39, 64, 67, 66, 65},
+		.edge = {24, 27, 26, 25, 23, 20, 21, 22, 19, 16, 17, 18}
+	};
+	cube_fast_t ti = {
+		.corner = {36, 39, 38, 37, 66, 65, 64, 67},
+		.edge = {25, 26, 27, 24, 21, 22, 23, 20, 16, 19, 18, 17}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_RDr(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {67, 64, 66, 65, 38, 37, 39, 36},
+		.edge = {23, 20, 21, 22, 27, 24, 25, 26, 2, 3, 0, 1}
+	};
+	cube_fast_t ti = {
+		.corner = {33, 35, 34, 32, 71, 69, 68, 70},
+		.edge = {10, 11, 8, 9, 17, 18, 19, 16, 21, 22, 23, 20}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_RBr(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {37, 38, 39, 36, 67, 64, 65, 66},
+		.edge = {27, 24, 25, 26, 20, 23, 22, 21, 17, 18, 19, 16}
+	};
+	cube_fast_t ti = {
+		.corner = {37, 38, 39, 36, 67, 64, 65, 66},
+		.edge = {27, 24, 25, 26, 20, 23, 22, 21, 17, 18, 19, 16}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_LUr(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {65, 66, 64, 67, 36, 39, 37, 38},
+		.edge = {21, 22, 23, 20, 26, 25, 24, 27, 1, 0, 3, 2}
+	};
+	cube_fast_t ti = {
+		.corner = {34, 32, 33, 35, 68, 70, 71, 69},
+		.edge = {9, 8, 11, 10, 19, 16, 17, 18, 22, 21, 20, 23}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_LFr(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {36, 39, 38, 37, 66, 65, 64, 67},
+		.edge = {25, 26, 27, 24, 21, 22, 23, 20, 16, 19, 18, 17}
+	};
+	cube_fast_t ti = {
+		.corner = {38, 37, 36, 39, 64, 67, 66, 65},
+		.edge = {24, 27, 26, 25, 23, 20, 21, 22, 19, 16, 17, 18}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_LDr(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {66, 65, 67, 64, 39, 36, 38, 37},
+		.edge = {22, 21, 20, 23, 25, 26, 27, 24, 3, 2, 1, 0}
+	};
+	cube_fast_t ti = {
+		.corner = {35, 33, 32, 34, 69, 71, 70, 68},
+		.edge = {11, 10, 9, 8, 18, 17, 16, 19, 23, 20, 21, 22}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_LBr(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {39, 36, 37, 38, 65, 66, 67, 64},
+		.edge = {26, 25, 24, 27, 22, 21, 20, 23, 18, 17, 16, 19}
+	};
+	cube_fast_t ti = {
+		.corner = {39, 36, 37, 38, 65, 66, 67, 64},
+		.edge = {26, 25, 24, 27, 22, 21, 20, 23, 18, 17, 16, 19}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_FUr(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {68, 70, 69, 71, 32, 34, 33, 35},
+		.edge = {16, 19, 18, 17, 9, 8, 11, 10, 5, 4, 7, 6}
+	};
+	cube_fast_t ti = {
+		.corner = {68, 70, 69, 71, 32, 34, 33, 35},
+		.edge = {16, 19, 18, 17, 9, 8, 11, 10, 5, 4, 7, 6}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_FRr(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {32, 34, 35, 33, 70, 68, 69, 71},
+		.edge = {8, 9, 10, 11, 16, 19, 18, 17, 20, 23, 22, 21}
+	};
+	cube_fast_t ti = {
+		.corner = {64, 67, 65, 66, 37, 38, 36, 39},
+		.edge = {20, 23, 22, 21, 24, 27, 26, 25, 0, 1, 2, 3}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_FDr(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {70, 68, 71, 69, 34, 32, 35, 33},
+		.edge = {19, 16, 17, 18, 8, 9, 10, 11, 7, 6, 5, 4}
+	};
+	cube_fast_t ti = {
+		.corner = {69, 71, 68, 70, 33, 35, 32, 34},
+		.edge = {17, 18, 19, 16, 11, 10, 9, 8, 4, 5, 6, 7}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_FLr(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {34, 32, 33, 35, 68, 70, 71, 69},
+		.edge = {9, 8, 11, 10, 19, 16, 17, 18, 22, 21, 20, 23}
+	};
+	cube_fast_t ti = {
+		.corner = {65, 66, 64, 67, 36, 39, 37, 38},
+		.edge = {21, 22, 23, 20, 26, 25, 24, 27, 1, 0, 3, 2}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_BUr(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {69, 71, 68, 70, 33, 35, 32, 34},
+		.edge = {17, 18, 19, 16, 11, 10, 9, 8, 4, 5, 6, 7}
+	};
+	cube_fast_t ti = {
+		.corner = {70, 68, 71, 69, 34, 32, 35, 33},
+		.edge = {19, 16, 17, 18, 8, 9, 10, 11, 7, 6, 5, 4}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_BRr(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {35, 33, 32, 34, 69, 71, 70, 68},
+		.edge = {11, 10, 9, 8, 18, 17, 16, 19, 23, 20, 21, 22}
+	};
+	cube_fast_t ti = {
+		.corner = {66, 65, 67, 64, 39, 36, 38, 37},
+		.edge = {22, 21, 20, 23, 25, 26, 27, 24, 3, 2, 1, 0}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_BDr(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {71, 69, 70, 68, 35, 33, 34, 32},
+		.edge = {18, 17, 16, 19, 10, 11, 8, 9, 6, 7, 4, 5}
+	};
+	cube_fast_t ti = {
+		.corner = {71, 69, 70, 68, 35, 33, 34, 32},
+		.edge = {18, 17, 16, 19, 10, 11, 8, 9, 6, 7, 4, 5}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_BLr(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {33, 35, 34, 32, 71, 69, 68, 70},
+		.edge = {10, 11, 8, 9, 17, 18, 19, 16, 21, 22, 23, 20}
+	};
+	cube_fast_t ti = {
+		.corner = {67, 64, 66, 65, 38, 37, 39, 36},
+		.edge = {23, 20, 21, 22, 27, 24, 25, 26, 2, 3, 0, 1}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_UFm(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {4, 5, 6, 7, 0, 1, 2, 3},
+		.edge = {0, 1, 2, 3, 5, 4, 7, 6, 9, 8, 11, 10}
+	};
+	cube_fast_t ti = {
+		.corner = {4, 5, 6, 7, 0, 1, 2, 3},
+		.edge = {0, 1, 2, 3, 5, 4, 7, 6, 9, 8, 11, 10}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_ULm(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {0, 1, 3, 2, 5, 4, 6, 7},
+		.edge = {4, 5, 6, 7, 0, 1, 2, 3, 24, 27, 26, 25}
+	};
+	cube_fast_t ti = {
+		.corner = {0, 1, 3, 2, 5, 4, 6, 7},
+		.edge = {4, 5, 6, 7, 0, 1, 2, 3, 24, 27, 26, 25}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_UBm(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {5, 4, 7, 6, 1, 0, 3, 2},
+		.edge = {1, 0, 3, 2, 4, 5, 6, 7, 11, 10, 9, 8}
+	};
+	cube_fast_t ti = {
+		.corner = {5, 4, 7, 6, 1, 0, 3, 2},
+		.edge = {1, 0, 3, 2, 4, 5, 6, 7, 11, 10, 9, 8}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_URm(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {1, 0, 2, 3, 4, 5, 7, 6},
+		.edge = {5, 4, 7, 6, 1, 0, 3, 2, 26, 25, 24, 27}
+	};
+	cube_fast_t ti = {
+		.corner = {1, 0, 2, 3, 4, 5, 7, 6},
+		.edge = {5, 4, 7, 6, 1, 0, 3, 2, 26, 25, 24, 27}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_DFm(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {6, 7, 4, 5, 2, 3, 0, 1},
+		.edge = {3, 2, 1, 0, 7, 6, 5, 4, 8, 9, 10, 11}
+	};
+	cube_fast_t ti = {
+		.corner = {6, 7, 4, 5, 2, 3, 0, 1},
+		.edge = {3, 2, 1, 0, 7, 6, 5, 4, 8, 9, 10, 11}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_DLm(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {3, 2, 0, 1, 6, 7, 5, 4},
+		.edge = {7, 6, 5, 4, 2, 3, 0, 1, 27, 24, 25, 26}
+	};
+	cube_fast_t ti = {
+		.corner = {2, 3, 1, 0, 7, 6, 4, 5},
+		.edge = {6, 7, 4, 5, 3, 2, 1, 0, 25, 26, 27, 24}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_DBm(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {7, 6, 5, 4, 3, 2, 1, 0},
+		.edge = {2, 3, 0, 1, 6, 7, 4, 5, 10, 11, 8, 9}
+	};
+	cube_fast_t ti = {
+		.corner = {7, 6, 5, 4, 3, 2, 1, 0},
+		.edge = {2, 3, 0, 1, 6, 7, 4, 5, 10, 11, 8, 9}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_DRm(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {2, 3, 1, 0, 7, 6, 4, 5},
+		.edge = {6, 7, 4, 5, 3, 2, 1, 0, 25, 26, 27, 24}
+	};
+	cube_fast_t ti = {
+		.corner = {3, 2, 0, 1, 6, 7, 5, 4},
+		.edge = {7, 6, 5, 4, 2, 3, 0, 1, 27, 24, 25, 26}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_RUm(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {68, 71, 69, 70, 33, 34, 32, 35},
+		.edge = {21, 22, 23, 20, 25, 26, 27, 24, 0, 1, 2, 3}
+	};
+	cube_fast_t ti = {
+		.corner = {70, 68, 69, 71, 32, 34, 35, 33},
+		.edge = {8, 9, 10, 11, 19, 16, 17, 18, 23, 20, 21, 22}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_RFm(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {34, 33, 32, 35, 68, 71, 70, 69},
+		.edge = {25, 26, 27, 24, 22, 21, 20, 23, 19, 16, 17, 18}
+	};
+	cube_fast_t ti = {
+		.corner = {66, 65, 64, 67, 36, 39, 38, 37},
+		.edge = {25, 26, 27, 24, 22, 21, 20, 23, 19, 16, 17, 18}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_RDm(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {71, 68, 70, 69, 34, 33, 35, 32},
+		.edge = {22, 21, 20, 23, 26, 25, 24, 27, 2, 3, 0, 1}
+	};
+	cube_fast_t ti = {
+		.corner = {71, 69, 68, 70, 33, 35, 34, 32},
+		.edge = {10, 11, 8, 9, 18, 17, 16, 19, 22, 21, 20, 23}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_RBm(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {33, 34, 35, 32, 71, 68, 69, 70},
+		.edge = {26, 25, 24, 27, 21, 22, 23, 20, 17, 18, 19, 16}
+	};
+	cube_fast_t ti = {
+		.corner = {67, 64, 65, 66, 37, 38, 39, 36},
+		.edge = {27, 24, 25, 26, 23, 20, 21, 22, 18, 17, 16, 19}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_LUm(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {69, 70, 68, 71, 32, 35, 33, 34},
+		.edge = {20, 23, 22, 21, 27, 24, 25, 26, 1, 0, 3, 2}
+	};
+	cube_fast_t ti = {
+		.corner = {68, 70, 71, 69, 34, 32, 33, 35},
+		.edge = {9, 8, 11, 10, 16, 19, 18, 17, 21, 22, 23, 20}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_LFm(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {32, 35, 34, 33, 70, 69, 68, 71},
+		.edge = {24, 27, 26, 25, 20, 23, 22, 21, 16, 19, 18, 17}
+	};
+	cube_fast_t ti = {
+		.corner = {64, 67, 66, 65, 38, 37, 36, 39},
+		.edge = {24, 27, 26, 25, 20, 23, 22, 21, 16, 19, 18, 17}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_LDm(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {70, 69, 71, 68, 35, 32, 34, 33},
+		.edge = {23, 20, 21, 22, 24, 27, 26, 25, 3, 2, 1, 0}
+	};
+	cube_fast_t ti = {
+		.corner = {69, 71, 70, 68, 35, 33, 32, 34},
+		.edge = {11, 10, 9, 8, 17, 18, 19, 16, 20, 23, 22, 21}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_LBm(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {35, 32, 33, 34, 69, 70, 71, 68},
+		.edge = {27, 24, 25, 26, 23, 20, 21, 22, 18, 17, 16, 19}
+	};
+	cube_fast_t ti = {
+		.corner = {65, 66, 67, 64, 39, 36, 37, 38},
+		.edge = {26, 25, 24, 27, 21, 22, 23, 20, 17, 18, 19, 16}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_FUm(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {64, 66, 65, 67, 36, 38, 37, 39},
+		.edge = {16, 19, 18, 17, 8, 9, 10, 11, 4, 5, 6, 7}
+	};
+	cube_fast_t ti = {
+		.corner = {32, 34, 33, 35, 68, 70, 69, 71},
+		.edge = {16, 19, 18, 17, 8, 9, 10, 11, 4, 5, 6, 7}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_FRm(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {36, 38, 39, 37, 66, 64, 65, 67},
+		.edge = {9, 8, 11, 10, 16, 19, 18, 17, 21, 22, 23, 20}
+	};
+	cube_fast_t ti = {
+		.corner = {37, 38, 36, 39, 64, 67, 65, 66},
+		.edge = {20, 23, 22, 21, 27, 24, 25, 26, 1, 0, 3, 2}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_FDm(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {66, 64, 67, 65, 38, 36, 39, 37},
+		.edge = {19, 16, 17, 18, 9, 8, 11, 10, 6, 7, 4, 5}
+	};
+	cube_fast_t ti = {
+		.corner = {33, 35, 32, 34, 69, 71, 68, 70},
+		.edge = {17, 18, 19, 16, 10, 11, 8, 9, 5, 4, 7, 6}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_FLm(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {38, 36, 37, 39, 64, 66, 67, 65},
+		.edge = {8, 9, 10, 11, 19, 16, 17, 18, 23, 20, 21, 22}
+	};
+	cube_fast_t ti = {
+		.corner = {36, 39, 37, 38, 65, 66, 64, 67},
+		.edge = {21, 22, 23, 20, 25, 26, 27, 24, 0, 1, 2, 3}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_BUm(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {65, 67, 64, 66, 37, 39, 36, 38},
+		.edge = {17, 18, 19, 16, 10, 11, 8, 9, 5, 4, 7, 6}
+	};
+	cube_fast_t ti = {
+		.corner = {34, 32, 35, 33, 70, 68, 71, 69},
+		.edge = {19, 16, 17, 18, 9, 8, 11, 10, 6, 7, 4, 5}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_BRm(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {39, 37, 36, 38, 65, 67, 66, 64},
+		.edge = {10, 11, 8, 9, 18, 17, 16, 19, 22, 21, 20, 23}
+	};
+	cube_fast_t ti = {
+		.corner = {39, 36, 38, 37, 66, 65, 67, 64},
+		.edge = {22, 21, 20, 23, 26, 25, 24, 27, 2, 3, 0, 1}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_BDm(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {67, 65, 66, 64, 39, 37, 38, 36},
+		.edge = {18, 17, 16, 19, 11, 10, 9, 8, 7, 6, 5, 4}
+	};
+	cube_fast_t ti = {
+		.corner = {35, 33, 34, 32, 71, 69, 70, 68},
+		.edge = {18, 17, 16, 19, 11, 10, 9, 8, 7, 6, 5, 4}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static inline cube_fast_t
+_trans_BLm(cube_fast_t c)
+{
+	cube_fast_t ret;
+	cube_fast_t tn = {
+		.corner = {37, 39, 38, 36, 67, 65, 64, 66},
+		.edge = {11, 10, 9, 8, 17, 18, 19, 16, 20, 23, 22, 21}
+	};
+	cube_fast_t ti = {
+		.corner = {38, 37, 39, 36, 67, 64, 66, 65},
+		.edge = {23, 20, 21, 22, 24, 27, 26, 25, 3, 2, 1, 0}
+	};
+
+	ret = compose_fast(tn, c);
+	ret = compose_fast(ret, ti);
+	ret = invertco_fast(ret);
+
+	return ret;
+}
+
+static cube_fast_t
+cubetofast(cube_t cube)
+{
+	cube_fast_t fast;
+	memcpy(&fast, &cube, sizeof(cube_fast_t));
+	return fast;
+}
+
+static cube_t
+fasttocube(cube_fast_t fast)
+{
+	cube_t cube;
+	memcpy(&cube, &fast, sizeof(cube_fast_t));
+	return cube;
+}
+
+static inline bool
+equal_fast(cube_fast_t c1, cube_fast_t c2)
+{
+	uint8_t i;
+	bool ret;
+
+	ret = true;
+	for (i = 0; i < 8; i++)
+		ret = ret && c1.corner[i] == c2.corner[i];
+	for (i = 0; i < 12; i++)
+		ret = ret && c1.edge[i] == c2.edge[i];
+
+	return ret;
+}
+
+static inline cube_fast_t
+inverse_fast(cube_fast_t cube)
+{
+	cube_fast_t ret;
+	uint8_t i, piece, orien;
+
+	ret = zero_fast;
+
+	for (i = 0; i < 12; i++) {
+		piece = cube.edge[i];
+		orien = piece & _eobit;
+		ret.edge[piece & _pbits] = i | orien;
+	}
+
+	for (i = 0; i < 8; i++) {
+		piece = cube.corner[i];
+		orien = ((piece << 1) | (piece >> 1)) & _cobits2;
+		ret.corner[piece & _pbits] = i | orien;
+	}
+
+	return ret;
+}
+
+static inline cube_fast_t
+compose_fast(cube_fast_t c1, cube_fast_t c2)
+{
+	cube_fast_t ret;
+	uint8_t i, piece1, piece2, p, orien, aux, auy;
+
+	ret = zero_fast;
+
+	for (i = 0; i < 12; i++) {
+		piece2 = c2.edge[i];
+		p = piece2 & _pbits;
+		piece1 = c1.edge[p];
+		orien = (piece2 ^ piece1) & _eobit;
+		ret.edge[i] = (piece1 & _pbits) | orien;
+	}
+
+	for (i = 0; i < 8; i++) {
+		piece2 = c2.corner[i];
+		p = piece2 & _pbits;
+		piece1 = c1.corner[p];
+		aux = (piece2 & _cobits) + (piece1 & _cobits);
+		auy = (aux + _ctwist_cw) >> 2U;
+		orien = (aux + auy) & _cobits2;
+		ret.corner[i] = (piece1 & _pbits) | orien;
+	}
+
+	return ret;
+}
+
+static inline int64_t
+coord_fast_eo(cube_fast_t cube)
+{
+	int i, p;
+	int64_t ret;
+
+	ret = 0;
+	for (i = 1, p = 1; i < 12; i++, p *= 2)
+		ret += p * (cube.edge[i] >> 4);
+
+	return ret;
+}
+
+#endif
+
+/******************************************************************************
+Section: generic methods
+
+This section contains generic functionality, including the public functions.
+Some of these routines depend on the efficient functions implemented in the
+previous sections, while some other operate directly on the cube.
+******************************************************************************/
+
 static uint8_t readco(char *);
 static uint8_t readcp(char *);
 static uint8_t readeo(char *);
 static uint8_t readep(char *);
-static cube_array_t readcube_array(format_t, char *);
 static int permsign(uint8_t *, int);
-static cube_array_t readcube_array_H48(char *);
-static void writecube_array_AVX(cube_array_t, char *);
-static void writecube_array_H48(cube_array_t, char *);
+static cube_t readcube_H48(char *);
+static void writecube_AVX(cube_t, char *);
+static void writecube_H48(cube_t, char *);
 static int writepiece_SRC(uint8_t, char *);
-static void writecube_array_SRC(cube_array_t, char *);
+static void writecube_SRC(cube_t, char *);
 static uint8_t readmove(char);
 static uint8_t readmodifier(char);
+static uint8_t readtrans(char *);
+static void writemoves(uint8_t *, int, char *);
+static void writetrans(uint8_t, char *);
+static cube_fast_t transform(cube_fast_t, uint8_t);
+static cube_fast_t move(cube_fast_t, uint8_t);
 
-cube_array_t _solvedcube_array = {
-	.c = {0, 1, 2, 3, 4, 5, 6, 7},
-	.e = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}
+static cube_t zero = { .corner = {0}, .edge = {0} };
+static cube_t solved = {
+	.corner = {0, 1, 2, 3, 4, 5, 6, 7},
+	.edge = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}
 };
-cube_array_t _zerocube_array = { .e = {0}, .c = {0} };
 
-static bool
-equal_array(cube_array_t c1, cube_array_t c2)
+cube_t
+solvedcube(void)
+{
+	return solved;
+}
+
+bool
+equal(cube_t c1, cube_t c2)
 {
 	int i;
 	bool ret;
 
 	ret = true;
 	for (i = 0; i < 8; i++)
-		ret = ret && c1.c[i] == c2.c[i];
+		ret = ret && c1.corner[i] == c2.corner[i];
 	for (i = 0; i < 12; i++)
-		ret = ret && c1.e[i] == c2.e[i];
+		ret = ret && c1.edge[i] == c2.edge[i];
 
 	return ret;
 }
 
-static bool
-iserror_array(cube_array_t arr)
+bool
+iserror(cube_t cube)
 {
-	return equal_array(arr, _zerocube_array);
+	return equal(cube, zero);
 }
 
 static uint8_t
@@ -349,12 +3021,12 @@ readep(char *str)
 	return _error;
 }
 
-static cube_array_t
-readcube_array_H48(char *buf)
+static cube_t
+readcube_H48(char *buf)
 {
 	int i;
 	uint8_t piece, orient;
-	cube_array_t ret = {0};
+	cube_t ret = {0};
 	char *b;
 	
 	b = buf;
@@ -363,44 +3035,41 @@ readcube_array_H48(char *buf)
 		while (*b == ' ' || *b == '\t' || *b == '\n')
 			b++;
 		if ((piece = readep(b)) == _error)
-			return _zerocube_array;
+			return zero;
 		b += 2;
 		if ((orient = readeo(b)) == _error)
-			return _zerocube_array;
+			return zero;
 		b++;
-		ret.e[i] = piece | orient;
+		ret.edge[i] = piece | orient;
 	}
 	for (i = 0; i < 8; i++) {
 		while (*b == ' ' || *b == '\t' || *b == '\n')
 			b++;
 		if ((piece = readcp(b)) == _error)
-			return _zerocube_array;
+			return zero;
 		b += 3;
 		if ((orient = readco(b)) == _error)
-			return _zerocube_array;
+			return zero;
 		b++;
-		ret.c[i] = piece | orient;
+		ret.corner[i] = piece | orient;
 	}
 
 	return ret;
 }
 
-cube_array_t
-readcube_array(format_t format, char *buf)
+cube_t
+readcube(char *format, char *buf)
 {
-	cube_array_t arr;
+	cube_t cube;
 
-	switch (format) {
-	case H48:
-		arr = readcube_array_H48(buf);
-		break;
-	default:
+	if (!strcmp(format, "H48")) {
+		cube = readcube_H48(buf);
+	} else {
 		DBG_LOG("Cannot read cube in the given format\n");
-		return _zerocube_array;
+		cube = zero;
 	}
 
-	DBG_ASSERT(!iserror_array(arr), arr, "readcube error\n");
-	return arr;
+	return cube;
 }
 
 
@@ -428,7 +3097,7 @@ writepiece_SRC(uint8_t piece, char *buf)
 }
 
 static void
-writecube_array_AVX(cube_array_t cube, char *buf)
+writecube_AVX(cube_t cube, char *buf)
 {
 	int i, ptr;
 	uint8_t piece;
@@ -437,7 +3106,7 @@ writecube_array_AVX(cube_array_t cube, char *buf)
 	ptr = 30;
 
 	for (i = 11; i >= 0; i--) {
-		piece = cube.e[i];
+		piece = cube.edge[i];
 		ptr += writepiece_SRC(piece, buf + ptr);
 	}
 
@@ -445,7 +3114,7 @@ writecube_array_AVX(cube_array_t cube, char *buf)
 	ptr += 25;
 
 	for (i = 7; i >= 0; i--) {
-		piece = cube.c[i];
+		piece = cube.corner[i];
 		ptr += writepiece_SRC(piece, buf + ptr);
 	}
 
@@ -453,13 +3122,13 @@ writecube_array_AVX(cube_array_t cube, char *buf)
 }
 
 static void
-writecube_array_H48(cube_array_t cube, char *buf)
+writecube_H48(cube_t cube, char *buf)
 {
 	uint8_t piece, perm, orient;
 	int i;
 
 	for (i = 0; i < 12; i++) {
-		piece = cube.e[i];
+		piece = cube.edge[i];
 		perm = piece & _pbits;
 		orient = (piece & _eobit) >> _eoshift;
 		buf[4*i    ] = edgestr[perm][0];
@@ -468,7 +3137,7 @@ writecube_array_H48(cube_array_t cube, char *buf)
 		buf[4*i + 3] = ' ';
 	}
 	for (i = 0; i < 8; i++) {
-		piece = cube.c[i];
+		piece = cube.corner[i];
 		perm = piece & _pbits;
 		orient = (piece & _cobits) >> _coshift;
 		buf[48 + 5*i    ] = cornerstr[perm][0];
@@ -482,24 +3151,24 @@ writecube_array_H48(cube_array_t cube, char *buf)
 }
 
 static void
-writecube_array_SRC(cube_array_t cube, char *buf)
+writecube_SRC(cube_t cube, char *buf)
 {
 	int i, ptr;
 	uint8_t piece;
 
-	memcpy(buf, "{\n\t.c = {", 9);
-	ptr = 9;
+	memcpy(buf, "{\n\t.corner = {", 14);
+	ptr = 14;
 
 	for (i = 0; i < 8; i++) {
-		piece = cube.c[i];
+		piece = cube.corner[i];
 		ptr += writepiece_SRC(piece, buf + ptr);
 	}
 
-	memcpy(buf+ptr-2, "},\n\t.e = {", 10);
-	ptr += 8;
+	memcpy(buf+ptr-2, "},\n\t.edge = {", 13);
+	ptr += 11;
 
 	for (i = 0; i < 12; i++) {
-		piece = cube.e[i];
+		piece = cube.edge[i];
 		ptr += writepiece_SRC(piece, buf + ptr);
 	}
 
@@ -507,27 +3176,23 @@ writecube_array_SRC(cube_array_t cube, char *buf)
 }
 
 void
-writecube_array(format_t format, cube_array_t a, char *buf)
+writecube(char *format, cube_t cube, char *buf)
 {
 	char *errormsg;
 	size_t len;
 
-	if (!isconsistent_array(a)) {
+	if (!isconsistent(cube)) {
 		errormsg = "ERROR: cannot write inconsistent cube";
 		goto writecube_error;
 	}
 
-	switch (format) {
-	case AVX:
-		writecube_array_AVX(a, buf);
-		break;
-	case H48:
-		writecube_array_H48(a, buf);
-		break;
-	case SRC:
-		writecube_array_SRC(a, buf);
-		break;
-	default:
+	if (!strcmp(format, "H48")) {
+		writecube_H48(cube, buf);
+	} else if (!strcmp(format, "SRC")) {
+		writecube_SRC(cube, buf);
+	} else if (!strcmp(format, "AVX")) {
+		writecube_AVX(cube, buf);
+	} else {
 		errormsg = "ERROR: cannot write cube in the given format";
 		goto writecube_error;
 	}
@@ -578,36 +3243,7 @@ readmodifier(char c)
 	}
 }
 
-int
-readmoves(char *buf, move_t *m)
-{
-	int n;
-	uint64_t r;
-	char *b;
-
-	for (b = buf, n = 0; *b != '\0'; b++) {
-		while (*b == ' ' || *b == '\t' || *b == '\n')
-			b++;
-		if (*b == '\0')
-			return n;
-		if ((r = readmove(*b)) == _error)
-			goto readmoves_error;
-		m[n] = (move_t)r;
-		if ((r = readmodifier(*(b+1))) != 0) {
-			b++;
-			m[n] += r;
-		}
-		n++;
-	}
-
-	return n;
-
-readmoves_error:
-	DBG_LOG("readmoves error\n");
-	return -1;
-}
-
-trans_t
+static uint8_t
 readtrans(char *buf)
 {
 	uint8_t t;
@@ -620,8 +3256,8 @@ readtrans(char *buf)
 	return _error;
 }
 
-void
-writemoves(move_t *m, int n, char *buf)
+static void
+writemoves(uint8_t *m, int n, char *buf)
 {
 	int i;
 	size_t len;
@@ -637,8 +3273,8 @@ writemoves(move_t *m, int n, char *buf)
 	*b = '\0';
 }
 
-void
-writetrans(trans_t t, char *buf)
+static void
+writetrans(uint8_t t, char *buf)
 {
 	if (t >= 48)
 		memcpy(buf, "error trans", 11);
@@ -660,8 +3296,8 @@ permsign(uint8_t *a, int n)
 	return ret % 2;
 }
 
-static bool
-isconsistent_array(cube_array_t c)
+bool
+isconsistent(cube_t cube)
 {
 	uint8_t i, p, e, piece;
 	bool found[12];
@@ -669,7 +3305,7 @@ isconsistent_array(cube_array_t c)
 	for (i = 0; i < 12; i++)
 		found[i] = false;
 	for (i = 0; i < 12; i++) {
-		piece = c.e[i];
+		piece = cube.edge[i];
 		p = piece & _pbits;
 		e = piece & _eobit;
 		if (p >= 12)
@@ -685,7 +3321,7 @@ isconsistent_array(cube_array_t c)
 	for (i = 0; i < 8; i++)
 		found[i] = false;
 	for (i = 0; i < 8; i++) {
-		piece = c.c[i];
+		piece = cube.corner[i];
 		p = piece & _pbits;
 		e = piece & _cobits;
 		if (p >= 8)
@@ -715,24 +3351,24 @@ inconsistent_co:
 }
 
 bool
-issolvable_array(cube_array_t c)
+issolvable(cube_t cube)
 {
 	uint8_t i, eo, co, piece, edges[12], corners[8];
 
-	DBG_ASSERT(isconsistent_array(c), false,
+	DBG_ASSERT(isconsistent(cube), false,
 	    "issolvable: cube is inconsistent\n");
 
 	for (i = 0; i < 12; i++)
-		edges[i] = c.e[i] & _pbits;
+		edges[i] = cube.edge[i] & _pbits;
 	for (i = 0; i < 8; i++)
-		corners[i] = c.c[i] & _pbits;
+		corners[i] = cube.corner[i] & _pbits;
 
 	if (permsign(edges, 12) != permsign(corners, 8))
 		goto issolvable_parity;
 
 	eo = 0;
 	for (i = 0; i < 12; i++) {
-		piece = c.e[i];
+		piece = cube.edge[i];
 		eo += (piece & _eobit) >> _eoshift;
 	}
 	if (eo % 2 != 0)
@@ -740,7 +3376,7 @@ issolvable_array(cube_array_t c)
 
 	co = 0;
 	for (i = 0; i < 8; i++) {
-		piece = c.c[i];
+		piece = cube.corner[i];
 		co += (piece & _cobits) >> _coshift;
 	}
 	if (co % 3 != 0)
@@ -759,2750 +3395,33 @@ issolvable_co:
 	return false;
 }
 
-/******************************************************************************
-Section: AVX2 fast methods
-
-This section contains performance-critical methods that rely on AVX2
-intructions such as routines for moving or transforming the cube.
-
-Note: the #ifdef below is closed in the next section.
-******************************************************************************/
-
-#ifdef CUBE_AVX2
-
-#define _co_avx2 _mm256_set_epi64x(0, 0, 0, 0xF0F0F0F0F0F0F0F0)
-#define _co2_avx2 _mm256_set_epi64x(0, 0, 0, 0x6060606060606060)
-#define _cocw_avx2 _mm256_set_epi64x(0, 0, 0, 0x2020202020202020)
-#define _eo_avx2 _mm256_set_epi64x(0x10101010, 0x1010101010101010, 0, 0)
-#define _zerocube _mm256_set_epi64x(0, 0, 0, 0);
-#define _solvedcube _mm256_set_epi8(                      \
-	0, 0, 0, 0, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, \
-	0, 0, 0, 0, 0, 0, 0, 0, 7, 6, 5, 4, 3, 2, 1, 0    \
-)
-	
-
-static cube_t _arraytocube(cube_array_t);
-static void _cubetoarray(cube_t, cube_array_t *);
-static inline bool _equal(cube_t, cube_t);
-static inline cube_t _invertco(cube_t);
-static inline cube_t _inverse(cube_t);
-static inline cube_t _compose(cube_t, cube_t);
-
-static inline cube_t
-_move_U(cube_t c)
-{
-	cube_t m = _mm256_set_epi8(
-		0, 0, 0, 0, 11, 10, 9, 8, 7, 6, 0, 1, 3, 2, 5, 4,
-		0, 0, 0, 0, 0, 0, 0, 0, 7, 6, 1, 0, 3, 2, 4, 5
-	);
-
-	return _mm256_shuffle_epi8(c, m);
-}
-
-static inline cube_t
-_move_U2(cube_t c)
-{
-	cube_t m = _mm256_set_epi8(
-		0, 0, 0, 0, 11, 10, 9, 8, 7, 6, 4, 5, 3, 2, 0, 1,
-		0, 0, 0, 0, 0, 0, 0, 0, 7, 6, 4, 5, 3, 2, 0, 1
-	);
-
-	return _mm256_shuffle_epi8(c, m);
-}
-
-static inline cube_t
-_move_U3(cube_t c)
-{
-	cube_t m = _mm256_set_epi8(
-		0, 0, 0, 0, 11, 10, 9, 8, 7, 6, 1, 0, 3, 2, 4, 5,
-		0, 0, 0, 0, 0, 0, 0, 0, 7, 6, 0, 1, 3, 2, 5, 4
-	);
-
-	return _mm256_shuffle_epi8(c, m);
-}
-
-static inline cube_t
-_move_D(cube_t c)
-{
-	cube_t m = _mm256_set_epi8(
-		0, 0, 0, 0, 11, 10, 9, 8, 3, 2, 5, 4, 6, 7, 1, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 5, 4, 6, 7, 1, 0
-	);
-
-	return _mm256_shuffle_epi8(c, m);
-}
-
-static inline cube_t
-_move_D2(cube_t c)
-{
-	cube_t m = _mm256_set_epi8(
-		0, 0, 0, 0, 11, 10, 9, 8, 6, 7, 5, 4, 2, 3, 1, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 6, 7, 5, 4, 2, 3, 1, 0
-	);
-
-	return _mm256_shuffle_epi8(c, m);
-}
-
-static inline cube_t
-_move_D3(cube_t c)
-{
-	cube_t m = _mm256_set_epi8(
-		0, 0, 0, 0, 11, 10, 9, 8, 2, 3, 5, 4, 7, 6, 1, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 5, 4, 7, 6, 1, 0
-	);
-
-	return _mm256_shuffle_epi8(c, m);
-}
-
-static inline cube_t
-_move_R(cube_t c)
-{
-	cube_t m = _mm256_set_epi8(
-		0, 0, 0, 0, 4, 10, 9, 7, 11, 6, 5, 8, 3, 2, 1, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 7, 35, 32, 4, 69, 2, 1, 70
-	);
-
-	return _compose(c, m);
-}
-
-static inline cube_t
-_move_R2(cube_t c)
-{
-	cube_t m = _mm256_set_epi8(
-		0, 0, 0, 0, 8, 10, 9, 11, 4, 6, 5, 7, 3, 2, 1, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 7, 5, 6, 4, 0, 2, 1, 3
-	);
-
-	return _mm256_shuffle_epi8(c, m);
-}
-
-static inline cube_t
-_move_R3(cube_t c)
-{
-	cube_t m = _mm256_set_epi8(
-		0, 0, 0, 0, 7, 10, 9, 4, 8, 6, 5, 11, 3, 2, 1, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 7, 32, 35, 4, 70, 2, 1, 69
-	);
-
-	return _compose(c, m);
-}
-
-static inline cube_t
-_move_L(cube_t c)
-{
-	cube_t m = _mm256_set_epi8(
-		0, 0, 0, 0, 11, 6, 5, 8, 7, 9, 10, 4, 3, 2, 1, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 34, 6, 5, 33, 3, 68, 71, 0
-	);
-
-	return _compose(c, m);
-}
-
-static inline cube_t
-_move_L2(cube_t c)
-{
-	cube_t m = _mm256_set_epi8(
-		0, 0, 0, 0, 11, 9, 10, 8, 7, 5, 6, 4, 3, 2, 1, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 4, 6, 5, 7, 3, 1, 2, 0
-	);
-
-	return _mm256_shuffle_epi8(c, m);
-}
-
-static inline cube_t
-_move_L3(cube_t c)
-{
-	cube_t m = _mm256_set_epi8(
-		0, 0, 0, 0, 11, 5, 6, 8, 7, 10, 9, 4, 3, 2, 1, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 33, 6, 5, 34, 3, 71, 68, 0
-	);
-
-	return _compose(c, m);
-}
-
-static inline cube_t
-_move_F(cube_t c)
-{
-	cube_t m = _mm256_set_epi8(
-		0, 0, 0, 0, 11, 10, 19, 16, 7, 6, 5, 4, 24, 2, 1, 25,
-		0, 0, 0, 0, 0, 0, 0, 0, 7, 64, 5, 66, 3, 38, 1, 36
-	);
-
-	return _compose(c, m);
-}
-
-static inline cube_t
-_move_F2(cube_t c)
-{
-	cube_t m = _mm256_set_epi8(
-		0, 0, 0, 0, 11, 10, 8, 9, 7, 6, 5, 4, 0, 2, 1, 3,
-		0, 0, 0, 0, 0, 0, 0, 0, 7, 4, 5, 6, 3, 0, 1, 2
-	);
-
-	return _mm256_shuffle_epi8(c, m);
-}
-
-static inline cube_t
-_move_F3(cube_t c)
-{
-	cube_t m = _mm256_set_epi8(
-		0, 0, 0, 0, 11, 10, 16, 19, 7, 6, 5, 4, 25, 2, 1, 24,
-		0, 0, 0, 0, 0, 0, 0, 0, 7, 66, 5, 64, 3, 36, 1, 38
-	);
-
-	return _compose(c, m);
-}
-
-static inline cube_t
-_move_B(cube_t c)
-{
-	cube_t m = _mm256_set_epi8(
-		0, 0, 0, 0, 18, 17, 9, 8, 7, 6, 5, 4, 3, 26, 27, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 65, 6, 67, 4, 39, 2, 37, 0
-	);
-
-	return _compose(c, m);
-}
-
-static inline cube_t
-_move_B2(cube_t c)
-{
-	cube_t m = _mm256_set_epi8(
-		0, 0, 0, 0, 10, 11, 9, 8, 7, 6, 5, 4, 3, 1, 2, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 5, 6, 7, 4, 1, 2, 3, 0
-	);
-
-	return _mm256_shuffle_epi8(c, m);
-}
-
-static inline cube_t
-_move_B3(cube_t c)
-{
-	cube_t m = _mm256_set_epi8(
-		0, 0, 0, 0, 17, 18, 9, 8, 7, 6, 5, 4, 3, 27, 26, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 67, 6, 65, 4, 37, 2, 39, 0
-	);
-
-	return _compose(c, m);
-}
-
-static inline cube_t
-_trans_UFr(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 7, 6, 5, 4, 3, 2, 1, 0
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 7, 6, 5, 4, 3, 2, 1, 0
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_ULr(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 24, 27, 26, 25, 3, 2, 1, 0, 6, 7, 4, 5,
-		0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 0, 1, 6, 7, 5, 4
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 26, 25, 24, 27, 2, 3, 0, 1, 7, 6, 5, 4,
-		0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 1, 0, 7, 6, 4, 5
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_UBr(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 9, 8, 11, 10, 6, 7, 4, 5, 2, 3, 0, 1,
-		0, 0, 0, 0, 0, 0, 0, 0, 6, 7, 4, 5, 2, 3, 0, 1
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 9, 8, 11, 10, 6, 7, 4, 5, 2, 3, 0, 1,
-		0, 0, 0, 0, 0, 0, 0, 0, 6, 7, 4, 5, 2, 3, 0, 1
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_URr(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 26, 25, 24, 27, 2, 3, 0, 1, 7, 6, 5, 4,
-		0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 1, 0, 7, 6, 4, 5
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 24, 27, 26, 25, 3, 2, 1, 0, 6, 7, 4, 5,
-		0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 0, 1, 6, 7, 5, 4
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_DFr(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 10, 11, 8, 9, 5, 4, 7, 6, 0, 1, 2, 3,
-		0, 0, 0, 0, 0, 0, 0, 0, 5, 4, 7, 6, 1, 0, 3, 2
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 10, 11, 8, 9, 5, 4, 7, 6, 0, 1, 2, 3,
-		0, 0, 0, 0, 0, 0, 0, 0, 5, 4, 7, 6, 1, 0, 3, 2
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_DLr(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 27, 24, 25, 26, 1, 0, 3, 2, 5, 4, 7, 6,
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 2, 5, 4, 6, 7
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 27, 24, 25, 26, 1, 0, 3, 2, 5, 4, 7, 6,
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 2, 5, 4, 6, 7
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_DBr(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 8, 9, 10, 11, 4, 5, 6, 7, 1, 0, 3, 2,
-		0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 6, 7, 0, 1, 2, 3
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 8, 9, 10, 11, 4, 5, 6, 7, 1, 0, 3, 2,
-		0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 6, 7, 0, 1, 2, 3
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_DRr(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 25, 26, 27, 24, 0, 1, 2, 3, 4, 5, 6, 7,
-		0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 3, 4, 5, 7, 6
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 25, 26, 27, 24, 0, 1, 2, 3, 4, 5, 6, 7,
-		0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 3, 4, 5, 7, 6
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_RUr(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 3, 2, 1, 0, 25, 26, 27, 24, 21, 22, 23, 20,
-		0, 0, 0, 0, 0, 0, 0, 0, 39, 36, 38, 37, 66, 65, 67, 64
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 21, 22, 23, 20, 17, 18, 19, 16, 11, 10, 9, 8,
-		0, 0, 0, 0, 0, 0, 0, 0, 71, 69, 68, 70, 33, 35, 34, 32
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_RFr(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 18, 17, 16, 19, 22, 21, 20, 23, 25, 26, 27, 24,
-		0, 0, 0, 0, 0, 0, 0, 0, 65, 66, 67, 64, 39, 36, 37, 38
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 17, 18, 19, 16, 20, 23, 22, 21, 24, 27, 26, 25,
-		0, 0, 0, 0, 0, 0, 0, 0, 67, 64, 65, 66, 37, 38, 39, 36
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_RDr(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 1, 0, 3, 2, 26, 25, 24, 27, 22, 21, 20, 23,
-		0, 0, 0, 0, 0, 0, 0, 0, 36, 39, 37, 38, 65, 66, 64, 67
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 20, 23, 22, 21, 16, 19, 18, 17, 9, 8, 11, 10,
-		0, 0, 0, 0, 0, 0, 0, 0, 70, 68, 69, 71, 32, 34, 35, 33
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_RBr(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 16, 19, 18, 17, 21, 22, 23, 20, 26, 25, 24, 27,
-		0, 0, 0, 0, 0, 0, 0, 0, 66, 65, 64, 67, 36, 39, 38, 37
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 16, 19, 18, 17, 21, 22, 23, 20, 26, 25, 24, 27,
-		0, 0, 0, 0, 0, 0, 0, 0, 66, 65, 64, 67, 36, 39, 38, 37
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_LUr(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 2, 3, 0, 1, 27, 24, 25, 26, 20, 23, 22, 21,
-		0, 0, 0, 0, 0, 0, 0, 0, 38, 37, 39, 36, 67, 64, 66, 65
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 23, 20, 21, 22, 18, 17, 16, 19, 10, 11, 8, 9,
-		0, 0, 0, 0, 0, 0, 0, 0, 69, 71, 70, 68, 35, 33, 32, 34
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_LFr(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 17, 18, 19, 16, 20, 23, 22, 21, 24, 27, 26, 25,
-		0, 0, 0, 0, 0, 0, 0, 0, 67, 64, 65, 66, 37, 38, 39, 36
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 18, 17, 16, 19, 22, 21, 20, 23, 25, 26, 27, 24,
-		0, 0, 0, 0, 0, 0, 0, 0, 65, 66, 67, 64, 39, 36, 37, 38
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_LDr(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 0, 1, 2, 3, 24, 27, 26, 25, 23, 20, 21, 22,
-		0, 0, 0, 0, 0, 0, 0, 0, 37, 38, 36, 39, 64, 67, 65, 66
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 22, 21, 20, 23, 19, 16, 17, 18, 8, 9, 10, 11,
-		0, 0, 0, 0, 0, 0, 0, 0, 68, 70, 71, 69, 34, 32, 33, 35
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_LBr(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 19, 16, 17, 18, 23, 20, 21, 22, 27, 24, 25, 26,
-		0, 0, 0, 0, 0, 0, 0, 0, 64, 67, 66, 65, 38, 37, 36, 39
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 19, 16, 17, 18, 23, 20, 21, 22, 27, 24, 25, 26,
-		0, 0, 0, 0, 0, 0, 0, 0, 64, 67, 66, 65, 38, 37, 36, 39
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_FUr(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 6, 7, 4, 5, 10, 11, 8, 9, 17, 18, 19, 16,
-		0, 0, 0, 0, 0, 0, 0, 0, 35, 33, 34, 32, 71, 69, 70, 68
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 6, 7, 4, 5, 10, 11, 8, 9, 17, 18, 19, 16,
-		0, 0, 0, 0, 0, 0, 0, 0, 35, 33, 34, 32, 71, 69, 70, 68
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_FRr(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 21, 22, 23, 20, 17, 18, 19, 16, 11, 10, 9, 8,
-		0, 0, 0, 0, 0, 0, 0, 0, 71, 69, 68, 70, 33, 35, 34, 32
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 3, 2, 1, 0, 25, 26, 27, 24, 21, 22, 23, 20,
-		0, 0, 0, 0, 0, 0, 0, 0, 39, 36, 38, 37, 66, 65, 67, 64
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_FDr(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 4, 5, 6, 7, 11, 10, 9, 8, 18, 17, 16, 19,
-		0, 0, 0, 0, 0, 0, 0, 0, 33, 35, 32, 34, 69, 71, 68, 70
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 7, 6, 5, 4, 8, 9, 10, 11, 16, 19, 18, 17,
-		0, 0, 0, 0, 0, 0, 0, 0, 34, 32, 35, 33, 70, 68, 71, 69
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_FLr(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 23, 20, 21, 22, 18, 17, 16, 19, 10, 11, 8, 9,
-		0, 0, 0, 0, 0, 0, 0, 0, 69, 71, 70, 68, 35, 33, 32, 34
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 2, 3, 0, 1, 27, 24, 25, 26, 20, 23, 22, 21,
-		0, 0, 0, 0, 0, 0, 0, 0, 38, 37, 39, 36, 67, 64, 66, 65
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_BUr(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 7, 6, 5, 4, 8, 9, 10, 11, 16, 19, 18, 17,
-		0, 0, 0, 0, 0, 0, 0, 0, 34, 32, 35, 33, 70, 68, 71, 69
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 4, 5, 6, 7, 11, 10, 9, 8, 18, 17, 16, 19,
-		0, 0, 0, 0, 0, 0, 0, 0, 33, 35, 32, 34, 69, 71, 68, 70
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_BRr(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 22, 21, 20, 23, 19, 16, 17, 18, 8, 9, 10, 11,
-		0, 0, 0, 0, 0, 0, 0, 0, 68, 70, 71, 69, 34, 32, 33, 35
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 0, 1, 2, 3, 24, 27, 26, 25, 23, 20, 21, 22,
-		0, 0, 0, 0, 0, 0, 0, 0, 37, 38, 36, 39, 64, 67, 65, 66
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_BDr(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 5, 4, 7, 6, 9, 8, 11, 10, 19, 16, 17, 18,
-		0, 0, 0, 0, 0, 0, 0, 0, 32, 34, 33, 35, 68, 70, 69, 71
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 5, 4, 7, 6, 9, 8, 11, 10, 19, 16, 17, 18,
-		0, 0, 0, 0, 0, 0, 0, 0, 32, 34, 33, 35, 68, 70, 69, 71
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_BLr(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 20, 23, 22, 21, 16, 19, 18, 17, 9, 8, 11, 10,
-		0, 0, 0, 0, 0, 0, 0, 0, 70, 68, 69, 71, 32, 34, 35, 33
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 1, 0, 3, 2, 26, 25, 24, 27, 22, 21, 20, 23,
-		0, 0, 0, 0, 0, 0, 0, 0, 36, 39, 37, 38, 65, 66, 64, 67
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_UFm(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 10, 11, 8, 9, 6, 7, 4, 5, 3, 2, 1, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 1, 0, 7, 6, 5, 4
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 10, 11, 8, 9, 6, 7, 4, 5, 3, 2, 1, 0,
-		0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 1, 0, 7, 6, 5, 4
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_ULm(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 25, 26, 27, 24, 3, 2, 1, 0, 7, 6, 5, 4,
-		0, 0, 0, 0, 0, 0, 0, 0, 7, 6, 4, 5, 2, 3, 1, 0
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 25, 26, 27, 24, 3, 2, 1, 0, 7, 6, 5, 4,
-		0, 0, 0, 0, 0, 0, 0, 0, 7, 6, 4, 5, 2, 3, 1, 0
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_UBm(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 8, 9, 10, 11, 7, 6, 5, 4, 2, 3, 0, 1,
-		0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 0, 1, 6, 7, 4, 5
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 8, 9, 10, 11, 7, 6, 5, 4, 2, 3, 0, 1,
-		0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 0, 1, 6, 7, 4, 5
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_URm(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 27, 24, 25, 26, 2, 3, 0, 1, 6, 7, 4, 5,
-		0, 0, 0, 0, 0, 0, 0, 0, 6, 7, 5, 4, 3, 2, 0, 1
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 27, 24, 25, 26, 2, 3, 0, 1, 6, 7, 4, 5,
-		0, 0, 0, 0, 0, 0, 0, 0, 6, 7, 5, 4, 3, 2, 0, 1
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_DFm(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 11, 10, 9, 8, 4, 5, 6, 7, 0, 1, 2, 3,
-		0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 2, 5, 4, 7, 6
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 11, 10, 9, 8, 4, 5, 6, 7, 0, 1, 2, 3,
-		0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 2, 5, 4, 7, 6
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_DLm(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 26, 25, 24, 27, 1, 0, 3, 2, 4, 5, 6, 7,
-		0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 7, 6, 1, 0, 2, 3
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 24, 27, 26, 25, 0, 1, 2, 3, 5, 4, 7, 6,
-		0, 0, 0, 0, 0, 0, 0, 0, 5, 4, 6, 7, 0, 1, 3, 2
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_DBm(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 9, 8, 11, 10, 5, 4, 7, 6, 1, 0, 3, 2,
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 9, 8, 11, 10, 5, 4, 7, 6, 1, 0, 3, 2,
-		0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_DRm(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 24, 27, 26, 25, 0, 1, 2, 3, 5, 4, 7, 6,
-		0, 0, 0, 0, 0, 0, 0, 0, 5, 4, 6, 7, 0, 1, 3, 2
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 26, 25, 24, 27, 1, 0, 3, 2, 4, 5, 6, 7,
-		0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 7, 6, 1, 0, 2, 3
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_RUm(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 3, 2, 1, 0, 24, 27, 26, 25, 20, 23, 22, 21,
-		0, 0, 0, 0, 0, 0, 0, 0, 35, 32, 34, 33, 70, 69, 71, 68
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 22, 21, 20, 23, 18, 17, 16, 19, 11, 10, 9, 8,
-		0, 0, 0, 0, 0, 0, 0, 0, 33, 35, 34, 32, 71, 69, 68, 70
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_RFm(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 18, 17, 16, 19, 23, 20, 21, 22, 24, 27, 26, 25,
-		0, 0, 0, 0, 0, 0, 0, 0, 69, 70, 71, 68, 35, 32, 33, 34
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 18, 17, 16, 19, 23, 20, 21, 22, 24, 27, 26, 25,
-		0, 0, 0, 0, 0, 0, 0, 0, 37, 38, 39, 36, 67, 64, 65, 66
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_RDm(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 1, 0, 3, 2, 27, 24, 25, 26, 23, 20, 21, 22,
-		0, 0, 0, 0, 0, 0, 0, 0, 32, 35, 33, 34, 69, 70, 68, 71
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 23, 20, 21, 22, 19, 16, 17, 18, 9, 8, 11, 10,
-		0, 0, 0, 0, 0, 0, 0, 0, 32, 34, 35, 33, 70, 68, 69, 71
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_RBm(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 16, 19, 18, 17, 20, 23, 22, 21, 27, 24, 25, 26,
-		0, 0, 0, 0, 0, 0, 0, 0, 70, 69, 68, 71, 32, 35, 34, 33
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 19, 16, 17, 18, 22, 21, 20, 23, 26, 25, 24, 27,
-		0, 0, 0, 0, 0, 0, 0, 0, 36, 39, 38, 37, 66, 65, 64, 67
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_LUm(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 2, 3, 0, 1, 26, 25, 24, 27, 21, 22, 23, 20,
-		0, 0, 0, 0, 0, 0, 0, 0, 34, 33, 35, 32, 71, 68, 70, 69
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 20, 23, 22, 21, 17, 18, 19, 16, 10, 11, 8, 9,
-		0, 0, 0, 0, 0, 0, 0, 0, 35, 33, 32, 34, 69, 71, 70, 68
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_LFm(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 17, 18, 19, 16, 21, 22, 23, 20, 25, 26, 27, 24,
-		0, 0, 0, 0, 0, 0, 0, 0, 71, 68, 69, 70, 33, 34, 35, 32
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 17, 18, 19, 16, 21, 22, 23, 20, 25, 26, 27, 24,
-		0, 0, 0, 0, 0, 0, 0, 0, 39, 36, 37, 38, 65, 66, 67, 64
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_LDm(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 0, 1, 2, 3, 25, 26, 27, 24, 22, 21, 20, 23,
-		0, 0, 0, 0, 0, 0, 0, 0, 33, 34, 32, 35, 68, 71, 69, 70
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 21, 22, 23, 20, 16, 19, 18, 17, 8, 9, 10, 11,
-		0, 0, 0, 0, 0, 0, 0, 0, 34, 32, 33, 35, 68, 70, 71, 69
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_LBm(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 19, 16, 17, 18, 22, 21, 20, 23, 26, 25, 24, 27,
-		0, 0, 0, 0, 0, 0, 0, 0, 68, 71, 70, 69, 34, 33, 32, 35
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 16, 19, 18, 17, 20, 23, 22, 21, 27, 24, 25, 26,
-		0, 0, 0, 0, 0, 0, 0, 0, 38, 37, 36, 39, 64, 67, 66, 65
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_FUm(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 7, 6, 5, 4, 11, 10, 9, 8, 17, 18, 19, 16,
-		0, 0, 0, 0, 0, 0, 0, 0, 39, 37, 38, 36, 67, 65, 66, 64
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 7, 6, 5, 4, 11, 10, 9, 8, 17, 18, 19, 16,
-		0, 0, 0, 0, 0, 0, 0, 0, 71, 69, 70, 68, 35, 33, 34, 32
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_FRm(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 20, 23, 22, 21, 17, 18, 19, 16, 10, 11, 8, 9,
-		0, 0, 0, 0, 0, 0, 0, 0, 67, 65, 64, 66, 37, 39, 38, 36
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 2, 3, 0, 1, 26, 25, 24, 27, 21, 22, 23, 20,
-		0, 0, 0, 0, 0, 0, 0, 0, 66, 65, 67, 64, 39, 36, 38, 37
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_FDm(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 5, 4, 7, 6, 10, 11, 8, 9, 18, 17, 16, 19,
-		0, 0, 0, 0, 0, 0, 0, 0, 37, 39, 36, 38, 65, 67, 64, 66
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 6, 7, 4, 5, 9, 8, 11, 10, 16, 19, 18, 17,
-		0, 0, 0, 0, 0, 0, 0, 0, 70, 68, 71, 69, 34, 32, 35, 33
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_FLm(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 22, 21, 20, 23, 18, 17, 16, 19, 11, 10, 9, 8,
-		0, 0, 0, 0, 0, 0, 0, 0, 65, 67, 66, 64, 39, 37, 36, 38
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 3, 2, 1, 0, 24, 27, 26, 25, 20, 23, 22, 21,
-		0, 0, 0, 0, 0, 0, 0, 0, 67, 64, 66, 65, 38, 37, 39, 36
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_BUm(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 6, 7, 4, 5, 9, 8, 11, 10, 16, 19, 18, 17,
-		0, 0, 0, 0, 0, 0, 0, 0, 38, 36, 39, 37, 66, 64, 67, 65
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 5, 4, 7, 6, 10, 11, 8, 9, 18, 17, 16, 19,
-		0, 0, 0, 0, 0, 0, 0, 0, 69, 71, 68, 70, 33, 35, 32, 34
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_BRm(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 23, 20, 21, 22, 19, 16, 17, 18, 9, 8, 11, 10,
-		0, 0, 0, 0, 0, 0, 0, 0, 64, 66, 67, 65, 38, 36, 37, 39
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 1, 0, 3, 2, 27, 24, 25, 26, 23, 20, 21, 22,
-		0, 0, 0, 0, 0, 0, 0, 0, 64, 67, 65, 66, 37, 38, 36, 39
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_BDm(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 4, 5, 6, 7, 8, 9, 10, 11, 19, 16, 17, 18,
-		0, 0, 0, 0, 0, 0, 0, 0, 36, 38, 37, 39, 64, 66, 65, 67
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 4, 5, 6, 7, 8, 9, 10, 11, 19, 16, 17, 18,
-		0, 0, 0, 0, 0, 0, 0, 0, 68, 70, 69, 71, 32, 34, 33, 35
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_BLm(cube_t c)
-{
-	cube_t ret;
-
-	cube_t tn = _mm256_set_epi8(
-		0, 0, 0, 0, 21, 22, 23, 20, 16, 19, 18, 17, 8, 9, 10, 11,
-		0, 0, 0, 0, 0, 0, 0, 0, 66, 64, 65, 67, 36, 38, 39, 37
-	);
-	cube_t ti = _mm256_set_epi8(
-		0, 0, 0, 0, 0, 1, 2, 3, 25, 26, 27, 24, 22, 21, 20, 23,
-		0, 0, 0, 0, 0, 0, 0, 0, 65, 66, 64, 67, 36, 39, 37, 38
-	);
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static cube_t
-_arraytocube(cube_array_t a)
-{
-	uint8_t aux[32];
-
-	memset(aux, 0, 32);
-	memcpy(aux, &a.c, 8);
-	memcpy(aux + 16, &a.e, 12);
-
-	return _mm256_loadu_si256((__m256i_u *)&aux);
-}
-
-static void
-_cubetoarray(cube_t c, cube_array_t *a)
-{
-	uint8_t aux[32];
-
-	_mm256_storeu_si256((__m256i_u *)aux, c);
-	memcpy(&a->c, aux, 8);
-	memcpy(&a->e, aux + 16, 12);
-}
-
-static inline bool
-_equal(cube_t c1, cube_t c2)
-{
-	uint32_t mask;
-	__m256i cmp;
-
-	cmp = _mm256_cmpeq_epi8(c1, c2);
-	mask = _mm256_movemask_epi8(cmp);
-
-	return mask == 0xffffffffU;
-}
-
-static inline cube_t
-_invertco(cube_t c)
-{
-        cube_t co, shleft, shright, summed, newco, cleanco, ret;
-
-        co = _mm256_and_si256(c, _co2_avx2);
-        shleft = _mm256_slli_epi32(co, 1);
-        shright = _mm256_srli_epi32(co, 1);
-        summed = _mm256_or_si256(shleft, shright);
-        newco = _mm256_and_si256(summed, _co2_avx2);
-        cleanco = _mm256_xor_si256(c, co);
-        ret = _mm256_or_si256(cleanco, newco);
-
-        return ret;
-}
-
-static inline cube_t
-_inverse(cube_t c)
-{
-	/* Method taken from Andrew Skalski's vcube[1]. The addition sequence
-	 * was generated using [2].
-	 * [1] https://github.com/Voltara/vcube
-	 * [2] http://wwwhomes.uni-bielefeld.de/achim/addition_chain.html
-	 */
-	cube_t v3, vi, vo, vp, ret;
-
-	v3 = _mm256_shuffle_epi8(c, c);
-	v3 = _mm256_shuffle_epi8(v3, c);
-	vi = _mm256_shuffle_epi8(v3, v3);
-	vi = _mm256_shuffle_epi8(vi, vi);
-	vi = _mm256_shuffle_epi8(vi, vi);
-	vi = _mm256_shuffle_epi8(vi, v3);
-	vi = _mm256_shuffle_epi8(vi, vi);
-	vi = _mm256_shuffle_epi8(vi, vi);
-	vi = _mm256_shuffle_epi8(vi, vi);
-	vi = _mm256_shuffle_epi8(vi, vi);
-	vi = _mm256_shuffle_epi8(vi, c);
-	vi = _mm256_shuffle_epi8(vi, vi);
-	vi = _mm256_shuffle_epi8(vi, vi);
-	vi = _mm256_shuffle_epi8(vi, vi);
-	vi = _mm256_shuffle_epi8(vi, vi);
-	vi = _mm256_shuffle_epi8(vi, vi);
-	vi = _mm256_shuffle_epi8(vi, v3);
-	vi = _mm256_shuffle_epi8(vi, vi);
-	vi = _mm256_shuffle_epi8(vi, c);
-
-	vo = _mm256_and_si256(c, _mm256_or_si256(_eo_avx2, _co2_avx2));
-	vo = _mm256_shuffle_epi8(vo, vi);
-	vp = _mm256_andnot_si256(_mm256_or_si256(_eo_avx2, _co2_avx2), vi);
-	ret = _mm256_or_si256(vp, vo);
-	
-	return _invertco(ret);
-}
-
-static inline cube_t
-_compose(cube_t c1, cube_t c2)
-{
-	cube_t ret;
-
-	cube_t s, eo2, ed, co1, co2, aux, auy1, auy2, auz1, auz2, coclean;
-
-	eo2 = _mm256_and_si256(c2, _eo_avx2);
-	s = _mm256_shuffle_epi8(c1, c2);
-	ed = _mm256_xor_si256(s, eo2);
-	co1 = _mm256_and_si256(s, _co2_avx2);
-	co2 = _mm256_and_si256(c2, _co2_avx2);
-	aux = _mm256_add_epi8(co1, co2);
-	auy1 = _mm256_add_epi8(aux, _cocw_avx2);
-	auy2 = _mm256_srli_epi32(auy1, 2);
-	auz1 = _mm256_add_epi8(aux, auy2);
-	auz2 = _mm256_and_si256(auz1, _co2_avx2);
-	coclean = _mm256_andnot_si256(_co2_avx2, ed);
-	ret = _mm256_or_si256(coclean, auz2);
-
-	return ret;
-}
-
-static inline int16_t
-_coord_eo(cube_t c)
-{
-	cube_t eo, shifted;
-	int mask;
-
-	eo = _mm256_and_si256(c, _eo_avx2);
-	shifted = _mm256_slli_epi32(eo, 3);
-	mask = _mm256_movemask_epi8(shifted);
-
-	return (int16_t)(mask >> 17);
-}
-
-
-/******************************************************************************
-Section: portable fast methods
-
-This section contains performance-critical methods that do not use
-advanced CPU instructions. They are used as an alternative to the ones
-in the previous section(s) for unsupported architectures.
-******************************************************************************/
-
-#else
-
-#define PERM4(r, i, j, k, l) \
-	aux = r[i];          \
-	r[i] = r[l];         \
-	r[l] = r[k];         \
-	r[k] = r[j];         \
-	r[j] = aux;
-#define PERM22(r, i, j, k, l) \
-	aux = r[i];           \
-	r[i] = r[j];          \
-	r[j] = aux;           \
-	aux = r[k];           \
-	r[k] = r[l];          \
-	r[l] = aux;
-#define CO(a, b)                             \
-	aux = (a & _cobits) + (b & _cobits); \
-	auy = (aux + _ctwist_cw) >> 2U;      \
-	auz = (aux + auy) & _cobits2;        \
-	a = (a & _pbits) | auz;
-#define CO4(r, i, j, k, l)    \
-	CO(r[i], _ctwist_cw)  \
-	CO(r[j], _ctwist_cw)  \
-	CO(r[k], _ctwist_ccw) \
-	CO(r[l], _ctwist_ccw)
-#define EO4(r, i, j, k, l) \
-	r[i] ^= _eobit;    \
-	r[j] ^= _eobit;    \
-	r[k] ^= _eobit;    \
-	r[l] ^= _eobit;
-
-static const cube_t _solvedcube = {
-	.c = {0, 1, 2, 3, 4, 5, 6, 7},
-	.e = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}
-};
-static const cube_t _zerocube = { .e = {0}, .c = {0} };
-
-static cube_t _arraytocube(cube_array_t);
-static void _cubetoarray(cube_t, cube_array_t *);
-static inline bool _equal(cube_t, cube_t);
-static inline cube_t _invertco(cube_t);
-static inline cube_t _inverse(cube_t);
-static inline cube_t _compose(cube_t, cube_t);
-
-static inline cube_t
-_move_U(cube_t c)
-{
-	uint8_t aux;
-	cube_t ret = c;
-
-	PERM4(ret.e, _e_uf, _e_ul, _e_ub, _e_ur)
-	PERM4(ret.c, _c_ufr, _c_ufl, _c_ubl, _c_ubr)
-
-	return ret;
-}
-
-static inline cube_t
-_move_U2(cube_t c)
-{
-	uint8_t aux;
-	cube_t ret = c;
-
-	PERM22(ret.e, _e_uf, _e_ub, _e_ul, _e_ur)
-	PERM22(ret.c, _c_ufr, _c_ubl, _c_ufl, _c_ubr)
-
-	return ret;
-}
-
-static inline cube_t
-_move_U3(cube_t c)
-{
-	uint8_t aux;
-	cube_t ret = c;
-
-	PERM4(ret.e, _e_uf, _e_ur, _e_ub, _e_ul)
-	PERM4(ret.c, _c_ufr, _c_ubr, _c_ubl, _c_ufl)
-
-	return ret;
-}
-
-static inline cube_t
-_move_D(cube_t c)
-{
-	uint8_t aux;
-	cube_t ret = c;
-
-	PERM4(ret.e, _e_df, _e_dr, _e_db, _e_dl)
-	PERM4(ret.c, _c_dfr, _c_dbr, _c_dbl, _c_dfl)
-
-	return ret;
-}
-
-static inline cube_t
-_move_D2(cube_t c)
-{
-	uint8_t aux;
-	cube_t ret = c;
-
-	PERM22(ret.e, _e_df, _e_db, _e_dr, _e_dl)
-	PERM22(ret.c, _c_dfr, _c_dbl, _c_dbr, _c_dfl)
-
-	return ret;
-}
-
-static inline cube_t
-_move_D3(cube_t c)
-{
-	uint8_t aux;
-	cube_t ret = c;
-
-	PERM4(ret.e, _e_df, _e_dl, _e_db, _e_dr)
-	PERM4(ret.c, _c_dfr, _c_dfl, _c_dbl, _c_dbr)
-
-	return ret;
-}
-
-static inline cube_t
-_move_R(cube_t c)
-{
-	uint8_t aux, auy, auz;
-	cube_t ret = c;
-
-	PERM4(ret.e, _e_ur, _e_br, _e_dr, _e_fr)
-	PERM4(ret.c, _c_ufr, _c_ubr, _c_dbr, _c_dfr)
-
-	CO4(ret.c, _c_ubr, _c_dfr, _c_ufr, _c_dbr)
-
-	return ret;
-}
-
-static inline cube_t
-_move_R2(cube_t c)
-{
-	uint8_t aux;
-	cube_t ret = c;
-
-	PERM22(ret.e, _e_ur, _e_dr, _e_fr, _e_br)
-	PERM22(ret.c, _c_ufr, _c_dbr, _c_ubr, _c_dfr)
-
-	return ret;
-}
-
-static inline cube_t
-_move_R3(cube_t c)
-{
-	uint8_t aux, auy, auz;
-	cube_t ret = c;
-
-	PERM4(ret.e, _e_ur, _e_fr, _e_dr, _e_br)
-	PERM4(ret.c, _c_ufr, _c_dfr, _c_dbr, _c_ubr)
-
-	CO4(ret.c, _c_ubr, _c_dfr, _c_ufr, _c_dbr)
-
-	return ret;
-}
-
-static inline cube_t
-_move_L(cube_t c)
-{
-	uint8_t aux, auy, auz;
-	cube_t ret = c;
-
-	PERM4(ret.e, _e_ul, _e_fl, _e_dl, _e_bl)
-	PERM4(ret.c, _c_ufl, _c_dfl, _c_dbl, _c_ubl)
-
-	CO4(ret.c, _c_ufl, _c_dbl, _c_dfl, _c_ubl)
-
-	return ret;
-}
-
-static inline cube_t
-_move_L2(cube_t c)
-{
-	uint8_t aux;
-	cube_t ret = c;
-
-	PERM22(ret.e, _e_ul, _e_dl, _e_fl, _e_bl)
-	PERM22(ret.c, _c_ufl, _c_dbl, _c_ubl, _c_dfl)
-
-	return ret;
-}
-
-static inline cube_t
-_move_L3(cube_t c)
-{
-	uint8_t aux, auy, auz;
-	cube_t ret = c;
-
-	PERM4(ret.e, _e_ul, _e_bl, _e_dl, _e_fl)
-	PERM4(ret.c, _c_ufl, _c_ubl, _c_dbl, _c_dfl)
-
-	CO4(ret.c, _c_ufl, _c_dbl, _c_dfl, _c_ubl)
-
-	return ret;
-}
-
-static inline cube_t
-_move_F(cube_t c)
-{
-	uint8_t aux, auy, auz;
-	cube_t ret = c;
-
-	PERM4(ret.e, _e_uf, _e_fr, _e_df, _e_fl)
-	PERM4(ret.c, _c_ufr, _c_dfr, _c_dfl, _c_ufl)
-
-	EO4(ret.e, _e_uf, _e_fr, _e_df, _e_fl)
-	CO4(ret.c, _c_ufr, _c_dfl, _c_dfr, _c_ufl)
-
-	return ret;
-}
-
-static inline cube_t
-_move_F2(cube_t c)
-{
-	uint8_t aux;
-	cube_t ret = c;
-
-	PERM22(ret.e, _e_uf, _e_df, _e_fr, _e_fl)
-	PERM22(ret.c, _c_ufr, _c_dfl, _c_ufl, _c_dfr)
-
-	return ret;
-}
-
-static inline cube_t
-_move_F3(cube_t c)
-{
-	uint8_t aux, auy, auz;
-	cube_t ret = c;
-
-	PERM4(ret.e, _e_uf, _e_fl, _e_df, _e_fr)
-	PERM4(ret.c, _c_ufr, _c_ufl, _c_dfl, _c_dfr)
-
-	EO4(ret.e, _e_uf, _e_fr, _e_df, _e_fl)
-	CO4(ret.c, _c_ufr, _c_dfl, _c_dfr, _c_ufl)
-
-	return ret;
-}
-
-static inline cube_t
-_move_B(cube_t c)
-{
-	uint8_t aux, auy, auz;
-	cube_t ret = c;
-
-	PERM4(ret.e, _e_ub, _e_bl, _e_db, _e_br)
-	PERM4(ret.c, _c_ubr, _c_ubl, _c_dbl, _c_dbr)
-
-	EO4(ret.e, _e_ub, _e_br, _e_db, _e_bl)
-	CO4(ret.c, _c_ubl, _c_dbr, _c_dbl, _c_ubr)
-
-	return ret;
-}
-
-static inline cube_t
-_move_B2(cube_t c)
-{
-	uint8_t aux;
-	cube_t ret = c;
-
-	PERM22(ret.e, _e_ub, _e_db, _e_br, _e_bl)
-	PERM22(ret.c, _c_ubr, _c_dbl, _c_ubl, _c_dbr)
-
-	return ret;
-}
-
-static inline cube_t
-_move_B3(cube_t c)
-{
-	uint8_t aux, auy, auz;
-	cube_t ret = c;
-
-	PERM4(ret.e, _e_ub, _e_br, _e_db, _e_bl)
-	PERM4(ret.c, _c_ubr, _c_dbr, _c_dbl, _c_ubl)
-
-	EO4(ret.e, _e_ub, _e_br, _e_db, _e_bl)
-	CO4(ret.c, _c_ubl, _c_dbr, _c_dbl, _c_ubr)
-
-	return ret;
-}
-
-static inline cube_t
-_invertco(cube_t c)
-{
-	uint8_t i, piece, orien;
-	cube_t ret;
-
-	ret = c;
-	for (i = 0; i < 8; i++) {
-		piece = c.c[i];
-		orien = ((piece << 1) | (piece >> 1)) & _cobits2;
-		ret.c[i] = (piece & _pbits) | orien;
-	}
-
-	return ret;
-}
-
-static inline cube_t
-_trans_UFr(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {0, 1, 2, 3, 4, 5, 6, 7},
-		.e = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}
-	};
-	cube_t ti = {
-		.c = {0, 1, 2, 3, 4, 5, 6, 7},
-		.e = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_ULr(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {4, 5, 7, 6, 1, 0, 2, 3},
-		.e = {5, 4, 7, 6, 0, 1, 2, 3, 25, 26, 27, 24}
-	};
-	cube_t ti = {
-		.c = {5, 4, 6, 7, 0, 1, 3, 2},
-		.e = {4, 5, 6, 7, 1, 0, 3, 2, 27, 24, 25, 26}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_UBr(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {1, 0, 3, 2, 5, 4, 7, 6},
-		.e = {1, 0, 3, 2, 5, 4, 7, 6, 10, 11, 8, 9}
-	};
-	cube_t ti = {
-		.c = {1, 0, 3, 2, 5, 4, 7, 6},
-		.e = {1, 0, 3, 2, 5, 4, 7, 6, 10, 11, 8, 9}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_URr(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {5, 4, 6, 7, 0, 1, 3, 2},
-		.e = {4, 5, 6, 7, 1, 0, 3, 2, 27, 24, 25, 26}
-	};
-	cube_t ti = {
-		.c = {4, 5, 7, 6, 1, 0, 2, 3},
-		.e = {5, 4, 7, 6, 0, 1, 2, 3, 25, 26, 27, 24}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_DFr(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {2, 3, 0, 1, 6, 7, 4, 5},
-		.e = {3, 2, 1, 0, 6, 7, 4, 5, 9, 8, 11, 10}
-	};
-	cube_t ti = {
-		.c = {2, 3, 0, 1, 6, 7, 4, 5},
-		.e = {3, 2, 1, 0, 6, 7, 4, 5, 9, 8, 11, 10}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_DLr(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {7, 6, 4, 5, 2, 3, 1, 0},
-		.e = {6, 7, 4, 5, 2, 3, 0, 1, 26, 25, 24, 27}
-	};
-	cube_t ti = {
-		.c = {7, 6, 4, 5, 2, 3, 1, 0},
-		.e = {6, 7, 4, 5, 2, 3, 0, 1, 26, 25, 24, 27}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_DBr(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {3, 2, 1, 0, 7, 6, 5, 4},
-		.e = {2, 3, 0, 1, 7, 6, 5, 4, 11, 10, 9, 8}
-	};
-	cube_t ti = {
-		.c = {3, 2, 1, 0, 7, 6, 5, 4},
-		.e = {2, 3, 0, 1, 7, 6, 5, 4, 11, 10, 9, 8}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_DRr(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {6, 7, 5, 4, 3, 2, 0, 1},
-		.e = {7, 6, 5, 4, 3, 2, 1, 0, 24, 27, 26, 25}
-	};
-	cube_t ti = {
-		.c = {6, 7, 5, 4, 3, 2, 0, 1},
-		.e = {7, 6, 5, 4, 3, 2, 1, 0, 24, 27, 26, 25}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_RUr(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {64, 67, 65, 66, 37, 38, 36, 39},
-		.e = {20, 23, 22, 21, 24, 27, 26, 25, 0, 1, 2, 3}
-	};
-	cube_t ti = {
-		.c = {32, 34, 35, 33, 70, 68, 69, 71},
-		.e = {8, 9, 10, 11, 16, 19, 18, 17, 20, 23, 22, 21}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_RFr(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {38, 37, 36, 39, 64, 67, 66, 65},
-		.e = {24, 27, 26, 25, 23, 20, 21, 22, 19, 16, 17, 18}
-	};
-	cube_t ti = {
-		.c = {36, 39, 38, 37, 66, 65, 64, 67},
-		.e = {25, 26, 27, 24, 21, 22, 23, 20, 16, 19, 18, 17}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_RDr(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {67, 64, 66, 65, 38, 37, 39, 36},
-		.e = {23, 20, 21, 22, 27, 24, 25, 26, 2, 3, 0, 1}
-	};
-	cube_t ti = {
-		.c = {33, 35, 34, 32, 71, 69, 68, 70},
-		.e = {10, 11, 8, 9, 17, 18, 19, 16, 21, 22, 23, 20}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_RBr(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {37, 38, 39, 36, 67, 64, 65, 66},
-		.e = {27, 24, 25, 26, 20, 23, 22, 21, 17, 18, 19, 16}
-	};
-	cube_t ti = {
-		.c = {37, 38, 39, 36, 67, 64, 65, 66},
-		.e = {27, 24, 25, 26, 20, 23, 22, 21, 17, 18, 19, 16}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_LUr(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {65, 66, 64, 67, 36, 39, 37, 38},
-		.e = {21, 22, 23, 20, 26, 25, 24, 27, 1, 0, 3, 2}
-	};
-	cube_t ti = {
-		.c = {34, 32, 33, 35, 68, 70, 71, 69},
-		.e = {9, 8, 11, 10, 19, 16, 17, 18, 22, 21, 20, 23}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_LFr(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {36, 39, 38, 37, 66, 65, 64, 67},
-		.e = {25, 26, 27, 24, 21, 22, 23, 20, 16, 19, 18, 17}
-	};
-	cube_t ti = {
-		.c = {38, 37, 36, 39, 64, 67, 66, 65},
-		.e = {24, 27, 26, 25, 23, 20, 21, 22, 19, 16, 17, 18}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_LDr(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {66, 65, 67, 64, 39, 36, 38, 37},
-		.e = {22, 21, 20, 23, 25, 26, 27, 24, 3, 2, 1, 0}
-	};
-	cube_t ti = {
-		.c = {35, 33, 32, 34, 69, 71, 70, 68},
-		.e = {11, 10, 9, 8, 18, 17, 16, 19, 23, 20, 21, 22}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_LBr(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {39, 36, 37, 38, 65, 66, 67, 64},
-		.e = {26, 25, 24, 27, 22, 21, 20, 23, 18, 17, 16, 19}
-	};
-	cube_t ti = {
-		.c = {39, 36, 37, 38, 65, 66, 67, 64},
-		.e = {26, 25, 24, 27, 22, 21, 20, 23, 18, 17, 16, 19}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_FUr(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {68, 70, 69, 71, 32, 34, 33, 35},
-		.e = {16, 19, 18, 17, 9, 8, 11, 10, 5, 4, 7, 6}
-	};
-	cube_t ti = {
-		.c = {68, 70, 69, 71, 32, 34, 33, 35},
-		.e = {16, 19, 18, 17, 9, 8, 11, 10, 5, 4, 7, 6}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_FRr(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {32, 34, 35, 33, 70, 68, 69, 71},
-		.e = {8, 9, 10, 11, 16, 19, 18, 17, 20, 23, 22, 21}
-	};
-	cube_t ti = {
-		.c = {64, 67, 65, 66, 37, 38, 36, 39},
-		.e = {20, 23, 22, 21, 24, 27, 26, 25, 0, 1, 2, 3}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_FDr(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {70, 68, 71, 69, 34, 32, 35, 33},
-		.e = {19, 16, 17, 18, 8, 9, 10, 11, 7, 6, 5, 4}
-	};
-	cube_t ti = {
-		.c = {69, 71, 68, 70, 33, 35, 32, 34},
-		.e = {17, 18, 19, 16, 11, 10, 9, 8, 4, 5, 6, 7}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_FLr(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {34, 32, 33, 35, 68, 70, 71, 69},
-		.e = {9, 8, 11, 10, 19, 16, 17, 18, 22, 21, 20, 23}
-	};
-	cube_t ti = {
-		.c = {65, 66, 64, 67, 36, 39, 37, 38},
-		.e = {21, 22, 23, 20, 26, 25, 24, 27, 1, 0, 3, 2}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_BUr(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {69, 71, 68, 70, 33, 35, 32, 34},
-		.e = {17, 18, 19, 16, 11, 10, 9, 8, 4, 5, 6, 7}
-	};
-	cube_t ti = {
-		.c = {70, 68, 71, 69, 34, 32, 35, 33},
-		.e = {19, 16, 17, 18, 8, 9, 10, 11, 7, 6, 5, 4}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_BRr(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {35, 33, 32, 34, 69, 71, 70, 68},
-		.e = {11, 10, 9, 8, 18, 17, 16, 19, 23, 20, 21, 22}
-	};
-	cube_t ti = {
-		.c = {66, 65, 67, 64, 39, 36, 38, 37},
-		.e = {22, 21, 20, 23, 25, 26, 27, 24, 3, 2, 1, 0}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_BDr(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {71, 69, 70, 68, 35, 33, 34, 32},
-		.e = {18, 17, 16, 19, 10, 11, 8, 9, 6, 7, 4, 5}
-	};
-	cube_t ti = {
-		.c = {71, 69, 70, 68, 35, 33, 34, 32},
-		.e = {18, 17, 16, 19, 10, 11, 8, 9, 6, 7, 4, 5}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_BLr(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {33, 35, 34, 32, 71, 69, 68, 70},
-		.e = {10, 11, 8, 9, 17, 18, 19, 16, 21, 22, 23, 20}
-	};
-	cube_t ti = {
-		.c = {67, 64, 66, 65, 38, 37, 39, 36},
-		.e = {23, 20, 21, 22, 27, 24, 25, 26, 2, 3, 0, 1}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_UFm(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {4, 5, 6, 7, 0, 1, 2, 3},
-		.e = {0, 1, 2, 3, 5, 4, 7, 6, 9, 8, 11, 10}
-	};
-	cube_t ti = {
-		.c = {4, 5, 6, 7, 0, 1, 2, 3},
-		.e = {0, 1, 2, 3, 5, 4, 7, 6, 9, 8, 11, 10}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_ULm(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {0, 1, 3, 2, 5, 4, 6, 7},
-		.e = {4, 5, 6, 7, 0, 1, 2, 3, 24, 27, 26, 25}
-	};
-	cube_t ti = {
-		.c = {0, 1, 3, 2, 5, 4, 6, 7},
-		.e = {4, 5, 6, 7, 0, 1, 2, 3, 24, 27, 26, 25}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_UBm(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {5, 4, 7, 6, 1, 0, 3, 2},
-		.e = {1, 0, 3, 2, 4, 5, 6, 7, 11, 10, 9, 8}
-	};
-	cube_t ti = {
-		.c = {5, 4, 7, 6, 1, 0, 3, 2},
-		.e = {1, 0, 3, 2, 4, 5, 6, 7, 11, 10, 9, 8}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_URm(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {1, 0, 2, 3, 4, 5, 7, 6},
-		.e = {5, 4, 7, 6, 1, 0, 3, 2, 26, 25, 24, 27}
-	};
-	cube_t ti = {
-		.c = {1, 0, 2, 3, 4, 5, 7, 6},
-		.e = {5, 4, 7, 6, 1, 0, 3, 2, 26, 25, 24, 27}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_DFm(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {6, 7, 4, 5, 2, 3, 0, 1},
-		.e = {3, 2, 1, 0, 7, 6, 5, 4, 8, 9, 10, 11}
-	};
-	cube_t ti = {
-		.c = {6, 7, 4, 5, 2, 3, 0, 1},
-		.e = {3, 2, 1, 0, 7, 6, 5, 4, 8, 9, 10, 11}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_DLm(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {3, 2, 0, 1, 6, 7, 5, 4},
-		.e = {7, 6, 5, 4, 2, 3, 0, 1, 27, 24, 25, 26}
-	};
-	cube_t ti = {
-		.c = {2, 3, 1, 0, 7, 6, 4, 5},
-		.e = {6, 7, 4, 5, 3, 2, 1, 0, 25, 26, 27, 24}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_DBm(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {7, 6, 5, 4, 3, 2, 1, 0},
-		.e = {2, 3, 0, 1, 6, 7, 4, 5, 10, 11, 8, 9}
-	};
-	cube_t ti = {
-		.c = {7, 6, 5, 4, 3, 2, 1, 0},
-		.e = {2, 3, 0, 1, 6, 7, 4, 5, 10, 11, 8, 9}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_DRm(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {2, 3, 1, 0, 7, 6, 4, 5},
-		.e = {6, 7, 4, 5, 3, 2, 1, 0, 25, 26, 27, 24}
-	};
-	cube_t ti = {
-		.c = {3, 2, 0, 1, 6, 7, 5, 4},
-		.e = {7, 6, 5, 4, 2, 3, 0, 1, 27, 24, 25, 26}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_RUm(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {68, 71, 69, 70, 33, 34, 32, 35},
-		.e = {21, 22, 23, 20, 25, 26, 27, 24, 0, 1, 2, 3}
-	};
-	cube_t ti = {
-		.c = {70, 68, 69, 71, 32, 34, 35, 33},
-		.e = {8, 9, 10, 11, 19, 16, 17, 18, 23, 20, 21, 22}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_RFm(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {34, 33, 32, 35, 68, 71, 70, 69},
-		.e = {25, 26, 27, 24, 22, 21, 20, 23, 19, 16, 17, 18}
-	};
-	cube_t ti = {
-		.c = {66, 65, 64, 67, 36, 39, 38, 37},
-		.e = {25, 26, 27, 24, 22, 21, 20, 23, 19, 16, 17, 18}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_RDm(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {71, 68, 70, 69, 34, 33, 35, 32},
-		.e = {22, 21, 20, 23, 26, 25, 24, 27, 2, 3, 0, 1}
-	};
-	cube_t ti = {
-		.c = {71, 69, 68, 70, 33, 35, 34, 32},
-		.e = {10, 11, 8, 9, 18, 17, 16, 19, 22, 21, 20, 23}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_RBm(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {33, 34, 35, 32, 71, 68, 69, 70},
-		.e = {26, 25, 24, 27, 21, 22, 23, 20, 17, 18, 19, 16}
-	};
-	cube_t ti = {
-		.c = {67, 64, 65, 66, 37, 38, 39, 36},
-		.e = {27, 24, 25, 26, 23, 20, 21, 22, 18, 17, 16, 19}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_LUm(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {69, 70, 68, 71, 32, 35, 33, 34},
-		.e = {20, 23, 22, 21, 27, 24, 25, 26, 1, 0, 3, 2}
-	};
-	cube_t ti = {
-		.c = {68, 70, 71, 69, 34, 32, 33, 35},
-		.e = {9, 8, 11, 10, 16, 19, 18, 17, 21, 22, 23, 20}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_LFm(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {32, 35, 34, 33, 70, 69, 68, 71},
-		.e = {24, 27, 26, 25, 20, 23, 22, 21, 16, 19, 18, 17}
-	};
-	cube_t ti = {
-		.c = {64, 67, 66, 65, 38, 37, 36, 39},
-		.e = {24, 27, 26, 25, 20, 23, 22, 21, 16, 19, 18, 17}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_LDm(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {70, 69, 71, 68, 35, 32, 34, 33},
-		.e = {23, 20, 21, 22, 24, 27, 26, 25, 3, 2, 1, 0}
-	};
-	cube_t ti = {
-		.c = {69, 71, 70, 68, 35, 33, 32, 34},
-		.e = {11, 10, 9, 8, 17, 18, 19, 16, 20, 23, 22, 21}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_LBm(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {35, 32, 33, 34, 69, 70, 71, 68},
-		.e = {27, 24, 25, 26, 23, 20, 21, 22, 18, 17, 16, 19}
-	};
-	cube_t ti = {
-		.c = {65, 66, 67, 64, 39, 36, 37, 38},
-		.e = {26, 25, 24, 27, 21, 22, 23, 20, 17, 18, 19, 16}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_FUm(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {64, 66, 65, 67, 36, 38, 37, 39},
-		.e = {16, 19, 18, 17, 8, 9, 10, 11, 4, 5, 6, 7}
-	};
-	cube_t ti = {
-		.c = {32, 34, 33, 35, 68, 70, 69, 71},
-		.e = {16, 19, 18, 17, 8, 9, 10, 11, 4, 5, 6, 7}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_FRm(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {36, 38, 39, 37, 66, 64, 65, 67},
-		.e = {9, 8, 11, 10, 16, 19, 18, 17, 21, 22, 23, 20}
-	};
-	cube_t ti = {
-		.c = {37, 38, 36, 39, 64, 67, 65, 66},
-		.e = {20, 23, 22, 21, 27, 24, 25, 26, 1, 0, 3, 2}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_FDm(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {66, 64, 67, 65, 38, 36, 39, 37},
-		.e = {19, 16, 17, 18, 9, 8, 11, 10, 6, 7, 4, 5}
-	};
-	cube_t ti = {
-		.c = {33, 35, 32, 34, 69, 71, 68, 70},
-		.e = {17, 18, 19, 16, 10, 11, 8, 9, 5, 4, 7, 6}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_FLm(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {38, 36, 37, 39, 64, 66, 67, 65},
-		.e = {8, 9, 10, 11, 19, 16, 17, 18, 23, 20, 21, 22}
-	};
-	cube_t ti = {
-		.c = {36, 39, 37, 38, 65, 66, 64, 67},
-		.e = {21, 22, 23, 20, 25, 26, 27, 24, 0, 1, 2, 3}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_BUm(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {65, 67, 64, 66, 37, 39, 36, 38},
-		.e = {17, 18, 19, 16, 10, 11, 8, 9, 5, 4, 7, 6}
-	};
-	cube_t ti = {
-		.c = {34, 32, 35, 33, 70, 68, 71, 69},
-		.e = {19, 16, 17, 18, 9, 8, 11, 10, 6, 7, 4, 5}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_BRm(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {39, 37, 36, 38, 65, 67, 66, 64},
-		.e = {10, 11, 8, 9, 18, 17, 16, 19, 22, 21, 20, 23}
-	};
-	cube_t ti = {
-		.c = {39, 36, 38, 37, 66, 65, 67, 64},
-		.e = {22, 21, 20, 23, 26, 25, 24, 27, 2, 3, 0, 1}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_BDm(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {67, 65, 66, 64, 39, 37, 38, 36},
-		.e = {18, 17, 16, 19, 11, 10, 9, 8, 7, 6, 5, 4}
-	};
-	cube_t ti = {
-		.c = {35, 33, 34, 32, 71, 69, 70, 68},
-		.e = {18, 17, 16, 19, 11, 10, 9, 8, 7, 6, 5, 4}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static inline cube_t
-_trans_BLm(cube_t c)
-{
-	cube_t ret;
-	cube_t tn = {
-		.c = {37, 39, 38, 36, 67, 65, 64, 66},
-		.e = {11, 10, 9, 8, 17, 18, 19, 16, 20, 23, 22, 21}
-	};
-	cube_t ti = {
-		.c = {38, 37, 39, 36, 67, 64, 66, 65},
-		.e = {23, 20, 21, 22, 24, 27, 26, 25, 3, 2, 1, 0}
-	};
-
-	ret = compose(tn, c);
-	ret = compose(ret, ti);
-	ret = _invertco(ret);
-
-	return ret;
-}
-
-static cube_t
-_arraytocube(cube_array_t a)
-{
-	cube_t c;
-	memcpy(&c, &a, sizeof(cube_t));
-	return c;
-}
-
-static void
-_cubetoarray(cube_t c, cube_array_t *a)
-{
-	memcpy(a, &c, sizeof(cube_t));
-}
-
-static inline bool
-_equal(cube_t c1, cube_t c2)
-{
-	uint8_t i;
-	bool ret;
-
-	ret = true;
-	for (i = 0; i < 8; i++)
-		ret = ret && c1.c[i] == c2.c[i];
-	for (i = 0; i < 12; i++)
-		ret = ret && c1.e[i] == c2.e[i];
-
-	return ret;
-}
-
-static inline cube_t
-_inverse(cube_t c)
-{
-	cube_t ret;
-	uint8_t i, piece, orien;
-
-	ret = _zerocube;
-
-	for (i = 0; i < 12; i++) {
-		piece = c.e[i];
-		orien = piece & _eobit;
-		ret.e[piece & _pbits] = i | orien;
-	}
-
-	for (i = 0; i < 8; i++) {
-		piece = c.c[i];
-		orien = ((piece << 1) | (piece >> 1)) & _cobits2;
-		ret.c[piece & _pbits] = i | orien;
-	}
-
-	return ret;
-}
-
-static inline cube_t
-_compose(cube_t c1, cube_t c2)
-{
-	cube_t ret;
-	uint8_t i, piece1, piece2, p, orien, aux, auy;
-
-	ret = _zerocube;
-
-	for (i = 0; i < 12; i++) {
-		piece2 = c2.e[i];
-		p = piece2 & _pbits;
-		piece1 = c1.e[p];
-		orien = (piece2 ^ piece1) & _eobit;
-		ret.e[i] = (piece1 & _pbits) | orien;
-	}
-
-	for (i = 0; i < 8; i++) {
-		piece2 = c2.c[i];
-		p = piece2 & _pbits;
-		piece1 = c1.c[p];
-		aux = (piece2 & _cobits) + (piece1 & _cobits);
-		auy = (aux + _ctwist_cw) >> 2U;
-		orien = (aux + auy) & _cobits2;
-		ret.c[i] = (piece1 & _pbits) | orien;
-	}
-
-	return ret;
-}
-
-static inline int16_t
-_coord_eo(cube_t c)
-{
-	int i, p;
-	int16_t ret;
-
-	ret = 0;
-	for (i = 1, p = 1; i < 12; i++, p *= 2)
-		ret += p * (c.e[i] >> 4);
-
-	return ret;
-}
-
-
-#endif
-
-/******************************************************************************
-Section: generic methods.
-
-This section contains functions that are based (directly or indirectly)
-on the per-architecture functions defined in the previous sections. Many
-of them are public functions from cube.h
-******************************************************************************/
-
-cube_t
-solvedcube(void)
-{
-	return _solvedcube;
-}
-
-cube_t
-readcube(format_t format, char *buf)
-{
-	cube_array_t arr = readcube_array(format, buf);
-	return _arraytocube(arr);
-}
-
-void
-writecube(format_t format, cube_t cube, char *buf)
-{
-	cube_array_t arr;
-	_cubetoarray(cube, &arr);
-	writecube_array(format, arr, buf);
-}
-
-bool
-isconsistent(cube_t c)
-{
-	cube_array_t arr;
-	_cubetoarray(c, &arr);
-	return isconsistent_array(arr);
-}
-
-bool
-issolvable(cube_t c)
-{
-	cube_array_t arr;
-	_cubetoarray(c, &arr);
-	return issolvable_array(arr);
-}
-
-bool
-iserror(cube_t c)
-{
-	cube_array_t arr;
-	_cubetoarray(c, &arr);
-	return iserror_array(arr);
-}
-
-bool
-equal(cube_t c1, cube_t c2)
-{
-	return _equal(c1, c2);
-}
-
 bool
 issolved(cube_t cube)
 {
-	return equal(cube, _solvedcube);
+	return equal(cube, solved);
 }
 
 cube_t
-move(cube_t c, move_t m)
+inverse(cube_t cube)
 {
-	DBG_ASSERT(isconsistent(c), _zerocube,
-	    "move error: inconsistent cube\n");
+	DBG_ASSERT(isconsistent(cube), zero,
+	    "inverse error: inconsistent cube\n");
 
+	return fasttocube(inverse_fast(cubetofast(cube)));
+}
+
+cube_t
+compose(cube_t c1, cube_t c2)
+{
+	DBG_ASSERT(isconsistent(c1) && isconsistent(c2),
+	    zero, "compose error: inconsistent cube\n")
+
+	return fasttocube(compose_fast(cubetofast(c1), cubetofast(c2)));
+}
+
+static cube_fast_t
+move(cube_fast_t c, uint8_t m)
+{
 	switch (m) {
 	case U:
 		return _move_U(c);
@@ -3542,34 +3461,13 @@ move(cube_t c, move_t m)
 		return _move_B3(c);
 	default:
 		DBG_LOG("mover error, unknown move\n");
-		return _zerocube;
+		return zero_fast;
 	}
 }
 
-cube_t
-inverse(cube_t c)
+static cube_fast_t
+transform(cube_fast_t c, uint8_t t)
 {
-	DBG_ASSERT(isconsistent(c), _zerocube,
-	    "inverse error: inconsistent cube\n");
-
-	return _inverse(c);
-}
-
-cube_t
-compose(cube_t c1, cube_t c2)
-{
-	DBG_ASSERT(isconsistent(c1) && isconsistent(c2),
-	    _zerocube, "compose error: inconsistent cube\n")
-
-	return _compose(c1, c2);
-}
-
-cube_t
-transform(cube_t c, trans_t t)
-{
-	DBG_ASSERT(isconsistent(c), _zerocube,
-	    "transform error: inconsistent cube\n");
-
 	switch (t) {
 	case UFr:
 		return _trans_UFr(c);
@@ -3669,39 +3567,86 @@ transform(cube_t c, trans_t t)
 		return _trans_BLm(c);
 	default:
 		DBG_LOG("transform error, unknown transformation\n");
-		return _zerocube;
+		return zero_fast;
 	}
 }
 
-int16_t
-coord_eo(cube_t c)
+cube_t
+applymoves(cube_t cube, char *buf)
 {
-	return _coord_eo(c);
+	cube_fast_t fast;
+	uint8_t r, m;
+	char *b;
+
+	DBG_ASSERT(isconsistent(cube), zero,
+	    "move error: inconsistent cube\n");
+
+	fast = cubetofast(cube);
+
+	for (b = buf; *b != '\0'; b++) {
+		while (*b == ' ' || *b == '\t' || *b == '\n')
+			b++;
+		if (*b == '\0')
+			goto readmoves_finish;
+		if ((r = readmove(*b)) == _error)
+			goto readmoves_error;
+		if ((m = readmodifier(*(b+1))) != 0)
+			b++;
+		fast = move(fast, r + m);
+	}
+
+readmoves_finish:
+	return fasttocube(fast);
+
+readmoves_error:
+	DBG_LOG("readmoves error\n");
+	return zero;
+}
+
+cube_t
+applytrans(cube_t cube, char *buf)
+{
+	cube_fast_t fast;
+	uint8_t t;
+
+	DBG_ASSERT(isconsistent(cube), zero,
+	    "transformation error: inconsistent cube\n");
+
+	t = readtrans(buf);
+	fast = cubetofast(cube);
+	fast = transform(fast, t);
+
+	return fasttocube(fast);
+}
+
+int64_t
+coord_eo(cube_t cube)
+{
+	return coord_fast_eo(cubetofast(cube));
 }
 
 /******************************************************************************
 Section: solvers
 
-This is a continuation of the generic methods section. Here you can find the
-implementation of all the solving algorithms.
+Here you can find the implementation of all the solving algorithms.
 ******************************************************************************/
 
 typedef struct {
-	cube_t cube;
+	cube_fast_t cube;
 	uint8_t depth;
 	int maxsols;
-	move_t *sols;
+	uint8_t *sols;
 	int nsols;
 	int nmoves;
-	move_t moves[20];
-	int (*estimate)(cube_t);
+	uint8_t moves[20];
+	int (*estimate)(cube_fast_t);
 } dfs_arg_t;
 
 static bool
-allowednextmove(dfs_arg_t arg, move_t m)
+allowednextmove(dfs_arg_t arg, uint8_t m)
 {
 	int n;
-	move_t mbase, l1base, l2base, maxis, l1axis, l2axis;
+	uint8_t mbase, l1base, l2base, maxis, l1axis, l2axis;
 
 	n = arg.nmoves;
 
@@ -3730,7 +3675,7 @@ solve_generic_dfs(dfs_arg_t arg)
 {
 	dfs_arg_t nextarg;
 	int bound, ret;
-	move_t m;
+	uint8_t m;
 
 	bound = arg.estimate(arg.cube);
 
@@ -3740,9 +3685,7 @@ solve_generic_dfs(dfs_arg_t arg)
 	if (bound == 0) {
 		if (arg.nmoves != arg.depth)
 			return 0;
-		memcpy(&arg.sols[arg.depth * arg.nsols],
-		       arg.moves,
-		       arg.depth * sizeof(move_t));
+		memcpy(&arg.sols[arg.depth * arg.nsols], arg.moves, arg.depth);
 		return 1;
 	}
 
@@ -3759,13 +3702,14 @@ solve_generic_dfs(dfs_arg_t arg)
 	return ret;
 }
 
+/* TODO
 int
 solve_generic(
-	cube_t cube,
+	cube_fast_t cube,
 	uint8_t depth,
 	int maxsols,
-	move_t *sols
-	int (*estimate)(cube_t),
+	uint8_t *sols,
+	int (*estimate)(cube_fast_t)
 )
 {
 	dfs_arg_t arg;
@@ -3780,9 +3724,10 @@ solve_generic(
 		.sols = sols,
 		.nsols = 0,
 		.nmoves = 0,
-		.moves = {0}
+		.moves = {0},
 		.estimate = estimate,
 	};
 
 	return solve_generic_dfs(arg);
 }
+*/

@@ -16,7 +16,7 @@ int main() {
 	int16_t result;
 
 	fgets(str, STRLENMAX, stdin);
-	cube = readcube(H48, str);
+	cube = readcube("H48", str);
 
 	result = coord_eo(cube);
 

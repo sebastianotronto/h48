@@ -12,32 +12,22 @@
 #define MOVESMAX 1000
 
 int main() {
-	char str[STRLENMAX];
-	int i, n;
-	move_t moves[MOVESMAX];
+	char movestr[STRLENMAX], cubestr[STRLENMAX];
 	cube_t cube;
 
-	fgets(str, STRLENMAX, stdin);
-	n = readmoves(str, moves);
+	fgets(movestr, STRLENMAX, stdin);
+	fgets(cubestr, STRLENMAX, stdin);
+	cube = readcube("H48", cubestr);
 
-	if (n == -1) {
-		printf("Error reading moves\n");
-		return 1;
-	}
-
-	fgets(str, STRLENMAX, stdin);
-	cube = readcube(H48, str);
-
-	for (i = 0; i < n; i++)
-		cube = move(cube, moves[i]);
+	cube = applymoves(cube, movestr);
 
 	if (iserror(cube)) {
 		printf("Error moving cube\n");
 	} else if (!issolvable(cube)) {
 		printf("Moved cube is not solvable\n");
 	} else {
-		writecube(H48, cube, str);
-		printf("%s\n", str);
+		writecube("H48", cube, cubestr);
+		printf("%s\n", cubestr);
 	}
 
 	return 0;
