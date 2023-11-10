@@ -1,0 +1,28 @@
+Benchmarks settings:
+MOVES:	100000000
+TRANS:	100000000
+COMPOSE:	100000000
+INVERSE:	100000000
+
+> moves: running benchmark...
+> moves: resulting cube, first piece: UB0
+> moves: 0.0097s
+
+> trans: running benchmark...
+> trans: resulting cube, first piece: DB0
+> trans: 20.1464s
+
+> compose: running benchmark...
+> compose: resulting cube, first piece: ERR
+> compose: 3.7322s
+
+> inverse: running benchmark...
+> inverse: resulting cube, first piece: DB0
+> inverse: 2.1003s
+
+Benchmark summary:
+moves:   100000000 moves            in 0.0097s (10259.5134 MTPS)
+trans:   100000000 transformations  in 20.1464s (4.9637 MTPS)
+compose: 100000000 compositions     in 3.7322s (26.7940 MCPS)
+inverse: 100000000 inverses         in 2.1003s (47.6116 MIPS)
+Total time: 25.9886

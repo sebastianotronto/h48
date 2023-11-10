@@ -106,50 +106,46 @@ cube_t readcube(char *format, char *buf);
 void writecube(char *format, cube_t cube, char *buf);
 
 /******************************************************************************
-Coordinates
-
-TODO description
-******************************************************************************/
-
-int64_t coord_eo(cube_t);
-
-/******************************************************************************
 Solvers
 
-The solutions are returned as a newline-separated list of characters.
+The solutions are returned as a newline-separated list of characters. Moves
+are separated by single spaces.
 
 Unless specified otherwise, all the solutions are not trivially simplifiable.
 This means that sequences like U U2 or R L R will not appear in any solution.
 Moreover, two consecutive parallel moves are always going to be sorted in
 increasing order. For example, L R2 may never appear in a solution, but R2 L
 could.
-
-Solvers return -1 in case of error, the number of solutions found otherwise.
-
-TODO NISS / INVERSE / LINEAR as a mask?
-
-All solvers take at least the following parameters, satisfying the conditions
-in square brackets:
-TODO more!
-	- cube_t cube [issolvable(cube)]: The cube to solve.
-	- uint8_t depth [depth <= 20]: The lenght of the solution.
-	- int maxsols: The maximum number of solutions to find. The solver
-	  stops when the limit is reached. If set to a negative number, all
-	  the solutions are found.
-	- move_t *ret: The array where the moves of the solutions are stored.
-	  There is no separator between different solutions; to read the
-	  solutions, use the fact that all solutions has the same length: the
-	  i-th move of the j-th solution is ret[j*depth + i].
-
-Some solvers take other parameters. See below for details.
 ******************************************************************************/
 
-/* TODO
-int solve_generic(
-	cube_t cube,
-	uint8_t depth,
-	int maxsols,
-	uint8_t *ret, // TODO change to char
-	int (*estimate)(cube_t)
+int64_t solve(
+	cube_t cube,     /* The cube to solve. Must be solvable. */
+	char *solver,    /* The solver. Supported solvers: TODO. */
+	char *options,   /* Some solvers accept extra options,
+			  * like "!filter".
+			  */
+	char *nisstype,  /* Can be "normal", "inverse", "mixed" or "linear". */
+	int8_t minmoves, /* The minimum number of moves. Must be >= 0. */
+	int8_t maxmoves, /* The maximum number of moves. If negative, the
+			  * maximum length is unlimited.
+			  */
+	int64_t maxsols, /* The maximum number of solutions. */
+	int64_t optimal, /* All solutions at most "optimal" moves from the
+			  * shortest solution (respecting minmoves) are found.
+			  * If negative, this parameter is ignored.
+			  */
+	void *data,      /* Some solvers require extra data to function
+			  * properly (for example, pruning tables). This data
+			  * can be generated with gendata(), see below.
+			  */
+	char *solutions  /* The solutions (return parameter) */
 );
-*/
+
+/* Solving n cubes optimally, one solutions per cube. Options are similar
+ * to solve().
+ */
+void multisolve(int n, cube_t *cube, char *solver, void *data, char *sols);
+
+/* Returns the number of bytes written to data, -1 in case of error.
+ * TODO: write down how much memory every solver requires. */
+int64_t gendata(char *solver, void *data);

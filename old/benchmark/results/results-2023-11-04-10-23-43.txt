@@ -1,0 +1,32 @@
+Benchmarks settings:
+MOVES:	100000000
+TRANS:	100000000
+COMP:	100000000
+INV:	100000000
+
+> moves: setting up benchmark...
+> moves: running benchmark...
+> moves: resulting cube, first piece: UF0
+> moves: 1.3434s
+
+> trans: setting up benchmark...
+> trans: running benchmark...
+> trans: resulting cube, first piece: UF0
+> trans: 1.6439s
+
+> comp: setting up benchmark...
+> comp: running benchmark...
+> comp: resulting cube, first piece: UR1
+> comp: 0.2872s
+
+> inv: setting up benchmark...
+> inv: running benchmark...
+> comp: resulting cube, first piece: DF0
+> inv: 0.6646s
+
+Benchmark summary:
+moves: 100000000 moves in 1.3434s (74.4399 MTPS)
+trans: 100000000 trans in 1.6439s (60.8320 MTPS)
+comp:  100000000 comps in 0.2872s (348.1848 MCPS)
+inv:   100000000 invs in  0.6646s (150.4726 MIPS)
+Total time: 3.9390

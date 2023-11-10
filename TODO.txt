@@ -1,43 +1,30 @@
-## Big change
+## Roadmap
 
-* Add tests for multiple moves
+See the sections below for details
 
-### More for moves
-
-* define macro to loop over moves e.g. #define FOREACHMOVE(action)
-
-### API goals:
-
-* manipulate move sequences (invert, unniss, cleanup, mirror / transform...)
-* solvers (optimal, generic, coordinates)
-* print cube (in various formats)
-* print ptables (or layout data in such a way that can be printed
-  easily, e.g. first bytes are null-terminated strig and can be
-  printed by user)
-
-### Solvers
-
-* Actually do A*, no fixed depth
-* Use threading (see below)
-* Return strings, newline separated (see nissy_ffi)
-* Instead of depth, I need the following parameters:
-  int minmoves
-  int maxmoves
-  a parameter for all solutions / nmax / optimal / -O n
-* How to make the above nicer? can it be done with a minimal
-  amount of parameters (e.g. at most 2)?
-
-### Rename to libnissy
-
-* prefix public functions with libnissy_ or something similar
-* move() that takes a string (alg) as input
+* Implement some simple solver
+* Extend cube and moves to include centers
+* More complex optimal solvers, pruning tables
+* Benchmarks
+* Multithreading (build-time option number of threads)
+* Other optimizations
+* NISS
+* Move manipulation utilities
+* Coordinate solvers and other steps
+* More output formats
+* Adapters for other languages (at least python)
+* More documentation (or keep all in cube.h?)
+* Rename to libnissy
+* Release 1.0
 
 ## Solving
 
-### Generic solver
+### Simple (slow, light) solver
 
+* Decide on API for solve() (see above)
+* solve generic becomes private, use cube_fast_t instead of cube_t
+* write simple solver based on generic
 * tests: solve full cube (max 7-8 moves?)
-* more tests: eo and other stuff
 * benchmarks
 
 ### Coordinates
@@ -110,8 +97,10 @@ What about symcoord?
 
 ## Improvements and other things
 
+* Rename to libnissy (prefix public functions with nissy_?)
 * add centers (and moves...)
 * for CO: move to bits 5 and 6, no need for padding bit
+* manipulate move sequences (invert, unniss, cleanup, mirror / transform...)
 * NISS: Add mask to moves (e.g. U | NISS where NISS = 32 or something);
   adapt readmoves and writemoves.
 * Consider adding centers and other moves (for avx2: centers in the
@@ -121,6 +110,9 @@ What about symcoord?
   ascii art (color = 1 letter)
   twizzle binary https://www.experiments.cubing.net/cubing.js/spec/binary/
   reid?
+* print ptables (or layout data in such a way that can be printed
+  easily, e.g. first bytes are null-terminated strig and can be
+  printed by user)
 
 ## "Front-end"
 

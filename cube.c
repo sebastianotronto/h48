@@ -3619,12 +3619,6 @@ applytrans(cube_t cube, char *buf)
 	return fasttocube(fast);
 }
 
-int64_t
-coord_eo(cube_t cube)
-{
-	return coord_fast_eo(cubetofast(cube));
-}
-
 /******************************************************************************
 Section: solvers
 
