@@ -1,8 +1,6 @@
 ## Big change
 
 * Add tests for multiple moves
-* Benchmark: add some simple benchmarking functions to nissy.h,
-  bench.c becomes very short
 
 ### More for moves
 
