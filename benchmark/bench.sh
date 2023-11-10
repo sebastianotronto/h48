@@ -9,7 +9,7 @@ BENCHBIN="benchmark/run"
 BENCHDIR="benchmark/results"
 CUBEOBJ="cube.o"
 
-$CC -o $BENCHBIN benchmark/bench.c $CUBEOBJ || exit 1;
+$CC -D_POSIX_C_SOURCE=199309L -o $BENCHBIN benchmark/bench.c $CUBEOBJ || exit 1
 
 d="$(date +'%Y-%m-%d-%H-%M-%S')" 
 mkdir -p "$BENCHDIR"

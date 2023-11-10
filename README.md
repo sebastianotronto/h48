@@ -26,10 +26,4 @@ regex, for example:
 $ TEST=coord make test
 ```
 
-You can also run
-
-```
-$ make benchmark
-```
-
-for benchmarks.
+Due to ongoing changes, benchmarks are currently broken.
