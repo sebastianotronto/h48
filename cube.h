@@ -130,7 +130,7 @@ int64_t solve(
 			  * maximum length is unlimited.
 			  */
 	int64_t maxsols, /* The maximum number of solutions. */
-	int64_t optimal, /* All solutions at most "optimal" moves from the
+	int8_t optimal,  /* All solutions at most "optimal" moves from the
 			  * shortest solution (respecting minmoves) are found.
 			  * If negative, this parameter is ignored.
 			  */

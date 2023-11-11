@@ -2,7 +2,7 @@
 
 See the sections below for details
 
-* Implement some simple solver
+* Tests for simple solver
 * Extend cube and moves to include centers
 * More complex optimal solvers, pruning tables
 * Benchmarks

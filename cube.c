@@ -9,6 +9,7 @@
 #ifdef DEBUG
 #include <stdio.h>
 #define DBG_LOG(...) fprintf(stderr, __VA_ARGS__)
+#define DBG_WARN(condition, ...) if (!(condition)) DBG_LOG(__VA_ARGS__);
 #define DBG_ASSERT(condition, retval, ...) \
 	if (!(condition)) {                \
 		DBG_LOG(__VA_ARGS__);      \
@@ -16,6 +17,7 @@
 	}
 #else
 #define DBG_LOG(...)
+#define DBG_WARN(condition, ...)
 #define DBG_ASSERT(condition, retval, ...)
 #endif
 
@@ -255,6 +257,10 @@ typedef __m256i cube_fast_t;
 #define _cocw_avx2 _mm256_set_epi64x(0, 0, 0, 0x2020202020202020)
 #define _eo_avx2 _mm256_set_epi64x(0x10101010, 0x1010101010101010, 0, 0)
 #define zero_fast _mm256_set_epi64x(0, 0, 0, 0);
+#define solved_fast _mm256_set_epi8(                      \
+	0, 0, 0, 0, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, \
+	0, 0, 0, 0, 0, 0, 0, 0, 7, 6, 5, 4, 3, 2, 1, 0    \
+)
 
 static cube_fast_t cubetofast(cube_t);
 static cube_t fasttocube(cube_fast_t);
@@ -1482,6 +1488,12 @@ equal_fast(cube_fast_t c1, cube_fast_t c2)
 	return mask == 0xffffffffU;
 }
 
+static inline bool
+issolved_fast(cube_fast_t cube)
+{
+	return equal_fast(cube, solved_fast);
+}
+
 static inline cube_fast_t
 invertco_fast(cube_fast_t c)
 {
@@ -1614,7 +1626,11 @@ typedef cube_t cube_fast_t;
 	r[k] ^= _eobit;    \
 	r[l] ^= _eobit;
 
-static const cube_fast_t zero_fast = { .corner = {0}, .edge = {0} };
+static cube_fast_t zero_fast = { .corner = {0}, .edge = {0} };
+static cube_t solved_fast = {
+	.corner = {0, 1, 2, 3, 4, 5, 6, 7},
+	.edge = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}
+};
 
 static cube_fast_t cubetofast(cube_t);
 static cube_t fasttocube(cube_fast_t);
@@ -2842,6 +2858,12 @@ equal_fast(cube_fast_t c1, cube_fast_t c2)
 	return ret;
 }
 
+static inline bool
+issolved_fast(cube_fast_t cube)
+{
+	return equal_fast(cube, solved_fast);
+}
+
 static inline cube_fast_t
 inverse_fast(cube_fast_t cube)
 {
@@ -2930,7 +2952,7 @@ static void writecube_SRC(cube_t, char *);
 static uint8_t readmove(char);
 static uint8_t readmodifier(char);
 static uint8_t readtrans(char *);
-static void writemoves(uint8_t *, int, char *);
+static int writemoves(uint8_t *, int, char *);
 static void writetrans(uint8_t, char *);
 static cube_fast_t transform(cube_fast_t, uint8_t);
 static cube_fast_t move(cube_fast_t, uint8_t);
@@ -3256,7 +3278,7 @@ readtrans(char *buf)
 	return _error;
 }
 
-static void
+static int
 writemoves(uint8_t *m, int n, char *buf)
 {
 	int i;
@@ -3271,6 +3293,8 @@ writemoves(uint8_t *m, int n, char *buf)
 		*b = ' ';
 	}
 	*b = '\0';
+
+	return b - buf;
 }
 
 static void
@@ -3628,16 +3652,16 @@ Here you can find the implementation of all the solving algorithms.
 typedef struct {
 	cube_fast_t cube;
 	uint8_t depth;
-	int maxsols;
-	uint8_t *sols;
-	int nsols;
-	int nmoves;
+	int64_t maxsols;
+	char *sols;
+	int64_t nsols;
+	uint8_t nmoves;
 	uint8_t moves[20];
-	int (*estimate)(cube_fast_t);
-} dfs_arg_t;
+	uint8_t (*estimate)(cube_fast_t);
+} dfsarg_generic_t;
 
 static bool
-allowednextmove(dfs_arg_t arg, uint8_t m)
+allowednextmove(dfsarg_generic_t arg, uint8_t m)
 {
 	int n;
 	uint8_t mbase, l1base, l2base, maxis, l1axis, l2axis;
@@ -3665,11 +3689,11 @@ allowednextmove(dfs_arg_t arg, uint8_t m)
 }
 
 static int
-solve_generic_dfs(dfs_arg_t arg)
+solve_generic_dfs(dfsarg_generic_t arg)
 {
-	dfs_arg_t nextarg;
-	int bound, ret;
-	uint8_t m;
+	dfsarg_generic_t nextarg;
+	uint8_t m, bound;
+	int64_t ret;
 
 	bound = arg.estimate(arg.cube);
 
@@ -3679,11 +3703,13 @@ solve_generic_dfs(dfs_arg_t arg)
 	if (bound == 0) {
 		if (arg.nmoves != arg.depth)
 			return 0;
-		memcpy(&arg.sols[arg.depth * arg.nsols], arg.moves, arg.depth);
+		arg.sols += writemoves(arg.moves, arg.depth, arg.sols);
+		*arg.sols = '\n';
+		arg.sols++;
 		return 1;
 	}
 
-	memcpy(&nextarg, &arg, sizeof(dfs_arg_t));
+	memcpy(&nextarg, &arg, sizeof(dfsarg_generic_t));
 	nextarg.nmoves = arg.nmoves + 1;
 	for (m = 0, ret = 0; m < 18; m++) {
 		if (allowednextmove(arg, m)) {
@@ -3696,24 +3722,65 @@ solve_generic_dfs(dfs_arg_t arg)
 	return ret;
 }
 
-/* TODO
-int
+static int64_t
 solve_generic(
-	cube_fast_t cube,
-	uint8_t depth,
-	int maxsols,
-	uint8_t *sols,
-	int (*estimate)(cube_fast_t)
+	cube_t cube,
+	char *nisstype,
+	/* TODO: handle NISS */
+	int8_t minmoves,
+	int8_t maxmoves,
+	int64_t maxsols,
+	int8_t optimal,
+	char *sols,
+	uint8_t (*estimate)(cube_fast_t)
+	/* TODO: add validator */
+	/* TODO: maybe add data for estimate */
+	/* TODO: add moveset (and allowednext?) */
 )
 {
-	dfs_arg_t arg;
+	dfsarg_generic_t arg;
+	int64_t ret, tmp, first;
 
-	if (!issolvable(cube) || depth > 20 || estimate == NULL)
+	if (!issolvable(cube)) {
+		DBG_LOG("solve: cube is not solvable\n");
 		return -1;
+	}
 
-	arg = (dfs_arg_t) {
-		.cube = cube,
-		.depth = depth,
+	DBG_WARN(!strcmp(nisstype, ""),
+	    "solve: NISS not implemented yet, 'nisstype' ignored\n");
+
+	if (minmoves < 0) {
+		DBG_LOG("solve: 'minmoves' is negative, setting to 0\n");
+		minmoves = 0;
+	}
+
+	if (maxmoves < 0) {
+		DBG_LOG("solve: invalid 'maxmoves', setting to 20\n");
+		maxmoves = 20;
+	}
+
+	if (maxsols < 0) {
+		DBG_LOG("solve: 'maxsols' is negative\n");
+		return -1;
+	}
+
+	if (maxsols == 0) {
+		DBG_LOG("solve: 'maxsols' is 0\n");
+		return 0;
+	}
+
+	if (sols == NULL) {
+		DBG_LOG("solve: return parameter 'sols' is NULL\n");
+		return -1;
+	}
+
+	if (estimate == NULL) {
+		DBG_LOG("solve: 'estimate' is NULL\n");
+		return -1;
+	}
+
+	arg = (dfsarg_generic_t) {
+		.cube = cubetofast(cube),
 		.maxsols = maxsols,
 		.sols = sols,
 		.nsols = 0,
@@ -3722,6 +3789,116 @@ solve_generic(
 		.estimate = estimate,
 	};
 
-	return solve_generic_dfs(arg);
+	ret = 0;
+	first = -1;
+	for (arg.depth = minmoves; arg.depth <= maxmoves; arg.depth++) {
+		tmp = solve_generic_dfs(arg);
+		ret += tmp;
+		if (tmp != 0)
+			first = arg.depth;
+
+		DBG_LOG("Found %" PRId64 " solutions at depth %" PRIu8 "\n",
+		        tmp, arg.depth);
+
+		if (ret >= maxsols)
+			break;
+
+		if (optimal >= 0 && first >= 0 && arg.depth - first == optimal)
+			break;
+	}
+
+	DBG_ASSERT(ret <= maxsols, ret,
+	    "solve: found more than 'maxsols' solutions\n");
+
+	return ret;
 }
-*/
+
+static uint8_t
+estimate_simple(cube_fast_t cube)
+{
+	return issolved_fast(cube) ? 0 : 1;
+}
+
+static int64_t
+solve_simple(
+	cube_t cube,
+	int8_t minmoves,
+	int8_t maxmoves,
+	int64_t maxsols,
+	int8_t optimal,
+	char *solutions
+)
+{
+	return solve_generic(
+		cube,
+		"",
+		minmoves,
+		maxmoves,
+		maxsols,
+		optimal,
+		solutions,
+		&estimate_simple
+	);
+}
+
+int64_t
+solve(
+	cube_t cube,
+	char *solver,
+	char *options,
+	char *nisstype,
+	int8_t minmoves,
+	int8_t maxmoves,
+	int64_t maxsols,
+	int8_t optimal,
+	void *data,
+	char *solutions
+)
+{
+	DBG_WARN(!strcmp(options, ""),
+	     "solve: 'options' not implemented yet, ignoring\n");
+
+	DBG_WARN(!strcmp(nisstype, ""),
+	     "solve: NISS not implemented yet, ignoring 'nisstype'\n");
+
+	DBG_WARN(data == NULL,
+	    "solve: 'data' not implemented yet, ignoring\n");
+
+	if (!strcmp(solver, "simple")) {
+		return solve_simple(
+			cube,
+			minmoves,
+			maxmoves,
+			maxsols,
+			optimal,
+			solutions
+		);
+	} else {
+		DBG_LOG("solve: unknown solver\n");
+		return -1;
+	}
+
+	DBG_LOG("solve: error\n");
+	return -1;
+}
+
+void
+multisolve(int n, cube_t *cube, char *solver, void *data, char *sols)
+{
+	char *s;
+	int i;
+
+	s = sols;
+	for (i = 0; i < n; i++) {
+		solve(cube[i], solver, "", "normal", 0, -1, 1, 0, NULL, s);
+		while (s++);
+	}
+}
+
+int64_t
+gendata(char *solver, void *data)
+{
+	DBG_LOG("gendata: not implemented yet\n");
+
+	return -1;
+}
