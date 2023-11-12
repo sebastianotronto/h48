@@ -277,7 +277,7 @@ _move_U(cube_fast_t c)
 		0, 0, 0, 0, 0, 0, 0, 0, 7, 6, 1, 0, 3, 2, 4, 5
 	);
 
-	return _mm256_shuffle_epi8(c, m);
+	return compose_fast(c, m);
 }
 
 static inline cube_fast_t
@@ -288,7 +288,7 @@ _move_U2(cube_fast_t c)
 		0, 0, 0, 0, 0, 0, 0, 0, 7, 6, 4, 5, 3, 2, 0, 1
 	);
 
-	return _mm256_shuffle_epi8(c, m);
+	return compose_fast(c, m);
 }
 
 static inline cube_fast_t
@@ -299,7 +299,7 @@ _move_U3(cube_fast_t c)
 		0, 0, 0, 0, 0, 0, 0, 0, 7, 6, 0, 1, 3, 2, 5, 4
 	);
 
-	return _mm256_shuffle_epi8(c, m);
+	return compose_fast(c, m);
 }
 
 static inline cube_fast_t
@@ -310,7 +310,7 @@ _move_D(cube_fast_t c)
 		0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 5, 4, 6, 7, 1, 0
 	);
 
-	return _mm256_shuffle_epi8(c, m);
+	return compose_fast(c, m);
 }
 
 static inline cube_fast_t
@@ -321,7 +321,7 @@ _move_D2(cube_fast_t c)
 		0, 0, 0, 0, 0, 0, 0, 0, 6, 7, 5, 4, 2, 3, 1, 0
 	);
 
-	return _mm256_shuffle_epi8(c, m);
+	return compose_fast(c, m);
 }
 
 static inline cube_fast_t
@@ -332,7 +332,7 @@ _move_D3(cube_fast_t c)
 		0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 5, 4, 7, 6, 1, 0
 	);
 
-	return _mm256_shuffle_epi8(c, m);
+	return compose_fast(c, m);
 }
 
 static inline cube_fast_t
@@ -354,7 +354,7 @@ _move_R2(cube_fast_t c)
 		0, 0, 0, 0, 0, 0, 0, 0, 7, 5, 6, 4, 0, 2, 1, 3
 	);
 
-	return _mm256_shuffle_epi8(c, m);
+	return compose_fast(c, m);
 }
 
 static inline cube_fast_t
@@ -387,7 +387,7 @@ _move_L2(cube_fast_t c)
 		0, 0, 0, 0, 0, 0, 0, 0, 4, 6, 5, 7, 3, 1, 2, 0
 	);
 
-	return _mm256_shuffle_epi8(c, m);
+	return compose_fast(c, m);
 }
 
 static inline cube_fast_t
@@ -420,7 +420,7 @@ _move_F2(cube_fast_t c)
 		0, 0, 0, 0, 0, 0, 0, 0, 7, 4, 5, 6, 3, 0, 1, 2
 	);
 
-	return _mm256_shuffle_epi8(c, m);
+	return compose_fast(c, m);
 }
 
 static inline cube_fast_t
@@ -453,7 +453,7 @@ _move_B2(cube_fast_t c)
 		0, 0, 0, 0, 0, 0, 0, 0, 5, 6, 7, 4, 1, 2, 3, 0
 	);
 
-	return _mm256_shuffle_epi8(c, m);
+	return compose_fast(c, m);
 }
 
 static inline cube_fast_t
@@ -1479,13 +1479,13 @@ fasttocube(cube_fast_t c)
 static inline bool
 equal_fast(cube_fast_t c1, cube_fast_t c2)
 {
-	uint32_t mask;
+	int32_t mask;
 	__m256i cmp;
 
 	cmp = _mm256_cmpeq_epi8(c1, c2);
 	mask = _mm256_movemask_epi8(cmp);
 
-	return mask == 0xffffffffU;
+	return mask == ~0;
 }
 
 static inline bool
@@ -1508,6 +1508,19 @@ invertco_fast(cube_fast_t c)
         ret = _mm256_or_si256(cleanco, newco);
 
         return ret;
+}
+
+static inline cube_fast_t
+cleanaftershuffle(cube_fast_t c)
+{
+	__m256i b;
+
+	b = _mm256_set_epi8(
+		~0, ~0, ~0, ~0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+		~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, 0, 0, 0, 0, 0, 0, 0, 0
+	);
+
+	return _mm256_andnot_si256(b, c);
 }
 
 static inline cube_fast_t
@@ -1544,6 +1557,7 @@ inverse_fast(cube_fast_t c)
 	vo = _mm256_shuffle_epi8(vo, vi);
 	vp = _mm256_andnot_si256(_mm256_or_si256(_eo_avx2, _co2_avx2), vi);
 	ret = _mm256_or_si256(vp, vo);
+	ret = cleanaftershuffle(ret);
 	
 	return invertco_fast(ret);
 }
@@ -1557,6 +1571,7 @@ compose_fast(cube_fast_t c1, cube_fast_t c2)
 
 	eo2 = _mm256_and_si256(c2, _eo_avx2);
 	s = _mm256_shuffle_epi8(c1, c2);
+	s = cleanaftershuffle(s);
 	ed = _mm256_xor_si256(s, eo2);
 	co1 = _mm256_and_si256(s, _co2_avx2);
 	co2 = _mm256_and_si256(c2, _co2_avx2);
@@ -2939,6 +2954,8 @@ Some of these routines depend on the efficient functions implemented in the
 previous sections, while some other operate directly on the cube.
 ******************************************************************************/
 
+static inline uint8_t movebase(uint8_t);
+static inline uint8_t moveaxis(uint8_t);
 static uint8_t readco(char *);
 static uint8_t readcp(char *);
 static uint8_t readeo(char *);
@@ -2988,6 +3005,18 @@ bool
 iserror(cube_t cube)
 {
 	return equal(cube, zero);
+}
+
+static inline uint8_t
+movebase(uint8_t move)
+{
+	return move / 3;
+}
+
+static inline uint8_t
+moveaxis(uint8_t move)
+{
+	return move / 6;
 }
 
 static uint8_t
@@ -3292,6 +3321,9 @@ writemoves(uint8_t *m, int n, char *buf)
 		b += len;	
 		*b = ' ';
 	}
+
+	if (b != buf)
+		b--; /* Remove last space */
 	*b = '\0';
 
 	return b - buf;
@@ -3653,8 +3685,8 @@ typedef struct {
 	cube_fast_t cube;
 	uint8_t depth;
 	int64_t maxsols;
-	char *sols;
-	int64_t nsols;
+	char **nextsol;
+	int64_t *nsols;
 	uint8_t nmoves;
 	uint8_t moves[20];
 	uint8_t (*estimate)(cube_fast_t);
@@ -3671,10 +3703,10 @@ allowednextmove(dfsarg_generic_t arg, uint8_t m)
 	if (n == 0)
 		return true;
 
-	mbase = m / 3;
-	maxis = mbase / 2;
-	l1base = arg.moves[n-1] / 3;
-	l1axis = l1base / 2;
+	mbase = movebase(m);
+	maxis = moveaxis(m);
+	l1base = movebase(arg.moves[n-1]);
+	l1axis = moveaxis(arg.moves[n-1]);
 
 	if (mbase == l1base || (maxis == l1axis && mbase < l1base))
 		return false;
@@ -3682,10 +3714,23 @@ allowednextmove(dfsarg_generic_t arg, uint8_t m)
 	if (n == 1)
 		return true;
 
-	l2base = arg.moves[n-2] / 3;
-	l2axis = l1base / 2;
+	l2base = movebase(arg.moves[n-2]);
+	l2axis = moveaxis(arg.moves[n-2]);
 
 	return l1axis != l2axis || mbase != l2base;
+}
+
+static void
+solve_generic_appendsolution(dfsarg_generic_t arg)
+{
+	int strl;
+
+	strl = writemoves(arg.moves, arg.depth, *arg.nextsol);
+	DBG_LOG("Solution found: %s\n", *arg.nextsol);
+	*arg.nextsol += strl;
+	**arg.nextsol = '\n';
+	(*arg.nextsol)++;
+	(*arg.nsols)++;
 }
 
 static int
@@ -3697,15 +3742,13 @@ solve_generic_dfs(dfsarg_generic_t arg)
 
 	bound = arg.estimate(arg.cube);
 
-	if (arg.nsols == arg.maxsols || bound + arg.nmoves > arg.depth)
+	if (*arg.nsols == arg.maxsols || bound + arg.nmoves > arg.depth)
 		return 0;
 
 	if (bound == 0) {
 		if (arg.nmoves != arg.depth)
 			return 0;
-		arg.sols += writemoves(arg.moves, arg.depth, arg.sols);
-		*arg.sols = '\n';
-		arg.sols++;
+		solve_generic_appendsolution(arg);
 		return 1;
 	}
 
@@ -3746,6 +3789,13 @@ solve_generic(
 		return -1;
 	}
 
+	if (issolved(cube)) {
+		DBG_LOG("solve: cube is already solved\n");
+		sols[0] = '\n';
+		sols[1] = 0;
+		return 1;
+	}
+
 	DBG_WARN(!strcmp(nisstype, ""),
 	    "solve: NISS not implemented yet, 'nisstype' ignored\n");
 
@@ -3782,8 +3832,8 @@ solve_generic(
 	arg = (dfsarg_generic_t) {
 		.cube = cubetofast(cube),
 		.maxsols = maxsols,
-		.sols = sols,
-		.nsols = 0,
+		.nextsol = &sols,
+		.nsols = &ret,
 		.nmoves = 0,
 		.moves = {0},
 		.estimate = estimate,
@@ -3793,12 +3843,11 @@ solve_generic(
 	first = -1;
 	for (arg.depth = minmoves; arg.depth <= maxmoves; arg.depth++) {
 		tmp = solve_generic_dfs(arg);
-		ret += tmp;
 		if (tmp != 0)
 			first = arg.depth;
 
-		DBG_LOG("Found %" PRId64 " solutions at depth %" PRIu8 "\n",
-		        tmp, arg.depth);
+		DBG_LOG("Found %" PRId64 " solution%s at depth %" PRIu8 "\n",
+		        tmp, tmp == 1 ? "" : "s", arg.depth);
 
 		if (ret >= maxsols)
 			break;
@@ -3864,7 +3913,7 @@ solve(
 	DBG_WARN(data == NULL,
 	    "solve: 'data' not implemented yet, ignoring\n");
 
-	if (!strcmp(solver, "simple")) {
+	if (!strcmp(solver, "optimal") || !strcmp(solver, "simple")) {
 		return solve_simple(
 			cube,
 			minmoves,
@@ -3874,7 +3923,7 @@ solve(
 			solutions
 		);
 	} else {
-		DBG_LOG("solve: unknown solver\n");
+		DBG_LOG("solve: unknown solver '%s'\n", solver);
 		return -1;
 	}
 

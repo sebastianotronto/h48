@@ -2,12 +2,14 @@
 
 See the sections below for details
 
-* Tests for simple solver
-* Extend cube and moves to include centers
+* Tests for multisolve
+* More tests for simple solver?
+* Benchmarks?
 * More complex optimal solvers, pruning tables
-* Benchmarks
+* (More) benchmarks
 * Multithreading (build-time option number of threads)
 * Other optimizations
+* Extend cube and moves to include centers
 * NISS
 * Move manipulation utilities
 * Coordinate solvers and other steps
@@ -76,6 +78,8 @@ What about symcoord?
 
 ### General things
 
+* Moves: don't do full compose for U*, D*, *2 (I removed this because I
+  was using shuffle intructions wrong, should re-do it)
 * Trans: don't do full compose, for some trans composing perm is enough.
   Split out sumco() as a separate function and refactor, optimize.
 * Use multi-move (up to 4/5 moves at once)
@@ -113,6 +117,7 @@ What about symcoord?
 * print ptables (or layout data in such a way that can be printed
   easily, e.g. first bytes are null-terminated strig and can be
   printed by user)
+* remove writetrans?
 
 ## "Front-end"
 

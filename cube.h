@@ -120,7 +120,10 @@ could.
 
 int64_t solve(
 	cube_t cube,     /* The cube to solve. Must be solvable. */
-	char *solver,    /* The solver. Supported solvers: TODO. */
+	char *solver,    /* Supported solvers:
+			  * "optimal" - currently the same as "simple"
+			  * "simple"  - a simple, slow solver using no tables
+			  */
 	char *options,   /* Some solvers accept extra options,
 			  * like "!filter".
 			  */
