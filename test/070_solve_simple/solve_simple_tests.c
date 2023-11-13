@@ -1,33 +1,25 @@
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "../test.h"
 
-#ifdef CUBE_AVX2
-#include <immintrin.h>
-#endif
-
-#include "../../cube.h"
-
-#define S 10000
+int64_t solve(cube_t, char *, char *, char *, int8_t, int8_t, int64_t, int8_t,
+    void *, char *);
 
 int main() {
-	char cubestr[S], solverstr[S], optionsstr[S], nisstypestr[S];
-	char minmovesstr[S], maxmovesstr[S], maxsolsstr[S], optimalstr[S];
-	char solutionsstr[S];
+	char cubestr[STRLENMAX], solverstr[STRLENMAX], optionsstr[STRLENMAX];
+	char nisstypestr[STRLENMAX], minmovesstr[STRLENMAX];
+	char maxmovesstr[STRLENMAX], maxsolsstr[STRLENMAX];
+	char optimalstr[STRLENMAX], solutionsstr[STRLENMAX];
 	cube_t cube;
 	int64_t maxsols;
 	int8_t minmoves, maxmoves, optimal;
 
-	fgets(cubestr, S, stdin);
-	fgets(solverstr, S, stdin);
-	fgets(optionsstr, S, stdin);
-	fgets(nisstypestr, S, stdin);
-	fgets(minmovesstr, S, stdin);
-	fgets(maxmovesstr, S, stdin);
-	fgets(maxsolsstr, S, stdin);
-	fgets(optimalstr, S, stdin);
+	fgets(cubestr, STRLENMAX, stdin);
+	fgets(solverstr, STRLENMAX, stdin);
+	fgets(optionsstr, STRLENMAX, stdin);
+	fgets(nisstypestr, STRLENMAX, stdin);
+	fgets(minmovesstr, STRLENMAX, stdin);
+	fgets(maxmovesstr, STRLENMAX, stdin);
+	fgets(maxsolsstr, STRLENMAX, stdin);
+	fgets(optimalstr, STRLENMAX, stdin);
 
 	solverstr[strcspn(solverstr, "\n")] = 0;
 	optionsstr[strcspn(optionsstr, "\n")] = 0;

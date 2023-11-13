@@ -1,14 +1,6 @@
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
+#include "../test.h"
 
-#ifdef CUBE_AVX2
-#include <immintrin.h>
-#endif
-
-#include "../../cube.h"
-
-#define STRLENMAX 10000
+cube_t compose(cube_t, cube_t);
 
 int main() {
 	char str[STRLENMAX];

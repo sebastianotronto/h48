@@ -1,14 +1,11 @@
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
-
-#ifdef CUBE_AVX2
-#include <immintrin.h>
-#endif
-
-#include "../../cube.h"
+#include "../test.h"
 
 #define STRLENMAX 10000
+
+bool iserror(cube_t);
+bool issolvable(cube_t);
+cube_t readcube(char *, char *);
+void writecube(char *, cube_t, char *);
 
 int main() {
 	char *c, str[STRLENMAX];

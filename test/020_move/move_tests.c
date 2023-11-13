@@ -1,15 +1,6 @@
-#include <stdbool.h>
-#include <stdint.h>
-#include <stdio.h>
+#include "../test.h"
 
-#ifdef CUBE_AVX2
-#include <immintrin.h>
-#endif
-
-#include "../../cube.h"
-
-#define STRLENMAX 10000
-#define MOVESMAX 1000
+cube_t applymoves(cube_t, char *);
 
 int main() {
 	char movestr[STRLENMAX], cubestr[STRLENMAX];
