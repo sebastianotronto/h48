@@ -8,6 +8,8 @@
 
 #ifdef DEBUG
 #include <stdio.h>
+#define _static
+#define _static_inline
 #define DBG_LOG(...) fprintf(stderr, __VA_ARGS__)
 #define DBG_WARN(condition, ...) if (!(condition)) DBG_LOG(__VA_ARGS__);
 #define DBG_ASSERT(condition, retval, ...) \
@@ -16,6 +18,8 @@
 		return retval;             \
 	}
 #else
+#define _static static
+#define _static_inline static inline
 #define DBG_LOG(...)
 #define DBG_WARN(condition, ...)
 #define DBG_ASSERT(condition, retval, ...)
@@ -130,7 +134,7 @@ Section: constants, strings and other stuff
 #define _eflip      0x10U
 #define _error      0xFFU
 
-static char *cornerstr[] = {
+_static char *cornerstr[] = {
 	[_c_ufr] = "UFR",
 	[_c_ubl] = "UBL",
 	[_c_dfl] = "DFL",
@@ -141,7 +145,7 @@ static char *cornerstr[] = {
 	[_c_dbl] = "DBL"
 };
 
-static char *cornerstralt[] = {
+_static char *cornerstralt[] = {
 	[_c_ufr] = "URF",
 	[_c_ubl] = "ULB",
 	[_c_dfl] = "DLF",
@@ -152,7 +156,7 @@ static char *cornerstralt[] = {
 	[_c_dbl] = "DLB"
 };
 
-static char *edgestr[] = {
+_static char *edgestr[] = {
 	[_e_uf] = "UF",
 	[_e_ub] = "UB",
 	[_e_db] = "DB",
@@ -167,7 +171,7 @@ static char *edgestr[] = {
 	[_e_br] = "BR"
 };
 
-static char *movestr[] = {
+_static char *movestr[] = {
 	[U]  = "U",
 	[U2] = "U2",
 	[U3] = "U'",
@@ -188,7 +192,7 @@ static char *movestr[] = {
 	[B3] = "B'",
 };
 
-static char *transstr[] = {
+_static char *transstr[] = {
 	[UFr] = "rotation UF",
 	[UFm] = "mirrored UF",
 	[ULr] = "rotation UL",
@@ -252,7 +256,6 @@ Note: the #ifdef below is closed in the next section.
 
 typedef __m256i cube_fast_t;
 
-#define _co_avx2 _mm256_set_epi64x(0, 0, 0, 0xF0F0F0F0F0F0F0F0)
 #define _co2_avx2 _mm256_set_epi64x(0, 0, 0, 0x6060606060606060)
 #define _cocw_avx2 _mm256_set_epi64x(0, 0, 0, 0x2020202020202020)
 #define _eo_avx2 _mm256_set_epi64x(0x10101010, 0x1010101010101010, 0, 0)
@@ -262,14 +265,17 @@ typedef __m256i cube_fast_t;
 	0, 0, 0, 0, 0, 0, 0, 0, 7, 6, 5, 4, 3, 2, 1, 0    \
 )
 
-static cube_fast_t cubetofast(cube_t);
-static cube_t fasttocube(cube_fast_t);
-static inline bool equal_fast(cube_fast_t, cube_fast_t);
-static inline cube_fast_t invertco_fast(cube_fast_t);
-static inline cube_fast_t inverse_fast(cube_fast_t);
-static inline cube_fast_t compose_fast(cube_fast_t, cube_fast_t);
+_static cube_fast_t cubetofast(cube_t);
+_static cube_t fasttocube(cube_fast_t);
+_static_inline bool equal_fast(cube_fast_t, cube_fast_t);
+_static_inline bool issolved_fast(cube_fast_t);
+_static_inline cube_fast_t invertco_fast(cube_fast_t);
+_static_inline cube_fast_t cleanaftershuffle(cube_fast_t);
+_static_inline cube_fast_t inverse_fast(cube_fast_t);
+_static_inline cube_fast_t compose_fast(cube_fast_t, cube_fast_t);
+_static_inline int64_t coord_fast_eo(cube_fast_t);
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_U(cube_fast_t c)
 {
 	cube_fast_t m = _mm256_set_epi8(
@@ -280,7 +286,7 @@ _move_U(cube_fast_t c)
 	return compose_fast(c, m);
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_U2(cube_fast_t c)
 {
 	cube_fast_t m = _mm256_set_epi8(
@@ -291,7 +297,7 @@ _move_U2(cube_fast_t c)
 	return compose_fast(c, m);
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_U3(cube_fast_t c)
 {
 	cube_fast_t m = _mm256_set_epi8(
@@ -302,7 +308,7 @@ _move_U3(cube_fast_t c)
 	return compose_fast(c, m);
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_D(cube_fast_t c)
 {
 	cube_fast_t m = _mm256_set_epi8(
@@ -313,7 +319,7 @@ _move_D(cube_fast_t c)
 	return compose_fast(c, m);
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_D2(cube_fast_t c)
 {
 	cube_fast_t m = _mm256_set_epi8(
@@ -324,7 +330,7 @@ _move_D2(cube_fast_t c)
 	return compose_fast(c, m);
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_D3(cube_fast_t c)
 {
 	cube_fast_t m = _mm256_set_epi8(
@@ -335,7 +341,7 @@ _move_D3(cube_fast_t c)
 	return compose_fast(c, m);
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_R(cube_fast_t c)
 {
 	cube_fast_t m = _mm256_set_epi8(
@@ -346,7 +352,7 @@ _move_R(cube_fast_t c)
 	return compose_fast(c, m);
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_R2(cube_fast_t c)
 {
 	cube_fast_t m = _mm256_set_epi8(
@@ -357,7 +363,7 @@ _move_R2(cube_fast_t c)
 	return compose_fast(c, m);
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_R3(cube_fast_t c)
 {
 	cube_fast_t m = _mm256_set_epi8(
@@ -368,7 +374,7 @@ _move_R3(cube_fast_t c)
 	return compose_fast(c, m);
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_L(cube_fast_t c)
 {
 	cube_fast_t m = _mm256_set_epi8(
@@ -379,7 +385,7 @@ _move_L(cube_fast_t c)
 	return compose_fast(c, m);
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_L2(cube_fast_t c)
 {
 	cube_fast_t m = _mm256_set_epi8(
@@ -390,7 +396,7 @@ _move_L2(cube_fast_t c)
 	return compose_fast(c, m);
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_L3(cube_fast_t c)
 {
 	cube_fast_t m = _mm256_set_epi8(
@@ -401,7 +407,7 @@ _move_L3(cube_fast_t c)
 	return compose_fast(c, m);
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_F(cube_fast_t c)
 {
 	cube_fast_t m = _mm256_set_epi8(
@@ -412,7 +418,7 @@ _move_F(cube_fast_t c)
 	return compose_fast(c, m);
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_F2(cube_fast_t c)
 {
 	cube_fast_t m = _mm256_set_epi8(
@@ -423,7 +429,7 @@ _move_F2(cube_fast_t c)
 	return compose_fast(c, m);
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_F3(cube_fast_t c)
 {
 	cube_fast_t m = _mm256_set_epi8(
@@ -434,7 +440,7 @@ _move_F3(cube_fast_t c)
 	return compose_fast(c, m);
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_B(cube_fast_t c)
 {
 	cube_fast_t m = _mm256_set_epi8(
@@ -445,7 +451,7 @@ _move_B(cube_fast_t c)
 	return compose_fast(c, m);
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_B2(cube_fast_t c)
 {
 	cube_fast_t m = _mm256_set_epi8(
@@ -456,7 +462,7 @@ _move_B2(cube_fast_t c)
 	return compose_fast(c, m);
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_B3(cube_fast_t c)
 {
 	cube_fast_t m = _mm256_set_epi8(
@@ -467,7 +473,7 @@ _move_B3(cube_fast_t c)
 	return compose_fast(c, m);
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_UFr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -487,7 +493,7 @@ _trans_UFr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_ULr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -507,7 +513,7 @@ _trans_ULr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_UBr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -527,7 +533,7 @@ _trans_UBr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_URr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -547,7 +553,7 @@ _trans_URr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_DFr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -567,7 +573,7 @@ _trans_DFr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_DLr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -587,7 +593,7 @@ _trans_DLr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_DBr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -607,7 +613,7 @@ _trans_DBr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_DRr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -627,7 +633,7 @@ _trans_DRr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_RUr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -647,7 +653,7 @@ _trans_RUr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_RFr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -667,7 +673,7 @@ _trans_RFr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_RDr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -687,7 +693,7 @@ _trans_RDr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_RBr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -707,7 +713,7 @@ _trans_RBr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_LUr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -727,7 +733,7 @@ _trans_LUr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_LFr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -747,7 +753,7 @@ _trans_LFr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_LDr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -767,7 +773,7 @@ _trans_LDr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_LBr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -787,7 +793,7 @@ _trans_LBr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_FUr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -807,7 +813,7 @@ _trans_FUr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_FRr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -827,7 +833,7 @@ _trans_FRr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_FDr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -847,7 +853,7 @@ _trans_FDr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_FLr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -867,7 +873,7 @@ _trans_FLr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_BUr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -887,7 +893,7 @@ _trans_BUr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_BRr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -907,7 +913,7 @@ _trans_BRr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_BDr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -927,7 +933,7 @@ _trans_BDr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_BLr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -947,7 +953,7 @@ _trans_BLr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_UFm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -968,7 +974,7 @@ _trans_UFm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_ULm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -989,7 +995,7 @@ _trans_ULm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_UBm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -1010,7 +1016,7 @@ _trans_UBm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_URm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -1031,7 +1037,7 @@ _trans_URm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_DFm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -1052,7 +1058,7 @@ _trans_DFm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_DLm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -1073,7 +1079,7 @@ _trans_DLm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_DBm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -1094,7 +1100,7 @@ _trans_DBm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_DRm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -1115,7 +1121,7 @@ _trans_DRm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_RUm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -1136,7 +1142,7 @@ _trans_RUm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_RFm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -1157,7 +1163,7 @@ _trans_RFm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_RDm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -1178,7 +1184,7 @@ _trans_RDm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_RBm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -1199,7 +1205,7 @@ _trans_RBm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_LUm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -1220,7 +1226,7 @@ _trans_LUm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_LFm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -1241,7 +1247,7 @@ _trans_LFm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_LDm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -1262,7 +1268,7 @@ _trans_LDm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_LBm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -1283,7 +1289,7 @@ _trans_LBm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_FUm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -1304,7 +1310,7 @@ _trans_FUm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_FRm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -1325,7 +1331,7 @@ _trans_FRm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_FDm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -1346,7 +1352,7 @@ _trans_FDm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_FLm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -1367,7 +1373,7 @@ _trans_FLm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_BUm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -1388,7 +1394,7 @@ _trans_BUm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_BRm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -1409,7 +1415,7 @@ _trans_BRm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_BDm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -1430,7 +1436,7 @@ _trans_BDm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_BLm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -1451,7 +1457,7 @@ _trans_BLm(cube_fast_t c)
 	return ret;
 }
 
-static cube_fast_t
+_static cube_fast_t
 cubetofast(cube_t a)
 {
 	uint8_t aux[32];
@@ -1463,7 +1469,7 @@ cubetofast(cube_t a)
 	return _mm256_loadu_si256((__m256i_u *)&aux);
 }
 
-static cube_t
+_static cube_t
 fasttocube(cube_fast_t c)
 {
 	cube_t a;
@@ -1476,7 +1482,7 @@ fasttocube(cube_fast_t c)
 	return a;
 }
 
-static inline bool
+_static_inline bool
 equal_fast(cube_fast_t c1, cube_fast_t c2)
 {
 	int32_t mask;
@@ -1488,13 +1494,13 @@ equal_fast(cube_fast_t c1, cube_fast_t c2)
 	return mask == ~0;
 }
 
-static inline bool
+_static_inline bool
 issolved_fast(cube_fast_t cube)
 {
 	return equal_fast(cube, solved_fast);
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 invertco_fast(cube_fast_t c)
 {
         cube_fast_t co, shleft, shright, summed, newco, cleanco, ret;
@@ -1510,7 +1516,7 @@ invertco_fast(cube_fast_t c)
         return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 cleanaftershuffle(cube_fast_t c)
 {
 	__m256i b;
@@ -1523,7 +1529,7 @@ cleanaftershuffle(cube_fast_t c)
 	return _mm256_andnot_si256(b, c);
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 inverse_fast(cube_fast_t c)
 {
 	/* Method taken from Andrew Skalski's vcube[1]. The addition sequence
@@ -1562,7 +1568,7 @@ inverse_fast(cube_fast_t c)
 	return invertco_fast(ret);
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 compose_fast(cube_fast_t c1, cube_fast_t c2)
 {
 	cube_fast_t ret;
@@ -1586,7 +1592,7 @@ compose_fast(cube_fast_t c1, cube_fast_t c2)
 	return ret;
 }
 
-static inline int64_t
+_static_inline int64_t
 coord_fast_eo(cube_fast_t c)
 {
 	cube_fast_t eo, shifted;
@@ -1641,20 +1647,22 @@ typedef cube_t cube_fast_t;
 	r[k] ^= _eobit;    \
 	r[l] ^= _eobit;
 
-static cube_fast_t zero_fast = { .corner = {0}, .edge = {0} };
-static cube_t solved_fast = {
+_static cube_fast_t zero_fast = { .corner = {0}, .edge = {0} };
+_static cube_t solved_fast = {
 	.corner = {0, 1, 2, 3, 4, 5, 6, 7},
 	.edge = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}
 };
 
-static cube_fast_t cubetofast(cube_t);
-static cube_t fasttocube(cube_fast_t);
-static inline bool equal_fast(cube_fast_t, cube_fast_t);
-static inline cube_fast_t invertco_fast(cube_fast_t);
-static inline cube_fast_t inverse_fast(cube_fast_t);
-static inline cube_fast_t compose_fast(cube_fast_t, cube_fast_t);
+_static cube_fast_t cubetofast(cube_t);
+_static cube_t fasttocube(cube_fast_t);
+_static_inline bool equal_fast(cube_fast_t, cube_fast_t);
+_static_inline bool issolved_fast(cube_fast_t);
+_static_inline cube_fast_t invertco_fast(cube_fast_t);
+_static_inline cube_fast_t inverse_fast(cube_fast_t);
+_static_inline cube_fast_t compose_fast(cube_fast_t, cube_fast_t);
+_static_inline int64_t coord_fast_eo(cube_fast_t);
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_U(cube_fast_t c)
 {
 	uint8_t aux;
@@ -1666,7 +1674,7 @@ _move_U(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_U2(cube_fast_t c)
 {
 	uint8_t aux;
@@ -1678,7 +1686,7 @@ _move_U2(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_U3(cube_fast_t c)
 {
 	uint8_t aux;
@@ -1690,7 +1698,7 @@ _move_U3(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_D(cube_fast_t c)
 {
 	uint8_t aux;
@@ -1702,7 +1710,7 @@ _move_D(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_D2(cube_fast_t c)
 {
 	uint8_t aux;
@@ -1714,7 +1722,7 @@ _move_D2(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_D3(cube_fast_t c)
 {
 	uint8_t aux;
@@ -1726,7 +1734,7 @@ _move_D3(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_R(cube_fast_t c)
 {
 	uint8_t aux, auy, auz;
@@ -1740,7 +1748,7 @@ _move_R(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_R2(cube_fast_t c)
 {
 	uint8_t aux;
@@ -1752,7 +1760,7 @@ _move_R2(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_R3(cube_fast_t c)
 {
 	uint8_t aux, auy, auz;
@@ -1766,7 +1774,7 @@ _move_R3(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_L(cube_fast_t c)
 {
 	uint8_t aux, auy, auz;
@@ -1780,7 +1788,7 @@ _move_L(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_L2(cube_fast_t c)
 {
 	uint8_t aux;
@@ -1792,7 +1800,7 @@ _move_L2(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_L3(cube_fast_t c)
 {
 	uint8_t aux, auy, auz;
@@ -1806,7 +1814,7 @@ _move_L3(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_F(cube_fast_t c)
 {
 	uint8_t aux, auy, auz;
@@ -1821,7 +1829,7 @@ _move_F(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_F2(cube_fast_t c)
 {
 	uint8_t aux;
@@ -1833,7 +1841,7 @@ _move_F2(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_F3(cube_fast_t c)
 {
 	uint8_t aux, auy, auz;
@@ -1848,7 +1856,7 @@ _move_F3(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_B(cube_fast_t c)
 {
 	uint8_t aux, auy, auz;
@@ -1863,7 +1871,7 @@ _move_B(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_B2(cube_fast_t c)
 {
 	uint8_t aux;
@@ -1875,7 +1883,7 @@ _move_B2(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _move_B3(cube_fast_t c)
 {
 	uint8_t aux, auy, auz;
@@ -1890,23 +1898,7 @@ _move_B3(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
-invertco_fast(cube_fast_t c)
-{
-	uint8_t i, piece, orien;
-	cube_fast_t ret;
-
-	ret = c;
-	for (i = 0; i < 8; i++) {
-		piece = c.corner[i];
-		orien = ((piece << 1) | (piece >> 1)) & _cobits2;
-		ret.corner[i] = (piece & _pbits) | orien;
-	}
-
-	return ret;
-}
-
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_UFr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -1925,7 +1917,7 @@ _trans_UFr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_ULr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -1944,7 +1936,7 @@ _trans_ULr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_UBr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -1963,7 +1955,7 @@ _trans_UBr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_URr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -1982,7 +1974,7 @@ _trans_URr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_DFr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2001,7 +1993,7 @@ _trans_DFr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_DLr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2020,7 +2012,7 @@ _trans_DLr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_DBr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2039,7 +2031,7 @@ _trans_DBr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_DRr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2058,7 +2050,7 @@ _trans_DRr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_RUr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2077,7 +2069,7 @@ _trans_RUr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_RFr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2096,7 +2088,7 @@ _trans_RFr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_RDr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2115,7 +2107,7 @@ _trans_RDr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_RBr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2134,7 +2126,7 @@ _trans_RBr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_LUr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2153,7 +2145,7 @@ _trans_LUr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_LFr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2172,7 +2164,7 @@ _trans_LFr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_LDr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2191,7 +2183,7 @@ _trans_LDr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_LBr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2210,7 +2202,7 @@ _trans_LBr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_FUr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2229,7 +2221,7 @@ _trans_FUr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_FRr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2248,7 +2240,7 @@ _trans_FRr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_FDr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2267,7 +2259,7 @@ _trans_FDr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_FLr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2286,7 +2278,7 @@ _trans_FLr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_BUr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2305,7 +2297,7 @@ _trans_BUr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_BRr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2324,7 +2316,7 @@ _trans_BRr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_BDr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2343,7 +2335,7 @@ _trans_BDr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_BLr(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2362,7 +2354,7 @@ _trans_BLr(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_UFm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2382,7 +2374,7 @@ _trans_UFm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_ULm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2402,7 +2394,7 @@ _trans_ULm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_UBm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2422,7 +2414,7 @@ _trans_UBm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_URm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2442,7 +2434,7 @@ _trans_URm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_DFm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2462,7 +2454,7 @@ _trans_DFm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_DLm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2482,7 +2474,7 @@ _trans_DLm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_DBm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2502,7 +2494,7 @@ _trans_DBm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_DRm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2522,7 +2514,7 @@ _trans_DRm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_RUm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2542,7 +2534,7 @@ _trans_RUm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_RFm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2562,7 +2554,7 @@ _trans_RFm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_RDm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2582,7 +2574,7 @@ _trans_RDm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_RBm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2602,7 +2594,7 @@ _trans_RBm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_LUm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2622,7 +2614,7 @@ _trans_LUm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_LFm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2642,7 +2634,7 @@ _trans_LFm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_LDm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2662,7 +2654,7 @@ _trans_LDm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_LBm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2682,7 +2674,7 @@ _trans_LBm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_FUm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2702,7 +2694,7 @@ _trans_FUm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_FRm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2722,7 +2714,7 @@ _trans_FRm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_FDm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2742,7 +2734,7 @@ _trans_FDm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_FLm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2762,7 +2754,7 @@ _trans_FLm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_BUm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2782,7 +2774,7 @@ _trans_BUm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_BRm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2802,7 +2794,7 @@ _trans_BRm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_BDm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2822,7 +2814,7 @@ _trans_BDm(cube_fast_t c)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 _trans_BLm(cube_fast_t c)
 {
 	cube_fast_t ret;
@@ -2842,7 +2834,7 @@ _trans_BLm(cube_fast_t c)
 	return ret;
 }
 
-static cube_fast_t
+_static cube_fast_t
 cubetofast(cube_t cube)
 {
 	cube_fast_t fast;
@@ -2850,7 +2842,7 @@ cubetofast(cube_t cube)
 	return fast;
 }
 
-static cube_t
+_static cube_t
 fasttocube(cube_fast_t fast)
 {
 	cube_t cube;
@@ -2858,7 +2850,7 @@ fasttocube(cube_fast_t fast)
 	return cube;
 }
 
-static inline bool
+_static_inline bool
 equal_fast(cube_fast_t c1, cube_fast_t c2)
 {
 	uint8_t i;
@@ -2873,13 +2865,29 @@ equal_fast(cube_fast_t c1, cube_fast_t c2)
 	return ret;
 }
 
-static inline bool
+_static_inline bool
 issolved_fast(cube_fast_t cube)
 {
 	return equal_fast(cube, solved_fast);
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
+invertco_fast(cube_fast_t c)
+{
+	uint8_t i, piece, orien;
+	cube_fast_t ret;
+
+	ret = c;
+	for (i = 0; i < 8; i++) {
+		piece = c.corner[i];
+		orien = ((piece << 1) | (piece >> 1)) & _cobits2;
+		ret.corner[i] = (piece & _pbits) | orien;
+	}
+
+	return ret;
+}
+
+_static_inline cube_fast_t
 inverse_fast(cube_fast_t cube)
 {
 	cube_fast_t ret;
@@ -2902,7 +2910,7 @@ inverse_fast(cube_fast_t cube)
 	return ret;
 }
 
-static inline cube_fast_t
+_static_inline cube_fast_t
 compose_fast(cube_fast_t c1, cube_fast_t c2)
 {
 	cube_fast_t ret;
@@ -2931,7 +2939,7 @@ compose_fast(cube_fast_t c1, cube_fast_t c2)
 	return ret;
 }
 
-static inline int64_t
+_static_inline int64_t
 coord_fast_eo(cube_fast_t cube)
 {
 	int i, p;
@@ -2954,402 +2962,47 @@ Some of these routines depend on the efficient functions implemented in the
 previous sections, while some other operate directly on the cube.
 ******************************************************************************/
 
-static inline uint8_t movebase(uint8_t);
-static inline uint8_t moveaxis(uint8_t);
-static uint8_t readco(char *);
-static uint8_t readcp(char *);
-static uint8_t readeo(char *);
-static uint8_t readep(char *);
-static int permsign(uint8_t *, int);
-static cube_t readcube_H48(char *);
-static void writecube_AVX(cube_t, char *);
-static void writecube_H48(cube_t, char *);
-static int writepiece_SRC(uint8_t, char *);
-static void writecube_SRC(cube_t, char *);
-static uint8_t readmove(char);
-static uint8_t readmodifier(char);
-static uint8_t readtrans(char *);
-static int writemoves(uint8_t *, int, char *);
-static void writetrans(uint8_t, char *);
-static cube_fast_t transform(cube_fast_t, uint8_t);
-static cube_fast_t move(cube_fast_t, uint8_t);
-
-static cube_t zero = { .corner = {0}, .edge = {0} };
-static cube_t solved = {
+_static cube_t zero = { .corner = {0}, .edge = {0} };
+_static cube_t solved = {
 	.corner = {0, 1, 2, 3, 4, 5, 6, 7},
 	.edge = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}
 };
+
+cube_t solvedcube(void);
+bool isconsistent(cube_t);
+bool issolvable(cube_t);
+bool issolved(cube_t cube);
+bool equal(cube_t, cube_t);
+bool iserror(cube_t);
+cube_t compose(cube_t, cube_t);
+cube_t inverse(cube_t);
+cube_t applymoves(cube_t, char *);
+cube_t applytrans(cube_t, char *);
+cube_t readcube(char *, char *);
+void writecube(char *, cube_t, char *);
+
+_static int permsign(uint8_t *, int);
+_static uint8_t readco(char *);
+_static uint8_t readcp(char *);
+_static uint8_t readeo(char *);
+_static uint8_t readep(char *);
+_static cube_t readcube_H48(char *);
+_static int writepiece_SRC(uint8_t, char *);
+_static void writecube_AVX(cube_t, char *);
+_static void writecube_H48(cube_t, char *);
+_static void writecube_SRC(cube_t, char *);
+_static uint8_t readmove(char);
+_static uint8_t readmodifier(char);
+_static uint8_t readtrans(char *);
+_static int writemoves(uint8_t *, int, char *);
+_static void writetrans(uint8_t, char *);
+_static cube_fast_t move(cube_fast_t, uint8_t);
+_static cube_fast_t transform(cube_fast_t, uint8_t);
 
 cube_t
 solvedcube(void)
 {
 	return solved;
-}
-
-bool
-equal(cube_t c1, cube_t c2)
-{
-	int i;
-	bool ret;
-
-	ret = true;
-	for (i = 0; i < 8; i++)
-		ret = ret && c1.corner[i] == c2.corner[i];
-	for (i = 0; i < 12; i++)
-		ret = ret && c1.edge[i] == c2.edge[i];
-
-	return ret;
-}
-
-bool
-iserror(cube_t cube)
-{
-	return equal(cube, zero);
-}
-
-static inline uint8_t
-movebase(uint8_t move)
-{
-	return move / 3;
-}
-
-static inline uint8_t
-moveaxis(uint8_t move)
-{
-	return move / 6;
-}
-
-static uint8_t
-readco(char *str)
-{
-	if (*str == '0')
-		return 0;
-	if (*str == '1')
-		return _ctwist_cw;
-	if (*str == '2')
-		return _ctwist_ccw;
-
-	DBG_LOG("Error reading CO\n");
-	return _error;
-}
-
-static uint8_t
-readcp(char *str)
-{
-	uint8_t c;
-
-	for (c = 0; c < 8; c++)
-		if (!strncmp(str, cornerstr[c], 3) ||
-		    !strncmp(str, cornerstralt[c], 3))
-			return c;
-
-	DBG_LOG("Error reading CP\n");
-	return _error;
-}
-
-static uint8_t
-readeo(char *str)
-{
-	if (*str == '0')
-		return 0;
-	if (*str == '1')
-		return _eflip;
-
-	DBG_LOG("Error reading EO\n");
-	return _error;
-}
-
-static uint8_t
-readep(char *str)
-{
-	uint8_t e;
-
-	for (e = 0; e < 12; e++)
-		if (!strncmp(str, edgestr[e], 2))
-			return e;
-
-	DBG_LOG("Error reading EP\n");
-	return _error;
-}
-
-static cube_t
-readcube_H48(char *buf)
-{
-	int i;
-	uint8_t piece, orient;
-	cube_t ret = {0};
-	char *b;
-	
-	b = buf;
-
-	for (i = 0; i < 12; i++) {
-		while (*b == ' ' || *b == '\t' || *b == '\n')
-			b++;
-		if ((piece = readep(b)) == _error)
-			return zero;
-		b += 2;
-		if ((orient = readeo(b)) == _error)
-			return zero;
-		b++;
-		ret.edge[i] = piece | orient;
-	}
-	for (i = 0; i < 8; i++) {
-		while (*b == ' ' || *b == '\t' || *b == '\n')
-			b++;
-		if ((piece = readcp(b)) == _error)
-			return zero;
-		b += 3;
-		if ((orient = readco(b)) == _error)
-			return zero;
-		b++;
-		ret.corner[i] = piece | orient;
-	}
-
-	return ret;
-}
-
-cube_t
-readcube(char *format, char *buf)
-{
-	cube_t cube;
-
-	if (!strcmp(format, "H48")) {
-		cube = readcube_H48(buf);
-	} else {
-		DBG_LOG("Cannot read cube in the given format\n");
-		cube = zero;
-	}
-
-	return cube;
-}
-
-
-static int
-writepiece_SRC(uint8_t piece, char *buf)
-{
-	char digits[3];
-	int i, len = 0;
-
-	while (piece != 0) {
-		digits[len++] = (piece % 10) + '0';
-		piece /= 10;
-	}
-
-	if (len == 0)
-		digits[len++] = '0';
-
-	for (i = 0; i < len; i++)
-		buf[i] = digits[len-i-1];
-
-	buf[len] = ',';
-	buf[len+1] = ' ';
-
-	return len+2;
-}
-
-static void
-writecube_AVX(cube_t cube, char *buf)
-{
-	int i, ptr;
-	uint8_t piece;
-
-	memcpy(buf, "_mm256_set_epi8(\n\t0, 0, 0, 0, ", 30);
-	ptr = 30;
-
-	for (i = 11; i >= 0; i--) {
-		piece = cube.edge[i];
-		ptr += writepiece_SRC(piece, buf + ptr);
-	}
-
-	memcpy(buf+ptr-2, ",\n\t0, 0, 0, 0, 0, 0, 0, 0, ", 27);
-	ptr += 25;
-
-	for (i = 7; i >= 0; i--) {
-		piece = cube.corner[i];
-		ptr += writepiece_SRC(piece, buf + ptr);
-	}
-
-	memcpy(buf+ptr-2, "\n)\0", 3);
-}
-
-static void
-writecube_H48(cube_t cube, char *buf)
-{
-	uint8_t piece, perm, orient;
-	int i;
-
-	for (i = 0; i < 12; i++) {
-		piece = cube.edge[i];
-		perm = piece & _pbits;
-		orient = (piece & _eobit) >> _eoshift;
-		buf[4*i    ] = edgestr[perm][0];
-		buf[4*i + 1] = edgestr[perm][1];
-		buf[4*i + 2] = orient + '0';
-		buf[4*i + 3] = ' ';
-	}
-	for (i = 0; i < 8; i++) {
-		piece = cube.corner[i];
-		perm = piece & _pbits;
-		orient = (piece & _cobits) >> _coshift;
-		buf[48 + 5*i    ] = cornerstr[perm][0];
-		buf[48 + 5*i + 1] = cornerstr[perm][1];
-		buf[48 + 5*i + 2] = cornerstr[perm][2];
-		buf[48 + 5*i + 3] = orient + '0';
-		buf[48 + 5*i + 4] = ' ';
-	}
-
-	buf[48+39] = '\0';
-}
-
-static void
-writecube_SRC(cube_t cube, char *buf)
-{
-	int i, ptr;
-	uint8_t piece;
-
-	memcpy(buf, "{\n\t.corner = {", 14);
-	ptr = 14;
-
-	for (i = 0; i < 8; i++) {
-		piece = cube.corner[i];
-		ptr += writepiece_SRC(piece, buf + ptr);
-	}
-
-	memcpy(buf+ptr-2, "},\n\t.edge = {", 13);
-	ptr += 11;
-
-	for (i = 0; i < 12; i++) {
-		piece = cube.edge[i];
-		ptr += writepiece_SRC(piece, buf + ptr);
-	}
-
-	memcpy(buf+ptr-2, "}\n}\0", 4);
-}
-
-void
-writecube(char *format, cube_t cube, char *buf)
-{
-	char *errormsg;
-	size_t len;
-
-	if (!isconsistent(cube)) {
-		errormsg = "ERROR: cannot write inconsistent cube";
-		goto writecube_error;
-	}
-
-	if (!strcmp(format, "H48")) {
-		writecube_H48(cube, buf);
-	} else if (!strcmp(format, "SRC")) {
-		writecube_SRC(cube, buf);
-	} else if (!strcmp(format, "AVX")) {
-		writecube_AVX(cube, buf);
-	} else {
-		errormsg = "ERROR: cannot write cube in the given format";
-		goto writecube_error;
-	}
-
-	return;
-
-writecube_error:
-	DBG_LOG("writecube error, see stdout for details\n");
-	len = strlen(errormsg);
-	memcpy(buf, errormsg, len);
-	buf[len] = '\n';
-	buf[len+1] = '\0';
-}
-
-static uint8_t
-readmove(char c)
-{
-	switch (c) {
-	case 'U':
-		return U;
-	case 'D':
-		return D;
-	case 'R':
-		return R;
-	case 'L':
-		return L;
-	case 'F':
-		return F;
-	case 'B':
-		return B;
-	default:
-		return _error;
-	}
-}
-
-static uint8_t
-readmodifier(char c)
-{
-	switch (c) {
-	case '1': /* Fallthrough */
-	case '2': /* Fallthrough */
-	case '3':
-		return c - '0' - 1;
-	case '\'':
-		return 2;
-	default:
-		return 0;
-	}
-}
-
-static uint8_t
-readtrans(char *buf)
-{
-	uint8_t t;
-
-	for (t = 0; t < 48; t++)
-		if (!strncmp(buf, transstr[t], 11))
-			return t;
-
-	DBG_LOG("readtrans error\n");
-	return _error;
-}
-
-static int
-writemoves(uint8_t *m, int n, char *buf)
-{
-	int i;
-	size_t len;
-	char *b, *s;
-
-	for (i = 0, b = buf; i < n; i++, b++) {
-		s = movestr[m[i]];
-		len = strlen(s);
-		memcpy(b, s, len);
-		b += len;	
-		*b = ' ';
-	}
-
-	if (b != buf)
-		b--; /* Remove last space */
-	*b = '\0';
-
-	return b - buf;
-}
-
-static void
-writetrans(uint8_t t, char *buf)
-{
-	if (t >= 48)
-		memcpy(buf, "error trans", 11);
-	else
-		memcpy(buf, transstr[t], 11);
-	buf[11] = '\0';
-}
-
-static int
-permsign(uint8_t *a, int n)
-{
-	int i, j;
-	uint8_t ret = 0;
-
-	for (i = 0; i < n; i++)
-		for (j = i+1; j < n; j++)
-			ret += a[i] > a[j] ? 1 : 0;
-
-	return ret % 2;
 }
 
 bool
@@ -3457,13 +3110,25 @@ issolved(cube_t cube)
 	return equal(cube, solved);
 }
 
-cube_t
-inverse(cube_t cube)
+bool
+equal(cube_t c1, cube_t c2)
 {
-	DBG_ASSERT(isconsistent(cube), zero,
-	    "inverse error: inconsistent cube\n");
+	int i;
+	bool ret;
 
-	return fasttocube(inverse_fast(cubetofast(cube)));
+	ret = true;
+	for (i = 0; i < 8; i++)
+		ret = ret && c1.corner[i] == c2.corner[i];
+	for (i = 0; i < 12; i++)
+		ret = ret && c1.edge[i] == c2.edge[i];
+
+	return ret;
+}
+
+bool
+iserror(cube_t cube)
+{
+	return equal(cube, zero);
 }
 
 cube_t
@@ -3475,7 +3140,396 @@ compose(cube_t c1, cube_t c2)
 	return fasttocube(compose_fast(cubetofast(c1), cubetofast(c2)));
 }
 
-static cube_fast_t
+cube_t
+inverse(cube_t cube)
+{
+	DBG_ASSERT(isconsistent(cube), zero,
+	    "inverse error: inconsistent cube\n");
+
+	return fasttocube(inverse_fast(cubetofast(cube)));
+}
+
+cube_t
+applymoves(cube_t cube, char *buf)
+{
+	cube_fast_t fast;
+	uint8_t r, m;
+	char *b;
+
+	DBG_ASSERT(isconsistent(cube), zero,
+	    "move error: inconsistent cube\n");
+
+	fast = cubetofast(cube);
+
+	for (b = buf; *b != '\0'; b++) {
+		while (*b == ' ' || *b == '\t' || *b == '\n')
+			b++;
+		if (*b == '\0')
+			goto readmoves_finish;
+		if ((r = readmove(*b)) == _error)
+			goto readmoves_error;
+		if ((m = readmodifier(*(b+1))) != 0)
+			b++;
+		fast = move(fast, r + m);
+	}
+
+readmoves_finish:
+	return fasttocube(fast);
+
+readmoves_error:
+	DBG_LOG("readmoves error\n");
+	return zero;
+}
+
+cube_t
+applytrans(cube_t cube, char *buf)
+{
+	cube_fast_t fast;
+	uint8_t t;
+
+	DBG_ASSERT(isconsistent(cube), zero,
+	    "transformation error: inconsistent cube\n");
+
+	t = readtrans(buf);
+	fast = cubetofast(cube);
+	fast = transform(fast, t);
+
+	return fasttocube(fast);
+}
+
+cube_t
+readcube(char *format, char *buf)
+{
+	cube_t cube;
+
+	if (!strcmp(format, "H48")) {
+		cube = readcube_H48(buf);
+	} else {
+		DBG_LOG("Cannot read cube in the given format\n");
+		cube = zero;
+	}
+
+	return cube;
+}
+
+void
+writecube(char *format, cube_t cube, char *buf)
+{
+	char *errormsg;
+	size_t len;
+
+	if (!isconsistent(cube)) {
+		errormsg = "ERROR: cannot write inconsistent cube";
+		goto writecube_error;
+	}
+
+	if (!strcmp(format, "H48")) {
+		writecube_H48(cube, buf);
+	} else if (!strcmp(format, "SRC")) {
+		writecube_SRC(cube, buf);
+	} else if (!strcmp(format, "AVX")) {
+		writecube_AVX(cube, buf);
+	} else {
+		errormsg = "ERROR: cannot write cube in the given format";
+		goto writecube_error;
+	}
+
+	return;
+
+writecube_error:
+	DBG_LOG("writecube error, see stdout for details\n");
+	len = strlen(errormsg);
+	memcpy(buf, errormsg, len);
+	buf[len] = '\n';
+	buf[len+1] = '\0';
+}
+
+_static int
+permsign(uint8_t *a, int n)
+{
+	int i, j;
+	uint8_t ret = 0;
+
+	for (i = 0; i < n; i++)
+		for (j = i+1; j < n; j++)
+			ret += a[i] > a[j] ? 1 : 0;
+
+	return ret % 2;
+}
+
+_static uint8_t
+readco(char *str)
+{
+	if (*str == '0')
+		return 0;
+	if (*str == '1')
+		return _ctwist_cw;
+	if (*str == '2')
+		return _ctwist_ccw;
+
+	DBG_LOG("Error reading CO\n");
+	return _error;
+}
+
+_static uint8_t
+readcp(char *str)
+{
+	uint8_t c;
+
+	for (c = 0; c < 8; c++)
+		if (!strncmp(str, cornerstr[c], 3) ||
+		    !strncmp(str, cornerstralt[c], 3))
+			return c;
+
+	DBG_LOG("Error reading CP\n");
+	return _error;
+}
+
+_static uint8_t
+readeo(char *str)
+{
+	if (*str == '0')
+		return 0;
+	if (*str == '1')
+		return _eflip;
+
+	DBG_LOG("Error reading EO\n");
+	return _error;
+}
+
+_static uint8_t
+readep(char *str)
+{
+	uint8_t e;
+
+	for (e = 0; e < 12; e++)
+		if (!strncmp(str, edgestr[e], 2))
+			return e;
+
+	DBG_LOG("Error reading EP\n");
+	return _error;
+}
+
+_static cube_t
+readcube_H48(char *buf)
+{
+	int i;
+	uint8_t piece, orient;
+	cube_t ret = {0};
+	char *b;
+	
+	b = buf;
+
+	for (i = 0; i < 12; i++) {
+		while (*b == ' ' || *b == '\t' || *b == '\n')
+			b++;
+		if ((piece = readep(b)) == _error)
+			return zero;
+		b += 2;
+		if ((orient = readeo(b)) == _error)
+			return zero;
+		b++;
+		ret.edge[i] = piece | orient;
+	}
+	for (i = 0; i < 8; i++) {
+		while (*b == ' ' || *b == '\t' || *b == '\n')
+			b++;
+		if ((piece = readcp(b)) == _error)
+			return zero;
+		b += 3;
+		if ((orient = readco(b)) == _error)
+			return zero;
+		b++;
+		ret.corner[i] = piece | orient;
+	}
+
+	return ret;
+}
+
+_static int
+writepiece_SRC(uint8_t piece, char *buf)
+{
+	char digits[3];
+	int i, len = 0;
+
+	while (piece != 0) {
+		digits[len++] = (piece % 10) + '0';
+		piece /= 10;
+	}
+
+	if (len == 0)
+		digits[len++] = '0';
+
+	for (i = 0; i < len; i++)
+		buf[i] = digits[len-i-1];
+
+	buf[len] = ',';
+	buf[len+1] = ' ';
+
+	return len+2;
+}
+
+_static void
+writecube_AVX(cube_t cube, char *buf)
+{
+	int i, ptr;
+	uint8_t piece;
+
+	memcpy(buf, "_mm256_set_epi8(\n\t0, 0, 0, 0, ", 30);
+	ptr = 30;
+
+	for (i = 11; i >= 0; i--) {
+		piece = cube.edge[i];
+		ptr += writepiece_SRC(piece, buf + ptr);
+	}
+
+	memcpy(buf+ptr-2, ",\n\t0, 0, 0, 0, 0, 0, 0, 0, ", 27);
+	ptr += 25;
+
+	for (i = 7; i >= 0; i--) {
+		piece = cube.corner[i];
+		ptr += writepiece_SRC(piece, buf + ptr);
+	}
+
+	memcpy(buf+ptr-2, "\n)\0", 3);
+}
+
+_static void
+writecube_H48(cube_t cube, char *buf)
+{
+	uint8_t piece, perm, orient;
+	int i;
+
+	for (i = 0; i < 12; i++) {
+		piece = cube.edge[i];
+		perm = piece & _pbits;
+		orient = (piece & _eobit) >> _eoshift;
+		buf[4*i    ] = edgestr[perm][0];
+		buf[4*i + 1] = edgestr[perm][1];
+		buf[4*i + 2] = orient + '0';
+		buf[4*i + 3] = ' ';
+	}
+	for (i = 0; i < 8; i++) {
+		piece = cube.corner[i];
+		perm = piece & _pbits;
+		orient = (piece & _cobits) >> _coshift;
+		buf[48 + 5*i    ] = cornerstr[perm][0];
+		buf[48 + 5*i + 1] = cornerstr[perm][1];
+		buf[48 + 5*i + 2] = cornerstr[perm][2];
+		buf[48 + 5*i + 3] = orient + '0';
+		buf[48 + 5*i + 4] = ' ';
+	}
+
+	buf[48+39] = '\0';
+}
+
+_static void
+writecube_SRC(cube_t cube, char *buf)
+{
+	int i, ptr;
+	uint8_t piece;
+
+	memcpy(buf, "{\n\t.corner = {", 14);
+	ptr = 14;
+
+	for (i = 0; i < 8; i++) {
+		piece = cube.corner[i];
+		ptr += writepiece_SRC(piece, buf + ptr);
+	}
+
+	memcpy(buf+ptr-2, "},\n\t.edge = {", 13);
+	ptr += 11;
+
+	for (i = 0; i < 12; i++) {
+		piece = cube.edge[i];
+		ptr += writepiece_SRC(piece, buf + ptr);
+	}
+
+	memcpy(buf+ptr-2, "}\n}\0", 4);
+}
+
+_static uint8_t
+readmove(char c)
+{
+	switch (c) {
+	case 'U':
+		return U;
+	case 'D':
+		return D;
+	case 'R':
+		return R;
+	case 'L':
+		return L;
+	case 'F':
+		return F;
+	case 'B':
+		return B;
+	default:
+		return _error;
+	}
+}
+
+_static uint8_t
+readmodifier(char c)
+{
+	switch (c) {
+	case '1': /* Fallthrough */
+	case '2': /* Fallthrough */
+	case '3':
+		return c - '0' - 1;
+	case '\'':
+		return 2;
+	default:
+		return 0;
+	}
+}
+
+_static uint8_t
+readtrans(char *buf)
+{
+	uint8_t t;
+
+	for (t = 0; t < 48; t++)
+		if (!strncmp(buf, transstr[t], 11))
+			return t;
+
+	DBG_LOG("readtrans error\n");
+	return _error;
+}
+
+_static int
+writemoves(uint8_t *m, int n, char *buf)
+{
+	int i;
+	size_t len;
+	char *b, *s;
+
+	for (i = 0, b = buf; i < n; i++, b++) {
+		s = movestr[m[i]];
+		len = strlen(s);
+		memcpy(b, s, len);
+		b += len;	
+		*b = ' ';
+	}
+
+	if (b != buf)
+		b--; /* Remove last space */
+	*b = '\0';
+
+	return b - buf;
+}
+
+_static void
+writetrans(uint8_t t, char *buf)
+{
+	if (t >= 48)
+		memcpy(buf, "error trans", 11);
+	else
+		memcpy(buf, transstr[t], 11);
+	buf[11] = '\0';
+}
+
+_static cube_fast_t
 move(cube_fast_t c, uint8_t m)
 {
 	switch (m) {
@@ -3521,7 +3575,7 @@ move(cube_fast_t c, uint8_t m)
 	}
 }
 
-static cube_fast_t
+_static cube_fast_t
 transform(cube_fast_t c, uint8_t t)
 {
 	switch (t) {
@@ -3627,52 +3681,26 @@ transform(cube_fast_t c, uint8_t t)
 	}
 }
 
-cube_t
-applymoves(cube_t cube, char *buf)
+/******************************************************************************
+Section: moves and move sequences
+
+This section contains methods to work with moves and arrays of moves. They
+do not rely on the cube structure.
+******************************************************************************/
+
+_static_inline uint8_t movebase(uint8_t);
+_static_inline uint8_t moveaxis(uint8_t);
+
+_static_inline uint8_t
+movebase(uint8_t move)
 {
-	cube_fast_t fast;
-	uint8_t r, m;
-	char *b;
-
-	DBG_ASSERT(isconsistent(cube), zero,
-	    "move error: inconsistent cube\n");
-
-	fast = cubetofast(cube);
-
-	for (b = buf; *b != '\0'; b++) {
-		while (*b == ' ' || *b == '\t' || *b == '\n')
-			b++;
-		if (*b == '\0')
-			goto readmoves_finish;
-		if ((r = readmove(*b)) == _error)
-			goto readmoves_error;
-		if ((m = readmodifier(*(b+1))) != 0)
-			b++;
-		fast = move(fast, r + m);
-	}
-
-readmoves_finish:
-	return fasttocube(fast);
-
-readmoves_error:
-	DBG_LOG("readmoves error\n");
-	return zero;
+	return move / 3;
 }
 
-cube_t
-applytrans(cube_t cube, char *buf)
+_static_inline uint8_t
+moveaxis(uint8_t move)
 {
-	cube_fast_t fast;
-	uint8_t t;
-
-	DBG_ASSERT(isconsistent(cube), zero,
-	    "transformation error: inconsistent cube\n");
-
-	t = readtrans(buf);
-	fast = cubetofast(cube);
-	fast = transform(fast, t);
-
-	return fasttocube(fast);
+	return move / 6;
 }
 
 /******************************************************************************
@@ -3692,7 +3720,82 @@ typedef struct {
 	uint8_t (*estimate)(cube_fast_t);
 } dfsarg_generic_t;
 
-static bool
+int64_t solve(cube_t, char *, char *, char *, int8_t, int8_t, int64_t, int8_t,
+    void *, char *);
+void multisolve(int, cube_t *, char *, void *, char *);
+int64_t gendata(char *, void *);
+
+_static bool allowednextmove(dfsarg_generic_t, uint8_t);
+_static void solve_generic_appendsolution(dfsarg_generic_t);
+_static int solve_generic_dfs(dfsarg_generic_t);
+_static int64_t solve_generic(cube_t, char *, int8_t, int8_t, int64_t, int8_t,
+    char *, uint8_t (*)(cube_fast_t));
+_static uint8_t estimate_simple(cube_fast_t);
+_static int64_t solve_simple(cube_t, int8_t, int8_t, int64_t, int8_t, char *);
+
+int64_t
+solve(
+	cube_t cube,
+	char *solver,
+	char *options,
+	char *nisstype,
+	int8_t minmoves,
+	int8_t maxmoves,
+	int64_t maxsols,
+	int8_t optimal,
+	void *data,
+	char *solutions
+)
+{
+	DBG_WARN(!strcmp(options, ""),
+	     "solve: 'options' not implemented yet, ignoring\n");
+
+	DBG_WARN(!strcmp(nisstype, ""),
+	     "solve: NISS not implemented yet, ignoring 'nisstype'\n");
+
+	DBG_WARN(data == NULL,
+	    "solve: 'data' not implemented yet, ignoring\n");
+
+	if (!strcmp(solver, "optimal") || !strcmp(solver, "simple")) {
+		return solve_simple(
+			cube,
+			minmoves,
+			maxmoves,
+			maxsols,
+			optimal,
+			solutions
+		);
+	} else {
+		DBG_LOG("solve: unknown solver '%s'\n", solver);
+		return -1;
+	}
+
+	DBG_LOG("solve: error\n");
+	return -1;
+}
+
+void
+multisolve(int n, cube_t *cube, char *solver, void *data, char *sols)
+{
+	char *s;
+	int i;
+
+	s = sols;
+	for (i = 0; i < n; i++) {
+		solve(cube[i], solver, "", "normal", 0, -1, 1, 0, NULL, s);
+		while (s++);
+	}
+}
+
+int64_t
+gendata(char *solver, void *data)
+{
+	DBG_LOG("gendata: not implemented yet\n");
+
+	return -1;
+}
+
+_static bool
 allowednextmove(dfsarg_generic_t arg, uint8_t m)
 {
 	int n;
@@ -3720,7 +3823,7 @@ allowednextmove(dfsarg_generic_t arg, uint8_t m)
 	return l1axis != l2axis || mbase != l2base;
 }
 
-static void
+_static void
 solve_generic_appendsolution(dfsarg_generic_t arg)
 {
 	int strl;
@@ -3733,7 +3836,7 @@ solve_generic_appendsolution(dfsarg_generic_t arg)
 	(*arg.nsols)++;
 }
 
-static int
+_static int
 solve_generic_dfs(dfsarg_generic_t arg)
 {
 	dfsarg_generic_t nextarg;
@@ -3765,7 +3868,7 @@ solve_generic_dfs(dfsarg_generic_t arg)
 	return ret;
 }
 
-static int64_t
+_static int64_t
 solve_generic(
 	cube_t cube,
 	char *nisstype,
@@ -3862,13 +3965,13 @@ solve_generic(
 	return ret;
 }
 
-static uint8_t
+_static uint8_t
 estimate_simple(cube_fast_t cube)
 {
 	return issolved_fast(cube) ? 0 : 1;
 }
 
-static int64_t
+_static int64_t
 solve_simple(
 	cube_t cube,
 	int8_t minmoves,
@@ -3888,66 +3991,4 @@ solve_simple(
 		solutions,
 		&estimate_simple
 	);
-}
-
-int64_t
-solve(
-	cube_t cube,
-	char *solver,
-	char *options,
-	char *nisstype,
-	int8_t minmoves,
-	int8_t maxmoves,
-	int64_t maxsols,
-	int8_t optimal,
-	void *data,
-	char *solutions
-)
-{
-	DBG_WARN(!strcmp(options, ""),
-	     "solve: 'options' not implemented yet, ignoring\n");
-
-	DBG_WARN(!strcmp(nisstype, ""),
-	     "solve: NISS not implemented yet, ignoring 'nisstype'\n");
-
-	DBG_WARN(data == NULL,
-	    "solve: 'data' not implemented yet, ignoring\n");
-
-	if (!strcmp(solver, "optimal") || !strcmp(solver, "simple")) {
-		return solve_simple(
-			cube,
-			minmoves,
-			maxmoves,
-			maxsols,
-			optimal,
-			solutions
-		);
-	} else {
-		DBG_LOG("solve: unknown solver '%s'\n", solver);
-		return -1;
-	}
-
-	DBG_LOG("solve: error\n");
-	return -1;
-}
-
-void
-multisolve(int n, cube_t *cube, char *solver, void *data, char *sols)
-{
-	char *s;
-	int i;
-
-	s = sols;
-	for (i = 0; i < n; i++) {
-		solve(cube[i], solver, "", "normal", 0, -1, 1, 0, NULL, s);
-		while (s++);
-	}
-}
-
-int64_t
-gendata(char *solver, void *data)
-{
-	DBG_LOG("gendata: not implemented yet\n");
-
-	return -1;
 }

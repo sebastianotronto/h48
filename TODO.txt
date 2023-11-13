@@ -19,6 +19,10 @@ See the sections below for details
 * Rename to libnissy
 * Release 1.0
 
+## Small change
+
+* add lots of tests for things that were static, now visible
+
 ## Solving
 
 ### Simple (slow, light) solver
