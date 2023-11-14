@@ -3165,19 +3165,19 @@ applymoves(cube_t cube, char *buf)
 		while (*b == ' ' || *b == '\t' || *b == '\n')
 			b++;
 		if (*b == '\0')
-			goto readmoves_finish;
+			goto applymoves_finish;
 		if ((r = readmove(*b)) == _error)
-			goto readmoves_error;
+			goto applymoves_error;
 		if ((m = readmodifier(*(b+1))) != 0)
 			b++;
 		fast = move(fast, r + m);
 	}
 
-readmoves_finish:
+applymoves_finish:
 	return fasttocube(fast);
 
-readmoves_error:
-	DBG_LOG("readmoves error\n");
+applymoves_error:
+	DBG_LOG("applymoves error\n");
 	return zero;
 }
 
@@ -3725,7 +3725,7 @@ int64_t solve(cube_t, char *, char *, char *, int8_t, int8_t, int64_t, int8_t,
 void multisolve(int, cube_t *, char *, void *, char *);
 int64_t gendata(char *, void *);
 
-_static bool allowednextmove(dfsarg_generic_t, uint8_t);
+_static bool allowednextmove(uint8_t *, int, uint8_t);
 _static void solve_generic_appendsolution(dfsarg_generic_t);
 _static int solve_generic_dfs(dfsarg_generic_t);
 _static int64_t solve_generic(cube_t, char *, int8_t, int8_t, int64_t, int8_t,
@@ -3796,20 +3796,17 @@ gendata(char *solver, void *data)
 }
 
 _static bool
-allowednextmove(dfsarg_generic_t arg, uint8_t m)
+allowednextmove(uint8_t *moves, int n, uint8_t m)
 {
-	int n;
 	uint8_t mbase, l1base, l2base, maxis, l1axis, l2axis;
-
-	n = arg.nmoves;
 
 	if (n == 0)
 		return true;
 
 	mbase = movebase(m);
 	maxis = moveaxis(m);
-	l1base = movebase(arg.moves[n-1]);
-	l1axis = moveaxis(arg.moves[n-1]);
+	l1base = movebase(moves[n-1]);
+	l1axis = moveaxis(moves[n-1]);
 
 	if (mbase == l1base || (maxis == l1axis && mbase < l1base))
 		return false;
@@ -3817,8 +3814,8 @@ allowednextmove(dfsarg_generic_t arg, uint8_t m)
 	if (n == 1)
 		return true;
 
-	l2base = movebase(arg.moves[n-2]);
-	l2axis = moveaxis(arg.moves[n-2]);
+	l2base = movebase(moves[n-2]);
+	l2axis = moveaxis(moves[n-2]);
 
 	return l1axis != l2axis || mbase != l2base;
 }
@@ -3858,7 +3855,7 @@ solve_generic_dfs(dfsarg_generic_t arg)
 	memcpy(&nextarg, &arg, sizeof(dfsarg_generic_t));
 	nextarg.nmoves = arg.nmoves + 1;
 	for (m = 0, ret = 0; m < 18; m++) {
-		if (allowednextmove(arg, m)) {
+		if (allowednextmove(arg.moves, arg.nmoves, m)) {
 			nextarg.cube = move(arg.cube, m);
 			nextarg.moves[arg.nmoves] = m;
 			ret += solve_generic_dfs(nextarg);

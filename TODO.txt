@@ -22,8 +22,6 @@ See the sections below for details
 ## Small change
 
 * solve tests: make smaller, split
-* add lots of tests for things that were static, now visible:
-  allowednextmove
 
 ## Solving
 
