@@ -134,7 +134,7 @@ Section: constants, strings and other stuff
 #define _eflip      0x10U
 #define _error      0xFFU
 
-_static char *cornerstr[] = {
+static char *cornerstr[] = {
 	[_c_ufr] = "UFR",
 	[_c_ubl] = "UBL",
 	[_c_dfl] = "DFL",
@@ -145,7 +145,7 @@ _static char *cornerstr[] = {
 	[_c_dbl] = "DBL"
 };
 
-_static char *cornerstralt[] = {
+static char *cornerstralt[] = {
 	[_c_ufr] = "URF",
 	[_c_ubl] = "ULB",
 	[_c_dfl] = "DLF",
@@ -156,7 +156,7 @@ _static char *cornerstralt[] = {
 	[_c_dbl] = "DLB"
 };
 
-_static char *edgestr[] = {
+static char *edgestr[] = {
 	[_e_uf] = "UF",
 	[_e_ub] = "UB",
 	[_e_db] = "DB",
@@ -171,7 +171,7 @@ _static char *edgestr[] = {
 	[_e_br] = "BR"
 };
 
-_static char *movestr[] = {
+static char *movestr[] = {
 	[U]  = "U",
 	[U2] = "U2",
 	[U3] = "U'",
@@ -192,7 +192,7 @@ _static char *movestr[] = {
 	[B3] = "B'",
 };
 
-_static char *transstr[] = {
+static char *transstr[] = {
 	[UFr] = "rotation UF",
 	[UFm] = "mirrored UF",
 	[ULr] = "rotation UL",
