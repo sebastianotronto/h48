@@ -1,82 +1,43 @@
-## Roadmap
+## (find better name) H48 solver, ideas
 
-See the sections below for details
+First compute co + csep. Use csep as a binary number (2^8 instead of 70,
+loose a factor of 3.66 but still fits in a few megabytes or less). Use
+co + csep as an index in a table whose entries have: 6 bits for ttrep,
+12 bits for rep, 4 bits for pruning. Optionally, 4 more bits could be
+used for the base of the pruning table, if we want to have a different
+base for each corner state; but probably not useful.
 
-* Tests for multisolve
-* More tests for simple solver?
-* Benchmarks?
-* More complex optimal solvers, pruning tables
-* (More) benchmarks
-* Multithreading (build-time option number of threads)
-* Other optimizations
-* Extend cube and moves to include centers
-* NISS
-* Move manipulation utilities
-* Coordinate solvers and other steps
-* More output formats
-* Adapters for other languages (at least python)
-* More documentation (or keep all in cube.h?)
-* Rename to libnissy
-* Release 1.0
+If the first pruning is enough, or if the base value of the pruning table
+(see below) is too low, do not compute the full coordinate (which includes
+epsep + partial EO, 12 different sizes depending on how many edges).
 
-## Small change
+Otherwise, transform edges only using ttrep and compute full coordinate.
+Look up in table. 3 types of table:
+1. 4 bits per entry, full pruning table
+2. 3 bits with base value (let's try, why not)
+3. 2 bits with base value, nxopt style
+4. 1 bit per entry, telling only if more or less than mid value
+Types 2-4 require benchmarks, a lot of them.
 
-* solve tests: make smaller, split
+Inverse probing (no need to compute inverse, compute one at the beginning
+and keep adding premoves); better do first part of pruning for both
+normal and inverse and only then search in the full table.
 
-## Solving
+If inverse probing gives tight bound, reduce branching factor, optionally
+switch. Here NISS may be useful.
 
-### Simple (slow, light) solver
+## Other solvers
 
-* Decide on API for solve() (see above)
-* solve generic becomes private, use cube_fast_t instead of cube_t
-* write simple solver based on generic
-* tests: solve full cube (max 7-8 moves?)
-* benchmarks
-
-### Coordinates
-
-TODO: specify in the comments that coordinates return 0 if solved
-
-* [done] eo
-* co
-* ep
-* epsep
-* cp
-* cpsep
-* cphtr
-
-What about symcoord?
-
-### More solvers
-
-* solve_light: first based on solve_generic, then optimize; benchmark
-  to see up to what length it works best (7 moves? 10 moves?)
-
-### Implement the following solvers:
-
-* Slow: basic solver without any table.
-* H48: one-bit-per-entry table + fallback, 48 symmetries and so on.
-  See planner.
-* nxopt31: mostly for comparison.
-* other nxopt solvers: make generic and take the type as parameter.
-* Step solver: take a coordinate function and a moveset as a parameter.
-
-### New method:
-
-* 48 symmetries, cocsep (or chtr, or similar) + epsep + some EO
-* 1 bit per entry + fallback
-* store necessary stuff (e.g. ttrep) all interleaved in the same table
-
-### Other considerations:
-
-* Reconsider going corners-first, so there is no need to sumco()
-
-### Pruning tables
-
-* ptable should contain some extra data at the beginning:
-  an integer (size)
-  a checksum
-  some summary info, maybe even in text form
+* ptable should contain some extra data at the beginning: an integer (size)
+  a checksum some summary info, maybe even in text form
+* multisolve
+* use threads
+* nxopt (various sizes, for comparison; also use base value probing
+  and benchmarking)
+* Coordinate solver for replacing nissy backend (specify in the comments
+  that coordinates return 0 if solved)
+* improve light solver with no table; consider using a small, hard-coded
+  table, e.g. H48 corner table?
 
 ## Optimizations
 
@@ -147,3 +108,22 @@ For example, to apply the transformation RBm (mirrored RB) to a cube C:
 	2. Rotate the mirrored cube with z' y2
 	3. Apply the cube C to the transformed solved cube
 	4. Apply the transformations of step 1a and 1b in reverse
+
+## Roadmap
+
+* Tests for multisolve
+* More tests for simple solver?
+* Benchmarks?
+* More complex optimal solvers, pruning tables
+* (More) benchmarks
+* Multithreading (build-time option number of threads)
+* Other optimizations
+* Extend cube and moves to include centers
+* NISS
+* Move manipulation utilities
+* Coordinate solvers and other steps
+* More output formats
+* Adapters for other languages (at least python)
+* More documentation (or keep all in cube.h?)
+* Rename to libnissy
+* Release 1.0
