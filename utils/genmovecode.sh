@@ -4,16 +4,18 @@ type="${1:-src}"
 
 gcc -DDEBUG h48_to_"$type".c ../cube.c -o h48_to_"$type"
 
-genfuncs() {
+lineavx() { printf '#define _move_cube_%s ' "$1"; }
+linesrc() { printf '_static cube_fast_t _move_cube_%s = ' "$1"; }
+sedavx() { sed '1,2s/$/ \\/ ; 3s/$/)/ ; 3q'; }
+sedsrc() { sed '3s/$/ };/ ; 3q'; }
+
+gen() {
 	for f in move_??_*.txt; do
 		move="$(echo $f | sed 's/.*_// ; s/\.txt//')"
-		printf 'static inline cube_fast_t\n_move_%s' "$move"
-		printf '(cube_fast_t c)\n{\n'
-		printf '\tcube_fast_t m = '
-		./h48_to_"$type" <"$f" | sed '2,4s/^/\t/'
-		printf ';\n\n\treturn compose_fast(c, m);\n}\n\n'
+		line$type "$move"
+		./h48_to_"$type" <"$f" | sed$type
 	done
 }
 
-genfuncs
+gen
 rm -f h48_to_"$type" invert
