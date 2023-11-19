@@ -12,7 +12,7 @@ int main() {
 
 	fgets(str, STRLENMAX, stdin);
 	cube = readcube("H48", str);
-	writecube("SRC", cube, str);
+	writecube("LST", cube, str);
 	fputs(str, stdout);
 
 	return 0;

@@ -83,13 +83,10 @@ Multiple representations of the cube as text are supported:
   cube. A single whitespace character is added between pieces when writing.
 
 - SRC: format used to generate code for internal use.
-  In cube.c, a type called cube_array_t is defined and used for basic,
-  non-performance-critical methods. If OUT is the output in SRC format,
-  the following line can be used to declare a new cube object:
+  If OUT is the output in SRC format, one can use `cube_t cube = OUT` to
+  declare a new cube object.
 
-cube_array_t cube = OUT
-      
-- AVX: analogue to SRC, but for the AVX2 internal representation of the cube.
+- LST: similar to SRC, but only a list of comma-separated numbers is printed.
 
 Not all formats are supported for both reading and writing. More formats
 may be supported in the future.
@@ -101,7 +98,7 @@ may be supported in the future.
 cube_t readcube(char *format, char *buf);
 
 /* Write the given cube to buf in the specified format.
- * Supported formats: "H48", "SRC", "AVX".
+ * Supported formats: "H48", "SRC", "LST".
  */
 void writecube(char *format, cube_t cube, char *buf);
 

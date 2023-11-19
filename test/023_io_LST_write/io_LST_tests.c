@@ -21,7 +21,7 @@ int main() {
 	} else if (!issolvable(cube)) {
 		printf("Cube is not solvable\n");
 	} else {
-		writecube("AVX", cube, str);
+		writecube("LST", cube, str);
 		printf("%s\n", str);
 	}
 

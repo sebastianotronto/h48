@@ -134,6 +134,241 @@ Section: constants, strings and other stuff
 #define _eflip      0x10U
 #define _error      0xFFU
 
+#define zero_fast fastcube( \
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+#define solved_fast fastcube( \
+    0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
+
+#define _move_cube_U fastcube( \
+    5, 4, 2, 3, 0, 1, 6, 7, 4, 5, 2, 3, 1, 0, 6, 7, 8, 9, 10, 11)
+#define _move_cube_U2 fastcube( \
+    1, 0, 2, 3, 5, 4, 6, 7, 1, 0, 2, 3, 5, 4, 6, 7, 8, 9, 10, 11)
+#define _move_cube_U3 fastcube( \
+    4, 5, 2, 3, 1, 0, 6, 7, 5, 4, 2, 3, 0, 1, 6, 7, 8, 9, 10, 11)
+#define _move_cube_D fastcube( \
+    0, 1, 7, 6, 4, 5, 2, 3, 0, 1, 7, 6, 4, 5, 2, 3, 8, 9, 10, 11)
+#define _move_cube_D2 fastcube( \
+    0, 1, 3, 2, 4, 5, 7, 6, 0, 1, 3, 2, 4, 5, 7, 6, 8, 9, 10, 11)
+#define _move_cube_D3 fastcube( \
+    0, 1, 6, 7, 4, 5, 3, 2, 0, 1, 6, 7, 4, 5, 3, 2, 8, 9, 10, 11)
+#define _move_cube_R fastcube( \
+    70, 1, 2, 69, 4, 32, 35, 7, 0, 1, 2, 3, 8, 5, 6, 11, 7, 9, 10, 4)
+#define _move_cube_R2 fastcube( \
+    3, 1, 2, 0, 4, 6, 5, 7, 0, 1, 2, 3, 7, 5, 6, 4, 11, 9, 10, 8)
+#define _move_cube_R3 fastcube( \
+    69, 1, 2, 70, 4, 35, 32, 7, 0, 1, 2, 3, 11, 5, 6, 8, 4, 9, 10, 7)
+#define _move_cube_L fastcube( \
+    0, 71, 68, 3, 33, 5, 6, 34, 0, 1, 2, 3, 4, 10, 9, 7, 8, 5, 6, 11)
+#define _move_cube_L2 fastcube( \
+    0, 2, 1, 3, 7, 5, 6, 4, 0, 1, 2, 3, 4, 6, 5, 7, 8, 10, 9, 11)
+#define _move_cube_L3 fastcube( \
+    0, 68, 71, 3, 34, 5, 6, 33, 0, 1, 2, 3, 4, 9, 10, 7, 8, 6, 5, 11)
+#define _move_cube_F fastcube( \
+    36, 1, 38, 3, 66, 5, 64, 7, 25, 1, 2, 24, 4, 5, 6, 7, 16, 19, 10, 11)
+#define _move_cube_F2 fastcube( \
+    2, 1, 0, 3, 6, 5, 4, 7, 3, 1, 2, 0, 4, 5, 6, 7, 9, 8, 10, 11)
+#define _move_cube_F3 fastcube( \
+    38, 1, 36, 3, 64, 5, 66, 7, 24, 1, 2, 25, 4, 5, 6, 7, 19, 16, 10, 11)
+#define _move_cube_B fastcube( \
+    0, 37, 2, 39, 4, 67, 6, 65, 0, 27, 26, 3, 4, 5, 6, 7, 8, 9, 17, 18)
+#define _move_cube_B2 fastcube( \
+    0, 3, 2, 1, 4, 7, 6, 5, 0, 2, 1, 3, 4, 5, 6, 7, 8, 9, 11, 10)
+#define _move_cube_B3 fastcube( \
+    0, 39, 2, 37, 4, 65, 6, 67, 0, 26, 27, 3, 4, 5, 6, 7, 8, 9, 18, 17)
+
+#define _trans_cube_UFr fastcube( \
+    0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
+#define _trans_cube_UFr_inverse fastcube( \
+    0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
+#define _trans_cube_ULr fastcube( \
+    4, 5, 7, 6, 1, 0, 2, 3, 5, 4, 7, 6, 0, 1, 2, 3, 25, 26, 27, 24)
+#define _trans_cube_ULr_inverse fastcube( \
+    5, 4, 6, 7, 0, 1, 3, 2, 4, 5, 6, 7, 1, 0, 3, 2, 27, 24, 25, 26)
+#define _trans_cube_UBr fastcube( \
+    1, 0, 3, 2, 5, 4, 7, 6, 1, 0, 3, 2, 5, 4, 7, 6, 10, 11, 8, 9)
+#define _trans_cube_UBr_inverse fastcube( \
+    1, 0, 3, 2, 5, 4, 7, 6, 1, 0, 3, 2, 5, 4, 7, 6, 10, 11, 8, 9)
+#define _trans_cube_URr fastcube( \
+    5, 4, 6, 7, 0, 1, 3, 2, 4, 5, 6, 7, 1, 0, 3, 2, 27, 24, 25, 26)
+#define _trans_cube_URr_inverse fastcube( \
+    4, 5, 7, 6, 1, 0, 2, 3, 5, 4, 7, 6, 0, 1, 2, 3, 25, 26, 27, 24)
+#define _trans_cube_DFr fastcube( \
+    2, 3, 0, 1, 6, 7, 4, 5, 3, 2, 1, 0, 6, 7, 4, 5, 9, 8, 11, 10)
+#define _trans_cube_DFr_inverse fastcube( \
+    2, 3, 0, 1, 6, 7, 4, 5, 3, 2, 1, 0, 6, 7, 4, 5, 9, 8, 11, 10)
+#define _trans_cube_DLr fastcube( \
+    7, 6, 4, 5, 2, 3, 1, 0, 6, 7, 4, 5, 2, 3, 0, 1, 26, 25, 24, 27)
+#define _trans_cube_DLr_inverse fastcube( \
+    7, 6, 4, 5, 2, 3, 1, 0, 6, 7, 4, 5, 2, 3, 0, 1, 26, 25, 24, 27)
+#define _trans_cube_DBr fastcube( \
+    3, 2, 1, 0, 7, 6, 5, 4, 2, 3, 0, 1, 7, 6, 5, 4, 11, 10, 9, 8)
+#define _trans_cube_DBr_inverse fastcube( \
+    3, 2, 1, 0, 7, 6, 5, 4, 2, 3, 0, 1, 7, 6, 5, 4, 11, 10, 9, 8)
+#define _trans_cube_DRr fastcube( \
+    6, 7, 5, 4, 3, 2, 0, 1, 7, 6, 5, 4, 3, 2, 1, 0, 24, 27, 26, 25)
+#define _trans_cube_DRr_inverse fastcube( \
+    6, 7, 5, 4, 3, 2, 0, 1, 7, 6, 5, 4, 3, 2, 1, 0, 24, 27, 26, 25)
+#define _trans_cube_RUr fastcube( \
+    64, 67, 65, 66, 37, 38, 36, 39, 20, 23, 22, 21, 24, 27, 26, 25, 0, 1, 2, 3)
+#define _trans_cube_RUr_inverse fastcube( \
+    32, 34, 35, 33, 70, 68, 69, 71, 8, 9, 10, 11, 16, 19, 18, 17, 20, 23, 22, 21)
+#define _trans_cube_RFr fastcube( \
+    38, 37, 36, 39, 64, 67, 66, 65, 24, 27, 26, 25, 23, 20, 21, 22, 19, 16, 17, 18)
+#define _trans_cube_RFr_inverse fastcube( \
+    36, 39, 38, 37, 66, 65, 64, 67, 25, 26, 27, 24, 21, 22, 23, 20, 16, 19, 18, 17)
+#define _trans_cube_RDr fastcube( \
+    67, 64, 66, 65, 38, 37, 39, 36, 23, 20, 21, 22, 27, 24, 25, 26, 2, 3, 0, 1)
+#define _trans_cube_RDr_inverse fastcube( \
+    33, 35, 34, 32, 71, 69, 68, 70, 10, 11, 8, 9, 17, 18, 19, 16, 21, 22, 23, 20)
+#define _trans_cube_RBr fastcube( \
+    37, 38, 39, 36, 67, 64, 65, 66, 27, 24, 25, 26, 20, 23, 22, 21, 17, 18, 19, 16)
+#define _trans_cube_RBr_inverse fastcube( \
+    37, 38, 39, 36, 67, 64, 65, 66, 27, 24, 25, 26, 20, 23, 22, 21, 17, 18, 19, 16)
+#define _trans_cube_LUr fastcube( \
+    65, 66, 64, 67, 36, 39, 37, 38, 21, 22, 23, 20, 26, 25, 24, 27, 1, 0, 3, 2)
+#define _trans_cube_LUr_inverse fastcube( \
+    34, 32, 33, 35, 68, 70, 71, 69, 9, 8, 11, 10, 19, 16, 17, 18, 22, 21, 20, 23)
+#define _trans_cube_LFr fastcube( \
+    36, 39, 38, 37, 66, 65, 64, 67, 25, 26, 27, 24, 21, 22, 23, 20, 16, 19, 18, 17)
+#define _trans_cube_LFr_inverse fastcube( \
+    38, 37, 36, 39, 64, 67, 66, 65, 24, 27, 26, 25, 23, 20, 21, 22, 19, 16, 17, 18)
+#define _trans_cube_LDr fastcube( \
+    66, 65, 67, 64, 39, 36, 38, 37, 22, 21, 20, 23, 25, 26, 27, 24, 3, 2, 1, 0)
+#define _trans_cube_LDr_inverse fastcube( \
+    35, 33, 32, 34, 69, 71, 70, 68, 11, 10, 9, 8, 18, 17, 16, 19, 23, 20, 21, 22)
+#define _trans_cube_LBr fastcube( \
+    39, 36, 37, 38, 65, 66, 67, 64, 26, 25, 24, 27, 22, 21, 20, 23, 18, 17, 16, 19)
+#define _trans_cube_LBr_inverse fastcube( \
+    39, 36, 37, 38, 65, 66, 67, 64, 26, 25, 24, 27, 22, 21, 20, 23, 18, 17, 16, 19)
+#define _trans_cube_FUr fastcube( \
+    68, 70, 69, 71, 32, 34, 33, 35, 16, 19, 18, 17, 9, 8, 11, 10, 5, 4, 7, 6)
+#define _trans_cube_FUr_inverse fastcube( \
+    68, 70, 69, 71, 32, 34, 33, 35, 16, 19, 18, 17, 9, 8, 11, 10, 5, 4, 7, 6)
+#define _trans_cube_FRr fastcube( \
+    32, 34, 35, 33, 70, 68, 69, 71, 8, 9, 10, 11, 16, 19, 18, 17, 20, 23, 22, 21)
+#define _trans_cube_FRr_inverse fastcube( \
+    64, 67, 65, 66, 37, 38, 36, 39, 20, 23, 22, 21, 24, 27, 26, 25, 0, 1, 2, 3)
+#define _trans_cube_FDr fastcube( \
+    70, 68, 71, 69, 34, 32, 35, 33, 19, 16, 17, 18, 8, 9, 10, 11, 7, 6, 5, 4)
+#define _trans_cube_FDr_inverse fastcube( \
+    69, 71, 68, 70, 33, 35, 32, 34, 17, 18, 19, 16, 11, 10, 9, 8, 4, 5, 6, 7)
+#define _trans_cube_FLr fastcube( \
+    34, 32, 33, 35, 68, 70, 71, 69, 9, 8, 11, 10, 19, 16, 17, 18, 22, 21, 20, 23)
+#define _trans_cube_FLr_inverse fastcube( \
+    65, 66, 64, 67, 36, 39, 37, 38, 21, 22, 23, 20, 26, 25, 24, 27, 1, 0, 3, 2)
+#define _trans_cube_BUr fastcube( \
+    69, 71, 68, 70, 33, 35, 32, 34, 17, 18, 19, 16, 11, 10, 9, 8, 4, 5, 6, 7)
+#define _trans_cube_BUr_inverse fastcube( \
+    70, 68, 71, 69, 34, 32, 35, 33, 19, 16, 17, 18, 8, 9, 10, 11, 7, 6, 5, 4)
+#define _trans_cube_BRr fastcube( \
+    35, 33, 32, 34, 69, 71, 70, 68, 11, 10, 9, 8, 18, 17, 16, 19, 23, 20, 21, 22)
+#define _trans_cube_BRr_inverse fastcube( \
+    66, 65, 67, 64, 39, 36, 38, 37, 22, 21, 20, 23, 25, 26, 27, 24, 3, 2, 1, 0)
+#define _trans_cube_BDr fastcube( \
+    71, 69, 70, 68, 35, 33, 34, 32, 18, 17, 16, 19, 10, 11, 8, 9, 6, 7, 4, 5)
+#define _trans_cube_BDr_inverse fastcube( \
+    71, 69, 70, 68, 35, 33, 34, 32, 18, 17, 16, 19, 10, 11, 8, 9, 6, 7, 4, 5)
+#define _trans_cube_BLr fastcube( \
+    33, 35, 34, 32, 71, 69, 68, 70, 10, 11, 8, 9, 17, 18, 19, 16, 21, 22, 23, 20)
+#define _trans_cube_BLr_inverse fastcube( \
+    67, 64, 66, 65, 38, 37, 39, 36, 23, 20, 21, 22, 27, 24, 25, 26, 2, 3, 0, 1)
+#define _trans_cube_UFm fastcube( \
+    4, 5, 6, 7, 0, 1, 2, 3, 0, 1, 2, 3, 5, 4, 7, 6, 9, 8, 11, 10)
+#define _trans_cube_UFm_inverse fastcube( \
+    4, 5, 6, 7, 0, 1, 2, 3, 0, 1, 2, 3, 5, 4, 7, 6, 9, 8, 11, 10)
+#define _trans_cube_ULm fastcube( \
+    0, 1, 3, 2, 5, 4, 6, 7, 4, 5, 6, 7, 0, 1, 2, 3, 24, 27, 26, 25)
+#define _trans_cube_ULm_inverse fastcube( \
+    0, 1, 3, 2, 5, 4, 6, 7, 4, 5, 6, 7, 0, 1, 2, 3, 24, 27, 26, 25)
+#define _trans_cube_UBm fastcube( \
+    5, 4, 7, 6, 1, 0, 3, 2, 1, 0, 3, 2, 4, 5, 6, 7, 11, 10, 9, 8)
+#define _trans_cube_UBm_inverse fastcube( \
+    5, 4, 7, 6, 1, 0, 3, 2, 1, 0, 3, 2, 4, 5, 6, 7, 11, 10, 9, 8)
+#define _trans_cube_URm fastcube( \
+    1, 0, 2, 3, 4, 5, 7, 6, 5, 4, 7, 6, 1, 0, 3, 2, 26, 25, 24, 27)
+#define _trans_cube_URm_inverse fastcube( \
+    1, 0, 2, 3, 4, 5, 7, 6, 5, 4, 7, 6, 1, 0, 3, 2, 26, 25, 24, 27)
+#define _trans_cube_DFm fastcube( \
+    6, 7, 4, 5, 2, 3, 0, 1, 3, 2, 1, 0, 7, 6, 5, 4, 8, 9, 10, 11)
+#define _trans_cube_DFm_inverse fastcube( \
+    6, 7, 4, 5, 2, 3, 0, 1, 3, 2, 1, 0, 7, 6, 5, 4, 8, 9, 10, 11)
+#define _trans_cube_DLm fastcube( \
+    3, 2, 0, 1, 6, 7, 5, 4, 7, 6, 5, 4, 2, 3, 0, 1, 27, 24, 25, 26)
+#define _trans_cube_DLm_inverse fastcube( \
+    2, 3, 1, 0, 7, 6, 4, 5, 6, 7, 4, 5, 3, 2, 1, 0, 25, 26, 27, 24)
+#define _trans_cube_DBm fastcube( \
+    7, 6, 5, 4, 3, 2, 1, 0, 2, 3, 0, 1, 6, 7, 4, 5, 10, 11, 8, 9)
+#define _trans_cube_DBm_inverse fastcube( \
+    7, 6, 5, 4, 3, 2, 1, 0, 2, 3, 0, 1, 6, 7, 4, 5, 10, 11, 8, 9)
+#define _trans_cube_DRm fastcube( \
+    2, 3, 1, 0, 7, 6, 4, 5, 6, 7, 4, 5, 3, 2, 1, 0, 25, 26, 27, 24)
+#define _trans_cube_DRm_inverse fastcube( \
+    3, 2, 0, 1, 6, 7, 5, 4, 7, 6, 5, 4, 2, 3, 0, 1, 27, 24, 25, 26)
+#define _trans_cube_RUm fastcube( \
+    68, 71, 69, 70, 33, 34, 32, 35, 21, 22, 23, 20, 25, 26, 27, 24, 0, 1, 2, 3)
+#define _trans_cube_RUm_inverse fastcube( \
+    70, 68, 69, 71, 32, 34, 35, 33, 8, 9, 10, 11, 19, 16, 17, 18, 23, 20, 21, 22)
+#define _trans_cube_RFm fastcube( \
+    34, 33, 32, 35, 68, 71, 70, 69, 25, 26, 27, 24, 22, 21, 20, 23, 19, 16, 17, 18)
+#define _trans_cube_RFm_inverse fastcube( \
+    66, 65, 64, 67, 36, 39, 38, 37, 25, 26, 27, 24, 22, 21, 20, 23, 19, 16, 17, 18)
+#define _trans_cube_RDm fastcube( \
+    71, 68, 70, 69, 34, 33, 35, 32, 22, 21, 20, 23, 26, 25, 24, 27, 2, 3, 0, 1)
+#define _trans_cube_RDm_inverse fastcube( \
+    71, 69, 68, 70, 33, 35, 34, 32, 10, 11, 8, 9, 18, 17, 16, 19, 22, 21, 20, 23)
+#define _trans_cube_RBm fastcube( \
+    33, 34, 35, 32, 71, 68, 69, 70, 26, 25, 24, 27, 21, 22, 23, 20, 17, 18, 19, 16)
+#define _trans_cube_RBm_inverse fastcube( \
+    67, 64, 65, 66, 37, 38, 39, 36, 27, 24, 25, 26, 23, 20, 21, 22, 18, 17, 16, 19)
+#define _trans_cube_LUm fastcube( \
+    69, 70, 68, 71, 32, 35, 33, 34, 20, 23, 22, 21, 27, 24, 25, 26, 1, 0, 3, 2)
+#define _trans_cube_LUm_inverse fastcube( \
+    68, 70, 71, 69, 34, 32, 33, 35, 9, 8, 11, 10, 16, 19, 18, 17, 21, 22, 23, 20)
+#define _trans_cube_LFm fastcube( \
+    32, 35, 34, 33, 70, 69, 68, 71, 24, 27, 26, 25, 20, 23, 22, 21, 16, 19, 18, 17)
+#define _trans_cube_LFm_inverse fastcube( \
+    64, 67, 66, 65, 38, 37, 36, 39, 24, 27, 26, 25, 20, 23, 22, 21, 16, 19, 18, 17)
+#define _trans_cube_LDm fastcube( \
+    70, 69, 71, 68, 35, 32, 34, 33, 23, 20, 21, 22, 24, 27, 26, 25, 3, 2, 1, 0)
+#define _trans_cube_LDm_inverse fastcube( \
+    69, 71, 70, 68, 35, 33, 32, 34, 11, 10, 9, 8, 17, 18, 19, 16, 20, 23, 22, 21)
+#define _trans_cube_LBm fastcube( \
+    35, 32, 33, 34, 69, 70, 71, 68, 27, 24, 25, 26, 23, 20, 21, 22, 18, 17, 16, 19)
+#define _trans_cube_LBm_inverse fastcube( \
+    65, 66, 67, 64, 39, 36, 37, 38, 26, 25, 24, 27, 21, 22, 23, 20, 17, 18, 19, 16)
+#define _trans_cube_FUm fastcube( \
+    64, 66, 65, 67, 36, 38, 37, 39, 16, 19, 18, 17, 8, 9, 10, 11, 4, 5, 6, 7)
+#define _trans_cube_FUm_inverse fastcube( \
+    32, 34, 33, 35, 68, 70, 69, 71, 16, 19, 18, 17, 8, 9, 10, 11, 4, 5, 6, 7)
+#define _trans_cube_FRm fastcube( \
+    36, 38, 39, 37, 66, 64, 65, 67, 9, 8, 11, 10, 16, 19, 18, 17, 21, 22, 23, 20)
+#define _trans_cube_FRm_inverse fastcube( \
+    37, 38, 36, 39, 64, 67, 65, 66, 20, 23, 22, 21, 27, 24, 25, 26, 1, 0, 3, 2)
+#define _trans_cube_FDm fastcube( \
+    66, 64, 67, 65, 38, 36, 39, 37, 19, 16, 17, 18, 9, 8, 11, 10, 6, 7, 4, 5)
+#define _trans_cube_FDm_inverse fastcube( \
+    33, 35, 32, 34, 69, 71, 68, 70, 17, 18, 19, 16, 10, 11, 8, 9, 5, 4, 7, 6)
+#define _trans_cube_FLm fastcube( \
+    38, 36, 37, 39, 64, 66, 67, 65, 8, 9, 10, 11, 19, 16, 17, 18, 23, 20, 21, 22)
+#define _trans_cube_FLm_inverse fastcube( \
+    36, 39, 37, 38, 65, 66, 64, 67, 21, 22, 23, 20, 25, 26, 27, 24, 0, 1, 2, 3)
+#define _trans_cube_BUm fastcube( \
+    65, 67, 64, 66, 37, 39, 36, 38, 17, 18, 19, 16, 10, 11, 8, 9, 5, 4, 7, 6)
+#define _trans_cube_BUm_inverse fastcube( \
+    34, 32, 35, 33, 70, 68, 71, 69, 19, 16, 17, 18, 9, 8, 11, 10, 6, 7, 4, 5)
+#define _trans_cube_BRm fastcube( \
+    39, 37, 36, 38, 65, 67, 66, 64, 10, 11, 8, 9, 18, 17, 16, 19, 22, 21, 20, 23)
+#define _trans_cube_BRm_inverse fastcube( \
+    39, 36, 38, 37, 66, 65, 67, 64, 22, 21, 20, 23, 26, 25, 24, 27, 2, 3, 0, 1)
+#define _trans_cube_BDm fastcube( \
+    67, 65, 66, 64, 39, 37, 38, 36, 18, 17, 16, 19, 11, 10, 9, 8, 7, 6, 5, 4)
+#define _trans_cube_BDm_inverse fastcube( \
+    35, 33, 34, 32, 71, 69, 70, 68, 18, 17, 16, 19, 11, 10, 9, 8, 7, 6, 5, 4)
+#define _trans_cube_BLm fastcube( \
+    37, 39, 38, 36, 67, 65, 64, 66, 11, 10, 9, 8, 17, 18, 19, 16, 20, 23, 22, 21)
+#define _trans_cube_BLm_inverse fastcube( \
+    38, 37, 39, 36, 67, 64, 66, 65, 23, 20, 21, 22, 24, 27, 26, 25, 3, 2, 1, 0)
+
 static char *cornerstr[] = {
 	[_c_ufr] = "UFR",
 	[_c_ubl] = "UBL",
@@ -259,356 +494,13 @@ typedef __m256i cube_fast_t;
 #define _co2_avx2 _mm256_set_epi64x(0, 0, 0, 0x6060606060606060)
 #define _cocw_avx2 _mm256_set_epi64x(0, 0, 0, 0x2020202020202020)
 #define _eo_avx2 _mm256_set_epi64x(0x10101010, 0x1010101010101010, 0, 0)
-#define zero_fast _mm256_set_epi64x(0, 0, 0, 0);
-#define solved_fast _mm256_set_epi8(                      \
-	0, 0, 0, 0, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, \
-	0, 0, 0, 0, 0, 0, 0, 0, 7, 6, 5, 4, 3, 2, 1, 0    \
-)
 
-#define _move_cube_U _mm256_set_epi8( \
-	0, 0, 0, 0, 11, 10, 9, 8, 7, 6, 0, 1, 3, 2, 5, 4, \
-	0, 0, 0, 0, 0, 0, 0, 0, 7, 6, 1, 0, 3, 2, 4, 5)
-#define _move_cube_U2 _mm256_set_epi8( \
-	0, 0, 0, 0, 11, 10, 9, 8, 7, 6, 4, 5, 3, 2, 0, 1, \
-	0, 0, 0, 0, 0, 0, 0, 0, 7, 6, 4, 5, 3, 2, 0, 1)
-#define _move_cube_U3 _mm256_set_epi8( \
-	0, 0, 0, 0, 11, 10, 9, 8, 7, 6, 1, 0, 3, 2, 4, 5, \
-	0, 0, 0, 0, 0, 0, 0, 0, 7, 6, 0, 1, 3, 2, 5, 4)
-#define _move_cube_D _mm256_set_epi8( \
-	0, 0, 0, 0, 11, 10, 9, 8, 3, 2, 5, 4, 6, 7, 1, 0, \
-	0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 5, 4, 6, 7, 1, 0)
-#define _move_cube_D2 _mm256_set_epi8( \
-	0, 0, 0, 0, 11, 10, 9, 8, 6, 7, 5, 4, 2, 3, 1, 0, \
-	0, 0, 0, 0, 0, 0, 0, 0, 6, 7, 5, 4, 2, 3, 1, 0)
-#define _move_cube_D3 _mm256_set_epi8( \
-	0, 0, 0, 0, 11, 10, 9, 8, 2, 3, 5, 4, 7, 6, 1, 0, \
-	0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 5, 4, 7, 6, 1, 0)
-#define _move_cube_R _mm256_set_epi8( \
-	0, 0, 0, 0, 4, 10, 9, 7, 11, 6, 5, 8, 3, 2, 1, 0, \
-	0, 0, 0, 0, 0, 0, 0, 0, 7, 35, 32, 4, 69, 2, 1, 70)
-#define _move_cube_R2 _mm256_set_epi8( \
-	0, 0, 0, 0, 8, 10, 9, 11, 4, 6, 5, 7, 3, 2, 1, 0, \
-	0, 0, 0, 0, 0, 0, 0, 0, 7, 5, 6, 4, 0, 2, 1, 3)
-#define _move_cube_R3 _mm256_set_epi8( \
-	0, 0, 0, 0, 7, 10, 9, 4, 8, 6, 5, 11, 3, 2, 1, 0, \
-	0, 0, 0, 0, 0, 0, 0, 0, 7, 32, 35, 4, 70, 2, 1, 69)
-#define _move_cube_L _mm256_set_epi8( \
-	0, 0, 0, 0, 11, 6, 5, 8, 7, 9, 10, 4, 3, 2, 1, 0, \
-	0, 0, 0, 0, 0, 0, 0, 0, 34, 6, 5, 33, 3, 68, 71, 0)
-#define _move_cube_L2 _mm256_set_epi8( \
-	0, 0, 0, 0, 11, 9, 10, 8, 7, 5, 6, 4, 3, 2, 1, 0, \
-	0, 0, 0, 0, 0, 0, 0, 0, 4, 6, 5, 7, 3, 1, 2, 0)
-#define _move_cube_L3 _mm256_set_epi8( \
-	0, 0, 0, 0, 11, 5, 6, 8, 7, 10, 9, 4, 3, 2, 1, 0, \
-	0, 0, 0, 0, 0, 0, 0, 0, 33, 6, 5, 34, 3, 71, 68, 0)
-#define _move_cube_F _mm256_set_epi8( \
-	0, 0, 0, 0, 11, 10, 19, 16, 7, 6, 5, 4, 24, 2, 1, 25, \
-	0, 0, 0, 0, 0, 0, 0, 0, 7, 64, 5, 66, 3, 38, 1, 36)
-#define _move_cube_F2 _mm256_set_epi8( \
-	0, 0, 0, 0, 11, 10, 8, 9, 7, 6, 5, 4, 0, 2, 1, 3, \
-	0, 0, 0, 0, 0, 0, 0, 0, 7, 4, 5, 6, 3, 0, 1, 2)
-#define _move_cube_F3 _mm256_set_epi8( \
-	0, 0, 0, 0, 11, 10, 16, 19, 7, 6, 5, 4, 25, 2, 1, 24, \
-	0, 0, 0, 0, 0, 0, 0, 0, 7, 66, 5, 64, 3, 36, 1, 38)
-#define _move_cube_B _mm256_set_epi8( \
-	0, 0, 0, 0, 18, 17, 9, 8, 7, 6, 5, 4, 3, 26, 27, 0, \
-	0, 0, 0, 0, 0, 0, 0, 0, 65, 6, 67, 4, 39, 2, 37, 0)
-#define _move_cube_B2 _mm256_set_epi8( \
-	0, 0, 0, 0, 10, 11, 9, 8, 7, 6, 5, 4, 3, 1, 2, 0, \
-	0, 0, 0, 0, 0, 0, 0, 0, 5, 6, 7, 4, 1, 2, 3, 0)
-#define _move_cube_B3 _mm256_set_epi8( \
-	0, 0, 0, 0, 17, 18, 9, 8, 7, 6, 5, 4, 3, 27, 26, 0, \
-	0, 0, 0, 0, 0, 0, 0, 0, 67, 6, 65, 4, 37, 2, 39, 0)
-
-#define _trans_cube_UFr _mm256_set_epi8( \
-	0, 0, 0, 0, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, \
-	0, 0, 0, 0, 0, 0, 0, 0, 7, 6, 5, 4, 3, 2, 1, 0)
-#define _trans_cube_UFr_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0, \
-	0, 0, 0, 0, 0, 0, 0, 0, 7, 6, 5, 4, 3, 2, 1, 0)
-#define _trans_cube_ULr _mm256_set_epi8( \
-	0, 0, 0, 0, 24, 27, 26, 25, 3, 2, 1, 0, 6, 7, 4, 5, \
-	0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 0, 1, 6, 7, 5, 4)
-#define _trans_cube_ULr_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 26, 25, 24, 27, 2, 3, 0, 1, 7, 6, 5, 4, \
-	0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 1, 0, 7, 6, 4, 5)
-#define _trans_cube_UBr _mm256_set_epi8( \
-	0, 0, 0, 0, 9, 8, 11, 10, 6, 7, 4, 5, 2, 3, 0, 1, \
-	0, 0, 0, 0, 0, 0, 0, 0, 6, 7, 4, 5, 2, 3, 0, 1)
-#define _trans_cube_UBr_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 9, 8, 11, 10, 6, 7, 4, 5, 2, 3, 0, 1, \
-	0, 0, 0, 0, 0, 0, 0, 0, 6, 7, 4, 5, 2, 3, 0, 1)
-#define _trans_cube_URr _mm256_set_epi8( \
-	0, 0, 0, 0, 26, 25, 24, 27, 2, 3, 0, 1, 7, 6, 5, 4, \
-	0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 1, 0, 7, 6, 4, 5)
-#define _trans_cube_URr_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 24, 27, 26, 25, 3, 2, 1, 0, 6, 7, 4, 5, \
-	0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 0, 1, 6, 7, 5, 4)
-#define _trans_cube_DFr _mm256_set_epi8( \
-	0, 0, 0, 0, 10, 11, 8, 9, 5, 4, 7, 6, 0, 1, 2, 3, \
-	0, 0, 0, 0, 0, 0, 0, 0, 5, 4, 7, 6, 1, 0, 3, 2)
-#define _trans_cube_DFr_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 10, 11, 8, 9, 5, 4, 7, 6, 0, 1, 2, 3, \
-	0, 0, 0, 0, 0, 0, 0, 0, 5, 4, 7, 6, 1, 0, 3, 2)
-#define _trans_cube_DLr _mm256_set_epi8( \
-	0, 0, 0, 0, 27, 24, 25, 26, 1, 0, 3, 2, 5, 4, 7, 6, \
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 2, 5, 4, 6, 7)
-#define _trans_cube_DLr_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 27, 24, 25, 26, 1, 0, 3, 2, 5, 4, 7, 6, \
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 2, 5, 4, 6, 7)
-#define _trans_cube_DBr _mm256_set_epi8( \
-	0, 0, 0, 0, 8, 9, 10, 11, 4, 5, 6, 7, 1, 0, 3, 2, \
-	0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 6, 7, 0, 1, 2, 3)
-#define _trans_cube_DBr_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 8, 9, 10, 11, 4, 5, 6, 7, 1, 0, 3, 2, \
-	0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 6, 7, 0, 1, 2, 3)
-#define _trans_cube_DRr _mm256_set_epi8( \
-	0, 0, 0, 0, 25, 26, 27, 24, 0, 1, 2, 3, 4, 5, 6, 7, \
-	0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 3, 4, 5, 7, 6)
-#define _trans_cube_DRr_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 25, 26, 27, 24, 0, 1, 2, 3, 4, 5, 6, 7, \
-	0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 2, 3, 4, 5, 7, 6)
-#define _trans_cube_RUr _mm256_set_epi8( \
-	0, 0, 0, 0, 3, 2, 1, 0, 25, 26, 27, 24, 21, 22, 23, 20, \
-	0, 0, 0, 0, 0, 0, 0, 0, 39, 36, 38, 37, 66, 65, 67, 64)
-#define _trans_cube_RUr_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 21, 22, 23, 20, 17, 18, 19, 16, 11, 10, 9, 8, \
-	0, 0, 0, 0, 0, 0, 0, 0, 71, 69, 68, 70, 33, 35, 34, 32)
-#define _trans_cube_RFr _mm256_set_epi8( \
-	0, 0, 0, 0, 18, 17, 16, 19, 22, 21, 20, 23, 25, 26, 27, 24, \
-	0, 0, 0, 0, 0, 0, 0, 0, 65, 66, 67, 64, 39, 36, 37, 38)
-#define _trans_cube_RFr_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 17, 18, 19, 16, 20, 23, 22, 21, 24, 27, 26, 25, \
-	0, 0, 0, 0, 0, 0, 0, 0, 67, 64, 65, 66, 37, 38, 39, 36)
-#define _trans_cube_RDr _mm256_set_epi8( \
-	0, 0, 0, 0, 1, 0, 3, 2, 26, 25, 24, 27, 22, 21, 20, 23, \
-	0, 0, 0, 0, 0, 0, 0, 0, 36, 39, 37, 38, 65, 66, 64, 67)
-#define _trans_cube_RDr_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 20, 23, 22, 21, 16, 19, 18, 17, 9, 8, 11, 10, \
-	0, 0, 0, 0, 0, 0, 0, 0, 70, 68, 69, 71, 32, 34, 35, 33)
-#define _trans_cube_RBr _mm256_set_epi8( \
-	0, 0, 0, 0, 16, 19, 18, 17, 21, 22, 23, 20, 26, 25, 24, 27, \
-	0, 0, 0, 0, 0, 0, 0, 0, 66, 65, 64, 67, 36, 39, 38, 37)
-#define _trans_cube_RBr_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 16, 19, 18, 17, 21, 22, 23, 20, 26, 25, 24, 27, \
-	0, 0, 0, 0, 0, 0, 0, 0, 66, 65, 64, 67, 36, 39, 38, 37)
-#define _trans_cube_LUr _mm256_set_epi8( \
-	0, 0, 0, 0, 2, 3, 0, 1, 27, 24, 25, 26, 20, 23, 22, 21, \
-	0, 0, 0, 0, 0, 0, 0, 0, 38, 37, 39, 36, 67, 64, 66, 65)
-#define _trans_cube_LUr_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 23, 20, 21, 22, 18, 17, 16, 19, 10, 11, 8, 9, \
-	0, 0, 0, 0, 0, 0, 0, 0, 69, 71, 70, 68, 35, 33, 32, 34)
-#define _trans_cube_LFr _mm256_set_epi8( \
-	0, 0, 0, 0, 17, 18, 19, 16, 20, 23, 22, 21, 24, 27, 26, 25, \
-	0, 0, 0, 0, 0, 0, 0, 0, 67, 64, 65, 66, 37, 38, 39, 36)
-#define _trans_cube_LFr_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 18, 17, 16, 19, 22, 21, 20, 23, 25, 26, 27, 24, \
-	0, 0, 0, 0, 0, 0, 0, 0, 65, 66, 67, 64, 39, 36, 37, 38)
-#define _trans_cube_LDr _mm256_set_epi8( \
-	0, 0, 0, 0, 0, 1, 2, 3, 24, 27, 26, 25, 23, 20, 21, 22, \
-	0, 0, 0, 0, 0, 0, 0, 0, 37, 38, 36, 39, 64, 67, 65, 66)
-#define _trans_cube_LDr_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 22, 21, 20, 23, 19, 16, 17, 18, 8, 9, 10, 11, \
-	0, 0, 0, 0, 0, 0, 0, 0, 68, 70, 71, 69, 34, 32, 33, 35)
-#define _trans_cube_LBr _mm256_set_epi8( \
-	0, 0, 0, 0, 19, 16, 17, 18, 23, 20, 21, 22, 27, 24, 25, 26, \
-	0, 0, 0, 0, 0, 0, 0, 0, 64, 67, 66, 65, 38, 37, 36, 39)
-#define _trans_cube_LBr_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 19, 16, 17, 18, 23, 20, 21, 22, 27, 24, 25, 26, \
-	0, 0, 0, 0, 0, 0, 0, 0, 64, 67, 66, 65, 38, 37, 36, 39)
-#define _trans_cube_FUr _mm256_set_epi8( \
-	0, 0, 0, 0, 6, 7, 4, 5, 10, 11, 8, 9, 17, 18, 19, 16, \
-	0, 0, 0, 0, 0, 0, 0, 0, 35, 33, 34, 32, 71, 69, 70, 68)
-#define _trans_cube_FUr_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 6, 7, 4, 5, 10, 11, 8, 9, 17, 18, 19, 16, \
-	0, 0, 0, 0, 0, 0, 0, 0, 35, 33, 34, 32, 71, 69, 70, 68)
-#define _trans_cube_FRr _mm256_set_epi8( \
-	0, 0, 0, 0, 21, 22, 23, 20, 17, 18, 19, 16, 11, 10, 9, 8, \
-	0, 0, 0, 0, 0, 0, 0, 0, 71, 69, 68, 70, 33, 35, 34, 32)
-#define _trans_cube_FRr_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 3, 2, 1, 0, 25, 26, 27, 24, 21, 22, 23, 20, \
-	0, 0, 0, 0, 0, 0, 0, 0, 39, 36, 38, 37, 66, 65, 67, 64)
-#define _trans_cube_FDr _mm256_set_epi8( \
-	0, 0, 0, 0, 4, 5, 6, 7, 11, 10, 9, 8, 18, 17, 16, 19, \
-	0, 0, 0, 0, 0, 0, 0, 0, 33, 35, 32, 34, 69, 71, 68, 70)
-#define _trans_cube_FDr_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 7, 6, 5, 4, 8, 9, 10, 11, 16, 19, 18, 17, \
-	0, 0, 0, 0, 0, 0, 0, 0, 34, 32, 35, 33, 70, 68, 71, 69)
-#define _trans_cube_FLr _mm256_set_epi8( \
-	0, 0, 0, 0, 23, 20, 21, 22, 18, 17, 16, 19, 10, 11, 8, 9, \
-	0, 0, 0, 0, 0, 0, 0, 0, 69, 71, 70, 68, 35, 33, 32, 34)
-#define _trans_cube_FLr_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 2, 3, 0, 1, 27, 24, 25, 26, 20, 23, 22, 21, \
-	0, 0, 0, 0, 0, 0, 0, 0, 38, 37, 39, 36, 67, 64, 66, 65)
-#define _trans_cube_BUr _mm256_set_epi8( \
-	0, 0, 0, 0, 7, 6, 5, 4, 8, 9, 10, 11, 16, 19, 18, 17, \
-	0, 0, 0, 0, 0, 0, 0, 0, 34, 32, 35, 33, 70, 68, 71, 69)
-#define _trans_cube_BUr_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 4, 5, 6, 7, 11, 10, 9, 8, 18, 17, 16, 19, \
-	0, 0, 0, 0, 0, 0, 0, 0, 33, 35, 32, 34, 69, 71, 68, 70)
-#define _trans_cube_BRr _mm256_set_epi8( \
-	0, 0, 0, 0, 22, 21, 20, 23, 19, 16, 17, 18, 8, 9, 10, 11, \
-	0, 0, 0, 0, 0, 0, 0, 0, 68, 70, 71, 69, 34, 32, 33, 35)
-#define _trans_cube_BRr_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 0, 1, 2, 3, 24, 27, 26, 25, 23, 20, 21, 22, \
-	0, 0, 0, 0, 0, 0, 0, 0, 37, 38, 36, 39, 64, 67, 65, 66)
-#define _trans_cube_BDr _mm256_set_epi8( \
-	0, 0, 0, 0, 5, 4, 7, 6, 9, 8, 11, 10, 19, 16, 17, 18, \
-	0, 0, 0, 0, 0, 0, 0, 0, 32, 34, 33, 35, 68, 70, 69, 71)
-#define _trans_cube_BDr_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 5, 4, 7, 6, 9, 8, 11, 10, 19, 16, 17, 18, \
-	0, 0, 0, 0, 0, 0, 0, 0, 32, 34, 33, 35, 68, 70, 69, 71)
-#define _trans_cube_BLr _mm256_set_epi8( \
-	0, 0, 0, 0, 20, 23, 22, 21, 16, 19, 18, 17, 9, 8, 11, 10, \
-	0, 0, 0, 0, 0, 0, 0, 0, 70, 68, 69, 71, 32, 34, 35, 33)
-#define _trans_cube_BLr_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 1, 0, 3, 2, 26, 25, 24, 27, 22, 21, 20, 23, \
-	0, 0, 0, 0, 0, 0, 0, 0, 36, 39, 37, 38, 65, 66, 64, 67)
-#define _trans_cube_UFm _mm256_set_epi8( \
-	0, 0, 0, 0, 10, 11, 8, 9, 6, 7, 4, 5, 3, 2, 1, 0, \
-	0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 1, 0, 7, 6, 5, 4)
-#define _trans_cube_UFm_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 10, 11, 8, 9, 6, 7, 4, 5, 3, 2, 1, 0, \
-	0, 0, 0, 0, 0, 0, 0, 0, 3, 2, 1, 0, 7, 6, 5, 4)
-#define _trans_cube_ULm _mm256_set_epi8( \
-	0, 0, 0, 0, 25, 26, 27, 24, 3, 2, 1, 0, 7, 6, 5, 4, \
-	0, 0, 0, 0, 0, 0, 0, 0, 7, 6, 4, 5, 2, 3, 1, 0)
-#define _trans_cube_ULm_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 25, 26, 27, 24, 3, 2, 1, 0, 7, 6, 5, 4, \
-	0, 0, 0, 0, 0, 0, 0, 0, 7, 6, 4, 5, 2, 3, 1, 0)
-#define _trans_cube_UBm _mm256_set_epi8( \
-	0, 0, 0, 0, 8, 9, 10, 11, 7, 6, 5, 4, 2, 3, 0, 1, \
-	0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 0, 1, 6, 7, 4, 5)
-#define _trans_cube_UBm_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 8, 9, 10, 11, 7, 6, 5, 4, 2, 3, 0, 1, \
-	0, 0, 0, 0, 0, 0, 0, 0, 2, 3, 0, 1, 6, 7, 4, 5)
-#define _trans_cube_URm _mm256_set_epi8( \
-	0, 0, 0, 0, 27, 24, 25, 26, 2, 3, 0, 1, 6, 7, 4, 5, \
-	0, 0, 0, 0, 0, 0, 0, 0, 6, 7, 5, 4, 3, 2, 0, 1)
-#define _trans_cube_URm_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 27, 24, 25, 26, 2, 3, 0, 1, 6, 7, 4, 5, \
-	0, 0, 0, 0, 0, 0, 0, 0, 6, 7, 5, 4, 3, 2, 0, 1)
-#define _trans_cube_DFm _mm256_set_epi8( \
-	0, 0, 0, 0, 11, 10, 9, 8, 4, 5, 6, 7, 0, 1, 2, 3, \
-	0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 2, 5, 4, 7, 6)
-#define _trans_cube_DFm_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 11, 10, 9, 8, 4, 5, 6, 7, 0, 1, 2, 3, \
-	0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 3, 2, 5, 4, 7, 6)
-#define _trans_cube_DLm _mm256_set_epi8( \
-	0, 0, 0, 0, 26, 25, 24, 27, 1, 0, 3, 2, 4, 5, 6, 7, \
-	0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 7, 6, 1, 0, 2, 3)
-#define _trans_cube_DLm_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 24, 27, 26, 25, 0, 1, 2, 3, 5, 4, 7, 6, \
-	0, 0, 0, 0, 0, 0, 0, 0, 5, 4, 6, 7, 0, 1, 3, 2)
-#define _trans_cube_DBm _mm256_set_epi8( \
-	0, 0, 0, 0, 9, 8, 11, 10, 5, 4, 7, 6, 1, 0, 3, 2, \
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7)
-#define _trans_cube_DBm_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 9, 8, 11, 10, 5, 4, 7, 6, 1, 0, 3, 2, \
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 3, 4, 5, 6, 7)
-#define _trans_cube_DRm _mm256_set_epi8( \
-	0, 0, 0, 0, 24, 27, 26, 25, 0, 1, 2, 3, 5, 4, 7, 6, \
-	0, 0, 0, 0, 0, 0, 0, 0, 5, 4, 6, 7, 0, 1, 3, 2)
-#define _trans_cube_DRm_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 26, 25, 24, 27, 1, 0, 3, 2, 4, 5, 6, 7, \
-	0, 0, 0, 0, 0, 0, 0, 0, 4, 5, 7, 6, 1, 0, 2, 3)
-#define _trans_cube_RUm _mm256_set_epi8( \
-	0, 0, 0, 0, 3, 2, 1, 0, 24, 27, 26, 25, 20, 23, 22, 21, \
-	0, 0, 0, 0, 0, 0, 0, 0, 35, 32, 34, 33, 70, 69, 71, 68)
-#define _trans_cube_RUm_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 22, 21, 20, 23, 18, 17, 16, 19, 11, 10, 9, 8, \
-	0, 0, 0, 0, 0, 0, 0, 0, 33, 35, 34, 32, 71, 69, 68, 70)
-#define _trans_cube_RFm _mm256_set_epi8( \
-	0, 0, 0, 0, 18, 17, 16, 19, 23, 20, 21, 22, 24, 27, 26, 25, \
-	0, 0, 0, 0, 0, 0, 0, 0, 69, 70, 71, 68, 35, 32, 33, 34)
-#define _trans_cube_RFm_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 18, 17, 16, 19, 23, 20, 21, 22, 24, 27, 26, 25, \
-	0, 0, 0, 0, 0, 0, 0, 0, 37, 38, 39, 36, 67, 64, 65, 66)
-#define _trans_cube_RDm _mm256_set_epi8( \
-	0, 0, 0, 0, 1, 0, 3, 2, 27, 24, 25, 26, 23, 20, 21, 22, \
-	0, 0, 0, 0, 0, 0, 0, 0, 32, 35, 33, 34, 69, 70, 68, 71)
-#define _trans_cube_RDm_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 23, 20, 21, 22, 19, 16, 17, 18, 9, 8, 11, 10, \
-	0, 0, 0, 0, 0, 0, 0, 0, 32, 34, 35, 33, 70, 68, 69, 71)
-#define _trans_cube_RBm _mm256_set_epi8( \
-	0, 0, 0, 0, 16, 19, 18, 17, 20, 23, 22, 21, 27, 24, 25, 26, \
-	0, 0, 0, 0, 0, 0, 0, 0, 70, 69, 68, 71, 32, 35, 34, 33)
-#define _trans_cube_RBm_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 19, 16, 17, 18, 22, 21, 20, 23, 26, 25, 24, 27, \
-	0, 0, 0, 0, 0, 0, 0, 0, 36, 39, 38, 37, 66, 65, 64, 67)
-#define _trans_cube_LUm _mm256_set_epi8( \
-	0, 0, 0, 0, 2, 3, 0, 1, 26, 25, 24, 27, 21, 22, 23, 20, \
-	0, 0, 0, 0, 0, 0, 0, 0, 34, 33, 35, 32, 71, 68, 70, 69)
-#define _trans_cube_LUm_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 20, 23, 22, 21, 17, 18, 19, 16, 10, 11, 8, 9, \
-	0, 0, 0, 0, 0, 0, 0, 0, 35, 33, 32, 34, 69, 71, 70, 68)
-#define _trans_cube_LFm _mm256_set_epi8( \
-	0, 0, 0, 0, 17, 18, 19, 16, 21, 22, 23, 20, 25, 26, 27, 24, \
-	0, 0, 0, 0, 0, 0, 0, 0, 71, 68, 69, 70, 33, 34, 35, 32)
-#define _trans_cube_LFm_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 17, 18, 19, 16, 21, 22, 23, 20, 25, 26, 27, 24, \
-	0, 0, 0, 0, 0, 0, 0, 0, 39, 36, 37, 38, 65, 66, 67, 64)
-#define _trans_cube_LDm _mm256_set_epi8( \
-	0, 0, 0, 0, 0, 1, 2, 3, 25, 26, 27, 24, 22, 21, 20, 23, \
-	0, 0, 0, 0, 0, 0, 0, 0, 33, 34, 32, 35, 68, 71, 69, 70)
-#define _trans_cube_LDm_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 21, 22, 23, 20, 16, 19, 18, 17, 8, 9, 10, 11, \
-	0, 0, 0, 0, 0, 0, 0, 0, 34, 32, 33, 35, 68, 70, 71, 69)
-#define _trans_cube_LBm _mm256_set_epi8( \
-	0, 0, 0, 0, 19, 16, 17, 18, 22, 21, 20, 23, 26, 25, 24, 27, \
-	0, 0, 0, 0, 0, 0, 0, 0, 68, 71, 70, 69, 34, 33, 32, 35)
-#define _trans_cube_LBm_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 16, 19, 18, 17, 20, 23, 22, 21, 27, 24, 25, 26, \
-	0, 0, 0, 0, 0, 0, 0, 0, 38, 37, 36, 39, 64, 67, 66, 65)
-#define _trans_cube_FUm _mm256_set_epi8( \
-	0, 0, 0, 0, 7, 6, 5, 4, 11, 10, 9, 8, 17, 18, 19, 16, \
-	0, 0, 0, 0, 0, 0, 0, 0, 39, 37, 38, 36, 67, 65, 66, 64)
-#define _trans_cube_FUm_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 7, 6, 5, 4, 11, 10, 9, 8, 17, 18, 19, 16, \
-	0, 0, 0, 0, 0, 0, 0, 0, 71, 69, 70, 68, 35, 33, 34, 32)
-#define _trans_cube_FRm _mm256_set_epi8( \
-	0, 0, 0, 0, 20, 23, 22, 21, 17, 18, 19, 16, 10, 11, 8, 9, \
-	0, 0, 0, 0, 0, 0, 0, 0, 67, 65, 64, 66, 37, 39, 38, 36)
-#define _trans_cube_FRm_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 2, 3, 0, 1, 26, 25, 24, 27, 21, 22, 23, 20, \
-	0, 0, 0, 0, 0, 0, 0, 0, 66, 65, 67, 64, 39, 36, 38, 37)
-#define _trans_cube_FDm _mm256_set_epi8( \
-	0, 0, 0, 0, 5, 4, 7, 6, 10, 11, 8, 9, 18, 17, 16, 19, \
-	0, 0, 0, 0, 0, 0, 0, 0, 37, 39, 36, 38, 65, 67, 64, 66)
-#define _trans_cube_FDm_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 6, 7, 4, 5, 9, 8, 11, 10, 16, 19, 18, 17, \
-	0, 0, 0, 0, 0, 0, 0, 0, 70, 68, 71, 69, 34, 32, 35, 33)
-#define _trans_cube_FLm _mm256_set_epi8( \
-	0, 0, 0, 0, 22, 21, 20, 23, 18, 17, 16, 19, 11, 10, 9, 8, \
-	0, 0, 0, 0, 0, 0, 0, 0, 65, 67, 66, 64, 39, 37, 36, 38)
-#define _trans_cube_FLm_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 3, 2, 1, 0, 24, 27, 26, 25, 20, 23, 22, 21, \
-	0, 0, 0, 0, 0, 0, 0, 0, 67, 64, 66, 65, 38, 37, 39, 36)
-#define _trans_cube_BUm _mm256_set_epi8( \
-	0, 0, 0, 0, 6, 7, 4, 5, 9, 8, 11, 10, 16, 19, 18, 17, \
-	0, 0, 0, 0, 0, 0, 0, 0, 38, 36, 39, 37, 66, 64, 67, 65)
-#define _trans_cube_BUm_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 5, 4, 7, 6, 10, 11, 8, 9, 18, 17, 16, 19, \
-	0, 0, 0, 0, 0, 0, 0, 0, 69, 71, 68, 70, 33, 35, 32, 34)
-#define _trans_cube_BRm _mm256_set_epi8( \
-	0, 0, 0, 0, 23, 20, 21, 22, 19, 16, 17, 18, 9, 8, 11, 10, \
-	0, 0, 0, 0, 0, 0, 0, 0, 64, 66, 67, 65, 38, 36, 37, 39)
-#define _trans_cube_BRm_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 1, 0, 3, 2, 27, 24, 25, 26, 23, 20, 21, 22, \
-	0, 0, 0, 0, 0, 0, 0, 0, 64, 67, 65, 66, 37, 38, 36, 39)
-#define _trans_cube_BDm _mm256_set_epi8( \
-	0, 0, 0, 0, 4, 5, 6, 7, 8, 9, 10, 11, 19, 16, 17, 18, \
-	0, 0, 0, 0, 0, 0, 0, 0, 36, 38, 37, 39, 64, 66, 65, 67)
-#define _trans_cube_BDm_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 4, 5, 6, 7, 8, 9, 10, 11, 19, 16, 17, 18, \
-	0, 0, 0, 0, 0, 0, 0, 0, 68, 70, 69, 71, 32, 34, 33, 35)
-#define _trans_cube_BLm _mm256_set_epi8( \
-	0, 0, 0, 0, 21, 22, 23, 20, 16, 19, 18, 17, 8, 9, 10, 11, \
-	0, 0, 0, 0, 0, 0, 0, 0, 66, 64, 65, 67, 36, 38, 39, 37)
-#define _trans_cube_BLm_inverse _mm256_set_epi8( \
-	0, 0, 0, 0, 0, 1, 2, 3, 25, 26, 27, 24, 22, 21, 20, 23, \
-	0, 0, 0, 0, 0, 0, 0, 0, 65, 66, 64, 67, 36, 39, 37, 38)
-
+_static inline cube_fast_t fastcube(
+    uint8_t, uint8_t, uint8_t, uint8_t, uint8_t,
+    uint8_t, uint8_t, uint8_t, uint8_t, uint8_t,
+    uint8_t, uint8_t, uint8_t, uint8_t, uint8_t,
+    uint8_t, uint8_t, uint8_t, uint8_t, uint8_t
+);
 _static cube_fast_t cubetofast(cube_t);
 _static cube_t fasttocube(cube_fast_t);
 _static_inline bool equal_fast(cube_fast_t, cube_fast_t);
@@ -618,6 +510,39 @@ _static_inline cube_fast_t cleanaftershuffle(cube_fast_t);
 _static_inline cube_fast_t inverse_fast(cube_fast_t);
 _static_inline cube_fast_t compose_fast(cube_fast_t, cube_fast_t);
 _static_inline int64_t coord_fast_eo(cube_fast_t);
+
+_static inline cube_fast_t
+fastcube(
+	uint8_t c_ufr,
+	uint8_t c_ubl,
+	uint8_t c_dfl,
+	uint8_t c_dbr,
+	uint8_t c_ufl,
+	uint8_t c_ubr,
+	uint8_t c_dfr,
+	uint8_t c_dbl,
+
+	uint8_t e_uf,
+	uint8_t e_ub,
+	uint8_t e_db,
+	uint8_t e_df,
+	uint8_t e_ur,
+	uint8_t e_ul,
+	uint8_t e_dl,
+	uint8_t e_dr,
+	uint8_t e_fr,
+	uint8_t e_fl,
+	uint8_t e_bl,
+	uint8_t e_br
+)
+{
+	return _mm256_set_epi8(
+		0, 0, 0, 0, e_br, e_bl, e_fl, e_fr,
+		e_dr, e_dl, e_ul, e_ur, e_df, e_db, e_ub, e_uf,
+		0, 0, 0, 0, 0, 0, 0, 0,
+		c_dbl, c_dfr, c_ubr, c_ufl, c_dbr, c_dfl, c_ubl, c_ufr
+	);
+}
 
 _static cube_fast_t
 cubetofast(cube_t a)
@@ -780,356 +705,12 @@ in the previous section(s) for unsupported architectures.
 
 typedef cube_t cube_fast_t;
 
-_static cube_fast_t zero_fast = { .corner = {0}, .edge = {0} };
-_static cube_t solved_fast = {
-	.corner = {0, 1, 2, 3, 4, 5, 6, 7},
-	.edge = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}
-};
-
-_static cube_fast_t _move_cube_U = {
-	.corner = {5, 4, 2, 3, 0, 1, 6, 7},
-	.edge = {4, 5, 2, 3, 1, 0, 6, 7, 8, 9, 10, 11} };
-_static cube_fast_t _move_cube_U2 = {
-	.corner = {1, 0, 2, 3, 5, 4, 6, 7},
-	.edge = {1, 0, 2, 3, 5, 4, 6, 7, 8, 9, 10, 11} };
-_static cube_fast_t _move_cube_U3 = {
-	.corner = {4, 5, 2, 3, 1, 0, 6, 7},
-	.edge = {5, 4, 2, 3, 0, 1, 6, 7, 8, 9, 10, 11} };
-_static cube_fast_t _move_cube_D = {
-	.corner = {0, 1, 7, 6, 4, 5, 2, 3},
-	.edge = {0, 1, 7, 6, 4, 5, 2, 3, 8, 9, 10, 11} };
-_static cube_fast_t _move_cube_D2 = {
-	.corner = {0, 1, 3, 2, 4, 5, 7, 6},
-	.edge = {0, 1, 3, 2, 4, 5, 7, 6, 8, 9, 10, 11} };
-_static cube_fast_t _move_cube_D3 = {
-	.corner = {0, 1, 6, 7, 4, 5, 3, 2},
-	.edge = {0, 1, 6, 7, 4, 5, 3, 2, 8, 9, 10, 11} };
-_static cube_fast_t _move_cube_R = {
-	.corner = {70, 1, 2, 69, 4, 32, 35, 7},
-	.edge = {0, 1, 2, 3, 8, 5, 6, 11, 7, 9, 10, 4} };
-_static cube_fast_t _move_cube_R2 = {
-	.corner = {3, 1, 2, 0, 4, 6, 5, 7},
-	.edge = {0, 1, 2, 3, 7, 5, 6, 4, 11, 9, 10, 8} };
-_static cube_fast_t _move_cube_R3 = {
-	.corner = {69, 1, 2, 70, 4, 35, 32, 7},
-	.edge = {0, 1, 2, 3, 11, 5, 6, 8, 4, 9, 10, 7} };
-_static cube_fast_t _move_cube_L = {
-	.corner = {0, 71, 68, 3, 33, 5, 6, 34},
-	.edge = {0, 1, 2, 3, 4, 10, 9, 7, 8, 5, 6, 11} };
-_static cube_fast_t _move_cube_L2 = {
-	.corner = {0, 2, 1, 3, 7, 5, 6, 4},
-	.edge = {0, 1, 2, 3, 4, 6, 5, 7, 8, 10, 9, 11} };
-_static cube_fast_t _move_cube_L3 = {
-	.corner = {0, 68, 71, 3, 34, 5, 6, 33},
-	.edge = {0, 1, 2, 3, 4, 9, 10, 7, 8, 6, 5, 11} };
-_static cube_fast_t _move_cube_F = {
-	.corner = {36, 1, 38, 3, 66, 5, 64, 7},
-	.edge = {25, 1, 2, 24, 4, 5, 6, 7, 16, 19, 10, 11} };
-_static cube_fast_t _move_cube_F2 = {
-	.corner = {2, 1, 0, 3, 6, 5, 4, 7},
-	.edge = {3, 1, 2, 0, 4, 5, 6, 7, 9, 8, 10, 11} };
-_static cube_fast_t _move_cube_F3 = {
-	.corner = {38, 1, 36, 3, 64, 5, 66, 7},
-	.edge = {24, 1, 2, 25, 4, 5, 6, 7, 19, 16, 10, 11} };
-_static cube_fast_t _move_cube_B = {
-	.corner = {0, 37, 2, 39, 4, 67, 6, 65},
-	.edge = {0, 27, 26, 3, 4, 5, 6, 7, 8, 9, 17, 18} };
-_static cube_fast_t _move_cube_B2 = {
-	.corner = {0, 3, 2, 1, 4, 7, 6, 5},
-	.edge = {0, 2, 1, 3, 4, 5, 6, 7, 8, 9, 11, 10} };
-_static cube_fast_t _move_cube_B3 = {
-	.corner = {0, 39, 2, 37, 4, 65, 6, 67},
-	.edge = {0, 26, 27, 3, 4, 5, 6, 7, 8, 9, 18, 17} };
-
-_static cube_fast_t _trans_cube_UFr = {
-	.corner = {0, 1, 2, 3, 4, 5, 6, 7},
-	.edge = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11} };
-_static cube_fast_t _trans_cube_UFr_inverse = {
-	.corner = {0, 1, 2, 3, 4, 5, 6, 7},
-	.edge = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11} };
-_static cube_fast_t _trans_cube_ULr = {
-	.corner = {4, 5, 7, 6, 1, 0, 2, 3},
-	.edge = {5, 4, 7, 6, 0, 1, 2, 3, 25, 26, 27, 24} };
-_static cube_fast_t _trans_cube_ULr_inverse = {
-	.corner = {5, 4, 6, 7, 0, 1, 3, 2},
-	.edge = {4, 5, 6, 7, 1, 0, 3, 2, 27, 24, 25, 26} };
-_static cube_fast_t _trans_cube_UBr = {
-	.corner = {1, 0, 3, 2, 5, 4, 7, 6},
-	.edge = {1, 0, 3, 2, 5, 4, 7, 6, 10, 11, 8, 9} };
-_static cube_fast_t _trans_cube_UBr_inverse = {
-	.corner = {1, 0, 3, 2, 5, 4, 7, 6},
-	.edge = {1, 0, 3, 2, 5, 4, 7, 6, 10, 11, 8, 9} };
-_static cube_fast_t _trans_cube_URr = {
-	.corner = {5, 4, 6, 7, 0, 1, 3, 2},
-	.edge = {4, 5, 6, 7, 1, 0, 3, 2, 27, 24, 25, 26} };
-_static cube_fast_t _trans_cube_URr_inverse = {
-	.corner = {4, 5, 7, 6, 1, 0, 2, 3},
-	.edge = {5, 4, 7, 6, 0, 1, 2, 3, 25, 26, 27, 24} };
-_static cube_fast_t _trans_cube_DFr = {
-	.corner = {2, 3, 0, 1, 6, 7, 4, 5},
-	.edge = {3, 2, 1, 0, 6, 7, 4, 5, 9, 8, 11, 10} };
-_static cube_fast_t _trans_cube_DFr_inverse = {
-	.corner = {2, 3, 0, 1, 6, 7, 4, 5},
-	.edge = {3, 2, 1, 0, 6, 7, 4, 5, 9, 8, 11, 10} };
-_static cube_fast_t _trans_cube_DLr = {
-	.corner = {7, 6, 4, 5, 2, 3, 1, 0},
-	.edge = {6, 7, 4, 5, 2, 3, 0, 1, 26, 25, 24, 27} };
-_static cube_fast_t _trans_cube_DLr_inverse = {
-	.corner = {7, 6, 4, 5, 2, 3, 1, 0},
-	.edge = {6, 7, 4, 5, 2, 3, 0, 1, 26, 25, 24, 27} };
-_static cube_fast_t _trans_cube_DBr = {
-	.corner = {3, 2, 1, 0, 7, 6, 5, 4},
-	.edge = {2, 3, 0, 1, 7, 6, 5, 4, 11, 10, 9, 8} };
-_static cube_fast_t _trans_cube_DBr_inverse = {
-	.corner = {3, 2, 1, 0, 7, 6, 5, 4},
-	.edge = {2, 3, 0, 1, 7, 6, 5, 4, 11, 10, 9, 8} };
-_static cube_fast_t _trans_cube_DRr = {
-	.corner = {6, 7, 5, 4, 3, 2, 0, 1},
-	.edge = {7, 6, 5, 4, 3, 2, 1, 0, 24, 27, 26, 25} };
-_static cube_fast_t _trans_cube_DRr_inverse = {
-	.corner = {6, 7, 5, 4, 3, 2, 0, 1},
-	.edge = {7, 6, 5, 4, 3, 2, 1, 0, 24, 27, 26, 25} };
-_static cube_fast_t _trans_cube_RUr = {
-	.corner = {64, 67, 65, 66, 37, 38, 36, 39},
-	.edge = {20, 23, 22, 21, 24, 27, 26, 25, 0, 1, 2, 3} };
-_static cube_fast_t _trans_cube_RUr_inverse = {
-	.corner = {32, 34, 35, 33, 70, 68, 69, 71},
-	.edge = {8, 9, 10, 11, 16, 19, 18, 17, 20, 23, 22, 21} };
-_static cube_fast_t _trans_cube_RFr = {
-	.corner = {38, 37, 36, 39, 64, 67, 66, 65},
-	.edge = {24, 27, 26, 25, 23, 20, 21, 22, 19, 16, 17, 18} };
-_static cube_fast_t _trans_cube_RFr_inverse = {
-	.corner = {36, 39, 38, 37, 66, 65, 64, 67},
-	.edge = {25, 26, 27, 24, 21, 22, 23, 20, 16, 19, 18, 17} };
-_static cube_fast_t _trans_cube_RDr = {
-	.corner = {67, 64, 66, 65, 38, 37, 39, 36},
-	.edge = {23, 20, 21, 22, 27, 24, 25, 26, 2, 3, 0, 1} };
-_static cube_fast_t _trans_cube_RDr_inverse = {
-	.corner = {33, 35, 34, 32, 71, 69, 68, 70},
-	.edge = {10, 11, 8, 9, 17, 18, 19, 16, 21, 22, 23, 20} };
-_static cube_fast_t _trans_cube_RBr = {
-	.corner = {37, 38, 39, 36, 67, 64, 65, 66},
-	.edge = {27, 24, 25, 26, 20, 23, 22, 21, 17, 18, 19, 16} };
-_static cube_fast_t _trans_cube_RBr_inverse = {
-	.corner = {37, 38, 39, 36, 67, 64, 65, 66},
-	.edge = {27, 24, 25, 26, 20, 23, 22, 21, 17, 18, 19, 16} };
-_static cube_fast_t _trans_cube_LUr = {
-	.corner = {65, 66, 64, 67, 36, 39, 37, 38},
-	.edge = {21, 22, 23, 20, 26, 25, 24, 27, 1, 0, 3, 2} };
-_static cube_fast_t _trans_cube_LUr_inverse = {
-	.corner = {34, 32, 33, 35, 68, 70, 71, 69},
-	.edge = {9, 8, 11, 10, 19, 16, 17, 18, 22, 21, 20, 23} };
-_static cube_fast_t _trans_cube_LFr = {
-	.corner = {36, 39, 38, 37, 66, 65, 64, 67},
-	.edge = {25, 26, 27, 24, 21, 22, 23, 20, 16, 19, 18, 17} };
-_static cube_fast_t _trans_cube_LFr_inverse = {
-	.corner = {38, 37, 36, 39, 64, 67, 66, 65},
-	.edge = {24, 27, 26, 25, 23, 20, 21, 22, 19, 16, 17, 18} };
-_static cube_fast_t _trans_cube_LDr = {
-	.corner = {66, 65, 67, 64, 39, 36, 38, 37},
-	.edge = {22, 21, 20, 23, 25, 26, 27, 24, 3, 2, 1, 0} };
-_static cube_fast_t _trans_cube_LDr_inverse = {
-	.corner = {35, 33, 32, 34, 69, 71, 70, 68},
-	.edge = {11, 10, 9, 8, 18, 17, 16, 19, 23, 20, 21, 22} };
-_static cube_fast_t _trans_cube_LBr = {
-	.corner = {39, 36, 37, 38, 65, 66, 67, 64},
-	.edge = {26, 25, 24, 27, 22, 21, 20, 23, 18, 17, 16, 19} };
-_static cube_fast_t _trans_cube_LBr_inverse = {
-	.corner = {39, 36, 37, 38, 65, 66, 67, 64},
-	.edge = {26, 25, 24, 27, 22, 21, 20, 23, 18, 17, 16, 19} };
-_static cube_fast_t _trans_cube_FUr = {
-	.corner = {68, 70, 69, 71, 32, 34, 33, 35},
-	.edge = {16, 19, 18, 17, 9, 8, 11, 10, 5, 4, 7, 6} };
-_static cube_fast_t _trans_cube_FUr_inverse = {
-	.corner = {68, 70, 69, 71, 32, 34, 33, 35},
-	.edge = {16, 19, 18, 17, 9, 8, 11, 10, 5, 4, 7, 6} };
-_static cube_fast_t _trans_cube_FRr = {
-	.corner = {32, 34, 35, 33, 70, 68, 69, 71},
-	.edge = {8, 9, 10, 11, 16, 19, 18, 17, 20, 23, 22, 21} };
-_static cube_fast_t _trans_cube_FRr_inverse = {
-	.corner = {64, 67, 65, 66, 37, 38, 36, 39},
-	.edge = {20, 23, 22, 21, 24, 27, 26, 25, 0, 1, 2, 3} };
-_static cube_fast_t _trans_cube_FDr = {
-	.corner = {70, 68, 71, 69, 34, 32, 35, 33},
-	.edge = {19, 16, 17, 18, 8, 9, 10, 11, 7, 6, 5, 4} };
-_static cube_fast_t _trans_cube_FDr_inverse = {
-	.corner = {69, 71, 68, 70, 33, 35, 32, 34},
-	.edge = {17, 18, 19, 16, 11, 10, 9, 8, 4, 5, 6, 7} };
-_static cube_fast_t _trans_cube_FLr = {
-	.corner = {34, 32, 33, 35, 68, 70, 71, 69},
-	.edge = {9, 8, 11, 10, 19, 16, 17, 18, 22, 21, 20, 23} };
-_static cube_fast_t _trans_cube_FLr_inverse = {
-	.corner = {65, 66, 64, 67, 36, 39, 37, 38},
-	.edge = {21, 22, 23, 20, 26, 25, 24, 27, 1, 0, 3, 2} };
-_static cube_fast_t _trans_cube_BUr = {
-	.corner = {69, 71, 68, 70, 33, 35, 32, 34},
-	.edge = {17, 18, 19, 16, 11, 10, 9, 8, 4, 5, 6, 7} };
-_static cube_fast_t _trans_cube_BUr_inverse = {
-	.corner = {70, 68, 71, 69, 34, 32, 35, 33},
-	.edge = {19, 16, 17, 18, 8, 9, 10, 11, 7, 6, 5, 4} };
-_static cube_fast_t _trans_cube_BRr = {
-	.corner = {35, 33, 32, 34, 69, 71, 70, 68},
-	.edge = {11, 10, 9, 8, 18, 17, 16, 19, 23, 20, 21, 22} };
-_static cube_fast_t _trans_cube_BRr_inverse = {
-	.corner = {66, 65, 67, 64, 39, 36, 38, 37},
-	.edge = {22, 21, 20, 23, 25, 26, 27, 24, 3, 2, 1, 0} };
-_static cube_fast_t _trans_cube_BDr = {
-	.corner = {71, 69, 70, 68, 35, 33, 34, 32},
-	.edge = {18, 17, 16, 19, 10, 11, 8, 9, 6, 7, 4, 5} };
-_static cube_fast_t _trans_cube_BDr_inverse = {
-	.corner = {71, 69, 70, 68, 35, 33, 34, 32},
-	.edge = {18, 17, 16, 19, 10, 11, 8, 9, 6, 7, 4, 5} };
-_static cube_fast_t _trans_cube_BLr = {
-	.corner = {33, 35, 34, 32, 71, 69, 68, 70},
-	.edge = {10, 11, 8, 9, 17, 18, 19, 16, 21, 22, 23, 20} };
-_static cube_fast_t _trans_cube_BLr_inverse = {
-	.corner = {67, 64, 66, 65, 38, 37, 39, 36},
-	.edge = {23, 20, 21, 22, 27, 24, 25, 26, 2, 3, 0, 1} };
-_static cube_fast_t _trans_cube_UFm = {
-	.corner = {4, 5, 6, 7, 0, 1, 2, 3},
-	.edge = {0, 1, 2, 3, 5, 4, 7, 6, 9, 8, 11, 10} };
-_static cube_fast_t _trans_cube_UFm_inverse = {
-	.corner = {4, 5, 6, 7, 0, 1, 2, 3},
-	.edge = {0, 1, 2, 3, 5, 4, 7, 6, 9, 8, 11, 10} };
-_static cube_fast_t _trans_cube_ULm = {
-	.corner = {0, 1, 3, 2, 5, 4, 6, 7},
-	.edge = {4, 5, 6, 7, 0, 1, 2, 3, 24, 27, 26, 25} };
-_static cube_fast_t _trans_cube_ULm_inverse = {
-	.corner = {0, 1, 3, 2, 5, 4, 6, 7},
-	.edge = {4, 5, 6, 7, 0, 1, 2, 3, 24, 27, 26, 25} };
-_static cube_fast_t _trans_cube_UBm = {
-	.corner = {5, 4, 7, 6, 1, 0, 3, 2},
-	.edge = {1, 0, 3, 2, 4, 5, 6, 7, 11, 10, 9, 8} };
-_static cube_fast_t _trans_cube_UBm_inverse = {
-	.corner = {5, 4, 7, 6, 1, 0, 3, 2},
-	.edge = {1, 0, 3, 2, 4, 5, 6, 7, 11, 10, 9, 8} };
-_static cube_fast_t _trans_cube_URm = {
-	.corner = {1, 0, 2, 3, 4, 5, 7, 6},
-	.edge = {5, 4, 7, 6, 1, 0, 3, 2, 26, 25, 24, 27} };
-_static cube_fast_t _trans_cube_URm_inverse = {
-	.corner = {1, 0, 2, 3, 4, 5, 7, 6},
-	.edge = {5, 4, 7, 6, 1, 0, 3, 2, 26, 25, 24, 27} };
-_static cube_fast_t _trans_cube_DFm = {
-	.corner = {6, 7, 4, 5, 2, 3, 0, 1},
-	.edge = {3, 2, 1, 0, 7, 6, 5, 4, 8, 9, 10, 11} };
-_static cube_fast_t _trans_cube_DFm_inverse = {
-	.corner = {6, 7, 4, 5, 2, 3, 0, 1},
-	.edge = {3, 2, 1, 0, 7, 6, 5, 4, 8, 9, 10, 11} };
-_static cube_fast_t _trans_cube_DLm = {
-	.corner = {3, 2, 0, 1, 6, 7, 5, 4},
-	.edge = {7, 6, 5, 4, 2, 3, 0, 1, 27, 24, 25, 26} };
-_static cube_fast_t _trans_cube_DLm_inverse = {
-	.corner = {2, 3, 1, 0, 7, 6, 4, 5},
-	.edge = {6, 7, 4, 5, 3, 2, 1, 0, 25, 26, 27, 24} };
-_static cube_fast_t _trans_cube_DBm = {
-	.corner = {7, 6, 5, 4, 3, 2, 1, 0},
-	.edge = {2, 3, 0, 1, 6, 7, 4, 5, 10, 11, 8, 9} };
-_static cube_fast_t _trans_cube_DBm_inverse = {
-	.corner = {7, 6, 5, 4, 3, 2, 1, 0},
-	.edge = {2, 3, 0, 1, 6, 7, 4, 5, 10, 11, 8, 9} };
-_static cube_fast_t _trans_cube_DRm = {
-	.corner = {2, 3, 1, 0, 7, 6, 4, 5},
-	.edge = {6, 7, 4, 5, 3, 2, 1, 0, 25, 26, 27, 24} };
-_static cube_fast_t _trans_cube_DRm_inverse = {
-	.corner = {3, 2, 0, 1, 6, 7, 5, 4},
-	.edge = {7, 6, 5, 4, 2, 3, 0, 1, 27, 24, 25, 26} };
-_static cube_fast_t _trans_cube_RUm = {
-	.corner = {68, 71, 69, 70, 33, 34, 32, 35},
-	.edge = {21, 22, 23, 20, 25, 26, 27, 24, 0, 1, 2, 3} };
-_static cube_fast_t _trans_cube_RUm_inverse = {
-	.corner = {70, 68, 69, 71, 32, 34, 35, 33},
-	.edge = {8, 9, 10, 11, 19, 16, 17, 18, 23, 20, 21, 22} };
-_static cube_fast_t _trans_cube_RFm = {
-	.corner = {34, 33, 32, 35, 68, 71, 70, 69},
-	.edge = {25, 26, 27, 24, 22, 21, 20, 23, 19, 16, 17, 18} };
-_static cube_fast_t _trans_cube_RFm_inverse = {
-	.corner = {66, 65, 64, 67, 36, 39, 38, 37},
-	.edge = {25, 26, 27, 24, 22, 21, 20, 23, 19, 16, 17, 18} };
-_static cube_fast_t _trans_cube_RDm = {
-	.corner = {71, 68, 70, 69, 34, 33, 35, 32},
-	.edge = {22, 21, 20, 23, 26, 25, 24, 27, 2, 3, 0, 1} };
-_static cube_fast_t _trans_cube_RDm_inverse = {
-	.corner = {71, 69, 68, 70, 33, 35, 34, 32},
-	.edge = {10, 11, 8, 9, 18, 17, 16, 19, 22, 21, 20, 23} };
-_static cube_fast_t _trans_cube_RBm = {
-	.corner = {33, 34, 35, 32, 71, 68, 69, 70},
-	.edge = {26, 25, 24, 27, 21, 22, 23, 20, 17, 18, 19, 16} };
-_static cube_fast_t _trans_cube_RBm_inverse = {
-	.corner = {67, 64, 65, 66, 37, 38, 39, 36},
-	.edge = {27, 24, 25, 26, 23, 20, 21, 22, 18, 17, 16, 19} };
-_static cube_fast_t _trans_cube_LUm = {
-	.corner = {69, 70, 68, 71, 32, 35, 33, 34},
-	.edge = {20, 23, 22, 21, 27, 24, 25, 26, 1, 0, 3, 2} };
-_static cube_fast_t _trans_cube_LUm_inverse = {
-	.corner = {68, 70, 71, 69, 34, 32, 33, 35},
-	.edge = {9, 8, 11, 10, 16, 19, 18, 17, 21, 22, 23, 20} };
-_static cube_fast_t _trans_cube_LFm = {
-	.corner = {32, 35, 34, 33, 70, 69, 68, 71},
-	.edge = {24, 27, 26, 25, 20, 23, 22, 21, 16, 19, 18, 17} };
-_static cube_fast_t _trans_cube_LFm_inverse = {
-	.corner = {64, 67, 66, 65, 38, 37, 36, 39},
-	.edge = {24, 27, 26, 25, 20, 23, 22, 21, 16, 19, 18, 17} };
-_static cube_fast_t _trans_cube_LDm = {
-	.corner = {70, 69, 71, 68, 35, 32, 34, 33},
-	.edge = {23, 20, 21, 22, 24, 27, 26, 25, 3, 2, 1, 0} };
-_static cube_fast_t _trans_cube_LDm_inverse = {
-	.corner = {69, 71, 70, 68, 35, 33, 32, 34},
-	.edge = {11, 10, 9, 8, 17, 18, 19, 16, 20, 23, 22, 21} };
-_static cube_fast_t _trans_cube_LBm = {
-	.corner = {35, 32, 33, 34, 69, 70, 71, 68},
-	.edge = {27, 24, 25, 26, 23, 20, 21, 22, 18, 17, 16, 19} };
-_static cube_fast_t _trans_cube_LBm_inverse = {
-	.corner = {65, 66, 67, 64, 39, 36, 37, 38},
-	.edge = {26, 25, 24, 27, 21, 22, 23, 20, 17, 18, 19, 16} };
-_static cube_fast_t _trans_cube_FUm = {
-	.corner = {64, 66, 65, 67, 36, 38, 37, 39},
-	.edge = {16, 19, 18, 17, 8, 9, 10, 11, 4, 5, 6, 7} };
-_static cube_fast_t _trans_cube_FUm_inverse = {
-	.corner = {32, 34, 33, 35, 68, 70, 69, 71},
-	.edge = {16, 19, 18, 17, 8, 9, 10, 11, 4, 5, 6, 7} };
-_static cube_fast_t _trans_cube_FRm = {
-	.corner = {36, 38, 39, 37, 66, 64, 65, 67},
-	.edge = {9, 8, 11, 10, 16, 19, 18, 17, 21, 22, 23, 20} };
-_static cube_fast_t _trans_cube_FRm_inverse = {
-	.corner = {37, 38, 36, 39, 64, 67, 65, 66},
-	.edge = {20, 23, 22, 21, 27, 24, 25, 26, 1, 0, 3, 2} };
-_static cube_fast_t _trans_cube_FDm = {
-	.corner = {66, 64, 67, 65, 38, 36, 39, 37},
-	.edge = {19, 16, 17, 18, 9, 8, 11, 10, 6, 7, 4, 5} };
-_static cube_fast_t _trans_cube_FDm_inverse = {
-	.corner = {33, 35, 32, 34, 69, 71, 68, 70},
-	.edge = {17, 18, 19, 16, 10, 11, 8, 9, 5, 4, 7, 6} };
-_static cube_fast_t _trans_cube_FLm = {
-	.corner = {38, 36, 37, 39, 64, 66, 67, 65},
-	.edge = {8, 9, 10, 11, 19, 16, 17, 18, 23, 20, 21, 22} };
-_static cube_fast_t _trans_cube_FLm_inverse = {
-	.corner = {36, 39, 37, 38, 65, 66, 64, 67},
-	.edge = {21, 22, 23, 20, 25, 26, 27, 24, 0, 1, 2, 3} };
-_static cube_fast_t _trans_cube_BUm = {
-	.corner = {65, 67, 64, 66, 37, 39, 36, 38},
-	.edge = {17, 18, 19, 16, 10, 11, 8, 9, 5, 4, 7, 6} };
-_static cube_fast_t _trans_cube_BUm_inverse = {
-	.corner = {34, 32, 35, 33, 70, 68, 71, 69},
-	.edge = {19, 16, 17, 18, 9, 8, 11, 10, 6, 7, 4, 5} };
-_static cube_fast_t _trans_cube_BRm = {
-	.corner = {39, 37, 36, 38, 65, 67, 66, 64},
-	.edge = {10, 11, 8, 9, 18, 17, 16, 19, 22, 21, 20, 23} };
-_static cube_fast_t _trans_cube_BRm_inverse = {
-	.corner = {39, 36, 38, 37, 66, 65, 67, 64},
-	.edge = {22, 21, 20, 23, 26, 25, 24, 27, 2, 3, 0, 1} };
-_static cube_fast_t _trans_cube_BDm = {
-	.corner = {67, 65, 66, 64, 39, 37, 38, 36},
-	.edge = {18, 17, 16, 19, 11, 10, 9, 8, 7, 6, 5, 4} };
-_static cube_fast_t _trans_cube_BDm_inverse = {
-	.corner = {35, 33, 34, 32, 71, 69, 70, 68},
-	.edge = {18, 17, 16, 19, 11, 10, 9, 8, 7, 6, 5, 4} };
-_static cube_fast_t _trans_cube_BLm = {
-	.corner = {37, 39, 38, 36, 67, 65, 64, 66},
-	.edge = {11, 10, 9, 8, 17, 18, 19, 16, 20, 23, 22, 21} };
-_static cube_fast_t _trans_cube_BLm_inverse = {
-	.corner = {38, 37, 39, 36, 67, 64, 66, 65},
-	.edge = {23, 20, 21, 22, 24, 27, 26, 25, 3, 2, 1, 0} };
-
+_static cube_fast_t fastcube(
+    uint8_t, uint8_t, uint8_t, uint8_t, uint8_t,
+    uint8_t, uint8_t, uint8_t, uint8_t, uint8_t,
+    uint8_t, uint8_t, uint8_t, uint8_t, uint8_t,
+    uint8_t, uint8_t, uint8_t, uint8_t, uint8_t
+);
 _static cube_fast_t cubetofast(cube_t);
 _static cube_t fasttocube(cube_fast_t);
 _static_inline bool equal_fast(cube_fast_t, cube_fast_t);
@@ -1138,6 +719,44 @@ _static_inline cube_fast_t invertco_fast(cube_fast_t);
 _static_inline cube_fast_t inverse_fast(cube_fast_t);
 _static_inline cube_fast_t compose_fast(cube_fast_t, cube_fast_t);
 _static_inline int64_t coord_fast_eo(cube_fast_t);
+
+_static inline cube_fast_t
+fastcube(
+	uint8_t c_ufr,
+	uint8_t c_ubl,
+	uint8_t c_dfl,
+	uint8_t c_dbr,
+	uint8_t c_ufl,
+	uint8_t c_ubr,
+	uint8_t c_dfr,
+	uint8_t c_dbl,
+
+	uint8_t e_uf,
+	uint8_t e_ub,
+	uint8_t e_db,
+	uint8_t e_df,
+	uint8_t e_ur,
+	uint8_t e_ul,
+	uint8_t e_dl,
+	uint8_t e_dr,
+	uint8_t e_fr,
+	uint8_t e_fl,
+	uint8_t e_bl,
+	uint8_t e_br
+)
+{
+	cube_fast_t cube = {
+		.corner = {
+			c_ufr, c_ubl, c_dfl, c_dbr, c_ufl, c_ubr, c_dfr, c_dbl
+		},
+		.edge = {
+			e_uf, e_ub, e_db, e_df, e_ur, e_ul,
+			e_dl, e_dr, e_fr, e_fl, e_bl, e_br
+		}
+	};
+
+	return cube;
+}
 
 _static cube_fast_t
 cubetofast(cube_t cube)
@@ -1302,9 +921,9 @@ _static uint8_t readeo(char *);
 _static uint8_t readep(char *);
 _static cube_t readcube_H48(char *);
 _static int writepiece_SRC(uint8_t, char *);
-_static void writecube_AVX(cube_t, char *);
 _static void writecube_H48(cube_t, char *);
 _static void writecube_SRC(cube_t, char *);
+_static void writecube_LST(cube_t, char *);
 _static uint8_t readmove(char);
 _static uint8_t readmodifier(char);
 _static uint8_t readtrans(char *);
@@ -1541,8 +1160,8 @@ writecube(char *format, cube_t cube, char *buf)
 		writecube_H48(cube, buf);
 	} else if (!strcmp(format, "SRC")) {
 		writecube_SRC(cube, buf);
-	} else if (!strcmp(format, "AVX")) {
-		writecube_AVX(cube, buf);
+	} else if (!strcmp(format, "LST")) {
+		writecube_LST(cube, buf);
 	} else {
 		errormsg = "ERROR: cannot write cube in the given format";
 		goto writecube_error;
@@ -1684,31 +1303,6 @@ writepiece_SRC(uint8_t piece, char *buf)
 }
 
 _static void
-writecube_AVX(cube_t cube, char *buf)
-{
-	int i, ptr;
-	uint8_t piece;
-
-	memcpy(buf, "_mm256_set_epi8(\n\t0, 0, 0, 0, ", 30);
-	ptr = 30;
-
-	for (i = 11; i >= 0; i--) {
-		piece = cube.edge[i];
-		ptr += writepiece_SRC(piece, buf + ptr);
-	}
-
-	memcpy(buf+ptr-2, ",\n\t0, 0, 0, 0, 0, 0, 0, 0, ", 27);
-	ptr += 25;
-
-	for (i = 7; i >= 0; i--) {
-		piece = cube.corner[i];
-		ptr += writepiece_SRC(piece, buf + ptr);
-	}
-
-	memcpy(buf+ptr-2, "\n)\0", 3);
-}
-
-_static void
 writecube_H48(cube_t cube, char *buf)
 {
 	uint8_t piece, perm, orient;
@@ -1760,6 +1354,27 @@ writecube_SRC(cube_t cube, char *buf)
 	}
 
 	memcpy(buf+ptr-2, "}\n}\0", 4);
+}
+
+_static void
+writecube_LST(cube_t cube, char *buf)
+{
+	int i, ptr;
+	uint8_t piece;
+
+	ptr = 0;
+
+	for (i = 0; i < 8; i++) {
+		piece = cube.corner[i];
+		ptr += writepiece_SRC(piece, buf + ptr);
+	}
+
+	for (i = 0; i < 12; i++) {
+		piece = cube.edge[i];
+		ptr += writepiece_SRC(piece, buf + ptr);
+	}
+
+	*(buf+ptr-2) = 0;
 }
 
 _static uint8_t

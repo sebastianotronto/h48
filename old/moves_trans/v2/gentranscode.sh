@@ -1,6 +1,8 @@
 #!/bin/sh
 
-gcc -DDEBUG h48_to_lst.c ../cube.c -o h48_to_lst
+type="${1:-src}"
+
+gcc -DDEBUG h48_to_"$type".c ../cube.c -o h48_to_"$type"
 gcc -DDEBUG invert.c ../cube.c -o invert
 
 lineavx() { printf '#define _trans_cube_%s ' "$1"; }
@@ -11,15 +13,12 @@ sedsrc() { sed '3s/$/ };/ ; 3q'; }
 gen() {
 	for f in transform_??_???.txt; do
 		trans="$(echo $f | sed 's/.*_// ; s/\.txt//')"
-		printf '#define _trans_cube_%s fastcube( \\\n    ' "$trans"
-		./h48_to_lst <"$f"
-		printf ')\n'
-		printf '#define _trans_cube_%s_inverse fastcube( \\\n    ' \
-			"$trans"
-		./invert <"$f" | ./h48_to_lst
-		printf ')\n'
+		line$type "$trans"
+		./h48_to_"$type" <"$f" | sed$type
+		line$type "${trans}_inverse"
+		./invert <"$f" | ./h48_to_"$type" | sed$type
 	done
 }
 
 gen
-rm -f h48_to_lst invert
+rm -f h48_to_"$type" invert
