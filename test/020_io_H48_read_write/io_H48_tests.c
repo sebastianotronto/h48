@@ -1,6 +1,6 @@
 #include "../test.h"
 
-int main() {
+int main(void) {
 	char *c, str[STRLENMAX];
 	cube_t cube;
 

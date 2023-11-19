@@ -2,7 +2,7 @@
 
 cube_t compose(cube_t, cube_t);
 
-int main() {
+int main(void) {
 	char str[STRLENMAX];
 	cube_t c1, c2, c3;
 

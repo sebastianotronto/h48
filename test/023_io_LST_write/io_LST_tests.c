@@ -7,7 +7,7 @@ bool issolvable(cube_t);
 cube_t readcube(char *, char *);
 void writecube(char *, cube_t, char *);
 
-int main() {
+int main(void) {
 	char *c, str[STRLENMAX];
 	cube_t cube;
 

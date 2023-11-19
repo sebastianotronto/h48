@@ -2,7 +2,7 @@
 
 cube_t applymoves(cube_t, char *);
 
-int main() {
+int main(void) {
 	char movestr[STRLENMAX], cubestr[STRLENMAX];
 	cube_t cube;
 

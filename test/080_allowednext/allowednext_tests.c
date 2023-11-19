@@ -11,7 +11,7 @@ static char *moves[] = {
 	"B", "B2", "B'",
 };
 
-int main() {
+int main(void) {
 	char movestr[STRLENMAX];
 	uint8_t m[100], next;
 	int n, i, j;

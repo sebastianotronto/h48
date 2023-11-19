@@ -6,7 +6,7 @@
 
 #define STRLENMAX 1000
 
-int main() {
+int main(void) {
 	char str[STRLENMAX];
 	cube_t cube;
 

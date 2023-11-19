@@ -4,7 +4,7 @@ cube_fast_t cubetofast(cube_t);
 cube_t fasttocube(cube_fast_t);
 bool equal(cube_t, cube_t);
 
-int main() {
+int main(void) {
 	char cubestr[STRLENMAX];
 	cube_t cube, cube2;
 	cube_fast_t fast;

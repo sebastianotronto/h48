@@ -3,7 +3,7 @@
 int64_t solve(cube_t, char *, char *, char *, int8_t, int8_t, int64_t, int8_t,
     void *, char *);
 
-int main() {
+int main(void) {
 	char cubestr[STRLENMAX], solverstr[STRLENMAX], optionsstr[STRLENMAX];
 	char nisstypestr[STRLENMAX], minmovesstr[STRLENMAX];
 	char maxmovesstr[STRLENMAX], maxsolsstr[STRLENMAX];

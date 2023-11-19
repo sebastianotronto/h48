@@ -3,7 +3,7 @@
 int64_t coord_fast_eo(cube_fast_t);
 cube_fast_t cubetofast(cube_t);
 
-int main() {
+int main(void) {
 	char str[STRLENMAX];
 	cube_t cube;
 	cube_fast_t fast;

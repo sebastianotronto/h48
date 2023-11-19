@@ -2,7 +2,7 @@
 
 cube_t inverse(cube_t);
 
-int main() {
+int main(void) {
 	char str[STRLENMAX];
 	cube_t cube, inv;
 
