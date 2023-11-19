@@ -1,8 +1,9 @@
 #!/bin/sh
 
-detect() { cc -march=native -dM -E - < /dev/null | grep "$1"; }
+detectarch() { cc -march=native -dM -E - </dev/null | grep "$1"; }
+detectsan() { cc -fsanitize=$1 -dM -E -x c - </dev/null | grep "SANITIZE"; }
 
-[ -n "$(detect __AVX2__)" ] && detected="AVX2"
+[ -n "$(detectarch __AVX2__)" ] && detected="AVX2"
 
 TYPE=${TYPE-"$detected"}
 
@@ -11,7 +12,10 @@ echo "Using CUBE_$TYPE"
 STD="-std=c99"
 WFLAGS="-pedantic -Wall -Wextra -Wno-unused-parameter -Wno-unused-function"
 [ "$TYPE" = "AVX2" ] && AVX="-mavx2"
-[ "$(uname)" = "Linux" ] && SAN="-fsanitize=address -fsanitize=undefined"
+
+[ -n "$(detectsan address)" ] && ADDR="-fsanitize=address"
+[ -n "$(detectsan undefined)" ] && UNDEF="-fsanitize=undefined"
+SAN="$ADDR $UNDEF"
 
 CFLAGS="$STD $WFLAGS $AVX -O3"
 DBGFLAGS="$STD $WFLAGS $AVX -g3 -DDEBUG"

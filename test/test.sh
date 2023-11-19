@@ -1,15 +1,15 @@
 #!/bin/sh
 
+detectsan() { cc -fsanitize=$1 -dM -E -x c - </dev/null | grep "SANITIZE"; }
+
 re="${TEST:-$@}"
 
 CC="cc -DDEBUG -std=c99 -pedantic -Wall -Wextra \
     -Wno-unused-parameter -Wno-unused-function -g3 -D$CUBETYPE"
-if [ "$CUBETYPE" = "CUBE_AVX2" ]; then
-	CC="$CC -mavx2"
-fi
-if [ "$(uname)" != "OpenBSD" ]; then
-	CC="$CC -fsanitize=address -fsanitize=undefined"
-fi
+
+[ "$CUBETYPE" = "CUBE_AVX2" ] && CC="$CC -mavx2"
+[ -n "$(detectsan address)" ] && CC="$CC -fsanitize=address"
+[ -n "$(detectsan undefined)" ] && CC="$CC -fsanitize=undefined"
 
 TESTBIN="test/run"
 TESTOUT="test/last.out"
