@@ -8,11 +8,13 @@ cube_t readcube(char *, char *);
 void writecube(char *, cube_t, char *);
 
 int main(void) {
-	char *c, str[STRLENMAX];
+	char str[STRLENMAX], *aux;
 	cube_t cube;
 
-	for (c = str; (*c = getchar()) != EOF; c++) ;
-	*c = '\0';
+        aux = str;
+	while (fgets(aux, STRLENMAX, stdin) != NULL)
+		while (*aux != '\n')
+			aux++;
 
 	cube = readcube("H48", str);
 
