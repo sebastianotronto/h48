@@ -134,6 +134,12 @@ Section: constants, strings and other stuff
 #define _eflip      0x10U
 #define _error      0xFFU
 
+_static cube_t zero = { .corner = {0}, .edge = {0} };
+_static cube_t solved = {
+	.corner = {0, 1, 2, 3, 4, 5, 6, 7},
+	.edge = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}
+};
+
 #define zero_fast fastcube( \
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 #define solved_fast fastcube( \
@@ -507,7 +513,6 @@ _static_inline bool equal_fast(cube_fast_t, cube_fast_t);
 _static_inline bool issolved_fast(cube_fast_t);
 _static_inline cube_fast_t invertco_fast(cube_fast_t);
 _static_inline cube_fast_t cleanaftershuffle(cube_fast_t);
-_static_inline cube_fast_t inverse_fast(cube_fast_t);
 _static_inline cube_fast_t compose_fast(cube_fast_t, cube_fast_t);
 _static_inline int64_t coord_fast_eo(cube_fast_t);
 
@@ -617,45 +622,6 @@ cleanaftershuffle(cube_fast_t c)
 }
 
 _static_inline cube_fast_t
-inverse_fast(cube_fast_t c)
-{
-	/* Method taken from Andrew Skalski's vcube[1]. The addition sequence
-	 * was generated using [2].
-	 * [1] https://github.com/Voltara/vcube
-	 * [2] http://wwwhomes.uni-bielefeld.de/achim/addition_chain.html
-	 */
-	cube_fast_t v3, vi, vo, vp, ret;
-
-	v3 = _mm256_shuffle_epi8(c, c);
-	v3 = _mm256_shuffle_epi8(v3, c);
-	vi = _mm256_shuffle_epi8(v3, v3);
-	vi = _mm256_shuffle_epi8(vi, vi);
-	vi = _mm256_shuffle_epi8(vi, vi);
-	vi = _mm256_shuffle_epi8(vi, v3);
-	vi = _mm256_shuffle_epi8(vi, vi);
-	vi = _mm256_shuffle_epi8(vi, vi);
-	vi = _mm256_shuffle_epi8(vi, vi);
-	vi = _mm256_shuffle_epi8(vi, vi);
-	vi = _mm256_shuffle_epi8(vi, c);
-	vi = _mm256_shuffle_epi8(vi, vi);
-	vi = _mm256_shuffle_epi8(vi, vi);
-	vi = _mm256_shuffle_epi8(vi, vi);
-	vi = _mm256_shuffle_epi8(vi, vi);
-	vi = _mm256_shuffle_epi8(vi, vi);
-	vi = _mm256_shuffle_epi8(vi, v3);
-	vi = _mm256_shuffle_epi8(vi, vi);
-	vi = _mm256_shuffle_epi8(vi, c);
-
-	vo = _mm256_and_si256(c, _mm256_or_si256(_eo_avx2, _co2_avx2));
-	vo = _mm256_shuffle_epi8(vo, vi);
-	vp = _mm256_andnot_si256(_mm256_or_si256(_eo_avx2, _co2_avx2), vi);
-	ret = _mm256_or_si256(vp, vo);
-	ret = cleanaftershuffle(ret);
-	
-	return invertco_fast(ret);
-}
-
-_static_inline cube_fast_t
 compose_fast(cube_fast_t c1, cube_fast_t c2)
 {
 	cube_fast_t ret;
@@ -716,7 +682,6 @@ _static cube_t fasttocube(cube_fast_t);
 _static_inline bool equal_fast(cube_fast_t, cube_fast_t);
 _static_inline bool issolved_fast(cube_fast_t);
 _static_inline cube_fast_t invertco_fast(cube_fast_t);
-_static_inline cube_fast_t inverse_fast(cube_fast_t);
 _static_inline cube_fast_t compose_fast(cube_fast_t, cube_fast_t);
 _static_inline int64_t coord_fast_eo(cube_fast_t);
 
@@ -812,29 +777,6 @@ invertco_fast(cube_fast_t c)
 }
 
 _static_inline cube_fast_t
-inverse_fast(cube_fast_t cube)
-{
-	cube_fast_t ret;
-	uint8_t i, piece, orien;
-
-	ret = zero_fast;
-
-	for (i = 0; i < 12; i++) {
-		piece = cube.edge[i];
-		orien = piece & _eobit;
-		ret.edge[piece & _pbits] = i | orien;
-	}
-
-	for (i = 0; i < 8; i++) {
-		piece = cube.corner[i];
-		orien = ((piece << 1) | (piece >> 1)) & _cobits2;
-		ret.corner[piece & _pbits] = i | orien;
-	}
-
-	return ret;
-}
-
-_static_inline cube_fast_t
 compose_fast(cube_fast_t c1, cube_fast_t c2)
 {
 	cube_fast_t ret;
@@ -894,12 +836,6 @@ previous sections, while some other operate directly on the cube.
 #define _trans_mirrored(T, c) \
 	invertco_fast(compose_fast(compose_fast(_trans_cube_ ## T, c), \
 	_trans_cube_ ## T ## _inverse))
-
-_static cube_t zero = { .corner = {0}, .edge = {0} };
-_static cube_t solved = {
-	.corner = {0, 1, 2, 3, 4, 5, 6, 7},
-	.edge = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}
-};
 
 cube_t solvedcube(void);
 bool isconsistent(cube_t);
@@ -1076,10 +1012,27 @@ compose(cube_t c1, cube_t c2)
 cube_t
 inverse(cube_t cube)
 {
+	cube_t ret;
+	uint8_t i, piece, orien;
+
 	DBG_ASSERT(isconsistent(cube), zero,
 	    "inverse error: inconsistent cube\n");
 
-	return fasttocube(inverse_fast(cubetofast(cube)));
+	ret = zero_fast;
+
+	for (i = 0; i < 12; i++) {
+		piece = cube.edge[i];
+		orien = piece & _eobit;
+		ret.edge[piece & _pbits] = i | orien;
+	}
+
+	for (i = 0; i < 8; i++) {
+		piece = cube.corner[i];
+		orien = ((piece << 1) | (piece >> 1)) & _cobits2;
+		ret.corner[piece & _pbits] = i | orien;
+	}
+
+	return ret;
 }
 
 cube_t
