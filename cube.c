@@ -501,7 +501,7 @@ typedef __m256i cube_fast_t;
 #define _cocw_avx2 _mm256_set_epi64x(0, 0, 0, 0x2020202020202020)
 #define _eo_avx2 _mm256_set_epi64x(0x10101010, 0x1010101010101010, 0, 0)
 
-_static inline cube_fast_t fastcube(
+_static_inline cube_fast_t fastcube(
     uint8_t, uint8_t, uint8_t, uint8_t, uint8_t,
     uint8_t, uint8_t, uint8_t, uint8_t, uint8_t,
     uint8_t, uint8_t, uint8_t, uint8_t, uint8_t,
@@ -512,11 +512,10 @@ _static cube_t fasttocube(cube_fast_t);
 _static_inline bool equal_fast(cube_fast_t, cube_fast_t);
 _static_inline bool issolved_fast(cube_fast_t);
 _static_inline cube_fast_t invertco_fast(cube_fast_t);
-_static_inline cube_fast_t cleanaftershuffle(cube_fast_t);
 _static_inline cube_fast_t compose_fast(cube_fast_t, cube_fast_t);
 _static_inline int64_t coord_fast_eo(cube_fast_t);
 
-_static inline cube_fast_t
+_static_inline cube_fast_t
 fastcube(
 	uint8_t c_ufr,
 	uint8_t c_ubl,
@@ -609,29 +608,23 @@ invertco_fast(cube_fast_t c)
 }
 
 _static_inline cube_fast_t
-cleanaftershuffle(cube_fast_t c)
+compose_fast(cube_fast_t c1, cube_fast_t c2)
 {
-	__m256i b;
+	cube_fast_t s, b, eo2, co1, co2, aux, auy1, auy2, auz1, auz2;
 
+	/* Permute and clean unused bits */
+	s = _mm256_shuffle_epi8(c1, c2);
 	b = _mm256_set_epi8(
 		~0, ~0, ~0, ~0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 		~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, 0, 0, 0, 0, 0, 0, 0, 0
 	);
+	s = _mm256_andnot_si256(b, s);
 
-	return _mm256_andnot_si256(b, c);
-}
-
-_static_inline cube_fast_t
-compose_fast(cube_fast_t c1, cube_fast_t c2)
-{
-	cube_fast_t ret;
-
-	cube_fast_t s, eo2, ed, co1, co2, aux, auy1, auy2, auz1, auz2, coclean;
-
+	/* Change EO */
 	eo2 = _mm256_and_si256(c2, _eo_avx2);
-	s = _mm256_shuffle_epi8(c1, c2);
-	s = cleanaftershuffle(s);
-	ed = _mm256_xor_si256(s, eo2);
+	s = _mm256_xor_si256(s, eo2);
+
+	/* Change CO */
 	co1 = _mm256_and_si256(s, _co2_avx2);
 	co2 = _mm256_and_si256(c2, _co2_avx2);
 	aux = _mm256_add_epi8(co1, co2);
@@ -639,10 +632,12 @@ compose_fast(cube_fast_t c1, cube_fast_t c2)
 	auy2 = _mm256_srli_epi32(auy1, 2);
 	auz1 = _mm256_add_epi8(aux, auy2);
 	auz2 = _mm256_and_si256(auz1, _co2_avx2);
-	coclean = _mm256_andnot_si256(_co2_avx2, ed);
-	ret = _mm256_or_si256(coclean, auz2);
 
-	return ret;
+	/* Put together */
+	s = _mm256_andnot_si256(_co2_avx2, s);
+	s = _mm256_or_si256(s, auz2);
+
+	return s;
 }
 
 _static_inline int64_t
@@ -671,7 +666,7 @@ in the previous section(s) for unsupported architectures.
 
 typedef cube_t cube_fast_t;
 
-_static cube_fast_t fastcube(
+_static_inline cube_fast_t fastcube(
     uint8_t, uint8_t, uint8_t, uint8_t, uint8_t,
     uint8_t, uint8_t, uint8_t, uint8_t, uint8_t,
     uint8_t, uint8_t, uint8_t, uint8_t, uint8_t,
@@ -685,7 +680,7 @@ _static_inline cube_fast_t invertco_fast(cube_fast_t);
 _static_inline cube_fast_t compose_fast(cube_fast_t, cube_fast_t);
 _static_inline int64_t coord_fast_eo(cube_fast_t);
 
-_static inline cube_fast_t
+_static_inline cube_fast_t
 fastcube(
 	uint8_t c_ufr,
 	uint8_t c_ubl,
@@ -1018,7 +1013,7 @@ inverse(cube_t cube)
 	DBG_ASSERT(isconsistent(cube), zero,
 	    "inverse error: inconsistent cube\n");
 
-	ret = zero_fast;
+	ret = zero;
 
 	for (i = 0; i < 12; i++) {
 		piece = cube.edge[i];
