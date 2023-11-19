@@ -86,20 +86,12 @@ Multiple representations of the cube as text are supported:
   If OUT is the output in SRC format, one can use `cube_t cube = OUT` to
   declare a new cube object.
 
-- LST: similar to SRC, but only a list of comma-separated numbers is printed.
-
-Not all formats are supported for both reading and writing. More formats
-may be supported in the future.
+- LST: a format for internal use and generating code.
+  The cube is printed as a comma-separated list of 20 integers, as they appear
+  in cube_t. Corners come first, followed by edge (unlike H48).
 ******************************************************************************/
 
-/* Reads a cube from buf in the specified format, and return it.
- * Supported formats: "H48".
- */
 cube_t readcube(char *format, char *buf);
-
-/* Write the given cube to buf in the specified format.
- * Supported formats: "H48", "SRC", "LST".
- */
 void writecube(char *format, cube_t cube, char *buf);
 
 /******************************************************************************

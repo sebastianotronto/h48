@@ -849,9 +849,10 @@ _static uint8_t readcp(char *);
 _static uint8_t readeo(char *);
 _static uint8_t readep(char *);
 _static cube_t readcube_H48(char *);
-_static int writepiece_SRC(uint8_t, char *);
+_static uint8_t readpiece_LST(char **);
+_static cube_t readcube_LST(char *);
+_static int writepiece_LST(uint8_t, char *);
 _static void writecube_H48(cube_t, char *);
-_static void writecube_SRC(cube_t, char *);
 _static void writecube_LST(cube_t, char *);
 _static uint8_t readmove(char);
 _static uint8_t readmodifier(char);
@@ -1083,6 +1084,8 @@ readcube(char *format, char *buf)
 
 	if (!strcmp(format, "H48")) {
 		cube = readcube_H48(buf);
+	} else if (!strcmp(format, "LST")) {
+		cube = readcube_LST(buf);
 	} else {
 		DBG_LOG("Cannot read cube in the given format\n");
 		cube = zero;
@@ -1104,8 +1107,6 @@ writecube(char *format, cube_t cube, char *buf)
 
 	if (!strcmp(format, "H48")) {
 		writecube_H48(cube, buf);
-	} else if (!strcmp(format, "SRC")) {
-		writecube_SRC(cube, buf);
 	} else if (!strcmp(format, "LST")) {
 		writecube_LST(cube, buf);
 	} else {
@@ -1225,8 +1226,40 @@ readcube_H48(char *buf)
 	return ret;
 }
 
+_static uint8_t
+readpiece_LST(char **b)
+{
+	uint8_t ret;
+	bool read;
+
+	while (**b == ',' || **b == ' ' || **b == '\t' || **b == '\n')
+		(*b)++;
+
+	for (ret = 0, read = false; **b >= '0' && **b <= '9'; (*b)++) {
+		read = true;
+		ret = ret * 10 + (**b) - '0';
+	}
+
+	return read ? ret : _error;
+}
+
+_static cube_t
+readcube_LST(char *buf)
+{
+	int i;
+	cube_t ret = {0};
+
+	for (i = 0; i < 8; i++)
+		ret.corner[i] = readpiece_LST(&buf);
+
+	for (i = 0; i < 12; i++)
+		ret.edge[i] = readpiece_LST(&buf);
+
+	return ret;
+}
+
 _static int
-writepiece_SRC(uint8_t piece, char *buf)
+writepiece_LST(uint8_t piece, char *buf)
 {
 	char digits[3];
 	int i, len = 0;
@@ -1278,31 +1311,6 @@ writecube_H48(cube_t cube, char *buf)
 }
 
 _static void
-writecube_SRC(cube_t cube, char *buf)
-{
-	int i, ptr;
-	uint8_t piece;
-
-	memcpy(buf, "{\n\t.corner = {", 14);
-	ptr = 14;
-
-	for (i = 0; i < 8; i++) {
-		piece = cube.corner[i];
-		ptr += writepiece_SRC(piece, buf + ptr);
-	}
-
-	memcpy(buf+ptr-2, "},\n\t.edge = {", 13);
-	ptr += 11;
-
-	for (i = 0; i < 12; i++) {
-		piece = cube.edge[i];
-		ptr += writepiece_SRC(piece, buf + ptr);
-	}
-
-	memcpy(buf+ptr-2, "}\n}\0", 4);
-}
-
-_static void
 writecube_LST(cube_t cube, char *buf)
 {
 	int i, ptr;
@@ -1312,12 +1320,12 @@ writecube_LST(cube_t cube, char *buf)
 
 	for (i = 0; i < 8; i++) {
 		piece = cube.corner[i];
-		ptr += writepiece_SRC(piece, buf + ptr);
+		ptr += writepiece_LST(piece, buf + ptr);
 	}
 
 	for (i = 0; i < 12; i++) {
 		piece = cube.edge[i];
-		ptr += writepiece_SRC(piece, buf + ptr);
+		ptr += writepiece_LST(piece, buf + ptr);
 	}
 
 	*(buf+ptr-2) = 0;

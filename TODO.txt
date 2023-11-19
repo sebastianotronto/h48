@@ -39,6 +39,12 @@ switch. Here NISS may be useful.
 * improve light solver with no table; consider using a small, hard-coded
   table, e.g. H48 corner table?
 
+## ARM NEON intrinsics and other architectures
+
+* For ARM: use two uint8x16_t (or uint8x16x2_t) and vqtbl* instructions;
+  see https://developer.arm.com/architectures/instruction-sets/intrinsics
+* Implement also SSE? Why not...
+
 ## Optimizations
 
 ### General things

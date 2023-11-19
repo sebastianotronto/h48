@@ -1,12 +1,5 @@
 #include "../test.h"
 
-#define STRLENMAX 10000
-
-bool iserror(cube_t);
-bool issolvable(cube_t);
-cube_t readcube(char *, char *);
-void writecube(char *, cube_t, char *);
-
 int main(void) {
 	char str[STRLENMAX], *aux;
 	cube_t cube;
