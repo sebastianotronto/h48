@@ -2,9 +2,7 @@
 #include <stdbool.h>
 #include <string.h>
 
-#ifdef CUBE_AVX2
-#include <immintrin.h>
-#endif
+#include "cube.h"
 
 #ifdef DEBUG
 #include <stdio.h>
@@ -24,8 +22,6 @@
 #define DBG_WARN(condition, ...)
 #define DBG_ASSERT(condition, retval, ...)
 #endif
-
-#include "cube.h"
 
 /******************************************************************************
 Section: constants, strings and other stuff
@@ -494,6 +490,8 @@ Note: the #ifdef below is closed in the next section.
 ******************************************************************************/
 
 #ifdef CUBE_AVX2
+
+#include <immintrin.h>
 
 typedef __m256i cube_fast_t;
 
