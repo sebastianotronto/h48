@@ -485,11 +485,9 @@ Section: AVX2 fast methods
 
 This section contains performance-critical methods that rely on AVX2
 intructions such as routines for moving or transforming the cube.
-
-Note: the #ifdef below is closed in the next section.
 ******************************************************************************/
 
-#ifdef CUBE_AVX2
+#if defined(CUBE_AVX2)
 
 #include <immintrin.h>
 
@@ -651,6 +649,21 @@ coord_fast_eo(cube_fast_t c)
 	return mask >> 17;
 }
 
+/******************************************************************************
+Section: ARM NEON fast methods
+
+This section contains performance-critical methods that rely on ARM NEON
+intructions such as routines for moving or transforming the cube.
+******************************************************************************/
+
+#elif defined(CUBE_NEON)
+
+typedef struct {
+	uint8x16_t corner;
+	uint8x16_t edge;
+} cube_fast_t;
+
+/* TODO! */
 
 /******************************************************************************
 Section: portable fast methods

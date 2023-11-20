@@ -1,9 +1,12 @@
 #!/bin/sh
 
-detectarch() { cc -march=native -dM -E - </dev/null | grep "$1"; }
-detectsan() { cc -fsanitize=$1 -dM -E -x c - </dev/null | grep "SANITIZE"; }
+cc=${CC:-cc}
+
+detectarch() { ${cc} -march=native -dM -E - </dev/null | grep "$1"; }
+detectsan() { ${cc} -fsanitize=$1 -dM -E -x c - </dev/null | grep "SANITIZE"; }
 
 [ -n "$(detectarch __AVX2__)" ] && detected="AVX2"
+[ -n "$(detectarch __ARM_NEON)" ] && detected="NEON"
 
 TYPE=${TYPE-"$detected"}
 
@@ -26,5 +29,5 @@ echo "";
 echo "CFLAGS = $CFLAGS";
 echo "DBGFLAGS = $DBGFLAGS";
 echo "";
-echo "CC = ${CC:-cc}"
+echo "CC = ${cc}"
 } > config.mk
