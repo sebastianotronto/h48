@@ -509,6 +509,8 @@ _static_inline bool equal_fast(cube_fast_t, cube_fast_t);
 _static_inline bool issolved_fast(cube_fast_t);
 _static_inline cube_fast_t invertco_fast(cube_fast_t);
 _static_inline cube_fast_t compose_fast(cube_fast_t, cube_fast_t);
+
+_static_inline int64_t coord_fast_co(cube_fast_t);
 _static_inline int64_t coord_fast_eo(cube_fast_t);
 
 _static_inline cube_fast_t
@@ -637,6 +639,22 @@ compose_fast(cube_fast_t c1, cube_fast_t c2)
 }
 
 _static_inline int64_t
+coord_fast_co(cube_fast_t c)
+{
+	cube_fast_t co, shifted;
+	int64_t mem[4], ret, i, p;
+
+	co = _mm256_and_si256(c, _co2_avx2);
+	_mm256_storeu_si256((__m256i *)mem, co);
+
+	mem[0] >>= 5L;
+	for (i = 0, ret = 0, p = 1; i < 7; i++, mem[0] >>= 8L, p *= 3)
+		ret += (mem[0] & 3L) * p;
+
+	return ret;
+}
+
+_static_inline int64_t
 coord_fast_eo(cube_fast_t c)
 {
 	cube_fast_t eo, shifted;
@@ -689,6 +707,8 @@ _static_inline bool equal_fast(cube_fast_t, cube_fast_t);
 _static_inline bool issolved_fast(cube_fast_t);
 _static_inline cube_fast_t invertco_fast(cube_fast_t);
 _static_inline cube_fast_t compose_fast(cube_fast_t, cube_fast_t);
+
+_static_inline int64_t coord_fast_co(cube_fast_t);
 _static_inline int64_t coord_fast_eo(cube_fast_t);
 
 _static_inline cube_fast_t
@@ -812,14 +832,25 @@ compose_fast(cube_fast_t c1, cube_fast_t c2)
 }
 
 _static_inline int64_t
-coord_fast_eo(cube_fast_t cube)
+coord_fast_co(cube_fast_t c)
 {
 	int i, p;
 	int64_t ret;
 
-	ret = 0;
-	for (i = 1, p = 1; i < 12; i++, p *= 2)
-		ret += p * (cube.edge[i] >> 4);
+	for (ret = 0, i = 0, p = 1; i < 7; i++, p *= 3)
+		ret += p * (c.corner[i] >> _coshift);
+
+	return ret;
+}
+
+_static_inline int64_t
+coord_fast_eo(cube_fast_t c)
+{
+	int i, p;
+	int64_t ret;
+
+	for (ret = 0, i = 1, p = 1; i < 12; i++, p *= 2)
+		ret += p * (c.edge[i] >> _eoshift);
 
 	return ret;
 }
@@ -1598,6 +1629,12 @@ moveaxis(uint8_t move)
 {
 	return move / 6;
 }
+
+/******************************************************************************
+Section: auxiliary procedures for H48 optimal solver (temporary)
+******************************************************************************/
+
+
 
 /******************************************************************************
 Section: solvers
