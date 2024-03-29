@@ -126,6 +126,9 @@ Section: constants, strings and other stuff
 #define _coshift    5U
 
 #define _pbits      0xFU
+#define _esepbit1   0x4U
+#define _esepbit2   0x8U
+#define _csepbit    0x4U
 #define _eobit      0x10U
 #define _cobits     0xF0U
 #define _cobits2    0x60U
@@ -484,6 +487,21 @@ static char *transstr[] = {
 	[BLm] = "mirrored BL",
 };
 
+static int64_t binomial[12][12] = {
+	{1,  0,  0,   0,   0,   0,   0,   0,   0,  0,  0, 0},
+	{1,  1,  0,   0,   0,   0,   0,   0,   0,  0,  0, 0},
+	{1,  2,  1,   0,   0,   0,   0,   0,   0,  0,  0, 0},
+	{1,  3,  3,   1,   0,   0,   0,   0,   0,  0,  0, 0},
+	{1,  4,  6,   4,   1,   0,   0,   0,   0,  0,  0, 0},
+	{1,  5, 10,  10,   5,   1,   0,   0,   0,  0,  0, 0},
+	{1,  6, 15,  20,  15,   6,   1,   0,   0,  0,  0, 0},
+	{1,  7, 21,  35,  35,  21,   7,   1,   0,  0,  0, 0},
+	{1,  8, 28,  56,  70,  56,  28,   8,   1,  0,  0, 0},
+	{1,  9, 36,  84, 126, 126,  84,  36,   9,  1,  0, 0},
+	{1, 10, 45, 120, 210, 252, 210, 120,  45, 10,  1, 0},
+	{1, 11, 55, 165, 330, 462, 462, 330, 165, 55, 11, 1},
+};
+
 /******************************************************************************
 Section: AVX2 fast methods
 
@@ -500,6 +518,7 @@ typedef __m256i cube_fast_t;
 #define _co2_avx2 _mm256_set_epi64x(0, 0, 0, 0x6060606060606060)
 #define _cocw_avx2 _mm256_set_epi64x(0, 0, 0, 0x2020202020202020)
 #define _cp_avx2 _mm256_set_epi64x(0, 0, 0, 0x0707070707070707)
+#define _ep_avx2 _mm256_set_epi64x(0x0F0F0F0F, 0x0F0F0F0F0F0F0F0F, 0, 0)
 #define _eo_avx2 _mm256_set_epi64x(0x10101010, 0x1010101010101010, 0, 0)
 
 _static_inline cube_fast_t fastcube(
@@ -518,6 +537,7 @@ _static_inline cube_fast_t compose_fast(cube_fast_t, cube_fast_t);
 _static_inline int64_t coord_fast_co(cube_fast_t);
 _static_inline int64_t coord_fast_csep(cube_fast_t);
 _static_inline int64_t coord_fast_eo(cube_fast_t);
+_static_inline int64_t coord_fast_esep(cube_fast_t);
 
 _static_inline cube_fast_t
 fastcube(
@@ -686,6 +706,36 @@ coord_fast_eo(cube_fast_t c)
 	return mask >> 17;
 }
 
+_static_inline int64_t
+coord_fast_esep(cube_fast_t c)
+{
+	cube_fast_t ep;
+	int64_t e, mem[4], i, j, k, l, ret1, ret2, bit1, bit2, is1;
+
+	ep = _mm256_and_si256(c, _ep_avx2);
+	_mm256_storeu_si256((__m256i *)mem, ep);
+
+	mem[3] <<= 8L;
+	ret1 = ret2 = 0;
+	k = l = 4;
+	for (i = 0, j = 0; i < 12; i++, mem[i/8 + 2] >>= 8L) {
+		e = mem[i/8 + 2];
+
+		bit1 = (e & _esepbit1) >> 2L;
+		bit2 = (e & _esepbit2) >> 3L;
+		is1 = (1 - bit2) * bit1;
+
+		ret1 += bit2 * binomial[11-i][k];
+		k -= bit2;
+
+		ret2 += is1 * binomial[7-j][l];
+		l -= is1;
+		j += (1-bit2);
+	}
+
+	return ret1 * 70 + ret2;
+}
+
 /******************************************************************************
 Section: ARM NEON fast methods
 
@@ -730,6 +780,7 @@ _static_inline cube_fast_t compose_fast(cube_fast_t, cube_fast_t);
 _static_inline int64_t coord_fast_co(cube_fast_t);
 _static_inline int64_t coord_fast_csep(cube_fast_t);
 _static_inline int64_t coord_fast_eo(cube_fast_t);
+_static_inline int64_t coord_fast_esep(cube_fast_t);
 
 _static_inline cube_fast_t
 fastcube(
@@ -863,6 +914,13 @@ coord_fast_co(cube_fast_t c)
 	return ret;
 }
 
+/*
+For corner separation, we consider the axis (a.k.a. tetrad) each
+corner belongs to as 0 or 1 and we translate this sequence into binary.
+Ignoring the last bit, we have a value up to 2^7, but not all values are
+possible. Encoding this as a number from 0 to C(8,4) would save about 40%
+of space, but we are not going to use this coordinate in large tables.
+*/
 _static_inline int64_t
 coord_fast_csep(cube_fast_t c)
 {
@@ -870,7 +928,7 @@ coord_fast_csep(cube_fast_t c)
 	int64_t ret;
 
 	for (ret = 0, i = 0, p = 1; i < 7; i++, p *= 2)
-		ret += p * ((c.corner[i] & _pbits) >> 2U);
+		ret += p * ((c.corner[i] & _csepbit) >> 2U);
 
 	return ret;
 }
@@ -885,6 +943,41 @@ coord_fast_eo(cube_fast_t c)
 		ret += p * (c.edge[i] >> _eoshift);
 
 	return ret;
+}
+
+/*
+We encode the edge separation as a number from 0 to C(12,4)*C(8,4).
+It can be seen as the composition of two "subset index" coordinates.
+*/
+_static_inline int64_t
+coord_fast_esep(cube_fast_t c)
+{
+	int64_t i, j, k, l, ret1, ret2, bit1, bit2, is1;
+
+	for (i = 0, j = 0, k = 4, l = 4, ret1 = 0, ret2 = 0; i < 12; i++) {
+		/* Simple version:
+		if (c.edge[i] & _esepbit2) {
+			ret1 += binomial[11-i][k--];
+		} else {
+			if (c.edge[i] & _esepbit1)
+				ret2 += binomial[7-j][l--];
+			j++;
+		}
+		*/
+
+		bit1 = (c.edge[i] & _esepbit1) >> 2U;
+		bit2 = (c.edge[i] & _esepbit2) >> 3U;
+		is1 = (1 - bit2) * bit1;
+
+		ret1 += bit2 * binomial[11-i][k];
+		k -= bit2;
+
+		ret2 += is1 * binomial[7-j][l];
+		l -= is1;
+		j += (1-bit2);
+	}
+
+	return ret1 * 70 + ret2;
 }
 
 #endif

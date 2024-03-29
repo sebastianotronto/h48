@@ -1,6 +1,7 @@
 ## (find better name) H48 solver, ideas
 
-TODO next: epsep, precise coordinate unlike cpsep which is redundant
+TODO implement lookup tables
+TODO alternative: ARM NEON part
 
 First compute co + csep. Use csep as a binary number (2^7 instead of 70,
 loose a factor of 1.8 but still fits in a few megabytes or less). Use
