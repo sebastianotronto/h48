@@ -5,6 +5,7 @@
 #include "cube.h"
 
 #ifdef DEBUG
+
 #include <stdio.h>
 #define _static
 #define _static_inline
@@ -15,12 +16,15 @@
 		DBG_LOG(__VA_ARGS__);      \
 		return retval;             \
 	}
+
 #else
+
 #define _static static
 #define _static_inline static inline
 #define DBG_LOG(...)
 #define DBG_WARN(condition, ...)
 #define DBG_ASSERT(condition, retval, ...)
+
 #endif
 
 /******************************************************************************
@@ -495,6 +499,7 @@ typedef __m256i cube_fast_t;
 
 #define _co2_avx2 _mm256_set_epi64x(0, 0, 0, 0x6060606060606060)
 #define _cocw_avx2 _mm256_set_epi64x(0, 0, 0, 0x2020202020202020)
+#define _cp_avx2 _mm256_set_epi64x(0, 0, 0, 0x0707070707070707)
 #define _eo_avx2 _mm256_set_epi64x(0x10101010, 0x1010101010101010, 0, 0)
 
 _static_inline cube_fast_t fastcube(
@@ -511,6 +516,7 @@ _static_inline cube_fast_t invertco_fast(cube_fast_t);
 _static_inline cube_fast_t compose_fast(cube_fast_t, cube_fast_t);
 
 _static_inline int64_t coord_fast_co(cube_fast_t);
+_static_inline int64_t coord_fast_csep(cube_fast_t);
 _static_inline int64_t coord_fast_eo(cube_fast_t);
 
 _static_inline cube_fast_t
@@ -641,7 +647,7 @@ compose_fast(cube_fast_t c1, cube_fast_t c2)
 _static_inline int64_t
 coord_fast_co(cube_fast_t c)
 {
-	cube_fast_t co, shifted;
+	cube_fast_t co;
 	int64_t mem[4], ret, i, p;
 
 	co = _mm256_and_si256(c, _co2_avx2);
@@ -652,6 +658,19 @@ coord_fast_co(cube_fast_t c)
 		ret += (mem[0] & 3L) * p;
 
 	return ret;
+}
+
+_static_inline int64_t
+coord_fast_csep(cube_fast_t c)
+{
+	cube_fast_t cp, shifted;
+	int64_t mask;
+
+	cp = _mm256_and_si256(c, _cp_avx2);
+	shifted = _mm256_slli_epi32(cp, 5);
+	mask = _mm256_movemask_epi8(shifted);
+
+	return mask & 0x7F;
 }
 
 _static_inline int64_t
@@ -709,6 +728,7 @@ _static_inline cube_fast_t invertco_fast(cube_fast_t);
 _static_inline cube_fast_t compose_fast(cube_fast_t, cube_fast_t);
 
 _static_inline int64_t coord_fast_co(cube_fast_t);
+_static_inline int64_t coord_fast_csep(cube_fast_t);
 _static_inline int64_t coord_fast_eo(cube_fast_t);
 
 _static_inline cube_fast_t
@@ -839,6 +859,18 @@ coord_fast_co(cube_fast_t c)
 
 	for (ret = 0, i = 0, p = 1; i < 7; i++, p *= 3)
 		ret += p * (c.corner[i] >> _coshift);
+
+	return ret;
+}
+
+_static_inline int64_t
+coord_fast_csep(cube_fast_t c)
+{
+	int i, p;
+	int64_t ret;
+
+	for (ret = 0, i = 0, p = 1; i < 7; i++, p *= 2)
+		ret += p * ((c.corner[i] & _pbits) >> 2U);
 
 	return ret;
 }

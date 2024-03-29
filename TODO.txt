@@ -1,9 +1,9 @@
 ## (find better name) H48 solver, ideas
 
-TODO next: implement cosep coordinate
+TODO next: epsep, precise coordinate unlike cpsep which is redundant
 
-First compute co + csep. Use csep as a binary number (2^8 instead of 70,
-loose a factor of 3.66 but still fits in a few megabytes or less). Use
+First compute co + csep. Use csep as a binary number (2^7 instead of 70,
+loose a factor of 1.8 but still fits in a few megabytes or less). Use
 co + csep as an index in a table whose entries have: 6 bits for ttrep,
 12 bits for rep, 4 bits for pruning. Optionally, 4 more bits could be
 used for the base of the pruning table, if we want to have a different
