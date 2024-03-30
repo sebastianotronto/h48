@@ -1,7 +1,10 @@
-## (find better name) H48 solver, ideas
-
-TODO implement lookup tables
+TODO optimize cocsep generation (very slow!)
+TODO cocsep data: fix
+TODO cocsep data: add hash checks?
+TODO implement big pruning table for H48 solver
 TODO alternative: ARM NEON part
+
+## H48 optimal solver
 
 First compute co + csep. Use csep as a binary number (2^7 instead of 70,
 loose a factor of 1.8 but still fits in a few megabytes or less). Use

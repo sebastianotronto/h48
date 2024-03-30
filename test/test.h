@@ -22,5 +22,6 @@ typedef cube_t cube_fast_t;
 cube_t solvedcube(void);
 bool iserror(cube_t);
 bool issolvable(cube_t);
+bool issolved(cube_t);
 cube_t readcube(char *, char *);
 void writecube(char *, cube_t, char *);

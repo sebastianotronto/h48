@@ -28,7 +28,33 @@
 #endif
 
 /******************************************************************************
-Section: constants, strings and other stuff
+Section: mathematical constants
+******************************************************************************/
+
+#define _2p11  2048U
+#define _2p12  4096U
+#define _3p7   2187U
+#define _3p8   6561U
+#define _12c4  495U
+#define _8c4   70U
+
+_static int64_t binomial[12][12] = {
+	{1,  0,  0,   0,   0,   0,   0,   0,   0,  0,  0, 0},
+	{1,  1,  0,   0,   0,   0,   0,   0,   0,  0,  0, 0},
+	{1,  2,  1,   0,   0,   0,   0,   0,   0,  0,  0, 0},
+	{1,  3,  3,   1,   0,   0,   0,   0,   0,  0,  0, 0},
+	{1,  4,  6,   4,   1,   0,   0,   0,   0,  0,  0, 0},
+	{1,  5, 10,  10,   5,   1,   0,   0,   0,  0,  0, 0},
+	{1,  6, 15,  20,  15,   6,   1,   0,   0,  0,  0, 0},
+	{1,  7, 21,  35,  35,  21,   7,   1,   0,  0,  0, 0},
+	{1,  8, 28,  56,  70,  56,  28,   8,   1,  0,  0, 0},
+	{1,  9, 36,  84, 126, 126,  84,  36,   9,  1,  0, 0},
+	{1, 10, 45, 120, 210, 252, 210, 120,  45, 10,  1, 0},
+	{1, 11, 55, 165, 330, 462, 462, 330, 165, 55, 11, 1},
+};
+
+/******************************************************************************
+Section: moves definitions and tables
 ******************************************************************************/
 
 #define U  0U
@@ -378,7 +404,7 @@ _static cube_t solved = {
 #define _trans_cube_BLm_inverse fastcube( \
     38, 37, 39, 36, 67, 64, 66, 65, 23, 20, 21, 22, 24, 27, 26, 25, 3, 2, 1, 0)
 
-static char *cornerstr[] = {
+_static char *cornerstr[] = {
 	[_c_ufr] = "UFR",
 	[_c_ubl] = "UBL",
 	[_c_dfl] = "DFL",
@@ -389,7 +415,7 @@ static char *cornerstr[] = {
 	[_c_dbl] = "DBL"
 };
 
-static char *cornerstralt[] = {
+_static char *cornerstralt[] = {
 	[_c_ufr] = "URF",
 	[_c_ubl] = "ULB",
 	[_c_dfl] = "DLF",
@@ -400,7 +426,7 @@ static char *cornerstralt[] = {
 	[_c_dbl] = "DLB"
 };
 
-static char *edgestr[] = {
+_static char *edgestr[] = {
 	[_e_uf] = "UF",
 	[_e_ub] = "UB",
 	[_e_db] = "DB",
@@ -415,7 +441,7 @@ static char *edgestr[] = {
 	[_e_br] = "BR"
 };
 
-static char *movestr[] = {
+_static char *movestr[] = {
 	[U]  = "U",
 	[U2] = "U2",
 	[U3] = "U'",
@@ -436,7 +462,7 @@ static char *movestr[] = {
 	[B3] = "B'",
 };
 
-static char *transstr[] = {
+_static char *transstr[] = {
 	[UFr] = "rotation UF",
 	[UFm] = "mirrored UF",
 	[ULr] = "rotation UL",
@@ -487,19 +513,55 @@ static char *transstr[] = {
 	[BLm] = "mirrored BL",
 };
 
-static int64_t binomial[12][12] = {
-	{1,  0,  0,   0,   0,   0,   0,   0,   0,  0,  0, 0},
-	{1,  1,  0,   0,   0,   0,   0,   0,   0,  0,  0, 0},
-	{1,  2,  1,   0,   0,   0,   0,   0,   0,  0,  0, 0},
-	{1,  3,  3,   1,   0,   0,   0,   0,   0,  0,  0, 0},
-	{1,  4,  6,   4,   1,   0,   0,   0,   0,  0,  0, 0},
-	{1,  5, 10,  10,   5,   1,   0,   0,   0,  0,  0, 0},
-	{1,  6, 15,  20,  15,   6,   1,   0,   0,  0,  0, 0},
-	{1,  7, 21,  35,  35,  21,   7,   1,   0,  0,  0, 0},
-	{1,  8, 28,  56,  70,  56,  28,   8,   1,  0,  0, 0},
-	{1,  9, 36,  84, 126, 126,  84,  36,   9,  1,  0, 0},
-	{1, 10, 45, 120, 210, 252, 210, 120,  45, 10,  1, 0},
-	{1, 11, 55, 165, 330, 462, 462, 330, 165, 55, 11, 1},
+static uint8_t inverse_trans_table[48] = {
+	[UFr] = UFr,
+	[UFm] = UFm,
+	[ULr] = URr,
+	[ULm] = ULm,
+	[UBr] = UBr,
+	[UBm] = UBm,
+	[URr] = ULr,
+	[URm] = URm,
+	[DFr] = DFr,
+	[DFm] = DFm,
+	[DLr] = DLr,
+	[DLm] = DRm,
+	[DBr] = DBr,
+	[DBm] = DBm,
+	[DRr] = DRr,
+	[DRm] = DLm,
+	[RUr] = FRr,
+	[RUm] = FLm,
+	[RFr] = LFr,
+	[RFm] = RFm,
+	[RDr] = BLr,
+	[RDm] = BRm,
+	[RBr] = RBr,
+	[RBm] = LBm,
+	[LUr] = FLr,
+	[LUm] = FRm,
+	[LFr] = RFr,
+	[LFm] = LFm,
+	[LDr] = BRr,
+	[LDm] = BLm,
+	[LBr] = LBr,
+	[LBm] = RBm,
+	[FUr] = FUr,
+	[FUm] = FUm,
+	[FRr] = RUr,
+	[FRm] = LUm,
+	[FDr] = BUr,
+	[FDm] = BUm,
+	[FLr] = LUr,
+	[FLm] = RUm,
+	[BUr] = FDr,
+	[BUm] = FDm,
+	[BRr] = LDr,
+	[BRm] = RDm,
+	[BDr] = BDr,
+	[BDm] = BDm,
+	[BLr] = RDr,
+	[BLm] = LDm,
 };
 
 /******************************************************************************
@@ -536,6 +598,7 @@ _static_inline cube_fast_t compose_fast(cube_fast_t, cube_fast_t);
 
 _static_inline int64_t coord_fast_co(cube_fast_t);
 _static_inline int64_t coord_fast_csep(cube_fast_t);
+_static_inline int64_t coord_fast_cocsep(cube_fast_t);
 _static_inline int64_t coord_fast_eo(cube_fast_t);
 _static_inline int64_t coord_fast_esep(cube_fast_t);
 
@@ -694,6 +757,12 @@ coord_fast_csep(cube_fast_t c)
 }
 
 _static_inline int64_t
+coord_fast_cocsep(cube_fast_t c)
+{
+	return (coord_fast_co(c) << 7) + coord_fast_csep(c);
+}
+
+_static_inline int64_t
 coord_fast_eo(cube_fast_t c)
 {
 	cube_fast_t eo, shifted;
@@ -779,6 +848,7 @@ _static_inline cube_fast_t compose_fast(cube_fast_t, cube_fast_t);
 
 _static_inline int64_t coord_fast_co(cube_fast_t);
 _static_inline int64_t coord_fast_csep(cube_fast_t);
+_static_inline int64_t coord_fast_cocsep(cube_fast_t);
 _static_inline int64_t coord_fast_eo(cube_fast_t);
 _static_inline int64_t coord_fast_esep(cube_fast_t);
 
@@ -931,6 +1001,12 @@ coord_fast_csep(cube_fast_t c)
 		ret += p * ((c.corner[i] & _csepbit) >> 2U);
 
 	return ret;
+}
+
+_static_inline int64_t
+coord_fast_cocsep(cube_fast_t c)
+{
+	return (coord_fast_co(c) << 7) + coord_fast_csep(c);
 }
 
 _static_inline int64_t
@@ -1734,14 +1810,21 @@ transform(cube_fast_t c, uint8_t t)
 }
 
 /******************************************************************************
-Section: moves and move sequences
+Section: moves, move sequences and transformations
 
 This section contains methods to work with moves and arrays of moves. They
 do not rely on the cube structure.
 ******************************************************************************/
 
+_static_inline uint8_t inverse_trans(uint8_t);
 _static_inline uint8_t movebase(uint8_t);
 _static_inline uint8_t moveaxis(uint8_t);
+
+_static_inline uint8_t
+inverse_trans(uint8_t t)
+{
+	return inverse_trans_table[t];
+}
 
 _static_inline uint8_t
 movebase(uint8_t move)
@@ -1759,7 +1842,87 @@ moveaxis(uint8_t move)
 Section: auxiliary procedures for H48 optimal solver (temporary)
 ******************************************************************************/
 
+_static size_t gendata_cocsep(void *);
+_static uint16_t dfs_cocsep(cube_fast_t, uint8_t, uint8_t, uint16_t *, uint32_t *);
 
+/*
+Each element of the cocsep table is a uint32_t used as follows:
+  - Lowest 8-bit block: pruning value
+  - Second-lower 8-bit block: "ttrep" (transformation to representative)
+  - Top 16-bit block: symcoord value
+*/
+_static size_t
+gendata_cocsep(void *buf)
+{
+	uint32_t *buf32;
+	uint16_t n, cc;
+	uint8_t i, j;
+	size_t tablesize;
+
+	tablesize = _3p7 << 7U;
+
+	buf32 = (uint32_t *)buf;
+	memset(buf32, 0xFFU, 4*tablesize);
+	memset(buf32 + tablesize, 0, 21*4);
+
+	for (i = 0, n = 0, cc = 0; cc != 0 || i == 0; i++) {
+		DBG_LOG("gendata_cocsep: generating depth %" PRIu8 "\n", i);
+		cc = dfs_cocsep(cubetofast(solvedcube()), 0, i, &n, buf32);
+		buf32[tablesize+i+1] = (uint32_t)cc;
+	}
+	buf32[tablesize] = (uint32_t)n;
+	i--;
+
+	DBG_LOG("cocsep data computed, %" PRIu16 " symmetry classes\n", n);
+	DBG_LOG("Pruning value distribution:\n");
+	for (j = 0; j < i; j++)
+		DBG_LOG("%" PRIu8 ":\t%" PRIu32 "\n", j, buf32[tablesize+j+1]);
+
+	return 4*(tablesize + i + 1);
+}
+
+_static uint16_t
+dfs_cocsep(
+	cube_fast_t c,
+	uint8_t depth,
+	uint8_t maxdepth,
+	uint16_t *n,
+	uint32_t *buf32
+)
+{
+	uint8_t m, t, tinv, olddepth;
+	uint16_t cc;
+	uint32_t oldvalue;
+	uint64_t i;
+	cube_fast_t d;
+
+	oldvalue = buf32[coord_fast_cocsep(c)];
+	if (depth == maxdepth) {
+		if ((oldvalue & 0xFFU) != 0xFFU)
+			return 0;
+
+		for (t = 0, cc = 0; t < 48; t++) {
+			d = transform(c, t);
+			i = coord_fast_cocsep(d);
+			tinv = inverse_trans(t);
+			if ((buf32[i] & 0xFFU) == 0xFFU)
+				cc++;
+			buf32[i] = (*n << 16U) | (tinv << 8U) | depth;
+		}
+		(*n)++;
+
+		return cc;
+	}
+
+	olddepth = (uint8_t)(oldvalue & 0xFFU);
+	if (olddepth != depth)
+		return 0;
+
+	for (m = 0, cc = 0; m < 18; m++)
+		cc += dfs_cocsep(move(c, m), depth+1, maxdepth, n, buf32);
+
+	return cc;
+}
 
 /******************************************************************************
 Section: solvers
