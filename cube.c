@@ -1843,19 +1843,24 @@ Section: auxiliary procedures for H48 optimal solver (temporary)
 ******************************************************************************/
 
 _static size_t gendata_cocsep(void *);
-_static uint16_t dfs_cocsep(cube_fast_t, uint8_t, uint8_t, uint16_t *, uint32_t *);
+_static uint32_t dfs_cocsep(cube_fast_t, uint8_t, uint8_t, uint16_t *, uint32_t *);
 
 /*
 Each element of the cocsep table is a uint32_t used as follows:
   - Lowest 8-bit block: pruning value
   - Second-lower 8-bit block: "ttrep" (transformation to representative)
   - Top 16-bit block: symcoord value
+After the data as described above, more auxiliary information is appended:
+  - A uint32_t representing the number of symmetry classes
+  - A uint32_t representing the highest value of the pruning table
+  - One uint32_t for each "line" of the pruning table, representing the number
+    of positions having that pruning value.
 */
 _static size_t
 gendata_cocsep(void *buf)
 {
-	uint32_t *buf32;
-	uint16_t n, cc;
+	uint32_t *buf32, cc;
+	uint16_t n;
 	uint8_t i, j;
 	size_t tablesize;
 
@@ -1868,20 +1873,22 @@ gendata_cocsep(void *buf)
 	for (i = 0, n = 0, cc = 0; cc != 0 || i == 0; i++) {
 		DBG_LOG("gendata_cocsep: generating depth %" PRIu8 "\n", i);
 		cc = dfs_cocsep(cubetofast(solvedcube()), 0, i, &n, buf32);
-		buf32[tablesize+i+1] = (uint32_t)cc;
+		buf32[tablesize+i+2] = cc;
+		DBG_LOG("found %" PRIu32 "\n", cc);
 	}
 	buf32[tablesize] = (uint32_t)n;
-	i--;
+	buf32[tablesize+1] = (uint32_t)(i-2);
 
-	DBG_LOG("cocsep data computed, %" PRIu16 " symmetry classes\n", n);
+	DBG_LOG("cocsep data computed, %" PRIu32 " symmetry classes\n", n);
+	DBG_LOG("Maximum pruning value: %" PRIu32 "\n", buf32[tablesize+1]);
 	DBG_LOG("Pruning value distribution:\n");
-	for (j = 0; j < i; j++)
-		DBG_LOG("%" PRIu8 ":\t%" PRIu32 "\n", j, buf32[tablesize+j+1]);
+	for (j = 0; j < i-1; j++)
+		DBG_LOG("%" PRIu8 ":\t%" PRIu32 "\n", j, buf32[tablesize+j+2]);
 
 	return 4*(tablesize + i + 1);
 }
 
-_static uint16_t
+_static uint32_t
 dfs_cocsep(
 	cube_fast_t c,
 	uint8_t depth,
@@ -1891,8 +1898,7 @@ dfs_cocsep(
 )
 {
 	uint8_t m, t, tinv, olddepth;
-	uint16_t cc;
-	uint32_t oldvalue;
+	uint32_t cc, oldvalue;
 	uint64_t i;
 	cube_fast_t d;
 
