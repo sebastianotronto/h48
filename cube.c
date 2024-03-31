@@ -1075,6 +1075,30 @@ previous sections, while some other operate directly on the cube.
 	invertco_fast(compose_fast(compose_fast(_trans_cube_ ## T, c), \
 	_trans_cube_ ## T ## _inverse))
 
+#define _foreach_move(_m, _c, _d, instruction) \
+	_m = U;  _d = _move(U,  _c); instruction \
+	_m = U2; _d = _move(U2, _c); instruction \
+	_m = U3; _d = _move(U3, _c); instruction \
+	_m = D;  _d = _move(D,  _c); instruction \
+	_m = D2; _d = _move(D2, _c); instruction \
+	_m = D3; _d = _move(D3, _c); instruction \
+	_m = R;  _d = _move(R,  _c); instruction \
+	_m = R2; _d = _move(R2, _c); instruction \
+	_m = R3; _d = _move(R3, _c); instruction \
+	_m = L;  _d = _move(L,  _c); instruction \
+	_m = L2; _d = _move(L2, _c); instruction \
+	_m = L3; _d = _move(L3, _c); instruction \
+	_m = F;  _d = _move(F,  _c); instruction \
+	_m = F2; _d = _move(F2, _c); instruction \
+	_m = F3; _d = _move(F3, _c); instruction \
+	_m = B;  _d = _move(B,  _c); instruction \
+	_m = B2; _d = _move(B2, _c); instruction \
+	_m = B3; _d = _move(B3, _c); instruction
+/*
+#define _foreach_move(_m, _c, _d, instruction) \
+	for (_m = 0; _m < 18; _m++) { _d = move(_c, _m); instruction }
+*/
+
 cube_t solvedcube(void);
 bool isconsistent(cube_t);
 bool issolvable(cube_t);
@@ -1924,8 +1948,10 @@ dfs_cocsep(
 	if (olddepth != depth)
 		return 0;
 
-	for (m = 0, cc = 0; m < 18; m++)
-		cc += dfs_cocsep(move(c, m), depth+1, maxdepth, n, buf32);
+	cc = 0;
+	_foreach_move(m, c, d,
+		cc += dfs_cocsep(d, depth+1, maxdepth, n, buf32);
+	)
 
 	return cc;
 }
@@ -2081,6 +2107,7 @@ solve_generic_dfs(dfsarg_generic_t arg)
 
 	memcpy(&nextarg, &arg, sizeof(dfsarg_generic_t));
 	nextarg.nmoves = arg.nmoves + 1;
+	/*
 	for (m = 0, ret = 0; m < 18; m++) {
 		if (allowednextmove(arg.moves, arg.nmoves, m)) {
 			nextarg.cube = move(arg.cube, m);
@@ -2088,6 +2115,14 @@ solve_generic_dfs(dfsarg_generic_t arg)
 			ret += solve_generic_dfs(nextarg);
 		}
 	}
+	*/
+	ret = 0;
+	_foreach_move(m, arg.cube, nextarg.cube,
+		if (allowednextmove(arg.moves, arg.nmoves, m)) {
+			nextarg.moves[arg.nmoves] = m;
+			ret += solve_generic_dfs(nextarg);
+		}
+	)
 
 	return ret;
 }

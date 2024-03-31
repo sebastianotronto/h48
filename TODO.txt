@@ -1,6 +1,6 @@
 TODO optimize cocsep generation (very slow!)
-TODO cocsep data: fix
-TODO cocsep data: add hash checks?
+TODO check which is faster: foreach_move or simple for loop?
+     same for transformations
 TODO implement big pruning table for H48 solver
 TODO alternative: ARM NEON part
 
