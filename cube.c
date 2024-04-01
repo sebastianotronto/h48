@@ -1075,6 +1075,7 @@ previous sections, while some other operate directly on the cube.
 	invertco_fast(compose_fast(compose_fast(_trans_cube_ ## T, c), \
 	_trans_cube_ ## T ## _inverse))
 
+/*
 #define _foreach_move(_m, _c, _d, instruction) \
 	_m = U;  _d = _move(U,  _c); instruction \
 	_m = U2; _d = _move(U2, _c); instruction \
@@ -1094,10 +1095,9 @@ previous sections, while some other operate directly on the cube.
 	_m = B;  _d = _move(B,  _c); instruction \
 	_m = B2; _d = _move(B2, _c); instruction \
 	_m = B3; _d = _move(B3, _c); instruction
-/*
+*/
 #define _foreach_move(_m, _c, _d, instruction) \
 	for (_m = 0; _m < 18; _m++) { _d = move(_c, _m); instruction }
-*/
 
 cube_t solvedcube(void);
 bool isconsistent(cube_t);
@@ -1867,7 +1867,8 @@ Section: auxiliary procedures for H48 optimal solver (temporary)
 ******************************************************************************/
 
 _static size_t gendata_cocsep(void *);
-_static uint32_t dfs_cocsep(cube_fast_t, uint8_t, uint8_t, uint16_t *, uint32_t *);
+_static uint32_t dfs_cocsep(
+    cube_fast_t, uint8_t, uint8_t, uint16_t *, uint32_t *, bool *);
 
 /*
 Each element of the cocsep table is a uint32_t used as follows:
@@ -1883,33 +1884,36 @@ After the data as described above, more auxiliary information is appended:
 _static size_t
 gendata_cocsep(void *buf)
 {
+	static size_t tablesize = _3p7 << 7U;
+
+	cube_fast_t solved;
 	uint32_t *buf32, cc;
 	uint16_t n;
 	uint8_t i, j;
-	size_t tablesize;
-
-	tablesize = _3p7 << 7U;
+	bool visited[tablesize];
 
 	buf32 = (uint32_t *)buf;
 	memset(buf32, 0xFFU, 4*tablesize);
 	memset(buf32 + tablesize, 0, 21*4);
 
-	for (i = 0, n = 0, cc = 0; cc != 0 || i == 0; i++) {
+	solved = cubetofast(solvedcube());
+	buf32[tablesize+1] = 9U; /* Known max pruning value */
+	for (i = 0, n = 0, cc = 0; i < 10; i++) {
+		memset(visited, 0, tablesize); /* Set visited bit for dfs */
 		DBG_LOG("gendata_cocsep: generating depth %" PRIu8 "\n", i);
-		cc = dfs_cocsep(cubetofast(solvedcube()), 0, i, &n, buf32);
+		cc = dfs_cocsep(solved, 0, i, &n, buf32, visited);
 		buf32[tablesize+i+2] = cc;
 		DBG_LOG("found %" PRIu32 "\n", cc);
 	}
 	buf32[tablesize] = (uint32_t)n;
-	buf32[tablesize+1] = (uint32_t)(i-2);
 
 	DBG_LOG("cocsep data computed, %" PRIu32 " symmetry classes\n", n);
 	DBG_LOG("Maximum pruning value: %" PRIu32 "\n", buf32[tablesize+1]);
 	DBG_LOG("Pruning value distribution:\n");
-	for (j = 0; j < i-1; j++)
+	for (j = 0; j < 10; j++)
 		DBG_LOG("%" PRIu8 ":\t%" PRIu32 "\n", j, buf32[tablesize+j+2]);
 
-	return 4*(tablesize + i + 1);
+	return 4*(tablesize + 12);
 }
 
 _static uint32_t
@@ -1918,25 +1922,31 @@ dfs_cocsep(
 	uint8_t depth,
 	uint8_t maxdepth,
 	uint16_t *n,
-	uint32_t *buf32
+	uint32_t *buf32,
+	bool *visited
 )
 {
 	uint8_t m, t, tinv, olddepth;
-	uint32_t cc, oldvalue;
+	uint32_t cc;
 	uint64_t i;
 	cube_fast_t d;
 
-	oldvalue = buf32[coord_fast_cocsep(c)];
+	i = coord_fast_cocsep(c);
+	olddepth = (uint8_t)(buf32[i] & 0xFFU);
+	if (olddepth < depth || visited[i])
+		return 0;
+	visited[i] = true;
+
 	if (depth == maxdepth) {
-		if ((oldvalue & 0xFFU) != 0xFFU)
+		if ((buf32[i] & 0xFFU) != 0xFFU)
 			return 0;
 
 		for (t = 0, cc = 0; t < 48; t++) {
 			d = transform(c, t);
 			i = coord_fast_cocsep(d);
+			visited[i] = true;
 			tinv = inverse_trans(t);
-			if ((buf32[i] & 0xFFU) == 0xFFU)
-				cc++;
+			cc += (buf32[i] & 0xFFU) == 0xFFU;
 			buf32[i] = (*n << 16U) | (tinv << 8U) | depth;
 		}
 		(*n)++;
@@ -1944,13 +1954,9 @@ dfs_cocsep(
 		return cc;
 	}
 
-	olddepth = (uint8_t)(oldvalue & 0xFFU);
-	if (olddepth != depth)
-		return 0;
-
 	cc = 0;
 	_foreach_move(m, c, d,
-		cc += dfs_cocsep(d, depth+1, maxdepth, n, buf32);
+		cc += dfs_cocsep(d, depth+1, maxdepth, n, buf32, visited);
 	)
 
 	return cc;

@@ -2,6 +2,9 @@ include config.mk
 
 all: cube.o debugcube.o
 
+cube.s: clean
+	${CC} -D${CUBETYPE} ${CFLAGS} -c -S -o cube.s cube.c
+
 cube.o: clean
 	${CC} -D${CUBETYPE} ${CFLAGS} -c -o cube.o cube.c
 

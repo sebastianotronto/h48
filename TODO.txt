@@ -1,4 +1,3 @@
-TODO optimize cocsep generation (very slow!)
 TODO check which is faster: foreach_move or simple for loop?
      same for transformations
 TODO implement big pruning table for H48 solver
