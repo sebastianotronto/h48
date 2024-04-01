@@ -1075,7 +1075,7 @@ previous sections, while some other operate directly on the cube.
 	invertco_fast(compose_fast(compose_fast(_trans_cube_ ## T, c), \
 	_trans_cube_ ## T ## _inverse))
 
-/*
+#ifdef MOVE_TRANS_LOOP_UNROLL
 #define _foreach_move(_m, _c, _d, instruction) \
 	_m = U;  _d = _move(U,  _c); instruction \
 	_m = U2; _d = _move(U2, _c); instruction \
@@ -1095,9 +1095,61 @@ previous sections, while some other operate directly on the cube.
 	_m = B;  _d = _move(B,  _c); instruction \
 	_m = B2; _d = _move(B2, _c); instruction \
 	_m = B3; _d = _move(B3, _c); instruction
-*/
+#define _foreach_trans(_t, _c, _d, instruction) \
+	_t = UFr; _d = _trans_rotation(UFr, _c); instruction \
+	_t = ULr; _d = _trans_rotation(ULr, _c); instruction \
+	_t = UBr; _d = _trans_rotation(UBr, _c); instruction \
+	_t = URr; _d = _trans_rotation(URr, _c); instruction \
+	_t = DFr; _d = _trans_rotation(DFr, _c); instruction \
+	_t = DLr; _d = _trans_rotation(DLr, _c); instruction \
+	_t = DBr; _d = _trans_rotation(DBr, _c); instruction \
+	_t = DRr; _d = _trans_rotation(DRr, _c); instruction \
+	_t = RUr; _d = _trans_rotation(RUr, _c); instruction \
+	_t = RFr; _d = _trans_rotation(RFr, _c); instruction \
+	_t = RDr; _d = _trans_rotation(RDr, _c); instruction \
+	_t = RBr; _d = _trans_rotation(RBr, _c); instruction \
+	_t = LUr; _d = _trans_rotation(LUr, _c); instruction \
+	_t = LFr; _d = _trans_rotation(LFr, _c); instruction \
+	_t = LDr; _d = _trans_rotation(LDr, _c); instruction \
+	_t = LBr; _d = _trans_rotation(LBr, _c); instruction \
+	_t = FUr; _d = _trans_rotation(FUr, _c); instruction \
+	_t = FRr; _d = _trans_rotation(FRr, _c); instruction \
+	_t = FDr; _d = _trans_rotation(FDr, _c); instruction \
+	_t = FLr; _d = _trans_rotation(FLr, _c); instruction \
+	_t = BUr; _d = _trans_rotation(BUr, _c); instruction \
+	_t = BRr; _d = _trans_rotation(BRr, _c); instruction \
+	_t = BDr; _d = _trans_rotation(BDr, _c); instruction \
+	_t = BLr; _d = _trans_rotation(BLr, _c); instruction \
+	_t = UFm; _d = _trans_mirrored(UFm, _c); instruction \
+	_t = ULm; _d = _trans_mirrored(ULm, _c); instruction \
+	_t = UBm; _d = _trans_mirrored(UBm, _c); instruction \
+	_t = URm; _d = _trans_mirrored(URm, _c); instruction \
+	_t = DFm; _d = _trans_mirrored(DFm, _c); instruction \
+	_t = DLm; _d = _trans_mirrored(DLm, _c); instruction \
+	_t = DBm; _d = _trans_mirrored(DBm, _c); instruction \
+	_t = DRm; _d = _trans_mirrored(DRm, _c); instruction \
+	_t = RUm; _d = _trans_mirrored(RUm, _c); instruction \
+	_t = RFm; _d = _trans_mirrored(RFm, _c); instruction \
+	_t = RDm; _d = _trans_mirrored(RDm, _c); instruction \
+	_t = RBm; _d = _trans_mirrored(RBm, _c); instruction \
+	_t = LUm; _d = _trans_mirrored(LUm, _c); instruction \
+	_t = LFm; _d = _trans_mirrored(LFm, _c); instruction \
+	_t = LDm; _d = _trans_mirrored(LDm, _c); instruction \
+	_t = LBm; _d = _trans_mirrored(LBm, _c); instruction \
+	_t = FUm; _d = _trans_mirrored(FUm, _c); instruction \
+	_t = FRm; _d = _trans_mirrored(FRm, _c); instruction \
+	_t = FDm; _d = _trans_mirrored(FDm, _c); instruction \
+	_t = FLm; _d = _trans_mirrored(FLm, _c); instruction \
+	_t = BUm; _d = _trans_mirrored(BUm, _c); instruction \
+	_t = BRm; _d = _trans_mirrored(BRm, _c); instruction \
+	_t = BDm; _d = _trans_mirrored(BDm, _c); instruction \
+	_t = BLm; _d = _trans_mirrored(BLm, _c); instruction
+#else
 #define _foreach_move(_m, _c, _d, instruction) \
 	for (_m = 0; _m < 18; _m++) { _d = move(_c, _m); instruction }
+#define _foreach_trans(_t, _c, _d, instruction) \
+	for (_t = 0; _t < 48; _t++) { _d = transform(_c, _t); instruction }
+#endif
 
 cube_t solvedcube(void);
 bool isconsistent(cube_t);
@@ -1941,14 +1993,14 @@ dfs_cocsep(
 		if ((buf32[i] & 0xFFU) != 0xFFU)
 			return 0;
 
-		for (t = 0, cc = 0; t < 48; t++) {
-			d = transform(c, t);
+		cc = 0;
+		_foreach_trans(t, c, d,
 			i = coord_fast_cocsep(d);
 			visited[i] = true;
 			tinv = inverse_trans(t);
 			cc += (buf32[i] & 0xFFU) == 0xFFU;
 			buf32[i] = (*n << 16U) | (tinv << 8U) | depth;
-		}
+		)
 		(*n)++;
 
 		return cc;
