@@ -1,6 +1,4 @@
-TODO check which is faster: foreach_move or simple for loop?
-     same for transformations
-TODO implement big pruning table for H48 solver
+TODO implement big pruning table for H48 solver (edges)
 TODO alternative: ARM NEON part
 
 ## H48 optimal solver
@@ -51,6 +49,8 @@ switch. Here NISS may be useful.
 * Implement also SSE? Why not...
 
 ## Optimizations
+
+* check which is faster: foreach_move or simple for loop? same for trans
 
 ### General things
 
