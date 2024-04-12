@@ -38,6 +38,8 @@ Section: mathematical constants
 #define _12c4  495U
 #define _8c4   70U
 
+#define COCSEP_CLASSES 3393U
+
 _static int64_t binomial[12][12] = {
 	{1,  0,  0,   0,   0,   0,   0,   0,   0,  0,  0, 0},
 	{1,  1,  0,   0,   0,   0,   0,   0,   0,  0,  0, 0},
@@ -1183,6 +1185,8 @@ _static void writetrans(uint8_t, char *);
 _static cube_fast_t move(cube_fast_t, uint8_t);
 _static cube_fast_t transform(cube_fast_t, uint8_t);
 
+_static_inline int64_t coord_fast_h48(cube_fast_t, uint32_t *, uint8_t);
+
 cube_t
 solvedcube(void)
 {
@@ -1774,7 +1778,7 @@ move(cube_fast_t c, uint8_t m)
 	case B3:
 		return _move(B3, c);
 	default:
-		DBG_LOG("mover error, unknown move\n");
+		DBG_LOG("move error, unknown move\n");
 		return zero_fast;
 	}
 }
@@ -1885,6 +1889,31 @@ transform(cube_fast_t c, uint8_t t)
 	}
 }
 
+/* h is the number of eo bits used */
+_static_inline int64_t
+coord_fast_h48(cube_fast_t c, uint32_t *cocsepdata, uint8_t h)
+{
+	cube_fast_t d;
+	int64_t cocsep, coclass, esep, eo, esize;
+	uint32_t data;
+	uint8_t ttrep;
+
+	DBG_ASSERT(h <= 11, -1,
+	    "coord_fast_h48: h must be between 0 and 11\n");
+
+	cocsep = coord_fast_cocsep(c);
+	data = cocsepdata[cocsep];
+	coclass = (data & (0xFFFFU << 16U)) >> 16U;
+	ttrep = (data & (0xFFU << 8U)) >> 8U;
+
+	d = transform(c, ttrep); /* TODO: transform only edges */
+	esep = coord_fast_esep(d);
+	eo = coord_fast_eo(d);
+
+	esize = (_12c4 * _8c4) << h;
+	return (coclass * esize) + (esep << h) + (eo >> (11-h));
+}
+
 /******************************************************************************
 Section: moves, move sequences and transformations
 
@@ -1918,9 +1947,27 @@ moveaxis(uint8_t move)
 Section: auxiliary procedures for H48 optimal solver (temporary)
 ******************************************************************************/
 
+typedef struct {
+	cube_fast_t cube;
+	uint8_t nmoves;
+	uint8_t depth;
+	uint8_t h;
+	uint8_t k;
+	uint16_t *nclasses;
+	uint32_t *cocsepdata;
+	uint32_t *buf32;
+	bool *visited;
+} dfsarg_gendata_t;
+
 _static size_t gendata_cocsep(void *);
-_static uint32_t dfs_cocsep(
+_static uint32_t dfs_cocsep( /* TODO: use dfsarg */
     cube_fast_t, uint8_t, uint8_t, uint16_t *, uint32_t *, bool *);
+
+_static size_t gendata_eoesep(uint8_t, uint8_t, void *, void *);
+_static uint32_t dfs_eoesep(dfsarg_gendata_t *);
+
+_static_inline uint8_t get_h48_pval(uint32_t *, int64_t, uint8_t);
+_static_inline void set_h48_pval(uint32_t *, int64_t, uint8_t, uint8_t);
 
 /*
 Each element of the cocsep table is a uint32_t used as follows:
@@ -1937,35 +1984,41 @@ _static size_t
 gendata_cocsep(void *buf)
 {
 	static size_t tablesize = _3p7 << 7U;
+	static size_t infosize = 12;
 
 	cube_fast_t solved;
-	uint32_t *buf32, cc;
+	uint32_t *buf32, *info, cc;
 	uint16_t n;
 	uint8_t i, j;
 	bool visited[tablesize];
 
 	buf32 = (uint32_t *)buf;
+	info = buf32 + tablesize;
 	memset(buf32, 0xFFU, 4*tablesize);
-	memset(buf32 + tablesize, 0, 21*4);
+	memset(info, 0, 4*infosize);
 
 	solved = cubetofast(solvedcube());
-	buf32[tablesize+1] = 9U; /* Known max pruning value */
 	for (i = 0, n = 0, cc = 0; i < 10; i++) {
-		memset(visited, 0, tablesize); /* Set visited bit for dfs */
+		memset(visited, 0, tablesize * sizeof(bool));
 		DBG_LOG("gendata_cocsep: generating depth %" PRIu8 "\n", i);
 		cc = dfs_cocsep(solved, 0, i, &n, buf32, visited);
-		buf32[tablesize+i+2] = cc;
+		info[i+2] = cc;
 		DBG_LOG("found %" PRIu32 "\n", cc);
 	}
-	buf32[tablesize] = (uint32_t)n;
+	info[0] = (uint32_t)n;
+	info[1] = 9U; /* Known max pruning value */
+	DBG_ASSERT(n == COCSEP_CLASSES, 0,
+	    "cocsep: computed %" PRIu16 " symmetry classes, "
+	    "expected %" PRIu16 "\n", n, COCSEP_CLASSES);
 
-	DBG_LOG("cocsep data computed, %" PRIu32 " symmetry classes\n", n);
-	DBG_LOG("Maximum pruning value: %" PRIu32 "\n", buf32[tablesize+1]);
+	DBG_LOG("cocsep data computed\n");
+	DBG_LOG("Symmetry classes: %" PRIu32 "\n", info[0]);
+	DBG_LOG("Maximum pruning value: %" PRIu32 "\n", info[1]);
 	DBG_LOG("Pruning value distribution:\n");
 	for (j = 0; j < 10; j++)
-		DBG_LOG("%" PRIu8 ":\t%" PRIu32 "\n", j, buf32[tablesize+j+2]);
+		DBG_LOG("%" PRIu8 ":\t%" PRIu32 "\n", j, info[j+2]);
 
-	return 4*(tablesize + 12);
+	return 4*(tablesize + infosize);
 }
 
 _static uint32_t
@@ -2009,6 +2062,110 @@ dfs_cocsep(
 	cc = 0;
 	_foreach_move(m, c, d,
 		cc += dfs_cocsep(d, depth+1, maxdepth, n, buf32, visited);
+	)
+
+	return cc;
+}
+
+/*
+TODO description
+h is the number of eo bits
+k is the compression size (4, 2 or 1 bit)
+*/
+_static size_t
+gendata_eoesep(uint8_t h, uint8_t k, void *cocsepdata, void *buf)
+{
+	DBG_ASSERT(k == 4, 0, "eoesep: only k=4 is supported");
+
+	size_t tablesize = ((COCSEP_CLASSES * _12c4 * _8c4) / (8U / k)) << h;
+	size_t infosize = 25; /* TODO unknown yet */
+
+	uint32_t *buf32, *info, cc;
+	bool visited[tablesize]; /* TODO: change this, becomes too large */
+	dfsarg_gendata_t arg;
+
+	buf32 = (uint32_t *)buf;
+	info = buf32 + tablesize;
+	memset(buf32, 0xFFU, 4*tablesize);
+	memset(info, 0, 4*infosize);
+
+	arg.cube = cubetofast(solvedcube());
+	arg.nmoves = 0;
+	arg.cocsepdata = (uint32_t *)cocsepdata;
+	arg.buf32 = buf32;
+	arg.visited = visited;
+	/* TODO loop until no more is done, not until 12! (or hardcode limits)*/
+	for (arg.depth = 0, cc = 0; arg.depth < 12; arg.depth++) {
+		memset(visited, 0, tablesize * sizeof(bool));
+		DBG_LOG("gendata_eoesep: generating depth %" PRIu8 "\n",
+		        arg.depth);
+		cc = dfs_eoesep(&arg);
+		info[arg.depth+1] = cc;
+		DBG_LOG("found %" PRIu32 "\n", cc);
+	}
+
+	return cc;
+}
+
+_static_inline uint8_t
+get_h48_pval(uint32_t *buf32, int64_t index, uint8_t k)
+{
+	uint8_t mask, shift;
+
+	DBG_ASSERT(k == 1 || k == 2 || k == 4, 0,
+	    "h48 coordinate invalid k=%" PRIu8 "\n", k);
+
+	shift = (uint8_t)(k * index % (32 / k));
+	mask = (1U << k) - 1U;
+
+	return (buf32[index] & (mask << shift)) >> shift;
+}
+
+_static_inline void
+set_h48_pval(uint32_t *buf32, int64_t index, uint8_t k, uint8_t val)
+{
+	uint8_t mask, shift;
+
+	DBG_ASSERT(k == 1 || k == 2 || k == 4, ,
+	    "h48 coordinate invalid k=%" PRIu8 "\n", k);
+
+	shift = (uint8_t)(k * index % (32 / k));
+	mask = (1U << k) - 1U;
+
+	buf32[index] = (buf32[index] & (~mask)) | (val << shift);
+}
+
+_static uint32_t
+dfs_eoesep(dfsarg_gendata_t *arg)
+{
+	uint8_t m, olddepth;
+	uint32_t cc;
+	uint64_t i;
+	dfsarg_gendata_t newarg;
+
+	i = coord_fast_h48(arg->cube, arg->cocsepdata, arg->h);
+	olddepth = get_h48_pval(arg->buf32, i, arg->k);
+	if (olddepth < arg->nmoves || arg->visited[i])
+		return 0;
+	arg->visited[i] = true;
+
+	if (arg->nmoves == arg->depth) {
+		cc = olddepth == 0xFFU;
+		set_h48_pval(arg->buf32, i, arg->k, arg->depth);
+		return cc;
+	}
+
+	cc = 0;
+	newarg = *arg;
+	newarg.nmoves = arg->nmoves + 1;
+/*
+	newarg.nmoves = arg->nmoves + 1;
+	newarg.depth = arg->depth;
+	newarg.h = arg->h;
+	newarg.k = arg->k;
+*/
+	_foreach_move(m, arg->cube, newarg.cube,
+		cc += dfs_eoesep(&newarg);
 	)
 
 	return cc;
