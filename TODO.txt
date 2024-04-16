@@ -1,6 +1,5 @@
 TODO test big pruning table for H48
 TODO generate edge tables by corner case?
-TODO make h48-core-portable
 TODO checkdata and hash check for cocsep
 TODO benchmarks for solve and table generation
 TODO optimization for transform edges only (and test)

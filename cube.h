@@ -52,8 +52,8 @@ cube_t inverse(cube_t);
 
 /* TODO comment on these and the format for moves and trans */
 /* For trans, only one trans is supported */
-cube_t applymoves(cube_t, char *);
-cube_t applytrans(cube_t, char *);
+cube_t applymoves(cube_t, const char *);
+cube_t applytrans(cube_t, const char *);
 
 /******************************************************************************
 Read / write utilities
@@ -91,8 +91,8 @@ Multiple representations of the cube as text are supported:
   in cube_t. Corners come first, followed by edge (unlike H48).
 ******************************************************************************/
 
-cube_t readcube(char *format, char *buf);
-void writecube(char *format, cube_t cube, char *buf);
+cube_t readcube(const char *format, const char *buf);
+void writecube(const char *format, cube_t cube, char *buf);
 
 /******************************************************************************
 Solvers
@@ -108,36 +108,57 @@ could.
 ******************************************************************************/
 
 int64_t solve(
-	cube_t cube,     /* The cube to solve. Must be solvable. */
-	char *solver,    /* Supported solvers:
-			  * "optimal" - currently the same as "simple"
-			  * "simple"  - a simple, slow solver using no tables
-			  */
-	char *options,   /* Some solvers accept extra options,
-			  * like "!filter".
-			  */
-	char *nisstype,  /* Can be "normal", "inverse", "mixed" or "linear". */
-	int8_t minmoves, /* The minimum number of moves. Must be >= 0. */
-	int8_t maxmoves, /* The maximum number of moves. If negative, the
-			  * maximum length is unlimited.
-			  */
-	int64_t maxsols, /* The maximum number of solutions. */
-	int8_t optimal,  /* All solutions at most "optimal" moves from the
-			  * shortest solution (respecting minmoves) are found.
-			  * If negative, this parameter is ignored.
-			  */
-	void *data,      /* Some solvers require extra data to function
-			  * properly (for example, pruning tables). This data
-			  * can be generated with gendata(), see below.
-			  */
-	char *solutions  /* The solutions (return parameter) */
+	/* The cube to solve. Must be solvable. */
+	cube_t cube,
+
+	/* Supported solvers:
+	 * "optimal" - currently the same as "simple"
+	 * "simple"  - a simple, slow solver without tables
+	 */
+	const char *solver, 
+
+	/* Some solvers accept extra options,like "!filter". */
+	const char *options,
+
+	/* Can be "normal", "inverse", "mixed" or "linear". */
+	const char *nisstype,
+
+	/* The minimum number of moves. Must be >= 0. */
+	int8_t minmoves,
+
+	/* The maximum number of moves. If negative, the maximum length
+	 * is unlimited.
+	 */
+	int8_t maxmoves,
+
+	/* The maximum number of solutions. */
+	int64_t maxsols,
+
+	/* All solutions at most "optimal" moves from the shortest solution
+ 	 * (respecting minmoves) are found. If negative, it is ignored.
+	 */
+	int8_t optimal,
+
+	/* Some solvers require extra data to function properly (for example,
+         * pruning tables). This data can be generated with gendata().
+	 */
+	const void *data,         
+
+	/* The solutions (return parameter) */
+	char *solutions
 );
 
 /* Solving n cubes optimally, one solutions per cube. Options are similar
  * to solve().
  */
-void multisolve(int n, cube_t *cube, char *solver, void *data, char *sols);
+void multisolve(
+	int n,
+	cube_t *cube,
+	const char *solver,
+	const void *data,
+	char *sols
+);
 
 /* Returns the number of bytes written to data, -1 in case of error.
  * TODO: write down how much memory every solver requires. */
-int64_t gendata(char *solver, void *data);
+int64_t gendata(const char *solver, void *data);

@@ -406,7 +406,7 @@ _static cube_t solved = {
 #define _trans_cube_BLm_inverse fastcube( \
     38, 37, 39, 36, 67, 64, 66, 65, 23, 20, 21, 22, 24, 27, 26, 25, 3, 2, 1, 0)
 
-_static char *cornerstr[] = {
+_static const char *cornerstr[] = {
 	[_c_ufr] = "UFR",
 	[_c_ubl] = "UBL",
 	[_c_dfl] = "DFL",
@@ -417,7 +417,7 @@ _static char *cornerstr[] = {
 	[_c_dbl] = "DBL"
 };
 
-_static char *cornerstralt[] = {
+_static const char *cornerstralt[] = {
 	[_c_ufr] = "URF",
 	[_c_ubl] = "ULB",
 	[_c_dfl] = "DLF",
@@ -428,7 +428,7 @@ _static char *cornerstralt[] = {
 	[_c_dbl] = "DLB"
 };
 
-_static char *edgestr[] = {
+_static const char *edgestr[] = {
 	[_e_uf] = "UF",
 	[_e_ub] = "UB",
 	[_e_db] = "DB",
@@ -443,7 +443,7 @@ _static char *edgestr[] = {
 	[_e_br] = "BR"
 };
 
-_static char *movestr[] = {
+_static const char *movestr[] = {
 	[U]  = "U",
 	[U2] = "U2",
 	[U3] = "U'",
@@ -464,7 +464,7 @@ _static char *movestr[] = {
 	[B3] = "B'",
 };
 
-_static char *transstr[] = {
+_static const char *transstr[] = {
 	[UFr] = "rotation UF",
 	[UFm] = "mirrored UF",
 	[ULr] = "rotation UL",
@@ -1153,33 +1153,20 @@ previous sections, while some other operate directly on the cube.
 	for (_t = 0; _t < 48; _t++) { _d = transform(_c, _t); instruction }
 #endif
 
-cube_t solvedcube(void);
-bool isconsistent(cube_t);
-bool issolvable(cube_t);
-bool issolved(cube_t cube);
-bool equal(cube_t, cube_t);
-bool iserror(cube_t);
-cube_t compose(cube_t, cube_t);
-cube_t inverse(cube_t);
-cube_t applymoves(cube_t, char *);
-cube_t applytrans(cube_t, char *);
-cube_t readcube(char *, char *);
-void writecube(char *, cube_t, char *);
-
 _static int permsign(uint8_t *, int);
-_static uint8_t readco(char *);
-_static uint8_t readcp(char *);
-_static uint8_t readeo(char *);
-_static uint8_t readep(char *);
-_static cube_t readcube_H48(char *);
-_static uint8_t readpiece_LST(char **);
-_static cube_t readcube_LST(char *);
+_static uint8_t readco(const char *);
+_static uint8_t readcp(const char *);
+_static uint8_t readeo(const char *);
+_static uint8_t readep(const char *);
+_static cube_t readcube_H48(const char *);
+_static uint8_t readpiece_LST(const char **);
+_static cube_t readcube_LST(const char *);
 _static int writepiece_LST(uint8_t, char *);
 _static void writecube_H48(cube_t, char *);
 _static void writecube_LST(cube_t, char *);
 _static uint8_t readmove(char);
 _static uint8_t readmodifier(char);
-_static uint8_t readtrans(char *);
+_static uint8_t readtrans(const char *);
 _static int writemoves(uint8_t *, int, char *);
 _static void writetrans(uint8_t, char *);
 _static cube_fast_t move(cube_fast_t, uint8_t);
@@ -1355,11 +1342,11 @@ inverse(cube_t cube)
 }
 
 cube_t
-applymoves(cube_t cube, char *buf)
+applymoves(cube_t cube, const char *buf)
 {
 	cube_fast_t fast;
 	uint8_t r, m;
-	char *b;
+	const char *b;
 
 	DBG_ASSERT(isconsistent(cube), zero,
 	    "move error: inconsistent cube\n");
@@ -1387,7 +1374,7 @@ applymoves_error:
 }
 
 cube_t
-applytrans(cube_t cube, char *buf)
+applytrans(cube_t cube, const char *buf)
 {
 	cube_fast_t fast;
 	uint8_t t;
@@ -1403,7 +1390,7 @@ applytrans(cube_t cube, char *buf)
 }
 
 cube_t
-readcube(char *format, char *buf)
+readcube(const char *format, const char *buf)
 {
 	cube_t cube;
 
@@ -1420,7 +1407,7 @@ readcube(char *format, char *buf)
 }
 
 void
-writecube(char *format, cube_t cube, char *buf)
+writecube(const char *format, cube_t cube, char *buf)
 {
 	char *errormsg;
 	size_t len;
@@ -1463,7 +1450,7 @@ permsign(uint8_t *a, int n)
 }
 
 _static uint8_t
-readco(char *str)
+readco(const char *str)
 {
 	if (*str == '0')
 		return 0;
@@ -1477,7 +1464,7 @@ readco(char *str)
 }
 
 _static uint8_t
-readcp(char *str)
+readcp(const char *str)
 {
 	uint8_t c;
 
@@ -1491,7 +1478,7 @@ readcp(char *str)
 }
 
 _static uint8_t
-readeo(char *str)
+readeo(const char *str)
 {
 	if (*str == '0')
 		return 0;
@@ -1503,7 +1490,7 @@ readeo(char *str)
 }
 
 _static uint8_t
-readep(char *str)
+readep(const char *str)
 {
 	uint8_t e;
 
@@ -1516,12 +1503,12 @@ readep(char *str)
 }
 
 _static cube_t
-readcube_H48(char *buf)
+readcube_H48(const char *buf)
 {
 	int i;
 	uint8_t piece, orient;
 	cube_t ret = {0};
-	char *b;
+	const char *b;
 	
 	b = buf;
 
@@ -1552,7 +1539,7 @@ readcube_H48(char *buf)
 }
 
 _static uint8_t
-readpiece_LST(char **b)
+readpiece_LST(const char **b)
 {
 	uint8_t ret;
 	bool read;
@@ -1569,7 +1556,7 @@ readpiece_LST(char **b)
 }
 
 _static cube_t
-readcube_LST(char *buf)
+readcube_LST(const char *buf)
 {
 	int i;
 	cube_t ret = {0};
@@ -1693,7 +1680,7 @@ readmodifier(char c)
 }
 
 _static uint8_t
-readtrans(char *buf)
+readtrans(const char *buf)
 {
 	uint8_t t;
 
@@ -1710,7 +1697,8 @@ writemoves(uint8_t *m, int n, char *buf)
 {
 	int i;
 	size_t len;
-	char *b, *s;
+	const char *s;
+	char *b;
 
 	for (i = 0, b = buf; i < n; i++, b++) {
 		s = movestr[m[i]];
@@ -1963,10 +1951,10 @@ _static size_t gendata_cocsep(void *);
 _static uint32_t dfs_cocsep( /* TODO: use dfsarg */
     cube_fast_t, uint8_t, uint8_t, uint16_t *, uint32_t *, bool *);
 
-_static size_t gendata_eoesep(uint8_t, uint8_t, void *, void *);
+_static size_t gendata_eoesep(uint8_t, uint8_t, const void *, void *);
 _static uint32_t dfs_eoesep(dfsarg_gendata_t *);
 
-_static_inline uint8_t get_h48_pval(uint32_t *, int64_t, uint8_t);
+_static_inline uint8_t get_h48_pval(const uint32_t *, int64_t, uint8_t);
 _static_inline void set_h48_pval(uint32_t *, int64_t, uint8_t, uint8_t);
 
 /*
@@ -2073,7 +2061,7 @@ h is the number of eo bits
 k is the compression size (4, 2 or 1 bit)
 */
 _static size_t
-gendata_eoesep(uint8_t h, uint8_t k, void *cocsepdata, void *buf)
+gendata_eoesep(uint8_t h, uint8_t k, const void *cocsepdata, void *buf)
 {
 	DBG_ASSERT(k == 4, 0, "eoesep: only k=4 is supported");
 
@@ -2108,7 +2096,7 @@ gendata_eoesep(uint8_t h, uint8_t k, void *cocsepdata, void *buf)
 }
 
 _static_inline uint8_t
-get_h48_pval(uint32_t *buf32, int64_t index, uint8_t k)
+get_h48_pval(const uint32_t *buf32, int64_t index, uint8_t k)
 {
 	uint8_t mask, shift;
 
@@ -2188,30 +2176,25 @@ typedef struct {
 	uint8_t (*estimate)(cube_fast_t);
 } dfsarg_generic_t;
 
-int64_t solve(cube_t, char *, char *, char *, int8_t, int8_t, int64_t, int8_t,
-    void *, char *);
-void multisolve(int, cube_t *, char *, void *, char *);
-int64_t gendata(char *, void *);
-
 _static bool allowednextmove(uint8_t *, int, uint8_t);
 _static void solve_generic_appendsolution(dfsarg_generic_t);
 _static int solve_generic_dfs(dfsarg_generic_t);
-_static int64_t solve_generic(cube_t, char *, int8_t, int8_t, int64_t, int8_t,
-    char *, uint8_t (*)(cube_fast_t));
+_static int64_t solve_generic(cube_t, const char *, int8_t, int8_t, int64_t,
+    int8_t, char *, uint8_t (*)(cube_fast_t));
 _static uint8_t estimate_simple(cube_fast_t);
 _static int64_t solve_simple(cube_t, int8_t, int8_t, int64_t, int8_t, char *);
 
 int64_t
 solve(
 	cube_t cube,
-	char *solver,
-	char *options,
-	char *nisstype,
+	const char *solver,
+	const char *options,
+	const char *nisstype,
 	int8_t minmoves,
 	int8_t maxmoves,
 	int64_t maxsols,
 	int8_t optimal,
-	void *data,
+	const void *data,
 	char *solutions
 )
 {
@@ -2243,7 +2226,13 @@ solve(
 }
 
 void
-multisolve(int n, cube_t *cube, char *solver, void *data, char *sols)
+multisolve(
+	int n,
+	cube_t *cube,
+	const char *solver,
+	const void *data,
+	char *sols
+)
 {
 	char *s;
 	int i;
@@ -2256,7 +2245,7 @@ multisolve(int n, cube_t *cube, char *solver, void *data, char *sols)
 }
 
 int64_t
-gendata(char *solver, void *data)
+gendata(const char *solver, void *data)
 {
 	DBG_LOG("gendata: not implemented yet\n");
 
@@ -2345,7 +2334,7 @@ solve_generic_dfs(dfsarg_generic_t arg)
 _static int64_t
 solve_generic(
 	cube_t cube,
-	char *nisstype,
+	const char *nisstype,
 	/* TODO: handle NISS */
 	int8_t minmoves,
 	int8_t maxmoves,
