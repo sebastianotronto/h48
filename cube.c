@@ -1077,82 +1077,6 @@ previous sections, while some other operate directly on the cube.
 	invertco_fast(compose_fast(compose_fast(_trans_cube_ ## T, c), \
 	_trans_cube_ ## T ## _inverse))
 
-#ifdef MOVE_TRANS_LOOP_UNROLL
-#define _foreach_move(_m, _c, _d, instruction) \
-	_m = U;  _d = _move(U,  _c); instruction \
-	_m = U2; _d = _move(U2, _c); instruction \
-	_m = U3; _d = _move(U3, _c); instruction \
-	_m = D;  _d = _move(D,  _c); instruction \
-	_m = D2; _d = _move(D2, _c); instruction \
-	_m = D3; _d = _move(D3, _c); instruction \
-	_m = R;  _d = _move(R,  _c); instruction \
-	_m = R2; _d = _move(R2, _c); instruction \
-	_m = R3; _d = _move(R3, _c); instruction \
-	_m = L;  _d = _move(L,  _c); instruction \
-	_m = L2; _d = _move(L2, _c); instruction \
-	_m = L3; _d = _move(L3, _c); instruction \
-	_m = F;  _d = _move(F,  _c); instruction \
-	_m = F2; _d = _move(F2, _c); instruction \
-	_m = F3; _d = _move(F3, _c); instruction \
-	_m = B;  _d = _move(B,  _c); instruction \
-	_m = B2; _d = _move(B2, _c); instruction \
-	_m = B3; _d = _move(B3, _c); instruction
-#define _foreach_trans(_t, _c, _d, instruction) \
-	_t = UFr; _d = _trans_rotation(UFr, _c); instruction \
-	_t = ULr; _d = _trans_rotation(ULr, _c); instruction \
-	_t = UBr; _d = _trans_rotation(UBr, _c); instruction \
-	_t = URr; _d = _trans_rotation(URr, _c); instruction \
-	_t = DFr; _d = _trans_rotation(DFr, _c); instruction \
-	_t = DLr; _d = _trans_rotation(DLr, _c); instruction \
-	_t = DBr; _d = _trans_rotation(DBr, _c); instruction \
-	_t = DRr; _d = _trans_rotation(DRr, _c); instruction \
-	_t = RUr; _d = _trans_rotation(RUr, _c); instruction \
-	_t = RFr; _d = _trans_rotation(RFr, _c); instruction \
-	_t = RDr; _d = _trans_rotation(RDr, _c); instruction \
-	_t = RBr; _d = _trans_rotation(RBr, _c); instruction \
-	_t = LUr; _d = _trans_rotation(LUr, _c); instruction \
-	_t = LFr; _d = _trans_rotation(LFr, _c); instruction \
-	_t = LDr; _d = _trans_rotation(LDr, _c); instruction \
-	_t = LBr; _d = _trans_rotation(LBr, _c); instruction \
-	_t = FUr; _d = _trans_rotation(FUr, _c); instruction \
-	_t = FRr; _d = _trans_rotation(FRr, _c); instruction \
-	_t = FDr; _d = _trans_rotation(FDr, _c); instruction \
-	_t = FLr; _d = _trans_rotation(FLr, _c); instruction \
-	_t = BUr; _d = _trans_rotation(BUr, _c); instruction \
-	_t = BRr; _d = _trans_rotation(BRr, _c); instruction \
-	_t = BDr; _d = _trans_rotation(BDr, _c); instruction \
-	_t = BLr; _d = _trans_rotation(BLr, _c); instruction \
-	_t = UFm; _d = _trans_mirrored(UFm, _c); instruction \
-	_t = ULm; _d = _trans_mirrored(ULm, _c); instruction \
-	_t = UBm; _d = _trans_mirrored(UBm, _c); instruction \
-	_t = URm; _d = _trans_mirrored(URm, _c); instruction \
-	_t = DFm; _d = _trans_mirrored(DFm, _c); instruction \
-	_t = DLm; _d = _trans_mirrored(DLm, _c); instruction \
-	_t = DBm; _d = _trans_mirrored(DBm, _c); instruction \
-	_t = DRm; _d = _trans_mirrored(DRm, _c); instruction \
-	_t = RUm; _d = _trans_mirrored(RUm, _c); instruction \
-	_t = RFm; _d = _trans_mirrored(RFm, _c); instruction \
-	_t = RDm; _d = _trans_mirrored(RDm, _c); instruction \
-	_t = RBm; _d = _trans_mirrored(RBm, _c); instruction \
-	_t = LUm; _d = _trans_mirrored(LUm, _c); instruction \
-	_t = LFm; _d = _trans_mirrored(LFm, _c); instruction \
-	_t = LDm; _d = _trans_mirrored(LDm, _c); instruction \
-	_t = LBm; _d = _trans_mirrored(LBm, _c); instruction \
-	_t = FUm; _d = _trans_mirrored(FUm, _c); instruction \
-	_t = FRm; _d = _trans_mirrored(FRm, _c); instruction \
-	_t = FDm; _d = _trans_mirrored(FDm, _c); instruction \
-	_t = FLm; _d = _trans_mirrored(FLm, _c); instruction \
-	_t = BUm; _d = _trans_mirrored(BUm, _c); instruction \
-	_t = BRm; _d = _trans_mirrored(BRm, _c); instruction \
-	_t = BDm; _d = _trans_mirrored(BDm, _c); instruction \
-	_t = BLm; _d = _trans_mirrored(BLm, _c); instruction
-#else
-#define _foreach_move(_m, _c, _d, instruction) \
-	for (_m = 0; _m < 18; _m++) { _d = move(_c, _m); instruction }
-#define _foreach_trans(_t, _c, _d, instruction) \
-	for (_t = 0; _t < 48; _t++) { _d = transform(_c, _t); instruction }
-#endif
-
 _static int permsign(uint8_t *, int);
 _static uint8_t readco(const char *);
 _static uint8_t readcp(const char *);
@@ -1909,9 +1833,35 @@ This section contains methods to work with moves and arrays of moves. They
 do not rely on the cube structure.
 ******************************************************************************/
 
+_static_inline bool allowednextmove(uint8_t *, uint8_t);
 _static_inline uint8_t inverse_trans(uint8_t);
 _static_inline uint8_t movebase(uint8_t);
 _static_inline uint8_t moveaxis(uint8_t);
+
+_static bool
+allowednextmove(uint8_t *moves, uint8_t n)
+{
+	uint8_t base[3], axis[3];
+
+	if (n < 2)
+		return true;
+
+	base[0] = movebase(moves[n-1]);
+	axis[0] = moveaxis(moves[n-1]);
+	base[1] = movebase(moves[n-2]);
+	axis[1] = moveaxis(moves[n-2]);
+
+	if (base[0] == base[1] || (axis[0] == axis[1] && base[0] < base[1]))
+		return false;
+
+	if (n == 2)
+		return true;
+
+	base[2] = movebase(moves[n-3]);
+	axis[2] = moveaxis(moves[n-3]);
+
+	return axis[1] != axis[2] || base[0] != base[2];
+}
 
 _static_inline uint8_t
 inverse_trans(uint8_t t)
@@ -1937,6 +1887,7 @@ Section: auxiliary procedures for H48 optimal solver (temporary)
 
 typedef struct {
 	cube_fast_t cube;
+	uint8_t *moves;
 	uint8_t nmoves;
 	uint8_t depth;
 	uint8_t h;
@@ -1944,15 +1895,14 @@ typedef struct {
 	uint16_t *nclasses;
 	uint32_t *cocsepdata;
 	uint32_t *buf32;
-	bool *visited;
 } dfsarg_gendata_t;
 
 _static size_t gendata_cocsep(void *);
-_static uint32_t dfs_cocsep( /* TODO: use dfsarg */
+_static uint32_t gendata_cocsep_dfs( /* TODO: use dfsarg */
     cube_fast_t, uint8_t, uint8_t, uint16_t *, uint32_t *, bool *);
 
 _static size_t gendata_eoesep(uint8_t, uint8_t, const void *, void *);
-_static uint32_t dfs_eoesep(dfsarg_gendata_t *);
+_static uint32_t gendata_eoesep_dfs(dfsarg_gendata_t *);
 
 _static_inline uint8_t get_h48_pval(const uint32_t *, int64_t, uint8_t);
 _static_inline void set_h48_pval(uint32_t *, int64_t, uint8_t, uint8_t);
@@ -1989,7 +1939,7 @@ gendata_cocsep(void *buf)
 	for (i = 0, n = 0, cc = 0; i < 10; i++) {
 		memset(visited, 0, tablesize * sizeof(bool));
 		DBG_LOG("gendata_cocsep: generating depth %" PRIu8 "\n", i);
-		cc = dfs_cocsep(solved, 0, i, &n, buf32, visited);
+		cc = gendata_cocsep_dfs(solved, 0, i, &n, buf32, visited);
 		info[i+2] = cc;
 		DBG_LOG("found %" PRIu32 "\n", cc);
 	}
@@ -2010,7 +1960,7 @@ gendata_cocsep(void *buf)
 }
 
 _static uint32_t
-dfs_cocsep(
+gendata_cocsep_dfs(
 	cube_fast_t c,
 	uint8_t depth,
 	uint8_t maxdepth,
@@ -2035,22 +1985,23 @@ dfs_cocsep(
 			return 0;
 
 		cc = 0;
-		_foreach_trans(t, c, d,
+		for (t = 0; t < 48; t++) {
+			d = transform(c, t);
 			i = coord_fast_cocsep(d);
 			visited[i] = true;
 			tinv = inverse_trans(t);
 			cc += (buf32[i] & 0xFFU) == 0xFFU;
 			buf32[i] = (*n << 16U) | (tinv << 8U) | depth;
-		)
+		}
 		(*n)++;
 
 		return cc;
 	}
 
-	cc = 0;
-	_foreach_move(m, c, d,
-		cc += dfs_cocsep(d, depth+1, maxdepth, n, buf32, visited);
-	)
+	for (m = 0, cc = 0; m < 18; m++) {
+		d = move(c, m);
+		cc += gendata_cocsep_dfs(d, depth+1, maxdepth, n, buf32, visited);
+	}
 
 	return cc;
 }
@@ -2069,25 +2020,27 @@ gendata_eoesep(uint8_t h, uint8_t k, const void *cocsepdata, void *buf)
 	size_t infosize = 25; /* TODO unknown yet */
 
 	uint32_t *buf32, *info, cc;
-	bool visited[tablesize]; /* TODO: change this, becomes too large */
+	uint8_t moves[20];
 	dfsarg_gendata_t arg;
 
 	buf32 = (uint32_t *)buf;
 	info = buf32 + tablesize;
+DBG_LOG("Allocating 4 * %zu bytes\n", tablesize);
 	memset(buf32, 0xFFU, 4*tablesize);
 	memset(info, 0, 4*infosize);
 
 	arg.cube = cubetofast(solvedcube());
+	arg.moves = moves;
 	arg.nmoves = 0;
+	arg.h = h;
+	arg.k = k;
 	arg.cocsepdata = (uint32_t *)cocsepdata;
 	arg.buf32 = buf32;
-	arg.visited = visited;
 	/* TODO loop until no more is done, not until 12! (or hardcode limits)*/
 	for (arg.depth = 0, cc = 0; arg.depth < 12; arg.depth++) {
-		memset(visited, 0, tablesize * sizeof(bool));
 		DBG_LOG("gendata_eoesep: generating depth %" PRIu8 "\n",
 		        arg.depth);
-		cc = dfs_eoesep(&arg);
+		cc = gendata_eoesep_dfs(&arg);
 		info[arg.depth+1] = cc;
 		DBG_LOG("found %" PRIu32 "\n", cc);
 	}
@@ -2124,18 +2077,23 @@ set_h48_pval(uint32_t *buf32, int64_t index, uint8_t k, uint8_t val)
 }
 
 _static uint32_t
-dfs_eoesep(dfsarg_gendata_t *arg)
+gendata_eoesep_dfs(dfsarg_gendata_t *arg)
 {
 	uint8_t m, olddepth;
 	uint32_t cc;
 	uint64_t i;
-	dfsarg_gendata_t newarg;
+	dfsarg_gendata_t nextarg;
+
+	if (!allowednextmove(arg->moves, arg->nmoves))
+		return 0;
+
+	if (arg->nmoves > 0)
+		arg->cube = move(arg->cube, arg->moves[arg->nmoves-1]);
 
 	i = coord_fast_h48(arg->cube, arg->cocsepdata, arg->h);
 	olddepth = get_h48_pval(arg->buf32, i, arg->k);
-	if (olddepth < arg->nmoves || arg->visited[i])
+	if (olddepth < arg->nmoves)
 		return 0;
-	arg->visited[i] = true;
 
 	if (arg->nmoves == arg->depth) {
 		cc = olddepth == 0xFFU;
@@ -2143,18 +2101,13 @@ dfs_eoesep(dfsarg_gendata_t *arg)
 		return cc;
 	}
 
-	cc = 0;
-	newarg = *arg;
-	newarg.nmoves = arg->nmoves + 1;
-/*
-	newarg.nmoves = arg->nmoves + 1;
-	newarg.depth = arg->depth;
-	newarg.h = arg->h;
-	newarg.k = arg->k;
-*/
-	_foreach_move(m, arg->cube, newarg.cube,
-		cc += dfs_eoesep(&newarg);
-	)
+	nextarg = *arg;
+	nextarg.nmoves = arg->nmoves + 1;
+	for (m = 0, cc = 0; m < 18; m++) {
+		nextarg.cube = arg->cube;
+		nextarg.moves[arg->nmoves] = m;
+		cc += gendata_eoesep_dfs(&nextarg);
+	}
 
 	return cc;
 }
@@ -2176,9 +2129,8 @@ typedef struct {
 	uint8_t (*estimate)(cube_fast_t);
 } dfsarg_generic_t;
 
-_static bool allowednextmove(uint8_t *, int, uint8_t);
-_static void solve_generic_appendsolution(dfsarg_generic_t);
-_static int solve_generic_dfs(dfsarg_generic_t);
+_static void solve_generic_appendsolution(dfsarg_generic_t *);
+_static int solve_generic_dfs(dfsarg_generic_t *);
 _static int64_t solve_generic(cube_t, const char *, int8_t, int8_t, int64_t,
     int8_t, char *, uint8_t (*)(cube_fast_t));
 _static uint8_t estimate_simple(cube_fast_t);
@@ -2252,81 +2204,51 @@ gendata(const char *solver, void *data)
 	return -1;
 }
 
-_static bool
-allowednextmove(uint8_t *moves, int n, uint8_t m)
-{
-	uint8_t mbase, l1base, l2base, maxis, l1axis, l2axis;
-
-	if (n == 0)
-		return true;
-
-	mbase = movebase(m);
-	maxis = moveaxis(m);
-	l1base = movebase(moves[n-1]);
-	l1axis = moveaxis(moves[n-1]);
-
-	if (mbase == l1base || (maxis == l1axis && mbase < l1base))
-		return false;
-
-	if (n == 1)
-		return true;
-
-	l2base = movebase(moves[n-2]);
-	l2axis = moveaxis(moves[n-2]);
-
-	return l1axis != l2axis || mbase != l2base;
-}
-
 _static void
-solve_generic_appendsolution(dfsarg_generic_t arg)
+solve_generic_appendsolution(dfsarg_generic_t *arg)
 {
 	int strl;
 
-	strl = writemoves(arg.moves, arg.depth, *arg.nextsol);
-	DBG_LOG("Solution found: %s\n", *arg.nextsol);
-	*arg.nextsol += strl;
-	**arg.nextsol = '\n';
-	(*arg.nextsol)++;
-	(*arg.nsols)++;
+	strl = writemoves(arg->moves, arg->depth, *arg->nextsol);
+	DBG_LOG("Solution found: %s\n", *arg->nextsol);
+	*arg->nextsol += strl;
+	**arg->nextsol = '\n';
+	(*arg->nextsol)++;
+	(*arg->nsols)++;
 }
 
 _static int
-solve_generic_dfs(dfsarg_generic_t arg)
+solve_generic_dfs(dfsarg_generic_t *arg)
 {
 	dfsarg_generic_t nextarg;
 	uint8_t m, bound;
 	int64_t ret;
 
-	bound = arg.estimate(arg.cube);
+	if (!allowednextmove(arg->moves, arg->nmoves))
+		return 0;
 
-	if (*arg.nsols == arg.maxsols || bound + arg.nmoves > arg.depth)
+	if (arg->nmoves > 0)
+		arg->cube = move(arg->cube, arg->moves[arg->nmoves-1]);
+
+	bound = arg->estimate(arg->cube);
+	if (*arg->nsols == arg->maxsols || bound + arg->nmoves > arg->depth)
 		return 0;
 
 	if (bound == 0) {
-		if (arg.nmoves != arg.depth)
+		if (arg->nmoves != arg->depth)
 			return 0;
 		solve_generic_appendsolution(arg);
 		return 1;
 	}
 
-	memcpy(&nextarg, &arg, sizeof(dfsarg_generic_t));
-	nextarg.nmoves = arg.nmoves + 1;
-	/*
+	/* memcpy(&nextarg, arg, sizeof(dfsarg_generic_t)); */
+	nextarg = *arg;
+	nextarg.nmoves = arg->nmoves + 1;
 	for (m = 0, ret = 0; m < 18; m++) {
-		if (allowednextmove(arg.moves, arg.nmoves, m)) {
-			nextarg.cube = move(arg.cube, m);
-			nextarg.moves[arg.nmoves] = m;
-			ret += solve_generic_dfs(nextarg);
-		}
+		nextarg.cube = arg->cube;
+		nextarg.moves[arg->nmoves] = m;
+		ret += solve_generic_dfs(&nextarg);
 	}
-	*/
-	ret = 0;
-	_foreach_move(m, arg.cube, nextarg.cube,
-		if (allowednextmove(arg.moves, arg.nmoves, m)) {
-			nextarg.moves[arg.nmoves] = m;
-			ret += solve_generic_dfs(nextarg);
-		}
-	)
 
 	return ret;
 }
@@ -2408,7 +2330,7 @@ solve_generic(
 	ret = 0;
 	first = -1;
 	for (arg.depth = minmoves; arg.depth <= maxmoves; arg.depth++) {
-		tmp = solve_generic_dfs(arg);
+		tmp = solve_generic_dfs(&arg);
 		if (tmp != 0)
 			first = arg.depth;
 
