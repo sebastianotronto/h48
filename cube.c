@@ -1096,7 +1096,7 @@ _static void writetrans(uint8_t, char *);
 _static cube_fast_t move(cube_fast_t, uint8_t);
 _static cube_fast_t transform(cube_fast_t, uint8_t);
 
-_static_inline int64_t coord_fast_h48(cube_fast_t, uint32_t *, uint8_t);
+_static_inline int64_t coord_h48(cube_fast_t, uint32_t *, uint8_t);
 
 cube_t
 solvedcube(void)
@@ -1803,15 +1803,14 @@ transform(cube_fast_t c, uint8_t t)
 
 /* h is the number of eo bits used */
 _static_inline int64_t
-coord_fast_h48(cube_fast_t c, uint32_t *cocsepdata, uint8_t h)
+coord_h48(cube_fast_t c, uint32_t *cocsepdata, uint8_t h)
 {
 	cube_fast_t d;
-	int64_t cocsep, coclass, esep, eo, esize;
+	int64_t cocsep, coclass, esep, eo, esize, ret;
 	uint32_t data;
 	uint8_t ttrep;
 
-	DBG_ASSERT(h <= 11, -1,
-	    "coord_fast_h48: h must be between 0 and 11\n");
+	DBG_ASSERT(h <= 11, -1, "coord_h48: h must be between 0 and 11\n");
 
 	cocsep = coord_fast_cocsep(c);
 	data = cocsepdata[cocsep];
@@ -1823,7 +1822,9 @@ coord_fast_h48(cube_fast_t c, uint32_t *cocsepdata, uint8_t h)
 	eo = coord_fast_eo(d);
 
 	esize = (_12c4 * _8c4) << h;
-	return (coclass * esize) + (esep << h) + (eo >> (11-h));
+	ret = (coclass * esize) + (esep << h) + (eo >> (11-h));
+
+	return ret;
 }
 
 /******************************************************************************
@@ -2025,7 +2026,6 @@ gendata_eoesep(uint8_t h, uint8_t k, const void *cocsepdata, void *buf)
 
 	buf32 = (uint32_t *)buf;
 	info = buf32 + tablesize;
-DBG_LOG("Allocating 4 * %zu bytes\n", tablesize);
 	memset(buf32, 0xFFU, 4*tablesize);
 	memset(info, 0, 4*infosize);
 
@@ -2051,29 +2051,37 @@ DBG_LOG("Allocating 4 * %zu bytes\n", tablesize);
 _static_inline uint8_t
 get_h48_pval(const uint32_t *buf32, int64_t index, uint8_t k)
 {
-	uint8_t mask, shift;
+	uint32_t mask, shift;
+	int64_t realindex, subindex;
 
 	DBG_ASSERT(k == 1 || k == 2 || k == 4, 0,
 	    "h48 coordinate invalid k=%" PRIu8 "\n", k);
 
-	shift = (uint8_t)(k * index % (32 / k));
-	mask = (1U << k) - 1U;
+	/* TODO: use more efficient operations, pass k as exponent */
+	realindex = index / (32 / k);
+	subindex = index % (32 / k);
+	shift = (uint8_t)(k * subindex);
+	mask = ((1U << k) - 1U) << shift;
 
-	return (buf32[index] & (mask << shift)) >> shift;
+	return (buf32[realindex] & mask) >> shift;
 }
 
 _static_inline void
 set_h48_pval(uint32_t *buf32, int64_t index, uint8_t k, uint8_t val)
 {
-	uint8_t mask, shift;
+	uint32_t mask, shift;
+	int64_t realindex, subindex;
 
 	DBG_ASSERT(k == 1 || k == 2 || k == 4, ,
 	    "h48 coordinate invalid k=%" PRIu8 "\n", k);
 
-	shift = (uint8_t)(k * index % (32 / k));
-	mask = (1U << k) - 1U;
+	/* TODO: use more efficient operations, pass k as exponent */
+	realindex = index / (32 / k);
+	subindex = index % (32 / k);
+	shift = (uint8_t)(k * subindex);
+	mask = ((1U << k) - 1U) << shift;
 
-	buf32[index] = (buf32[index] & (~mask)) | (val << shift);
+	buf32[realindex] = (buf32[realindex] & (~mask)) | (val << shift);
 }
 
 _static uint32_t
@@ -2090,13 +2098,14 @@ gendata_eoesep_dfs(dfsarg_gendata_t *arg)
 	if (arg->nmoves > 0)
 		arg->cube = move(arg->cube, arg->moves[arg->nmoves-1]);
 
-	i = coord_fast_h48(arg->cube, arg->cocsepdata, arg->h);
+	i = coord_h48(arg->cube, arg->cocsepdata, arg->h);
 	olddepth = get_h48_pval(arg->buf32, i, arg->k);
+
 	if (olddepth < arg->nmoves)
 		return 0;
 
 	if (arg->nmoves == arg->depth) {
-		cc = olddepth == 0xFFU;
+		cc = olddepth > arg->depth;
 		set_h48_pval(arg->buf32, i, arg->k, arg->depth);
 		return cc;
 	}

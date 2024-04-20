@@ -1,5 +1,16 @@
-TODO test big pruning table for H48
-TODO generate edge tables by corner case?
+TODO big pruning table looks correct, improve speed?
+     use small table to prune, visited array...?
+     numbers so far (h=0, k=0):
+     0        1
+     1        1
+     2        4
+     3       34
+     4      331
+     5     3612
+     6    41605
+     7   474128
+     8  4953846
+
 TODO checkdata and hash check for cocsep
 TODO benchmarks for solve and table generation
 TODO optimization for transform edges only (and test)
