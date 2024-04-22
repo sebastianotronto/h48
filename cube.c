@@ -59,74 +59,74 @@ _static int64_t binomial[12][12] = {
 Section: moves definitions and tables
 ******************************************************************************/
 
-#define U  0U
-#define U2 1U
-#define U3 2U
-#define D  3U
-#define D2 4U
-#define D3 5U
-#define R  6U
-#define R2 7U
-#define R3 8U
-#define L  9U
-#define L2 10U
-#define L3 11U
-#define F  12U
-#define F2 13U
-#define F3 14U
-#define B  15U
-#define B2 16U
-#define B3 17U
+#define _move_U  0U
+#define _move_U2 1U
+#define _move_U3 2U
+#define _move_D  3U
+#define _move_D2 4U
+#define _move_D3 5U
+#define _move_R  6U
+#define _move_R2 7U
+#define _move_R3 8U
+#define _move_L  9U
+#define _move_L2 10U
+#define _move_L3 11U
+#define _move_F  12U
+#define _move_F2 13U
+#define _move_F3 14U
+#define _move_B  15U
+#define _move_B2 16U
+#define _move_B3 17U
 
-#define UFr 0
-#define ULr 1
-#define UBr 2
-#define URr 3
-#define DFr 4
-#define DLr 5
-#define DBr 6
-#define DRr 7
-#define RUr 8
-#define RFr 9
-#define RDr 10
-#define RBr 11
-#define LUr 12
-#define LFr 13
-#define LDr 14
-#define LBr 15
-#define FUr 16
-#define FRr 17
-#define FDr 18
-#define FLr 19
-#define BUr 20
-#define BRr 21
-#define BDr 22
-#define BLr 23
+#define _trans_UFr 0
+#define _trans_ULr 1
+#define _trans_UBr 2
+#define _trans_URr 3
+#define _trans_DFr 4
+#define _trans_DLr 5
+#define _trans_DBr 6
+#define _trans_DRr 7
+#define _trans_RUr 8
+#define _trans_RFr 9
+#define _trans_RDr 10
+#define _trans_RBr 11
+#define _trans_LUr 12
+#define _trans_LFr 13
+#define _trans_LDr 14
+#define _trans_LBr 15
+#define _trans_FUr 16
+#define _trans_FRr 17
+#define _trans_FDr 18
+#define _trans_FLr 19
+#define _trans_BUr 20
+#define _trans_BRr 21
+#define _trans_BDr 22
+#define _trans_BLr 23
 
-#define UFm 24
-#define ULm 25
-#define UBm 26
-#define URm 27
-#define DFm 28
-#define DLm 29
-#define DBm 30
-#define DRm 31
-#define RUm 32
-#define RFm 33
-#define RDm 34
-#define RBm 35
-#define LUm 36
-#define LFm 37
-#define LDm 38
-#define LBm 39
-#define FUm 40
-#define FRm 41
-#define FDm 42
-#define FLm 43
-#define BUm 44
-#define BRm 45
-#define BDm 46
-#define BLm 47
+#define _trans_UFm 24
+#define _trans_ULm 25
+#define _trans_UBm 26
+#define _trans_URm 27
+#define _trans_DFm 28
+#define _trans_DLm 29
+#define _trans_DBm 30
+#define _trans_DRm 31
+#define _trans_RUm 32
+#define _trans_RFm 33
+#define _trans_RDm 34
+#define _trans_RBm 35
+#define _trans_LUm 36
+#define _trans_LFm 37
+#define _trans_LDm 38
+#define _trans_LBm 39
+#define _trans_FUm 40
+#define _trans_FRm 41
+#define _trans_FDm 42
+#define _trans_FLm 43
+#define _trans_BUm 44
+#define _trans_BRm 45
+#define _trans_BDm 46
+#define _trans_BLm 47
 
 #define _c_ufr      0U
 #define _c_ubl      1U
@@ -444,126 +444,126 @@ _static const char *edgestr[] = {
 };
 
 _static const char *movestr[] = {
-	[U]  = "U",
-	[U2] = "U2",
-	[U3] = "U'",
-	[D]  = "D",
-	[D2] = "D2",
-	[D3] = "D'",
-	[R]  = "R",
-	[R2] = "R2",
-	[R3] = "R'",
-	[L]  = "L",
-	[L2] = "L2",
-	[L3] = "L'",
-	[F]  = "F",
-	[F2] = "F2",
-	[F3] = "F'",
-	[B]  = "B",
-	[B2] = "B2",
-	[B3] = "B'",
+	[_move_U]  = "U",
+	[_move_U2] = "U2",
+	[_move_U3] = "U'",
+	[_move_D]  = "D",
+	[_move_D2] = "D2",
+	[_move_D3] = "D'",
+	[_move_R]  = "R",
+	[_move_R2] = "R2",
+	[_move_R3] = "R'",
+	[_move_L]  = "L",
+	[_move_L2] = "L2",
+	[_move_L3] = "L'",
+	[_move_F]  = "F",
+	[_move_F2] = "F2",
+	[_move_F3] = "F'",
+	[_move_B]  = "B",
+	[_move_B2] = "B2",
+	[_move_B3] = "B'",
 };
 
 _static const char *transstr[] = {
-	[UFr] = "rotation UF",
-	[UFm] = "mirrored UF",
-	[ULr] = "rotation UL",
-	[ULm] = "mirrored UL",
-	[UBr] = "rotation UB",
-	[UBm] = "mirrored UB",
-	[URr] = "rotation UR",
-	[URm] = "mirrored UR",
-	[DFr] = "rotation DF",
-	[DFm] = "mirrored DF",
-	[DLr] = "rotation DL",
-	[DLm] = "mirrored DL",
-	[DBr] = "rotation DB",
-	[DBm] = "mirrored DB",
-	[DRr] = "rotation DR",
-	[DRm] = "mirrored DR",
-	[RUr] = "rotation RU",
-	[RUm] = "mirrored RU",
-	[RFr] = "rotation RF",
-	[RFm] = "mirrored RF",
-	[RDr] = "rotation RD",
-	[RDm] = "mirrored RD",
-	[RBr] = "rotation RB",
-	[RBm] = "mirrored RB",
-	[LUr] = "rotation LU",
-	[LUm] = "mirrored LU",
-	[LFr] = "rotation LF",
-	[LFm] = "mirrored LF",
-	[LDr] = "rotation LD",
-	[LDm] = "mirrored LD",
-	[LBr] = "rotation LB",
-	[LBm] = "mirrored LB",
-	[FUr] = "rotation FU",
-	[FUm] = "mirrored FU",
-	[FRr] = "rotation FR",
-	[FRm] = "mirrored FR",
-	[FDr] = "rotation FD",
-	[FDm] = "mirrored FD",
-	[FLr] = "rotation FL",
-	[FLm] = "mirrored FL",
-	[BUr] = "rotation BU",
-	[BUm] = "mirrored BU",
-	[BRr] = "rotation BR",
-	[BRm] = "mirrored BR",
-	[BDr] = "rotation BD",
-	[BDm] = "mirrored BD",
-	[BLr] = "rotation BL",
-	[BLm] = "mirrored BL",
+	[_trans_UFr] = "rotation UF",
+	[_trans_UFm] = "mirrored UF",
+	[_trans_ULr] = "rotation UL",
+	[_trans_ULm] = "mirrored UL",
+	[_trans_UBr] = "rotation UB",
+	[_trans_UBm] = "mirrored UB",
+	[_trans_URr] = "rotation UR",
+	[_trans_URm] = "mirrored UR",
+	[_trans_DFr] = "rotation DF",
+	[_trans_DFm] = "mirrored DF",
+	[_trans_DLr] = "rotation DL",
+	[_trans_DLm] = "mirrored DL",
+	[_trans_DBr] = "rotation DB",
+	[_trans_DBm] = "mirrored DB",
+	[_trans_DRr] = "rotation DR",
+	[_trans_DRm] = "mirrored DR",
+	[_trans_RUr] = "rotation RU",
+	[_trans_RUm] = "mirrored RU",
+	[_trans_RFr] = "rotation RF",
+	[_trans_RFm] = "mirrored RF",
+	[_trans_RDr] = "rotation RD",
+	[_trans_RDm] = "mirrored RD",
+	[_trans_RBr] = "rotation RB",
+	[_trans_RBm] = "mirrored RB",
+	[_trans_LUr] = "rotation LU",
+	[_trans_LUm] = "mirrored LU",
+	[_trans_LFr] = "rotation LF",
+	[_trans_LFm] = "mirrored LF",
+	[_trans_LDr] = "rotation LD",
+	[_trans_LDm] = "mirrored LD",
+	[_trans_LBr] = "rotation LB",
+	[_trans_LBm] = "mirrored LB",
+	[_trans_FUr] = "rotation FU",
+	[_trans_FUm] = "mirrored FU",
+	[_trans_FRr] = "rotation FR",
+	[_trans_FRm] = "mirrored FR",
+	[_trans_FDr] = "rotation FD",
+	[_trans_FDm] = "mirrored FD",
+	[_trans_FLr] = "rotation FL",
+	[_trans_FLm] = "mirrored FL",
+	[_trans_BUr] = "rotation BU",
+	[_trans_BUm] = "mirrored BU",
+	[_trans_BRr] = "rotation BR",
+	[_trans_BRm] = "mirrored BR",
+	[_trans_BDr] = "rotation BD",
+	[_trans_BDm] = "mirrored BD",
+	[_trans_BLr] = "rotation BL",
+	[_trans_BLm] = "mirrored BL",
 };
 
 static uint8_t inverse_trans_table[48] = {
-	[UFr] = UFr,
-	[UFm] = UFm,
-	[ULr] = URr,
-	[ULm] = ULm,
-	[UBr] = UBr,
-	[UBm] = UBm,
-	[URr] = ULr,
-	[URm] = URm,
-	[DFr] = DFr,
-	[DFm] = DFm,
-	[DLr] = DLr,
-	[DLm] = DRm,
-	[DBr] = DBr,
-	[DBm] = DBm,
-	[DRr] = DRr,
-	[DRm] = DLm,
-	[RUr] = FRr,
-	[RUm] = FLm,
-	[RFr] = LFr,
-	[RFm] = RFm,
-	[RDr] = BLr,
-	[RDm] = BRm,
-	[RBr] = RBr,
-	[RBm] = LBm,
-	[LUr] = FLr,
-	[LUm] = FRm,
-	[LFr] = RFr,
-	[LFm] = LFm,
-	[LDr] = BRr,
-	[LDm] = BLm,
-	[LBr] = LBr,
-	[LBm] = RBm,
-	[FUr] = FUr,
-	[FUm] = FUm,
-	[FRr] = RUr,
-	[FRm] = LUm,
-	[FDr] = BUr,
-	[FDm] = BUm,
-	[FLr] = LUr,
-	[FLm] = RUm,
-	[BUr] = FDr,
-	[BUm] = FDm,
-	[BRr] = LDr,
-	[BRm] = RDm,
-	[BDr] = BDr,
-	[BDm] = BDm,
-	[BLr] = RDr,
-	[BLm] = LDm,
+	[_trans_UFr] = _trans_UFr,
+	[_trans_UFm] = _trans_UFm,
+	[_trans_ULr] = _trans_URr,
+	[_trans_ULm] = _trans_ULm,
+	[_trans_UBr] = _trans_UBr,
+	[_trans_UBm] = _trans_UBm,
+	[_trans_URr] = _trans_ULr,
+	[_trans_URm] = _trans_URm,
+	[_trans_DFr] = _trans_DFr,
+	[_trans_DFm] = _trans_DFm,
+	[_trans_DLr] = _trans_DLr,
+	[_trans_DLm] = _trans_DRm,
+	[_trans_DBr] = _trans_DBr,
+	[_trans_DBm] = _trans_DBm,
+	[_trans_DRr] = _trans_DRr,
+	[_trans_DRm] = _trans_DLm,
+	[_trans_RUr] = _trans_FRr,
+	[_trans_RUm] = _trans_FLm,
+	[_trans_RFr] = _trans_LFr,
+	[_trans_RFm] = _trans_RFm,
+	[_trans_RDr] = _trans_BLr,
+	[_trans_RDm] = _trans_BRm,
+	[_trans_RBr] = _trans_RBr,
+	[_trans_RBm] = _trans_LBm,
+	[_trans_LUr] = _trans_FLr,
+	[_trans_LUm] = _trans_FRm,
+	[_trans_LFr] = _trans_RFr,
+	[_trans_LFm] = _trans_LFm,
+	[_trans_LDr] = _trans_BRr,
+	[_trans_LDm] = _trans_BLm,
+	[_trans_LBr] = _trans_LBr,
+	[_trans_LBm] = _trans_RBm,
+	[_trans_FUr] = _trans_FUr,
+	[_trans_FUm] = _trans_FUm,
+	[_trans_FRr] = _trans_RUr,
+	[_trans_FRm] = _trans_LUm,
+	[_trans_FDr] = _trans_BUr,
+	[_trans_FDm] = _trans_BUm,
+	[_trans_FLr] = _trans_LUr,
+	[_trans_FLm] = _trans_RUm,
+	[_trans_BUr] = _trans_FDr,
+	[_trans_BUm] = _trans_FDm,
+	[_trans_BRr] = _trans_LDr,
+	[_trans_BRm] = _trans_RDm,
+	[_trans_BDr] = _trans_BDr,
+	[_trans_BDm] = _trans_BDm,
+	[_trans_BLr] = _trans_RDr,
+	[_trans_BLm] = _trans_LDm,
 };
 
 /******************************************************************************
@@ -1572,17 +1572,17 @@ readmove(char c)
 {
 	switch (c) {
 	case 'U':
-		return U;
+		return _move_U;
 	case 'D':
-		return D;
+		return _move_D;
 	case 'R':
-		return R;
+		return _move_R;
 	case 'L':
-		return L;
+		return _move_L;
 	case 'F':
-		return F;
+		return _move_F;
 	case 'B':
-		return B;
+		return _move_B;
 	default:
 		return _error;
 	}
@@ -1653,41 +1653,41 @@ _static cube_fast_t
 move(cube_fast_t c, uint8_t m)
 {
 	switch (m) {
-	case U:
+	case _move_U:
 		return _move(U, c);
-	case U2:
+	case _move_U2:
 		return _move(U2, c);
-	case U3:
+	case _move_U3:
 		return _move(U3, c);
-	case D:
+	case _move_D:
 		return _move(D, c);
-	case D2:
+	case _move_D2:
 		return _move(D2, c);
-	case D3:
+	case _move_D3:
 		return _move(D3, c);
-	case R:
+	case _move_R:
 		return _move(R, c);
-	case R2:
+	case _move_R2:
 		return _move(R2, c);
-	case R3:
+	case _move_R3:
 		return _move(R3, c);
-	case L:
+	case _move_L:
 		return _move(L, c);
-	case L2:
+	case _move_L2:
 		return _move(L2, c);
-	case L3:
+	case _move_L3:
 		return _move(L3, c);
-	case F:
+	case _move_F:
 		return _move(F, c);
-	case F2:
+	case _move_F2:
 		return _move(F2, c);
-	case F3:
+	case _move_F3:
 		return _move(F3, c);
-	case B:
+	case _move_B:
 		return _move(B, c);
-	case B2:
+	case _move_B2:
 		return _move(B2, c);
-	case B3:
+	case _move_B3:
 		return _move(B3, c);
 	default:
 		DBG_LOG("move error, unknown move\n");
@@ -1699,101 +1699,101 @@ _static cube_fast_t
 transform(cube_fast_t c, uint8_t t)
 {
 	switch (t) {
-	case UFr:
+	case _trans_UFr:
 		return _trans_rotation(UFr, c);
-	case ULr:
+	case _trans_ULr:
 		return _trans_rotation(ULr, c);
-	case UBr:
+	case _trans_UBr:
 		return _trans_rotation(UBr, c);
-	case URr:
+	case _trans_URr:
 		return _trans_rotation(URr, c);
-	case DFr:
+	case _trans_DFr:
 		return _trans_rotation(DFr, c);
-	case DLr:
+	case _trans_DLr:
 		return _trans_rotation(DLr, c);
-	case DBr:
+	case _trans_DBr:
 		return _trans_rotation(DBr, c);
-	case DRr:
+	case _trans_DRr:
 		return _trans_rotation(DRr, c);
-	case RUr:
+	case _trans_RUr:
 		return _trans_rotation(RUr, c);
-	case RFr:
+	case _trans_RFr:
 		return _trans_rotation(RFr, c);
-	case RDr:
+	case _trans_RDr:
 		return _trans_rotation(RDr, c);
-	case RBr:
+	case _trans_RBr:
 		return _trans_rotation(RBr, c);
-	case LUr:
+	case _trans_LUr:
 		return _trans_rotation(LUr, c);
-	case LFr:
+	case _trans_LFr:
 		return _trans_rotation(LFr, c);
-	case LDr:
+	case _trans_LDr:
 		return _trans_rotation(LDr, c);
-	case LBr:
+	case _trans_LBr:
 		return _trans_rotation(LBr, c);
-	case FUr:
+	case _trans_FUr:
 		return _trans_rotation(FUr, c);
-	case FRr:
+	case _trans_FRr:
 		return _trans_rotation(FRr, c);
-	case FDr:
+	case _trans_FDr:
 		return _trans_rotation(FDr, c);
-	case FLr:
+	case _trans_FLr:
 		return _trans_rotation(FLr, c);
-	case BUr:
+	case _trans_BUr:
 		return _trans_rotation(BUr, c);
-	case BRr:
+	case _trans_BRr:
 		return _trans_rotation(BRr, c);
-	case BDr:
+	case _trans_BDr:
 		return _trans_rotation(BDr, c);
-	case BLr:
+	case _trans_BLr:
 		return _trans_rotation(BLr, c);
-	case UFm:
+	case _trans_UFm:
 		return _trans_mirrored(UFm, c);
-	case ULm:
+	case _trans_ULm:
 		return _trans_mirrored(ULm, c);
-	case UBm:
+	case _trans_UBm:
 		return _trans_mirrored(UBm, c);
-	case URm:
+	case _trans_URm:
 		return _trans_mirrored(URm, c);
-	case DFm:
+	case _trans_DFm:
 		return _trans_mirrored(DFm, c);
-	case DLm:
+	case _trans_DLm:
 		return _trans_mirrored(DLm, c);
-	case DBm:
+	case _trans_DBm:
 		return _trans_mirrored(DBm, c);
-	case DRm:
+	case _trans_DRm:
 		return _trans_mirrored(DRm, c);
-	case RUm:
+	case _trans_RUm:
 		return _trans_mirrored(RUm, c);
-	case RFm:
+	case _trans_RFm:
 		return _trans_mirrored(RFm, c);
-	case RDm:
+	case _trans_RDm:
 		return _trans_mirrored(RDm, c);
-	case RBm:
+	case _trans_RBm:
 		return _trans_mirrored(RBm, c);
-	case LUm:
+	case _trans_LUm:
 		return _trans_mirrored(LUm, c);
-	case LFm:
+	case _trans_LFm:
 		return _trans_mirrored(LFm, c);
-	case LDm:
+	case _trans_LDm:
 		return _trans_mirrored(LDm, c);
-	case LBm:
+	case _trans_LBm:
 		return _trans_mirrored(LBm, c);
-	case FUm:
+	case _trans_FUm:
 		return _trans_mirrored(FUm, c);
-	case FRm:
+	case _trans_FRm:
 		return _trans_mirrored(FRm, c);
-	case FDm:
+	case _trans_FDm:
 		return _trans_mirrored(FDm, c);
-	case FLm:
+	case _trans_FLm:
 		return _trans_mirrored(FLm, c);
-	case BUm:
+	case _trans_BUm:
 		return _trans_mirrored(BUm, c);
-	case BRm:
+	case _trans_BRm:
 		return _trans_mirrored(BRm, c);
-	case BDm:
+	case _trans_BDm:
 		return _trans_mirrored(BDm, c);
-	case BLm:
+	case _trans_BLm:
 		return _trans_mirrored(BLm, c);
 	default:
 		DBG_LOG("transform error, unknown transformation\n");
@@ -1886,13 +1886,18 @@ moveaxis(uint8_t move)
 Section: auxiliary procedures for H48 optimal solver (temporary)
 ******************************************************************************/
 
+#define _esep_ind(i)      (i / 8U)
+#define _esep_shift(i)    (4U * (i % 8U))
+#define _esep_mask(i)     (((1U << 4U) - 1U) << _esep_shift(i))
+#define _visited_ind(i)   (i / 8U)
+#define _visited_mask(i)  (1U << (i % 8U))
+
 typedef struct {
 	cube_fast_t cube;
+	uint8_t *visited;
 	uint8_t *moves;
 	uint8_t nmoves;
 	uint8_t depth;
-	uint8_t h;
-	uint8_t k;
 	uint16_t *nclasses;
 	uint32_t *cocsepdata;
 	uint32_t *buf32;
@@ -1900,13 +1905,15 @@ typedef struct {
 
 _static size_t gendata_cocsep(void *);
 _static uint32_t gendata_cocsep_dfs( /* TODO: use dfsarg */
-    cube_fast_t, uint8_t, uint8_t, uint16_t *, uint32_t *, bool *);
+    cube_fast_t, uint8_t, uint8_t, uint16_t *, uint32_t *, uint8_t *);
 
-_static size_t gendata_eoesep(uint8_t, uint8_t, const void *, void *);
-_static uint32_t gendata_eoesep_dfs(dfsarg_gendata_t *);
+_static size_t gendata_esep(const void *, void *);
+_static uint32_t gendata_esep_dfs(dfsarg_gendata_t *);
 
-_static_inline uint8_t get_h48_pval(const uint32_t *, int64_t, uint8_t);
-_static_inline void set_h48_pval(uint32_t *, int64_t, uint8_t, uint8_t);
+_static_inline bool get_visited(const uint8_t *, int64_t);
+_static_inline void set_visited(uint8_t *, int64_t);
+_static_inline uint8_t get_esep_pval(const uint32_t *, int64_t);
+_static_inline void set_esep_pval(uint32_t *, int64_t, uint8_t);
 
 /*
 Each element of the cocsep table is a uint32_t used as follows:
@@ -1922,14 +1929,14 @@ After the data as described above, more auxiliary information is appended:
 _static size_t
 gendata_cocsep(void *buf)
 {
-	static size_t tablesize = _3p7 << 7U;
-	static size_t infosize = 12;
+	size_t tablesize = _3p7 << 7U;
+	size_t visitedsize = (tablesize + 7U) / 8U;
+	size_t infosize = 12;
 
 	cube_fast_t solved;
 	uint32_t *buf32, *info, cc;
 	uint16_t n;
-	uint8_t i, j;
-	bool visited[tablesize];
+	uint8_t i, j, visited[visitedsize];
 
 	buf32 = (uint32_t *)buf;
 	info = buf32 + tablesize;
@@ -1938,12 +1945,13 @@ gendata_cocsep(void *buf)
 
 	solved = cubetofast(solvedcube());
 	for (i = 0, n = 0, cc = 0; i < 10; i++) {
-		memset(visited, 0, tablesize * sizeof(bool));
-		DBG_LOG("gendata_cocsep: generating depth %" PRIu8 "\n", i);
+		memset(visited, 0, visitedsize);
+		DBG_LOG("cocsep: generating depth %" PRIu8 "\n", i);
 		cc = gendata_cocsep_dfs(solved, 0, i, &n, buf32, visited);
 		info[i+2] = cc;
 		DBG_LOG("found %" PRIu32 "\n", cc);
 	}
+
 	info[0] = (uint32_t)n;
 	info[1] = 9U; /* Known max pruning value */
 	DBG_ASSERT(n == COCSEP_CLASSES, 0,
@@ -1967,29 +1975,28 @@ gendata_cocsep_dfs(
 	uint8_t maxdepth,
 	uint16_t *n,
 	uint32_t *buf32,
-	bool *visited
+	uint8_t *visited
 )
 {
 	uint8_t m, t, tinv, olddepth;
 	uint32_t cc;
-	uint64_t i;
+	int64_t i;
 	cube_fast_t d;
 
 	i = coord_fast_cocsep(c);
 	olddepth = (uint8_t)(buf32[i] & 0xFFU);
-	if (olddepth < depth || visited[i])
+	if (olddepth < depth || get_visited(visited, i))
 		return 0;
-	visited[i] = true;
+	set_visited(visited, i);
 
 	if (depth == maxdepth) {
 		if ((buf32[i] & 0xFFU) != 0xFFU)
 			return 0;
 
-		cc = 0;
-		for (t = 0; t < 48; t++) {
+		for (t = 0, cc = 0; t < 48; t++) {
 			d = transform(c, t);
 			i = coord_fast_cocsep(d);
-			visited[i] = true;
+			set_visited(visited, i);
 			tinv = inverse_trans(t);
 			cc += (buf32[i] & 0xFFU) == 0xFFU;
 			buf32[i] = (*n << 16U) | (tinv << 8U) | depth;
@@ -2009,21 +2016,20 @@ gendata_cocsep_dfs(
 
 /*
 TODO description
-h is the number of eo bits
-k is the compression size (4, 2 or 1 bit)
+generating fixed table with h=0, k=4
 */
 _static size_t
-gendata_eoesep(uint8_t h, uint8_t k, const void *cocsepdata, void *buf)
+gendata_esep(const void *cocsepdata, void *buf)
 {
-	DBG_ASSERT(k == 4, 0, "eoesep: only k=4 is supported");
-
-	size_t tablesize = ((COCSEP_CLASSES * _12c4 * _8c4) / (8U / k)) << h;
+	size_t tablesize = (COCSEP_CLASSES * _12c4 * _8c4) / 2U;
+	size_t visitedsize = (tablesize * 2U + 7U) / 8U;
 	size_t infosize = 25; /* TODO unknown yet */
 
 	uint32_t *buf32, *info, cc;
 	uint8_t moves[20];
 	dfsarg_gendata_t arg;
 
+	arg.visited = malloc(visitedsize);
 	buf32 = (uint32_t *)buf;
 	info = buf32 + tablesize;
 	memset(buf32, 0xFFU, 4*tablesize);
@@ -2032,64 +2038,28 @@ gendata_eoesep(uint8_t h, uint8_t k, const void *cocsepdata, void *buf)
 	arg.cube = cubetofast(solvedcube());
 	arg.moves = moves;
 	arg.nmoves = 0;
-	arg.h = h;
-	arg.k = k;
 	arg.cocsepdata = (uint32_t *)cocsepdata;
 	arg.buf32 = buf32;
 	/* TODO loop until no more is done, not until 12! (or hardcode limits)*/
 	for (arg.depth = 0, cc = 0; arg.depth < 12; arg.depth++) {
-		DBG_LOG("gendata_eoesep: generating depth %" PRIu8 "\n",
-		        arg.depth);
-		cc = gendata_eoesep_dfs(&arg);
+		DBG_LOG("esep: generating depth %" PRIu8 "\n", arg.depth);
+		memset(arg.visited, 0, visitedsize);
+		cc = gendata_esep_dfs(&arg);
 		info[arg.depth+1] = cc;
 		DBG_LOG("found %" PRIu32 "\n", cc);
 	}
+	free(arg.visited);
 
 	return cc;
 }
 
-_static_inline uint8_t
-get_h48_pval(const uint32_t *buf32, int64_t index, uint8_t k)
-{
-	uint32_t mask, shift;
-	int64_t realindex, subindex;
-
-	DBG_ASSERT(k == 1 || k == 2 || k == 4, 0,
-	    "h48 coordinate invalid k=%" PRIu8 "\n", k);
-
-	/* TODO: use more efficient operations, pass k as exponent */
-	realindex = index / (32 / k);
-	subindex = index % (32 / k);
-	shift = (uint8_t)(k * subindex);
-	mask = ((1U << k) - 1U) << shift;
-
-	return (buf32[realindex] & mask) >> shift;
-}
-
-_static_inline void
-set_h48_pval(uint32_t *buf32, int64_t index, uint8_t k, uint8_t val)
-{
-	uint32_t mask, shift;
-	int64_t realindex, subindex;
-
-	DBG_ASSERT(k == 1 || k == 2 || k == 4, ,
-	    "h48 coordinate invalid k=%" PRIu8 "\n", k);
-
-	/* TODO: use more efficient operations, pass k as exponent */
-	realindex = index / (32 / k);
-	subindex = index % (32 / k);
-	shift = (uint8_t)(k * subindex);
-	mask = ((1U << k) - 1U) << shift;
-
-	buf32[realindex] = (buf32[realindex] & (~mask)) | (val << shift);
-}
-
 _static uint32_t
-gendata_eoesep_dfs(dfsarg_gendata_t *arg)
+gendata_esep_dfs(dfsarg_gendata_t *arg)
 {
-	uint8_t m, olddepth;
+	uint8_t m, t, olddepth;
 	uint32_t cc;
 	uint64_t i;
+	cube_fast_t d;
 	dfsarg_gendata_t nextarg;
 
 	if (!allowednextmove(arg->moves, arg->nmoves))
@@ -2098,27 +2068,61 @@ gendata_eoesep_dfs(dfsarg_gendata_t *arg)
 	if (arg->nmoves > 0)
 		arg->cube = move(arg->cube, arg->moves[arg->nmoves-1]);
 
-	i = coord_h48(arg->cube, arg->cocsepdata, arg->h);
-	olddepth = get_h48_pval(arg->buf32, i, arg->k);
+	i = coord_h48(arg->cube, arg->cocsepdata, 0U);
+	olddepth = get_esep_pval(arg->buf32, i);
 
-	if (olddepth < arg->nmoves)
+	if (olddepth < arg->nmoves || get_visited(arg->visited, i))
 		return 0;
+	set_visited(arg->visited, i);
 
 	if (arg->nmoves == arg->depth) {
-		cc = olddepth > arg->depth;
-		set_h48_pval(arg->buf32, i, arg->k, arg->depth);
+		if (olddepth != 15U)
+			return 0;
+
+		for (t = 0, cc = 0; t < 48; t++) {
+			d = transform(arg->cube, t);
+			i = coord_h48(d, arg->cocsepdata, 0U);
+			set_visited(arg->visited, i);
+			cc += get_esep_pval(arg->buf32, i) == 15U;
+			set_esep_pval(arg->buf32, i, arg->depth);
+		}
+
 		return cc;
 	}
+
 
 	nextarg = *arg;
 	nextarg.nmoves = arg->nmoves + 1;
 	for (m = 0, cc = 0; m < 18; m++) {
 		nextarg.cube = arg->cube;
 		nextarg.moves[arg->nmoves] = m;
-		cc += gendata_eoesep_dfs(&nextarg);
+		cc += gendata_esep_dfs(&nextarg);
 	}
 
 	return cc;
+}
+
+_static_inline bool get_visited(const uint8_t *a, int64_t i)
+{
+	return a[_visited_ind(i)] & _visited_mask(i);
+}
+
+_static_inline void set_visited(uint8_t *a, int64_t i)
+{
+	a[_visited_ind(i)] |= _visited_mask(i);
+}
+
+_static_inline uint8_t
+get_esep_pval(const uint32_t *buf32, int64_t i)
+{
+	return (buf32[_esep_ind(i)] & _esep_mask(i)) >> _esep_shift(i);
+}
+
+_static_inline void
+set_esep_pval(uint32_t *buf32, int64_t i, uint8_t val)
+{
+	buf32[_esep_ind(i)] =
+	    (buf32[_esep_ind(i)] & (~_esep_mask(i))) | (val << _esep_shift(i));
 }
 
 /******************************************************************************
