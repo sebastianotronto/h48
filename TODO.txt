@@ -1,6 +1,11 @@
-TODO big pruning table looks correct, improve speed?
-     use small table to prune, visited array...?
-     numbers so far (h=0, k=0):
+TODO pruning tables:
+  - go back to nissy-style BFS for both cocsep and eoesep
+  - compute selfsim and keep list of representatives
+  - four different ruotines for k=4,2,1 for eoesep
+  - try: do not compute CO, but use its binary representation
+    (x8 memory for cocsep)
+  
+     numbers so far (eoesep h=0, k=0):
      0        1
      1        1
      2        4
@@ -10,13 +15,12 @@ TODO big pruning table looks correct, improve speed?
      6    41605
      7   474128
      8  4953846
+     9 34776317
 
-TODO checkdata and hash check for cocsep
+TODO checkdata (available from cube.h) and hash check for cocsep
 TODO benchmarks for solve and table generation
-TODO optimization for transform edges only (and test)
-TODO ARM NEON part
 
-## H48 optimal solver
+## H48 optimal solver (some has already been implemented)
 
 First compute co + csep. Use csep as a binary number (2^7 instead of 70,
 loose a factor of 1.8 but still fits in a few megabytes or less). Use
@@ -46,16 +50,11 @@ switch. Here NISS may be useful.
 
 ## Other solvers
 
-* ptable should contain some extra data at the beginning: an integer (size)
-  a checksum some summary info, maybe even in text form
-* multisolve
-* use threads
 * nxopt (various sizes, for comparison; also use base value probing
   and benchmarking)
 * Coordinate solver for replacing nissy backend (specify in the comments
   that coordinates return 0 if solved)
-* improve light solver with no table; consider using a small, hard-coded
-  table, e.g. H48 corner table?
+* simple solver with small table for short solutions
 
 ## ARM NEON intrinsics and other architectures
 
@@ -65,50 +64,32 @@ switch. Here NISS may be useful.
 
 ## Optimizations
 
-* check which is faster: foreach_move or simple for loop? same for trans
-
-### General things
-
+* use threads: how to detect at runtime? what is sane number to default to?
+  pthreads or threads.h?
+* multisolve with adaptive threading
+* transform edges only for h48 coord calculation
 * Moves: don't do full compose for U*, D*, *2 (I removed this because I
   was using shuffle intructions wrong, should re-do it)
 * Trans: don't do full compose, for some trans composing perm is enough.
   Split out sumco() as a separate function and refactor, optimize.
 * Use multi-move (up to 4/5 moves at once)
-* CO is the worst part of moving, transforming and inverting. Try basing
-  everything on representing the cube without CO and apply it only at the
-  end to check that it is actually solved.
 * see if vcube's method to flip all corners is better
 * find a better way for computing the inverse?
-* Improve avx2 instructions in general
-
-### Threading
-
-* THREADS build time option for the number of threads. If set to one,
-  do not include any threading library or code. Try detecting at build
-  time, or set to a sane default (e.g. 8? 16?) for generic builds.
-* pthread or threads.h? I am more familiar with pthread, but threads.h
-  is standard (from C11, so it requires switching to it from C99).
-  Does using threads.h help in any way (e.g. building on Windows)?
 
 ## Improvements and other things
 
 * Rename to libnissy (prefix public functions with nissy_?)
-* add centers (and moves...)
+* add centers (and slice moves and rotations)
+  for avx2: centers in the same lane as corners, numbered from 9 to 14
 * for CO: move to bits 5 and 6, no need for padding bit
 * manipulate move sequences (invert, unniss, cleanup, mirror / transform...)
 * NISS: Add mask to moves (e.g. U | NISS where NISS = 32 or something);
   adapt readmoves and writemoves.
-* Consider adding centers and other moves (for avx2: centers in the
-  same lane as corners, numbered from 9 to 14)
-* More I/O:
+* More I/O formats:
+  reid format
   nissy
-  ascii art (color = 1 letter)
+  ascii art (color = 1 letter? color print?)
   twizzle binary https://www.experiments.cubing.net/cubing.js/spec/binary/
-  reid?
-* print ptables (or layout data in such a way that can be printed
-  easily, e.g. first bytes are null-terminated strig and can be
-  printed by user)
-* remove writetrans?
 
 ## "Front-end"
 
@@ -134,25 +115,6 @@ For example, to apply the transformation RBm (mirrored RB) to a cube C:
 	2. Rotate the mirrored cube with z' y2
 	3. Apply the cube C to the transformed solved cube
 	4. Apply the transformations of step 1a and 1b in reverse
-
-## Roadmap
-
-* Tests for multisolve
-* More tests for simple solver?
-* Benchmarks?
-* More complex optimal solvers, pruning tables
-* (More) benchmarks
-* Multithreading (build-time option number of threads)
-* Other optimizations
-* Extend cube and moves to include centers
-* NISS
-* Move manipulation utilities
-* Coordinate solvers and other steps
-* More output formats (see https://experiments.cubing.net/cubing.js/3x3x3-formats)
-* Adapters for other languages (at least python)
-* More documentation (or keep all in cube.h?)
-* Rename to libnissy
-* Release 1.0
 
 ## Future work?
 
