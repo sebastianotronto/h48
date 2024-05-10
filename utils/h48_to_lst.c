@@ -2,7 +2,7 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
-#include "../cube.h"
+#include "../src/cube.h"
 
 #define STRLENMAX 1000
 
