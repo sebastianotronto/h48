@@ -17,6 +17,7 @@ _static_inline int64_t coord_fast_co(cube_fast_t);
 _static_inline int64_t coord_fast_csep(cube_fast_t);
 _static_inline int64_t coord_fast_cocsep(cube_fast_t);
 _static_inline int64_t coord_fast_eo(cube_fast_t);
+_static_inline void set_eo_fast(cube_fast_t *, int64_t eo);
 _static_inline int64_t coord_fast_esep(cube_fast_t);
 
 _static_inline cube_fast_t
@@ -186,6 +187,12 @@ coord_fast_eo(cube_fast_t c)
 		ret += p * (c.edge[i] >> _eoshift);
 
 	return ret;
+}
+
+_static_inline void
+_set_eo_fast(cube_fast_t *cube, int64_t eo)
+{
+	/* TODO */
 }
 
 /*

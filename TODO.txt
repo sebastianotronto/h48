@@ -1,9 +1,15 @@
+In progress: go back to nissy-style BFS for eosep data computation
+	- (done) compute selfsim and cocsep representatives
+	- implement set_eo_fast for invcoord_h48 (with tests for set_eo_fast)
+	  also: implement other set_stuff methods for fast cube representation
+	- in gendata_esep, compute representatives for esep inverse coordinate
+	- change to BFS
+
 TODO pruning tables:
-  - go back to nissy-style BFS for both cocsep and eoesep
-  - compute selfsim and keep list of representatives
   - four different ruotines for k=4,2,1 for eoesep
   - try: do not compute CO, but use its binary representation
     (x8 memory for cocsep)
+    (isn't this already done?)
   
      numbers so far (eoesep h=0, k=0):
      0        1
@@ -64,12 +70,13 @@ switch. Here NISS may be useful.
 
 ## Optimizations
 
+* Moves: don't do full compose for U*, D*, *2 (I removed this because I
+  was using shuffle intructions wrong, should re-do it)
+* transform edges only for h48 coord calculation
+* ptable: since it is fully symmetric, do only U or U2 at depth 1
 * use threads: how to detect at runtime? what is sane number to default to?
   pthreads or threads.h?
 * multisolve with adaptive threading
-* transform edges only for h48 coord calculation
-* Moves: don't do full compose for U*, D*, *2 (I removed this because I
-  was using shuffle intructions wrong, should re-do it)
 * Trans: don't do full compose, for some trans composing perm is enough.
   Split out sumco() as a separate function and refactor, optimize.
 * Use multi-move (up to 4/5 moves at once)

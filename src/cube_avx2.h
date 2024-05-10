@@ -23,6 +23,7 @@ _static_inline int64_t coord_fast_co(cube_fast_t);
 _static_inline int64_t coord_fast_csep(cube_fast_t);
 _static_inline int64_t coord_fast_cocsep(cube_fast_t);
 _static_inline int64_t coord_fast_eo(cube_fast_t);
+_static_inline void set_eo_fast(cube_fast_t *, int64_t);
 _static_inline int64_t coord_fast_esep(cube_fast_t);
 
 _static_inline cube_fast_t
@@ -196,6 +197,12 @@ coord_fast_eo(cube_fast_t c)
 	mask = _mm256_movemask_epi8(shifted);
 
 	return mask >> 17;
+}
+
+_static_inline void
+set_eo_fast(cube_fast_t *c, int64_t eo)
+{
+	/* TODO */
 }
 
 _static_inline int64_t
