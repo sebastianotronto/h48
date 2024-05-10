@@ -1,12 +1,16 @@
 #include "../test.h"
 
-size_t gendata_cocsep(void *);
+#define COCSEP_CLASSES 3393U
+
+size_t gendata_cocsep(void *, uint64_t *, cube_fast_t *);
 
 int main(void) {
 	uint32_t buf[300000], i;
+	uint64_t selfsim[COCSEP_CLASSES];
+	cube_fast_t rep[COCSEP_CLASSES];
 	size_t result;
 
-	result = gendata_cocsep(buf);
+	result = gendata_cocsep(buf, selfsim, rep);
 
 	printf("%zu\n", result);
 	printf("Classes: %" PRIu32 "\n", buf[result/4-12]);

@@ -4,6 +4,19 @@
 #define _visited_ind(i)   (i / 8U)
 #define _visited_mask(i)  (1U << (i % 8U))
 
+#define COCSEP_CLASSES 3393U
+
+typedef struct {
+	cube_fast_t cube;
+	uint8_t depth;
+	uint8_t maxdepth;
+	uint16_t *n;
+	uint32_t *buf32;
+	uint8_t *visited;
+	uint64_t *selfsim;
+	cube_fast_t *rep;
+} dfsarg_cocsep_t;
+
 typedef struct {
 	cube_fast_t cube;
 	uint8_t *visited;
@@ -13,23 +26,20 @@ typedef struct {
 	uint16_t *nclasses;
 	uint32_t *cocsepdata;
 	uint32_t *buf32;
-} dfsarg_gendata_t;
+} dfsarg_esep_t;
 
 _static_inline int64_t coord_h48(cube_fast_t, uint32_t *, uint8_t);
 
-_static size_t gendata_cocsep(void *);
-_static uint32_t gendata_cocsep_dfs( /* TODO: use dfsarg */
-    cube_fast_t, uint8_t, uint8_t, uint16_t *, uint32_t *, uint8_t *);
-
+_static size_t gendata_cocsep(void *, uint64_t *, cube_fast_t *);
+_static uint32_t gendata_cocsep_dfs(dfsarg_cocsep_t *);
 _static size_t gendata_esep(const void *, void *);
-_static uint32_t gendata_esep_dfs(dfsarg_gendata_t *);
+_static uint32_t gendata_esep_dfs(dfsarg_esep_t *);
 
 _static_inline bool get_visited(const uint8_t *, int64_t);
 _static_inline void set_visited(uint8_t *, int64_t);
 _static_inline uint8_t get_esep_pval(const uint32_t *, int64_t);
 _static_inline void set_esep_pval(uint32_t *, int64_t, uint8_t);
 
-/* h is the number of eo bits used */
 _static_inline int64_t
 coord_h48(cube_fast_t c, uint32_t *cocsepdata, uint8_t h)
 {
@@ -67,27 +77,37 @@ After the data as described above, more auxiliary information is appended:
     of positions having that pruning value.
 */
 _static size_t
-gendata_cocsep(void *buf)
+gendata_cocsep(void *buf, uint64_t *selfsim, cube_fast_t *rep)
 {
 	size_t tablesize = _3p7 << 7U;
 	size_t visitedsize = (tablesize + 7U) / 8U;
 	size_t infosize = 12;
 
-	cube_fast_t solved;
 	uint32_t *buf32, *info, cc;
 	uint16_t n;
 	uint8_t i, j, visited[visitedsize];
+	dfsarg_cocsep_t arg;
 
 	buf32 = (uint32_t *)buf;
 	info = buf32 + tablesize;
-	memset(buf32, 0xFFU, 4*tablesize);
-	memset(info, 0, 4*infosize);
+	memset(buf32, 0xFFU, sizeof(uint32_t) * tablesize);
+	memset(info, 0, sizeof(uint32_t) * infosize);
+	memset(selfsim, 0, sizeof(uint64_t) * COCSEP_CLASSES);
 
-	solved = cubetofast(solvedcube());
+	arg = (dfsarg_cocsep_t) {
+		.cube = cubetofast(solvedcube()),
+		.n = &n,
+		.buf32 = buf32,
+		.visited = visited,
+		.selfsim = selfsim,
+		.rep = rep
+	};
 	for (i = 0, n = 0, cc = 0; i < 10; i++) {
-		memset(visited, 0, visitedsize);
 		DBG_LOG("cocsep: generating depth %" PRIu8 "\n", i);
-		cc = gendata_cocsep_dfs(solved, 0, i, &n, buf32, visited);
+		memset(visited, 0, visitedsize);
+		arg.depth = 0;
+		arg.maxdepth = i;
+		cc = gendata_cocsep_dfs(&arg);
 		info[i+2] = cc;
 		DBG_LOG("found %" PRIu32 "\n", cc);
 	}
@@ -109,46 +129,43 @@ gendata_cocsep(void *buf)
 }
 
 _static uint32_t
-gendata_cocsep_dfs(
-	cube_fast_t c,
-	uint8_t depth,
-	uint8_t maxdepth,
-	uint16_t *n,
-	uint32_t *buf32,
-	uint8_t *visited
-)
+gendata_cocsep_dfs(dfsarg_cocsep_t *arg)
 {
 	uint8_t m, t, tinv, olddepth;
 	uint32_t cc;
 	int64_t i;
 	cube_fast_t d;
+	dfsarg_cocsep_t nextarg;
 
-	i = coord_fast_cocsep(c);
-	olddepth = (uint8_t)(buf32[i] & 0xFFU);
-	if (olddepth < depth || get_visited(visited, i))
+	i = coord_fast_cocsep(arg->cube);
+	olddepth = (uint8_t)(arg->buf32[i] & 0xFFU);
+	if (olddepth < arg->depth || get_visited(arg->visited, i))
 		return 0;
-	set_visited(visited, i);
+	set_visited(arg->visited, i);
 
-	if (depth == maxdepth) {
-		if ((buf32[i] & 0xFFU) != 0xFFU)
+	if (arg->depth == arg->maxdepth) {
+		if ((arg->buf32[i] & 0xFFU) != 0xFFU)
 			return 0;
 
 		for (t = 0, cc = 0; t < 48; t++) {
-			d = transform(c, t);
+			d = transform(arg->cube, t);
 			i = coord_fast_cocsep(d);
-			set_visited(visited, i);
+			set_visited(arg->visited, i);
 			tinv = inverse_trans(t);
-			cc += (buf32[i] & 0xFFU) == 0xFFU;
-			buf32[i] = (*n << 16U) | (tinv << 8U) | depth;
+			cc += (arg->buf32[i] & 0xFFU) == 0xFFU;
+			arg->buf32[i] =
+			    (*arg->n << 16U) | (tinv << 8U) | arg->depth;
 		}
-		(*n)++;
+		(*arg->n)++;
 
 		return cc;
 	}
 
+	memcpy(&nextarg, arg, sizeof(dfsarg_cocsep_t));
+	nextarg.depth++;
 	for (m = 0, cc = 0; m < 18; m++) {
-		d = move(c, m);
-		cc += gendata_cocsep_dfs(d, depth+1, maxdepth, n, buf32, visited);
+		nextarg.cube = move(arg->cube, m);
+		cc += gendata_cocsep_dfs(&nextarg);
 	}
 
 	return cc;
@@ -167,7 +184,7 @@ gendata_esep(const void *cocsepdata, void *buf)
 
 	uint32_t *buf32, *info, cc;
 	uint8_t moves[20];
-	dfsarg_gendata_t arg;
+	dfsarg_esep_t arg;
 
 	arg.visited = malloc(visitedsize);
 	buf32 = (uint32_t *)buf;
@@ -194,13 +211,13 @@ gendata_esep(const void *cocsepdata, void *buf)
 }
 
 _static uint32_t
-gendata_esep_dfs(dfsarg_gendata_t *arg)
+gendata_esep_dfs(dfsarg_esep_t *arg)
 {
 	uint8_t m, t, olddepth;
 	uint32_t cc;
 	uint64_t i;
 	cube_fast_t d;
-	dfsarg_gendata_t nextarg;
+	dfsarg_esep_t nextarg;
 
 	if (!allowednextmove(arg->moves, arg->nmoves))
 		return 0;

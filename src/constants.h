@@ -5,8 +5,6 @@
 #define _12c4  495U
 #define _8c4   70U
 
-#define COCSEP_CLASSES 3393U
-
 _static int64_t binomial[12][12] = {
 	{1,  0,  0,   0,   0,   0,   0,   0,   0,  0,  0, 0},
 	{1,  1,  0,   0,   0,   0,   0,   0,   0,  0,  0, 0},
