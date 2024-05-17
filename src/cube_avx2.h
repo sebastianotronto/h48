@@ -23,8 +23,11 @@ _static_inline int64_t coord_fast_co(cube_fast_t);
 _static_inline int64_t coord_fast_csep(cube_fast_t);
 _static_inline int64_t coord_fast_cocsep(cube_fast_t);
 _static_inline int64_t coord_fast_eo(cube_fast_t);
-_static_inline void set_eo_fast(cube_fast_t *, int64_t);
 _static_inline int64_t coord_fast_esep(cube_fast_t);
+
+_static_inline void copy_corners_fast(cube_fast_t *, cube_fast_t);
+_static_inline void copy_edges_fast(cube_fast_t *, cube_fast_t);
+_static_inline void set_eo_fast(cube_fast_t *, int64_t);
 
 _static_inline cube_fast_t
 fastcube(
@@ -199,12 +202,6 @@ coord_fast_eo(cube_fast_t c)
 	return mask >> 17;
 }
 
-_static_inline void
-set_eo_fast(cube_fast_t *c, int64_t eo)
-{
-	/* TODO */
-}
-
 _static_inline int64_t
 coord_fast_esep(cube_fast_t c)
 {
@@ -233,4 +230,41 @@ coord_fast_esep(cube_fast_t c)
 	}
 
 	return ret1 * 70 + ret2;
+}
+
+_static_inline void
+copy_corners_fast(cube_fast_t *dest, cube_fast_t src)
+{
+	*dest = _mm256_blend_epi32(*dest, src, 0x0F);
+}
+
+_static_inline void
+copy_edges_fast(cube_fast_t *dest, cube_fast_t src)
+{
+	*dest = _mm256_blend_epi32(*dest, src, 0xF0);
+}
+
+_static_inline void
+set_eo_fast(cube_fast_t *cube, int64_t eo)
+{
+	int64_t eo12, eotop, eobot;
+	__m256i veo;
+
+	eo12 = (eo << 1) + (_mm_popcnt_u64(eo) % 2);
+	eotop = (eo12 & (1 << 11)) << 17 |
+		(eo12 & (1 << 10)) << 10 |
+		(eo12 & (1 << 9)) << 3 |
+		(eo12 & (1 << 8)) >> 4;
+	eobot = (eo12 & (1 << 7)) << 53 |
+		(eo12 & (1 << 6)) << 46 |
+		(eo12 & (1 << 5)) << 39 |
+		(eo12 & (1 << 4)) << 32 |
+		(eo12 & (1 << 3)) << 25 |
+		(eo12 & (1 << 2)) << 18 |
+		(eo12 & (1 << 1)) << 11 |
+		(eo12 & 1) << 4;
+	veo = _mm256_set_epi64x(eotop, eobot, 0, 0);
+
+	*cube = _mm256_andnot_si256(_eo_avx2, *cube);
+	*cube = _mm256_or_si256(*cube, veo);
 }

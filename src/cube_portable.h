@@ -17,8 +17,11 @@ _static_inline int64_t coord_fast_co(cube_fast_t);
 _static_inline int64_t coord_fast_csep(cube_fast_t);
 _static_inline int64_t coord_fast_cocsep(cube_fast_t);
 _static_inline int64_t coord_fast_eo(cube_fast_t);
-_static_inline void set_eo_fast(cube_fast_t *, int64_t eo);
 _static_inline int64_t coord_fast_esep(cube_fast_t);
+
+_static_inline void copy_corners_fast(cube_fast_t *, cube_fast_t);
+_static_inline void copy_edges_fast(cube_fast_t *, cube_fast_t);
+_static_inline void set_eo_fast(cube_fast_t *, int64_t);
 
 _static_inline cube_fast_t
 fastcube(
@@ -189,12 +192,6 @@ coord_fast_eo(cube_fast_t c)
 	return ret;
 }
 
-_static_inline void
-_set_eo_fast(cube_fast_t *cube, int64_t eo)
-{
-	/* TODO */
-}
-
 /*
 We encode the edge separation as a number from 0 to C(12,4)*C(8,4).
 It can be seen as the composition of two "subset index" coordinates.
@@ -228,4 +225,29 @@ coord_fast_esep(cube_fast_t c)
 	}
 
 	return ret1 * 70 + ret2;
+}
+
+_static_inline void
+copy_corners_fast(cube_fast_t *dest, cube_fast_t src)
+{
+	memcpy(&dest->corner, src.corner, sizeof(src.corner));
+}
+
+_static_inline void
+copy_edges_fast(cube_fast_t *dest, cube_fast_t src)
+{
+	memcpy(&dest->edge, src.edge, sizeof(src.edge));
+}
+
+_static_inline void
+set_eo_fast(cube_fast_t *cube, int64_t eo)
+{
+	int i, sum, flip;
+
+	for (sum = 0, i = 1; i < 12; i++, eo >>= 1) {
+		flip = eo % 2;
+		sum += flip;
+		cube->edge[i] = (cube->edge[i] & ~_eobit) | (_eobit * flip);
+	}
+	cube->edge[0] = (cube->edge[0] & ~_eobit) | (_eobit * (sum%2));
 }

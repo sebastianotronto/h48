@@ -88,16 +88,17 @@ invcoord_h48(
 	cube_fast_t ret;
 	int64_t coclass, ee, esep, eo;
 
+	DBG_ASSERT(h <= 11, cubetofast(zero),
+		"invcoord_h48: h must be between 0 and 11\n");
+
 	coclass = i / H48_ESIZE;
 	ee = i % H48_ESIZE;
 	esep = ee >> h;
 	eo = (ee & ((1<<h)-1)) << (11-h);
 
-/* TODO: implement set_stuff methods
-	ret.c = crep[coclass];
-	ret.e = erep[esep];
+	copy_corners_fast(&ret, crep[coclass]);
+	copy_edges_fast(&ret, erep[esep]);
 	set_eo_fast(&ret, eo);
-*/
 
 	return ret;
 }

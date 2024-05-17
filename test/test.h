@@ -21,6 +21,7 @@ typedef cube_t cube_fast_t;
 /* Basic functions used in most tests */
 cube_t solvedcube(void);
 bool iserror(cube_t);
+bool isconsistent(cube_t);
 bool issolvable(cube_t);
 bool issolved(cube_t);
 cube_t readcube(char *, char *);

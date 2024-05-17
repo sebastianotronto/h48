@@ -1,7 +1,7 @@
 In progress: go back to nissy-style BFS for eosep data computation
 	- (done) compute selfsim and cocsep representatives
-	- implement set_eo_fast for invcoord_h48 (with tests for set_eo_fast)
-	  also: implement other set_stuff methods for fast cube representation
+	- (done) implement set_eo_fast for invcoord_h48
+	- add unit tests for invcoord_h48 (compute tables, if needed)
 	- in gendata_esep, compute representatives for esep inverse coordinate
 	- change to BFS
 
