@@ -28,6 +28,7 @@ _static_inline int64_t coord_fast_esep(cube_fast_t);
 _static_inline void copy_corners_fast(cube_fast_t *, cube_fast_t);
 _static_inline void copy_edges_fast(cube_fast_t *, cube_fast_t);
 _static_inline void set_eo_fast(cube_fast_t *, int64_t);
+_static_inline cube_fast_t invcoord_fast_esep(int64_t);
 
 _static_inline cube_fast_t
 fastcube(
@@ -267,4 +268,11 @@ set_eo_fast(cube_fast_t *cube, int64_t eo)
 
 	*cube = _mm256_andnot_si256(_eo_avx2, *cube);
 	*cube = _mm256_or_si256(*cube, veo);
+}
+
+_static_inline cube_fast_t
+invcoord_fast_esep(int64_t esep)
+{
+	/* TODO */
+	return cubetofast(zero);
 }

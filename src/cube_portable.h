@@ -22,6 +22,7 @@ _static_inline int64_t coord_fast_esep(cube_fast_t);
 _static_inline void copy_corners_fast(cube_fast_t *, cube_fast_t);
 _static_inline void copy_edges_fast(cube_fast_t *, cube_fast_t);
 _static_inline void set_eo_fast(cube_fast_t *, int64_t);
+_static_inline cube_fast_t invcoord_fast_esep(int64_t);
 
 _static_inline cube_fast_t
 fastcube(
@@ -250,4 +251,11 @@ set_eo_fast(cube_fast_t *cube, int64_t eo)
 		cube->edge[i] = (cube->edge[i] & ~_eobit) | (_eobit * flip);
 	}
 	cube->edge[0] = (cube->edge[0] & ~_eobit) | (_eobit * (sum%2));
+}
+
+_static_inline cube_fast_t
+invcoord_fast_esep(int64_t esep)
+{
+	/* TODO */
+	return cubetofast(zero);
 }

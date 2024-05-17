@@ -39,8 +39,7 @@ typedef struct {
 } dfsarg_esep_t;
 
 _static_inline int64_t coord_h48(cube_fast_t, const uint32_t *, uint8_t);
-_static_inline cube_fast_t invcoord_h48(int64_t, const uint32_t *,
-    const cube_fast_t *, const cube_fast_t *, uint8_t);
+_static_inline cube_fast_t invcoord_h48(int64_t, const cube_fast_t *, uint8_t);
 
 _static size_t gendata_cocsep(void *, uint64_t *, cube_fast_t *);
 _static uint32_t gendata_cocsep_dfs(dfsarg_cocsep_t *);
@@ -77,13 +76,7 @@ coord_h48(cube_fast_t c, const uint32_t *cocsepdata, uint8_t h)
 }
 
 _static_inline cube_fast_t
-invcoord_h48(
-	int64_t i,
-	const uint32_t *cocsepdata,
-	const cube_fast_t *crep,
-	const cube_fast_t *erep,
-	uint8_t h
-)
+invcoord_h48(int64_t i, const cube_fast_t *crep, uint8_t h)
 {
 	cube_fast_t ret;
 	int64_t coclass, ee, esep, eo;
@@ -96,8 +89,8 @@ invcoord_h48(
 	esep = ee >> h;
 	eo = (ee & ((1<<h)-1)) << (11-h);
 
+	ret = invcoord_fast_esep(esep);
 	copy_corners_fast(&ret, crep[coclass]);
-	copy_edges_fast(&ret, erep[esep]);
 	set_eo_fast(&ret, eo);
 
 	return ret;
