@@ -1,7 +1,7 @@
 In progress: go back to nissy-style BFS for eosep data computation
 	- (done) compute selfsim and cocsep representatives
 	- (done) implement set_eo_fast for invcoord_h48
-	- for invcoord_h48 remove erep, implement inverse esep coord
+	- (done) for invcoord_h48 remove erep, implement inverse esep coord
 	- add unit tests for invcoord_h48 (compute tables, if needed)
 	- change to BFS
 
