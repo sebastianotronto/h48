@@ -1,5 +1,4 @@
 TODO
-  - test h48 table by adding a parameter to stop computation at certain depth
   - add back benchmark, test performance of table computation
   - table generation is still slow, how to improve? profile!
     selfsim could be a list of cubes (representatives)

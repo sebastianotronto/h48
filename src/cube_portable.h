@@ -200,7 +200,7 @@ It can be seen as the composition of two "subset index" coordinates.
 _static_inline int64_t
 coord_fast_esep(cube_fast_t c)
 {
-	int64_t i, j, k, l, ret1, ret2, bit1, bit2, is1;
+	int64_t i, j, jj, k, l, ret1, ret2, bit1, bit2, is1;
 
 	for (i = 0, j = 0, k = 4, l = 4, ret1 = 0, ret2 = 0; i < 12; i++) {
 		/* Simple version:
@@ -220,7 +220,8 @@ coord_fast_esep(cube_fast_t c)
 		ret1 += bit2 * binomial[11-i][k];
 		k -= bit2;
 
-		ret2 += is1 * binomial[7-j][l];
+		jj = j < 8;
+		ret2 += jj * is1 * binomial[7-(j*jj)][l];
 		l -= is1;
 		j += (1-bit2);
 	}
@@ -257,7 +258,7 @@ _static_inline cube_fast_t
 invcoord_fast_esep(int64_t esep)
 {
 	cube_fast_t ret;
-	int64_t i, j, k, l, s, v, w, is1, set1, set2;
+	int64_t i, j, jj, k, l, s, v, w, is1, set1, set2;
 	uint8_t bit2, bit1;
 	uint8_t slice[3] = {0};
 
@@ -267,7 +268,8 @@ invcoord_fast_esep(int64_t esep)
 
 	for (i = 0, j = 0, k = 4, l = 4; i < 12; i++) {
 		v = binomial[11-i][k];
-		w = binomial[7-j][l];
+		jj = j < 8;
+		w = jj * binomial[7-(j*jj)][l];
 		bit2 = set2 >= v;
 		bit1 = set1 >= w;
 		is1 = (1 - bit2) * bit1;
