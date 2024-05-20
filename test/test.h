@@ -26,3 +26,5 @@ bool issolvable(cube_t);
 bool issolved(cube_t);
 cube_t readcube(char *, char *);
 void writecube(char *, cube_t, char *);
+cube_t fasttocube(cube_fast_t);
+cube_fast_t cubetofast(cube_t);

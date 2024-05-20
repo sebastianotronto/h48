@@ -2,7 +2,6 @@
 
 int64_t coord_fast_esep(cube_fast_t);
 cube_fast_t invcoord_fast_esep(int64_t);
-cube_fast_t cubetofast(cube_t);
 
 int main(void) {
 	char str[STRLENMAX];

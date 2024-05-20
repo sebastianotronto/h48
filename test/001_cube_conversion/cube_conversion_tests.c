@@ -1,7 +1,5 @@
 #include "../test.h"
 
-cube_fast_t cubetofast(cube_t);
-cube_t fasttocube(cube_fast_t);
 bool equal(cube_t, cube_t);
 
 int main(void) {

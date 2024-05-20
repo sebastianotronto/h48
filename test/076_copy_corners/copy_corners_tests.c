@@ -1,8 +1,6 @@
 #include "../test.h"
 
 void copy_corners_fast(cube_fast_t *, cube_fast_t);
-cube_fast_t cubetofast(cube_t);
-cube_t fasttocube(cube_fast_t);
 
 int main(void) {
 	char str[STRLENMAX];

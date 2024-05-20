@@ -1,7 +1,6 @@
 #include "../test.h"
 
 int64_t coord_fast_co(cube_fast_t);
-cube_fast_t cubetofast(cube_t);
 
 int main(void) {
 	char str[STRLENMAX];

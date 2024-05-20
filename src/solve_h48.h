@@ -8,13 +8,13 @@
 #define ESEP_VISITEDSIZE    ((ESEP_TABLESIZE * 2U + 7U) / 8U)
 #define ESEP_INFOSIZE       25 /* TODO unknown yet */
 
-#define H48_ESIZE           ((_12c4 * _8c4) << h)
+#define H48_ESIZE(h)        ((_12c4 * _8c4) << (h))
 
-#define _esep_ind(i)      (i / 8U)
-#define _esep_shift(i)    (4U * (i % 8U))
-#define _esep_mask(i)     (((1U << 4U) - 1U) << _esep_shift(i))
-#define _visited_ind(i)   (i / 8U)
-#define _visited_mask(i)  (1U << (i % 8U))
+#define _esep_ind(i)        (i / 8U)
+#define _esep_shift(i)      (4U * (i % 8U))
+#define _esep_mask(i)       (((1U << 4U) - 1U) << _esep_shift(i))
+#define _visited_ind(i)     (i / 8U)
+#define _visited_mask(i)    (1U << (i % 8U))
 
 typedef struct {
 	cube_fast_t cube;
@@ -70,22 +70,26 @@ coord_h48(cube_fast_t c, const uint32_t *cocsepdata, uint8_t h)
 	esep = coord_fast_esep(d);
 	eo = coord_fast_eo(d);
 
-	ret = (coclass * H48_ESIZE) + (esep << h) + (eo >> (11-h));
+	ret = (coclass * H48_ESIZE(h)) + (esep << h) + (eo >> (11-h));
 
 	return ret;
 }
 
+/*
+
+This function does not necessarily return a cube whose coordinate is
+the given value, because it works up to symmetry. This means that the
+returned cube is a transformed cube of one that gives the correct value.
+*/
 _static_inline cube_fast_t
-invcoord_h48(int64_t i, const cube_fast_t *crep, uint8_t h)
-{
-	cube_fast_t ret;
-	int64_t coclass, ee, esep, eo;
+invcoord_h48(int64_t i, const cube_fast_t *crep, uint8_t h) {
+	cube_fast_t ret; int64_t coclass, ee, esep, eo;
 
 	DBG_ASSERT(h <= 11, cubetofast(zero),
 		"invcoord_h48: h must be between 0 and 11\n");
 
-	coclass = i / H48_ESIZE;
-	ee = i % H48_ESIZE;
+	coclass = i / H48_ESIZE(h);
+	ee = i % H48_ESIZE(h);
 	esep = ee >> h;
 	eo = (ee & ((1<<h)-1)) << (11-h);
 
