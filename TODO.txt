@@ -1,27 +1,9 @@
-In progress: go back to nissy-style BFS for eosep data computation
-	- (done) compute selfsim and cocsep representatives
-	- (done) implement set_eo_fast for invcoord_h48
-	- (done) for invcoord_h48 remove erep, implement inverse esep coord
-	- (done) add unit tests for invcoord_h48 (compute tables, if needed)
-	- change to BFS
-
-TODO pruning tables:
-  - four different ruotines for k=4,2,1 for eoesep
-  - try: do not compute CO, but use its binary representation
-    (x8 memory for cocsep)
-    (isn't this already done?)
-  
-     numbers so far (eoesep h=0, k=0):
-     0        1
-     1        1
-     2        4
-     3       34
-     4      331
-     5     3612
-     6    41605
-     7   474128
-     8  4953846
-     9 34776317
+TODO
+  - test h48 table by adding a parameter to stop computation at certain depth
+  - add back benchmark, test performance of table computation
+  - table generation is still slow, how to improve? profile!
+    selfsim could be a list of cubes (representatives)
+  - add h48 table for different values of k
 
 TODO checkdata (available from cube.h) and hash check for cocsep
 TODO benchmarks for solve and table generation
