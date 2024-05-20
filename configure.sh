@@ -18,7 +18,7 @@ WFLAGS="-pedantic -Wall -Wextra -Wno-unused-parameter -Wno-unused-function"
 SAN="$ADDR $UNDEF"
 
 CFLAGS="$STD $WFLAGS $AVX -O3"
-DBGFLAGS="$STD $WFLAGS $AVX -g3 -DDEBUG"
+DBGFLAGS="$STD $WFLAGS $SAN $AVX -g3 -DDEBUG"
 
 echo "Cube type: CUBE_$TYPE"
 echo "Compiler: ${CC:-cc}"

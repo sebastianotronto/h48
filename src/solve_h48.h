@@ -1,12 +1,10 @@
 #define COCSEP_CLASSES        3393U
 #define COCSEP_TABLESIZE      (_3p7 << 7U)
 #define COCSEP_VISITEDSIZE    ((COCSEP_TABLESIZE + 7U) / 8U)
-#define COCSEP_INFOSIZE       12U
-#define COCSEP_FULLSIZE       (4 * (COCSEP_TABLESIZE + COCSEP_INFOSIZE))
+#define COCSEP_FULLSIZE       (4*(COCSEP_TABLESIZE + 12))
 
 #define ESEP_MAX(h)           ((COCSEP_CLASSES * _12c4 * _8c4) << (h))
-#define ESEP_TABLESIZE(h, k)  (ESEP_MAX((h)) >> (k))
-#define ESEP_INFOSIZE         25 /* TODO unknown yet */
+#define ESEP_TABLESIZE(h, k)  (ESEP_MAX((h)) / (8U / (k)))
 
 #define H48_ESIZE(h)          ((_12c4 * _8c4) << (h))
 
@@ -41,7 +39,7 @@ _static_inline cube_fast_t invcoord_h48(int64_t, const cube_fast_t *, uint8_t);
 
 _static size_t gendata_cocsep(void *, uint64_t *, cube_fast_t *);
 _static uint32_t gendata_cocsep_dfs(dfsarg_cocsep_t *);
-_static size_t gendata_h48(void *, uint8_t);
+_static size_t gendata_h48(void *, uint8_t, uint8_t);
 _static uint64_t gendata_esep_bfs(bfsarg_esep_t *);
 
 _static_inline bool get_visited(const uint8_t *, int64_t);
@@ -120,7 +118,6 @@ gendata_cocsep(void *buf, uint64_t *selfsim, cube_fast_t *rep)
 	buf32 = (uint32_t *)buf;
 	info = buf32 + COCSEP_TABLESIZE;
 	memset(buf32, 0xFFU, sizeof(uint32_t) * COCSEP_TABLESIZE);
-	memset(info, 0, sizeof(uint32_t) * COCSEP_INFOSIZE);
 	memset(selfsim, 0, sizeof(uint64_t) * COCSEP_CLASSES);
 
 	arg = (dfsarg_cocsep_t) {
@@ -163,7 +160,6 @@ gendata_cocsep_dfs(dfsarg_cocsep_t *arg)
 	uint8_t m, t, tinv, olddepth;
 	uint32_t cc;
 	int64_t i, ii;
-	uint64_t sim;
 	cube_fast_t d;
 	dfsarg_cocsep_t nextarg;
 
@@ -208,10 +204,10 @@ TODO description
 generating fixed table with h=0, k=4
 */
 _static size_t
-gendata_h48(void *buf, uint8_t h)
+gendata_h48(void *buf, uint8_t h, uint8_t maxdepth)
 {
-	const int k = 1; /* TODO: other cases? */
-	uint32_t *buf32, *info, *cocsepdata;
+	const int k = 4; /* TODO: other cases? */
+	uint32_t j, *buf32, *info, *cocsepdata;
 	bfsarg_esep_t arg;
 	int64_t sc, cc, tot;
 	uint64_t selfsim[COCSEP_CLASSES];
@@ -219,17 +215,14 @@ gendata_h48(void *buf, uint8_t h)
 	size_t cocsepsize;
 
 	cocsepsize = gendata_cocsep(buf, selfsim, crep);
-	DBG_ASSERT(cocsepsize == COCSEP_FULLSIZE, 0,
-	    "gendata_h48: error computing cocsep data\n");
-
 	cocsepdata = (uint32_t *)buf;
-	buf32 = cocsepdata + cocsepsize;
-	info = buf32 + ESEP_TABLESIZE(h, k);
-	memset(buf32, 0xFFU, sizeof(uint32_t) * ESEP_TABLESIZE(h, k));
-	memset(info, 0, sizeof(uint32_t) * ESEP_INFOSIZE);
+	buf32 = cocsepdata + cocsepsize/4;
+	info = buf32 + (ESEP_TABLESIZE(h, k) / sizeof(uint32_t));
+	memset(buf32, 0xFFU, ESEP_TABLESIZE(h, k));
 
 	sc = coord_h48(cubetofast(solved), cocsepdata, h);
 	set_esep_pval(buf32, sc, 0);
+	info[1] = 1;
 	arg = (bfsarg_esep_t) {
 		.h = h,
 		.cocsepdata = cocsepdata,
@@ -237,7 +230,11 @@ gendata_h48(void *buf, uint8_t h)
 		.crep = crep,
 		.selfsim = selfsim
 	};
-	for (tot = 1, arg.depth = 1, cc = 0; tot < ESEP_MAX(h); arg.depth++) {
+	for (
+		tot = 1, arg.depth = 1, cc = 0;
+		tot < ESEP_MAX(h) && arg.depth <= maxdepth;
+		arg.depth++
+	) {
 		DBG_LOG("esep: generating depth %" PRIu8 "\n", arg.depth);
 		cc = gendata_esep_bfs(&arg);
 		tot += cc;
@@ -245,7 +242,15 @@ gendata_h48(void *buf, uint8_t h)
 		DBG_LOG("found %" PRIu64 "\n", cc);
 	}
 
-	return COCSEP_FULLSIZE + cc;
+	info[0] = arg.depth-1;
+
+	DBG_LOG("h48 pruning table computed\n");
+	DBG_LOG("Maximum pruning value: %" PRIu32 "\n", info[0]);
+	DBG_LOG("Pruning value distribution:\n");
+	for (j = 0; j <= info[0]; j++)
+		DBG_LOG("%" PRIu8 ":\t%" PRIu32 "\n", j, info[j+1]);
+
+	return COCSEP_FULLSIZE + ESEP_TABLESIZE(h, k) + 4*(info[0]+2);
 }
 
 _static uint64_t
