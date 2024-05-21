@@ -1,6 +1,5 @@
 #include <inttypes.h>
 #include <stdbool.h>
-#include <stdlib.h> /* TODO: Used only for malloc, remove if possible */
 #include <string.h>
 
 #ifdef DEBUG
