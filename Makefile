@@ -20,4 +20,10 @@ test: debugcube.o
 benchmark: cube.o
 	CUBETYPE=${CUBETYPE} ./benchmark/bench.sh
 
-.PHONY: all clean test benchmark
+gen: cube.o
+	${CC} ${CFLAGS} -o gen cube.o tables/tables.c
+
+debuggen: debugcube.o
+	${CC} ${DBGFLAGS} -o debuggen debugcube.o tables/tables.c
+
+.PHONY: all clean test benchmark gen debuggen

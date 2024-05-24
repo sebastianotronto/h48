@@ -161,4 +161,4 @@ void multisolve(
 
 /* Returns the number of bytes written to data, -1 in case of error.
  * TODO: write down how much memory every solver requires. */
-int64_t gendata(const char *solver, void *data);
+int64_t gendata(const char *solver, const char *options, void *data);

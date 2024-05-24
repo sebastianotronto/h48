@@ -76,14 +76,6 @@ multisolve(
 	}
 }
 
-int64_t
-gendata(const char *solver, void *data)
-{
-	DBG_LOG("gendata: not implemented yet\n");
-
-	return -1;
-}
-
 _static void
 solve_generic_appendsolution(dfsarg_generic_t *arg)
 {
@@ -256,4 +248,22 @@ solve_simple(
 		solutions,
 		&estimate_simple
 	);
+}
+
+int64_t
+gendata(const char *solver, const char *options, void *data)
+{
+	int64_t ret;
+	uint8_t maxdepth;
+
+	if (!strcmp(solver, "H48")) {
+		/* TODO: write a generic parser for options */
+		maxdepth = atoi(options);
+		ret = gendata_h48(data, 0, maxdepth);
+	} else {
+		DBG_LOG("gendata: implemented only for H48 solver\n");
+		ret = -1;
+	}
+
+	return ret;
 }

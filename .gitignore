@@ -3,6 +3,11 @@ config.mk
 benchmark/results
 old/benchmark/results
 benchmark/run
+gen
+debuggen
+perf.data
+perf.data.old
+tables/data/*
 test/*/runtest
 test/run
 test/last.*
