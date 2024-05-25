@@ -1,6 +1,6 @@
 #define COCSEP_CLASSES        3393U
-#define COCSEP_TABLESIZE      (_3p7 << 7U)
-#define COCSEP_VISITEDSIZE    ((COCSEP_TABLESIZE + 7U) / 8U)
+#define COCSEP_TABLESIZE      (_3p7 << 7ULL)
+#define COCSEP_VISITEDSIZE    ((COCSEP_TABLESIZE + 7ULL) / 8ULL)
 #define COCSEP_FULLSIZE       (4*(COCSEP_TABLESIZE + 12))
 
 #define ESEP_MAX(h)           ((COCSEP_CLASSES * _12c4 * _8c4) << (h))
@@ -8,11 +8,11 @@
 
 #define H48_ESIZE(h)          ((_12c4 * _8c4) << (h))
 
-#define _esep_ind(i)          (i / 8U)
-#define _esep_shift(i)        (4U * (i % 8U))
-#define _esep_mask(i)         (((1U << 4U) - 1U) << _esep_shift(i))
-#define _visited_ind(i)       (i / 8U)
-#define _visited_mask(i)      (1U << (i % 8U))
+#define _esep_ind(i)          (i / 8ULL)
+#define _esep_shift(i)        (4ULL * (i % 8ULL))
+#define _esep_mask(i)         (((1ULL << 4ULL) - 1ULL) << _esep_shift(i))
+#define _visited_ind(i)       (i / 8ULL)
+#define _visited_mask(i)      (1ULL << (i % 8ULL))
 
 typedef struct {
 	cube_fast_t cube;
@@ -163,8 +163,9 @@ gendata_cocsep(void *buf, uint64_t *selfsim, cube_fast_t *rep)
 _static uint32_t
 gendata_cocsep_dfs(dfsarg_cocsep_t *arg)
 {
-	uint8_t m, t, tinv, olddepth;
+	uint8_t m, tinv, olddepth;
 	uint32_t cc;
+	uint64_t t, is;
 	int64_t i, ii;
 	cube_fast_t d;
 	dfsarg_cocsep_t nextarg;
@@ -182,7 +183,8 @@ gendata_cocsep_dfs(dfsarg_cocsep_t *arg)
 		for (t = 0, cc = 0; t < 48; t++) {
 			d = transform_corners(arg->cube, t);
 			ii = coord_fast_cocsep(d);
-			arg->selfsim[*arg->n] |= (i == ii) << t;
+			is = (i == ii);
+			arg->selfsim[*arg->n] |= is << t;
 			set_visited(arg->visited, ii);
 			tinv = inverse_trans(t);
 			cc += (arg->buf32[ii] & 0xFFU) == 0xFFU;
@@ -262,9 +264,9 @@ gendata_h48(void *buf, uint8_t h, uint8_t maxdepth)
 _static uint64_t
 gendata_esep_bfs(bfsarg_esep_t *arg)
 {
-	uint8_t c, m, t, x;
+	uint8_t c, m, x;
 	uint32_t cc;
-	uint64_t i, j, k, cocsep_coord, sim;
+	uint64_t i, j, k, t, cocsep_coord, sim;
 	cube_fast_t cube, moved, transd;
 
 	for (i = 0, cc = 0; i < ESEP_MAX(arg->h); i++) {
@@ -288,7 +290,7 @@ gendata_esep_bfs(bfsarg_esep_t *arg)
 			cocsep_coord = j / H48_ESIZE(arg->h);
 			sim = arg->selfsim[cocsep_coord];
 			for (t = 1; t < 48; t++) { /* Skip trivial trans */
-				if (!(sim & (1 << t)))
+				if (!(sim & (1ULL << t)))
 					continue;
 				transd = transform(moved, t);
 				k = coord_h48(transd, arg->cocsepdata, arg->h);
