@@ -30,10 +30,12 @@
 #elif defined(CUBE_NEON)
 #include "cube_neon.h"
 #else
+#include <stdlib.h> /* TODO: check if can be removed */
 #include "cube_portable.h"
 #endif
 
 #include "cube_routines.h"
+#include "cube_transform.h" /* TODO: merge with cube_routines? */
 #include "moves.h"
 #include "solve_h48.h"
 #include "solve_generic.h"

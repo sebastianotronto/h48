@@ -12,7 +12,7 @@ debugcube.o: clean
 	${CC} -D${CUBETYPE} ${DBGFLAGS} -c -o debugcube.o src/cube.c
 
 clean:
-	rm -rf *.o
+	rm -rf *.o gen debuggen
 
 test: debugcube.o
 	CUBETYPE=${CUBETYPE} TEST=${TEST} ./test/test.sh

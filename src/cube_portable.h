@@ -11,6 +11,10 @@ _static cube_t fasttocube(cube_fast_t);
 _static_inline bool equal_fast(cube_fast_t, cube_fast_t);
 _static_inline bool issolved_fast(cube_fast_t);
 _static_inline cube_fast_t invertco_fast(cube_fast_t);
+_static_inline void compose_edges_inplace(cube_fast_t, cube_fast_t, cube_fast_t *);
+_static_inline void compose_corners_inplace(cube_fast_t, cube_fast_t, cube_fast_t *);
+_static_inline cube_fast_t compose_fast_edges(cube_fast_t, cube_fast_t);
+_static_inline cube_fast_t compose_fast_corners(cube_fast_t, cube_fast_t);
 _static_inline cube_fast_t compose_fast(cube_fast_t, cube_fast_t);
 
 _static_inline int64_t coord_fast_co(cube_fast_t);
@@ -115,21 +119,24 @@ invertco_fast(cube_fast_t c)
 	return ret;
 }
 
-_static_inline cube_fast_t
-compose_fast(cube_fast_t c1, cube_fast_t c2)
+_static_inline void
+compose_edges_inplace(cube_fast_t c1, cube_fast_t c2, cube_fast_t *ret)
 {
-	cube_fast_t ret;
-	uint8_t i, piece1, piece2, p, orien, aux, auy;
-
-	ret = zero_fast;
+	uint8_t i, piece1, piece2, p, orien;
 
 	for (i = 0; i < 12; i++) {
 		piece2 = c2.edge[i];
 		p = piece2 & _pbits;
 		piece1 = c1.edge[p];
 		orien = (piece2 ^ piece1) & _eobit;
-		ret.edge[i] = (piece1 & _pbits) | orien;
+		ret->edge[i] = (piece1 & _pbits) | orien;
 	}
+}
+
+_static_inline void
+compose_corners_inplace(cube_fast_t c1, cube_fast_t c2, cube_fast_t *ret)
+{
+	uint8_t i, piece1, piece2, p, orien, aux, auy;
 
 	for (i = 0; i < 8; i++) {
 		piece2 = c2.corner[i];
@@ -138,8 +145,37 @@ compose_fast(cube_fast_t c1, cube_fast_t c2)
 		aux = (piece2 & _cobits) + (piece1 & _cobits);
 		auy = (aux + _ctwist_cw) >> 2U;
 		orien = (aux + auy) & _cobits2;
-		ret.corner[i] = (piece1 & _pbits) | orien;
+		ret->corner[i] = (piece1 & _pbits) | orien;
 	}
+}
+
+_static_inline cube_fast_t
+compose_fast_edges(cube_fast_t c1, cube_fast_t c2)
+{
+	cube_fast_t ret = zero_fast;
+
+	compose_edges_inplace(c1, c2, &ret);
+
+	return ret;
+}
+
+_static_inline cube_fast_t
+compose_fast_corners(cube_fast_t c1, cube_fast_t c2)
+{
+	cube_fast_t ret = zero_fast;
+
+	compose_corners_inplace(c1, c2, &ret);
+
+	return ret;
+}
+
+_static_inline cube_fast_t
+compose_fast(cube_fast_t c1, cube_fast_t c2)
+{
+	cube_fast_t ret = zero_fast;
+
+	compose_edges_inplace(c1, c2, &ret);
+	compose_corners_inplace(c1, c2, &ret);
 
 	return ret;
 }

@@ -1,16 +1,3 @@
-Table generation: transform only edges
-  (cube_avx2 and cube_portable)
-  - implement compose_fast_edges and compose_fast_corners
-  - tests not needed: just base the full transform on the other two
-  - cube_portable: easy for compose_fast to call the other two
-  - cube_avx2: split in (EP+EO+CP) and (CO); compose_edges call
-    (EP+EO+CP), compose_corners calls the full compose
-  (cube_routines)
-  - refactor transform(): use big array of cubes instead of switch
-  - add transform_edges and transform_corners
-  (solve_h48)
-  - uncomment transform_edges() and transform_corners()
-
 Solver
   - write a solver (how many tricks? some, but not all are needed)
 
@@ -27,6 +14,7 @@ Refactoring
   - remove cube type and some low-level utilities from interface,
     rename cube_fast_t to cube_t
   - add b64 i/o format, base64 encoded cube, one 6-bit word per piece
+  - transformations: remove switch to make shorter, but keep performance
 
 ## H48 optimal solver (some has already been implemented)
 

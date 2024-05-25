@@ -71,8 +71,7 @@ coord_h48_edges(cube_fast_t c, int64_t coclass, uint8_t t, uint8_t h)
 	cube_fast_t d;
 	int64_t esep, eo;
 
-	//d = transform_edges(c, t);
-	d = transform(c, t);
+	d = transform_edges(c, t);
 	esep = coord_fast_esep(d);
 	eo = coord_fast_eo(d);
 
@@ -181,8 +180,7 @@ gendata_cocsep_dfs(dfsarg_cocsep_t *arg)
 			return 0;
 
 		for (t = 0, cc = 0; t < 48; t++) {
-			//d = transform_corners(arg->cube, t);
-			d = transform(arg->cube, t);
+			d = transform_corners(arg->cube, t);
 			ii = coord_fast_cocsep(d);
 			arg->selfsim[*arg->n] |= (i == ii) << t;
 			set_visited(arg->visited, ii);

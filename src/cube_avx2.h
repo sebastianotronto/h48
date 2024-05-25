@@ -17,6 +17,9 @@ _static cube_t fasttocube(cube_fast_t);
 _static_inline bool equal_fast(cube_fast_t, cube_fast_t);
 _static_inline bool issolved_fast(cube_fast_t);
 _static_inline cube_fast_t invertco_fast(cube_fast_t);
+_static_inline cube_fast_t compose_epcpeo(cube_fast_t, cube_fast_t);
+_static_inline cube_fast_t compose_fast_edges(cube_fast_t, cube_fast_t);
+_static_inline cube_fast_t compose_fast_corners(cube_fast_t, cube_fast_t);
 _static_inline cube_fast_t compose_fast(cube_fast_t, cube_fast_t);
 
 _static_inline int64_t coord_fast_co(cube_fast_t);
@@ -123,9 +126,9 @@ invertco_fast(cube_fast_t c)
 }
 
 _static_inline cube_fast_t
-compose_fast(cube_fast_t c1, cube_fast_t c2)
+compose_epcpeo(cube_fast_t c1, cube_fast_t c2)
 {
-	cube_fast_t s, b, eo2, co1, co2, aux, auy1, auy2, auz1, auz2;
+	cube_fast_t b, s, eo2;
 
 	/* Permute and clean unused bits */
 	s = _mm256_shuffle_epi8(c1, c2);
@@ -138,6 +141,33 @@ compose_fast(cube_fast_t c1, cube_fast_t c2)
 	/* Change EO */
 	eo2 = _mm256_and_si256(c2, _eo_avx2);
 	s = _mm256_xor_si256(s, eo2);
+
+	return s;
+}
+
+_static_inline cube_fast_t
+compose_fast_edges(cube_fast_t c1, cube_fast_t c2)
+{
+	return compose_epcpeo(c1, c2);
+}
+
+_static_inline cube_fast_t
+compose_fast_corners(cube_fast_t c1, cube_fast_t c2)
+{
+	/*
+	 * We do a full compose. Minor optimizations are possible, like
+	 * saving one instruction by not doing EO, but it should not
+	 * be significant.
+	 */
+	return compose_fast(c1, c2);
+}
+
+_static_inline cube_fast_t
+compose_fast(cube_fast_t c1, cube_fast_t c2)
+{
+	cube_fast_t s, co1, co2, aux, auy1, auy2, auz1, auz2;
+
+	s = compose_epcpeo(c1, c2);
 
 	/* Change CO */
 	co1 = _mm256_and_si256(s, _co2_avx2);

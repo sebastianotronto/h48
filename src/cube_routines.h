@@ -1,11 +1,5 @@
 #define _move(M, c) compose_fast(c, _move_cube_ ## M)
 #define _premove(M, c) compose_fast(_move_cube_ ## M, c)
-#define _trans_rotation(T, c) \
-	compose_fast(compose_fast(_trans_cube_ ## T, c), \
-	_trans_cube_ ## T ## _inverse)
-#define _trans_mirrored(T, c) \
-	invertco_fast(compose_fast(compose_fast(_trans_cube_ ## T, c), \
-	_trans_cube_ ## T ## _inverse))
 
 _static int permsign(uint8_t *, int);
 _static uint8_t readco(const char *);
@@ -24,6 +18,8 @@ _static uint8_t readtrans(const char *);
 _static int writemoves(uint8_t *, int, char *);
 _static void writetrans(uint8_t, char *);
 _static cube_fast_t move(cube_fast_t, uint8_t);
+_static cube_fast_t transform_edges(cube_fast_t, uint8_t);
+_static cube_fast_t transform_corners(cube_fast_t, uint8_t);
 _static cube_fast_t transform(cube_fast_t, uint8_t);
 
 cube_t
@@ -623,108 +619,7 @@ move(cube_fast_t c, uint8_t m)
 	}
 }
 
-_static cube_fast_t
-transform(cube_fast_t c, uint8_t t)
-{
-	switch (t) {
-	case _trans_UFr:
-		return _trans_rotation(UFr, c);
-	case _trans_ULr:
-		return _trans_rotation(ULr, c);
-	case _trans_UBr:
-		return _trans_rotation(UBr, c);
-	case _trans_URr:
-		return _trans_rotation(URr, c);
-	case _trans_DFr:
-		return _trans_rotation(DFr, c);
-	case _trans_DLr:
-		return _trans_rotation(DLr, c);
-	case _trans_DBr:
-		return _trans_rotation(DBr, c);
-	case _trans_DRr:
-		return _trans_rotation(DRr, c);
-	case _trans_RUr:
-		return _trans_rotation(RUr, c);
-	case _trans_RFr:
-		return _trans_rotation(RFr, c);
-	case _trans_RDr:
-		return _trans_rotation(RDr, c);
-	case _trans_RBr:
-		return _trans_rotation(RBr, c);
-	case _trans_LUr:
-		return _trans_rotation(LUr, c);
-	case _trans_LFr:
-		return _trans_rotation(LFr, c);
-	case _trans_LDr:
-		return _trans_rotation(LDr, c);
-	case _trans_LBr:
-		return _trans_rotation(LBr, c);
-	case _trans_FUr:
-		return _trans_rotation(FUr, c);
-	case _trans_FRr:
-		return _trans_rotation(FRr, c);
-	case _trans_FDr:
-		return _trans_rotation(FDr, c);
-	case _trans_FLr:
-		return _trans_rotation(FLr, c);
-	case _trans_BUr:
-		return _trans_rotation(BUr, c);
-	case _trans_BRr:
-		return _trans_rotation(BRr, c);
-	case _trans_BDr:
-		return _trans_rotation(BDr, c);
-	case _trans_BLr:
-		return _trans_rotation(BLr, c);
-	case _trans_UFm:
-		return _trans_mirrored(UFm, c);
-	case _trans_ULm:
-		return _trans_mirrored(ULm, c);
-	case _trans_UBm:
-		return _trans_mirrored(UBm, c);
-	case _trans_URm:
-		return _trans_mirrored(URm, c);
-	case _trans_DFm:
-		return _trans_mirrored(DFm, c);
-	case _trans_DLm:
-		return _trans_mirrored(DLm, c);
-	case _trans_DBm:
-		return _trans_mirrored(DBm, c);
-	case _trans_DRm:
-		return _trans_mirrored(DRm, c);
-	case _trans_RUm:
-		return _trans_mirrored(RUm, c);
-	case _trans_RFm:
-		return _trans_mirrored(RFm, c);
-	case _trans_RDm:
-		return _trans_mirrored(RDm, c);
-	case _trans_RBm:
-		return _trans_mirrored(RBm, c);
-	case _trans_LUm:
-		return _trans_mirrored(LUm, c);
-	case _trans_LFm:
-		return _trans_mirrored(LFm, c);
-	case _trans_LDm:
-		return _trans_mirrored(LDm, c);
-	case _trans_LBm:
-		return _trans_mirrored(LBm, c);
-	case _trans_FUm:
-		return _trans_mirrored(FUm, c);
-	case _trans_FRm:
-		return _trans_mirrored(FRm, c);
-	case _trans_FDm:
-		return _trans_mirrored(FDm, c);
-	case _trans_FLm:
-		return _trans_mirrored(FLm, c);
-	case _trans_BUm:
-		return _trans_mirrored(BUm, c);
-	case _trans_BRm:
-		return _trans_mirrored(BRm, c);
-	case _trans_BDm:
-		return _trans_mirrored(BDm, c);
-	case _trans_BLm:
-		return _trans_mirrored(BLm, c);
-	default:
-		DBG_LOG("transform error, unknown transformation\n");
-		return zero_fast;
-	}
-}
+/*
+TODO transform is now relegated to a separated file because it is too long.
+It would be nice to make it shorter without loosing performance.
+*/
