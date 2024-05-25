@@ -288,9 +288,9 @@ gendata_esep_bfs(bfsarg_esep_t *arg)
 			set_esep_pval(arg->buf32, j, arg->depth);
 			cc += x != arg->depth;
 			cocsep_coord = j / H48_ESIZE(arg->h);
-			sim = arg->selfsim[cocsep_coord];
-			for (t = 1; t < 48; t++) { /* Skip trivial trans */
-				if (!(sim & (1ULL << t)))
+			sim = arg->selfsim[cocsep_coord] >> 1ULL;
+			for (t = 1; t < 48 && sim; t++, sim >>= 1ULL) {
+				if (!(sim & 1ULL))
 					continue;
 				transd = transform(moved, t);
 				k = coord_h48(transd, arg->cocsepdata, arg->h);

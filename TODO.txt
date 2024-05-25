@@ -1,3 +1,7 @@
+Correctness
+  - Check all cases of bitwise operations for type mismatch,
+    force cast to same type. Change to ULL where appropriate.
+
 Solver
   - write a solver (how many tricks? some, but not all are needed)
 
