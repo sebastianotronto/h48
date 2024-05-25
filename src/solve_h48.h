@@ -35,6 +35,7 @@ typedef struct {
 } bfsarg_esep_t;
 
 _static_inline int64_t coord_h48(cube_fast_t, const uint32_t *, uint8_t);
+_static_inline int64_t coord_h48_edges(cube_fast_t, int64_t, uint8_t, uint8_t);
 _static_inline cube_fast_t invcoord_h48(int64_t, const cube_fast_t *, uint8_t);
 
 _static size_t gendata_cocsep(void *, uint64_t *, cube_fast_t *);
@@ -50,8 +51,7 @@ _static_inline void set_esep_pval(uint32_t *, int64_t, uint8_t);
 _static_inline int64_t
 coord_h48(cube_fast_t c, const uint32_t *cocsepdata, uint8_t h)
 {
-	cube_fast_t d;
-	int64_t cocsep, coclass, esep, eo, ret;
+	int64_t cocsep, coclass;
 	uint32_t data;
 	uint8_t ttrep;
 
@@ -62,17 +62,24 @@ coord_h48(cube_fast_t c, const uint32_t *cocsepdata, uint8_t h)
 	coclass = (data & (0xFFFFU << 16U)) >> 16U;
 	ttrep = (data & (0xFFU << 8U)) >> 8U;
 
-	d = transform(c, ttrep); /* TODO: transform only edges */
+	return coord_h48_edges(c, coclass, ttrep, h);
+}
+
+_static_inline int64_t
+coord_h48_edges(cube_fast_t c, int64_t coclass, uint8_t t, uint8_t h)
+{
+	cube_fast_t d;
+	int64_t esep, eo;
+
+	//d = transform_edges(c, t);
+	d = transform(c, t);
 	esep = coord_fast_esep(d);
 	eo = coord_fast_eo(d);
 
-	ret = (coclass * H48_ESIZE(h)) + (esep << h) + (eo >> (11-h));
-
-	return ret;
+	return (coclass * H48_ESIZE(h)) + (esep << h) + (eo >> (11-h));
 }
 
 /*
-
 This function does not necessarily return a cube whose coordinate is
 the given value, because it works up to symmetry. This means that the
 returned cube is a transformed cube of one that gives the correct value.
@@ -174,6 +181,7 @@ gendata_cocsep_dfs(dfsarg_cocsep_t *arg)
 			return 0;
 
 		for (t = 0, cc = 0; t < 48; t++) {
+			//d = transform_corners(arg->cube, t);
 			d = transform(arg->cube, t);
 			ii = coord_fast_cocsep(d);
 			arg->selfsim[*arg->n] |= (i == ii) << t;
@@ -267,6 +275,11 @@ gendata_esep_bfs(bfsarg_esep_t *arg)
 			continue;
 		cube = invcoord_h48(i, arg->crep, arg->h);
 		for (m = 0; m < 18; m++) {
+			/*
+			 * TODO: here we can optimize by computing at first
+			 * only the corner part of the coordinate, and then
+			 * the edge parts for each transformation.
+			 */
 			moved = move(cube, m);
 			j = coord_h48(moved, arg->cocsepdata, arg->h);
 			x = get_esep_pval(arg->buf32, j);
