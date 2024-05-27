@@ -2,7 +2,7 @@
 
 #define MAXDEPTH 5
 #define COCSEPSIZE 1119792
-#define ETABLESIZE(h) (((3393 * 495 * 70) >> 1) << (h))
+#define ETABLESIZE(h) (((3393 * 495 * 70) >> 1) << (size_t)(h))
 
 size_t gendata_h48(void *, uint8_t, uint8_t);
 

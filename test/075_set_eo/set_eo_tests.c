@@ -22,9 +22,11 @@ int main(void) {
 		printf("Error setting EO\n");
 	} else if (!isconsistent(cube)) {
 		fprintf(stderr, "edges: ");
-		for (int i = 0; i < 12; i++) fprintf(stderr, "%d ", cube.edge[i]);
+		for (int i = 0; i < 12; i++)
+			fprintf(stderr, "%d ", cube.edge[i]);
 		fprintf(stderr, "\n");
-		for (int i = 0; i < 8; i++) fprintf(stderr, "%d ", cube.corner[i]);
+		for (int i = 0; i < 8; i++)
+			fprintf(stderr, "%d ", cube.corner[i]);
 		fprintf(stderr, "\n");
 		printf("Setting EO resulted in inconsistent cube\n");
 	} else {

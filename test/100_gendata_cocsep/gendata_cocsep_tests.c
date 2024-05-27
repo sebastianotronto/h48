@@ -1,6 +1,6 @@
 #include "../test.h"
 
-#define COCSEP_CLASSES 3393U
+#define COCSEP_CLASSES 3393
 
 size_t gendata_cocsep(void *, uint64_t *, cube_fast_t *);
 

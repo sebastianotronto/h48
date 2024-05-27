@@ -1,18 +1,23 @@
-#define COCSEP_CLASSES        3393U
-#define COCSEP_TABLESIZE      (_3p7 << 7ULL)
-#define COCSEP_VISITEDSIZE    ((COCSEP_TABLESIZE + 7ULL) / 8ULL)
-#define COCSEP_FULLSIZE       (4*(COCSEP_TABLESIZE + 12))
+#define COCSEP_CLASSES        ((size_t)3393)
+#define COCSEP_TABLESIZE      ((size_t)_3p7 << (size_t)7)
+#define COCSEP_VISITEDSIZE    ((COCSEP_TABLESIZE + (size_t)7) / (size_t)8)
+#define COCSEP_FULLSIZE       ((size_t)4 * (COCSEP_TABLESIZE + (size_t)12))
 
-#define ESEP_MAX(h)           ((COCSEP_CLASSES * _12c4 * _8c4) << (h))
-#define ESEP_TABLESIZE(h, k)  (ESEP_MAX((h)) / (8U / (k)))
+#define ESEP_NOEO             (COCSEP_CLASSES * (size_t)_12c4 * (size_t)_8c4)
+#define ESEP_MAX(h)           (ESEP_NOEO << (size_t)(h))
+#define ESEP_TABLESIZE(h, k)  (ESEP_MAX((h)) / ((size_t)8 / (size_t)(k)))
 
-#define H48_ESIZE(h)          ((_12c4 * _8c4) << (h))
+#define COCLASS_MASK          (UINT32_C(0xFFFF) << UINT32_C(16))
+#define COCLASS(x)            (((x) & COCLASS_MASK) >> UINT32_C(16))
+#define TTREP_MASK            (UINT32_C(0xFF) << UINT32_C(8))
+#define TTREP(x)              (((x) & TTREP_MASK) >> UINT32_C(8))
+#define H48_ESIZE(h)          ((_12c4 * _8c4) << (int64_t)(h))
 
-#define _esep_ind(i)          (i / 8ULL)
-#define _esep_shift(i)        (4ULL * (i % 8ULL))
-#define _esep_mask(i)         (((1ULL << 4ULL) - 1ULL) << _esep_shift(i))
-#define _visited_ind(i)       (i / 8ULL)
-#define _visited_mask(i)      (1ULL << (i % 8ULL))
+#define ESEP_IND(i)           ((uint32_t)(i) / UINT32_C(8))
+#define ESEP_SHIFT(i)         (UINT32_C(4) * ((uint32_t)(i) % UINT32_C(8)))
+#define ESEP_MASK(i)          ((_bit_u32(4) - (uint32_t)(1)) << ESEP_SHIFT(i))
+#define VISITED_IND(i)        ((uint32_t)(i) / UINT32_C(8))
+#define VISITED_MASK(i)       (UINT32_C(1) << ((uint32_t)(i) % UINT32_C(8)))
 
 typedef struct {
 	cube_fast_t cube;
@@ -59,8 +64,8 @@ coord_h48(cube_fast_t c, const uint32_t *cocsepdata, uint8_t h)
 
 	cocsep = coord_fast_cocsep(c);
 	data = cocsepdata[cocsep];
-	coclass = (data & (0xFFFFU << 16U)) >> 16U;
-	ttrep = (data & (0xFFU << 8U)) >> 8U;
+	coclass = (int64_t)COCLASS(data);
+	ttrep = (int64_t)TTREP(data);
 
 	return coord_h48_edges(c, coclass, ttrep, h);
 }
@@ -69,13 +74,14 @@ _static_inline int64_t
 coord_h48_edges(cube_fast_t c, int64_t coclass, uint8_t t, uint8_t h)
 {
 	cube_fast_t d;
-	int64_t esep, eo;
+	int64_t esep, eo, edges;
 
 	d = transform_edges(c, t);
 	esep = coord_fast_esep(d);
 	eo = coord_fast_eo(d);
+	edges = (esep << (int64_t)h) + (eo >> (11 - (int64_t)h));
 
-	return (coclass * H48_ESIZE(h)) + (esep << h) + (eo >> (11-h));
+	return coclass * H48_ESIZE(h) + edges;
 }
 
 /*
@@ -85,15 +91,17 @@ returned cube is a transformed cube of one that gives the correct value.
 */
 _static_inline cube_fast_t
 invcoord_h48(int64_t i, const cube_fast_t *crep, uint8_t h) {
-	cube_fast_t ret; int64_t coclass, ee, esep, eo;
+	cube_fast_t ret;
+	int64_t hh, coclass, ee, esep, eo;
 
 	DBG_ASSERT(h <= 11, cubetofast(zero),
 	    "invcoord_h48: h must be between 0 and 11\n");
 
+	hh = (int64_t)h;
 	coclass = i / H48_ESIZE(h);
 	ee = i % H48_ESIZE(h);
-	esep = ee >> h;
-	eo = (ee & ((1<<h)-1)) << (11-h);
+	esep = ee >> hh;
+	eo = (ee & ((1 << hh) - 1)) << (11 - hh);
 
 	ret = invcoord_fast_esep(esep);
 	copy_corners_fast(&ret, crep[coclass]);
@@ -123,7 +131,7 @@ gendata_cocsep(void *buf, uint64_t *selfsim, cube_fast_t *rep)
 
 	buf32 = (uint32_t *)buf;
 	info = buf32 + COCSEP_TABLESIZE;
-	memset(buf32, 0xFFU, sizeof(uint32_t) * COCSEP_TABLESIZE);
+	memset(buf32, 0xFF, sizeof(uint32_t) * COCSEP_TABLESIZE);
 	memset(selfsim, 0, sizeof(uint64_t) * COCSEP_CLASSES);
 
 	arg = (dfsarg_cocsep_t) {
@@ -145,10 +153,10 @@ gendata_cocsep(void *buf, uint64_t *selfsim, cube_fast_t *rep)
 	}
 
 	info[0] = (uint32_t)n;
-	info[1] = 9U; /* Known max pruning value */
+	info[1] = 9; /* Known max pruning value */
 	DBG_ASSERT(n == COCSEP_CLASSES, 0,
 	    "cocsep: computed %" PRIu16 " symmetry classes, "
-	    "expected %" PRIu16 "\n", n, COCSEP_CLASSES);
+	    "expected %zu\n", n, COCSEP_CLASSES);
 
 	DBG_LOG("cocsep data computed\n");
 	DBG_LOG("Symmetry classes: %" PRIu32 "\n", info[0]);
@@ -163,33 +171,37 @@ gendata_cocsep(void *buf, uint64_t *selfsim, cube_fast_t *rep)
 _static uint32_t
 gendata_cocsep_dfs(dfsarg_cocsep_t *arg)
 {
-	uint8_t m, tinv, olddepth;
-	uint32_t cc;
+	uint8_t m, tinv;
+	uint32_t cc, class, ttrep, depth, olddepth;
 	uint64_t t, is;
-	int64_t i, ii;
+	int64_t i, j;
 	cube_fast_t d;
 	dfsarg_cocsep_t nextarg;
 
 	i = coord_fast_cocsep(arg->cube);
-	olddepth = (uint8_t)(arg->buf32[i] & 0xFFU);
+	olddepth = (uint8_t)(arg->buf32[i] & 0xFF);
 	if (olddepth < arg->depth || get_visited(arg->visited, i))
 		return 0;
 	set_visited(arg->visited, i);
 
 	if (arg->depth == arg->maxdepth) {
-		if ((arg->buf32[i] & 0xFFU) != 0xFFU)
+		if ((arg->buf32[i] & 0xFF) != 0xFF)
 			return 0;
 
 		for (t = 0, cc = 0; t < 48; t++) {
 			d = transform_corners(arg->cube, t);
-			ii = coord_fast_cocsep(d);
-			is = (i == ii);
+			j = coord_fast_cocsep(d);
+			is = (i == j);
 			arg->selfsim[*arg->n] |= is << t;
-			set_visited(arg->visited, ii);
+			set_visited(arg->visited, j);
 			tinv = inverse_trans(t);
-			cc += (arg->buf32[ii] & 0xFFU) == 0xFFU;
-			arg->buf32[ii] =
-			    (*arg->n << 16U) | (tinv << 8U) | arg->depth;
+			olddepth = (uint8_t)(arg->buf32[j] & 0xFF);
+			cc += olddepth == 0xFF;
+
+			class = (uint32_t)(*arg->n) << 16;
+			ttrep = (uint32_t)tinv << 8;
+			depth = (uint32_t)arg->depth;
+			arg->buf32[j] = class | ttrep | depth;
 		}
 		arg->rep[*arg->n] = arg->cube;
 		(*arg->n)++;
@@ -217,16 +229,17 @@ gendata_h48(void *buf, uint8_t h, uint8_t maxdepth)
 	const int k = 4; /* TODO: other cases? */
 	uint32_t j, *buf32, *info, *cocsepdata;
 	bfsarg_esep_t arg;
-	int64_t sc, cc, tot;
+	int64_t sc, cc, tot, esep_max;
 	uint64_t selfsim[COCSEP_CLASSES];
 	cube_fast_t crep[COCSEP_CLASSES];
-	size_t cocsepsize;
+	size_t cocsepsize, infosize;
 
+	esep_max = (int64_t)ESEP_MAX(h);
 	cocsepsize = gendata_cocsep(buf, selfsim, crep);
 	cocsepdata = (uint32_t *)buf;
-	buf32 = cocsepdata + cocsepsize/4;
+	buf32 = cocsepdata + cocsepsize / 4;
 	info = buf32 + (ESEP_TABLESIZE(h, k) / sizeof(uint32_t));
-	memset(buf32, 0xFFU, ESEP_TABLESIZE(h, k));
+	memset(buf32, 0xFF, ESEP_TABLESIZE(h, k));
 
 	sc = coord_h48(cubetofast(solved), cocsepdata, h);
 	set_esep_pval(buf32, sc, 0);
@@ -240,7 +253,7 @@ gendata_h48(void *buf, uint8_t h, uint8_t maxdepth)
 	};
 	for (
 		tot = 1, arg.depth = 1, cc = 0;
-		tot < ESEP_MAX(h) && arg.depth <= maxdepth;
+		tot < esep_max && arg.depth <= maxdepth;
 		arg.depth++
 	) {
 		DBG_LOG("esep: generating depth %" PRIu8 "\n", arg.depth);
@@ -251,6 +264,7 @@ gendata_h48(void *buf, uint8_t h, uint8_t maxdepth)
 	}
 
 	info[0] = arg.depth-1;
+	infosize = 4 * (size_t)(info[0] + 2);
 
 	DBG_LOG("h48 pruning table computed\n");
 	DBG_LOG("Maximum pruning value: %" PRIu32 "\n", info[0]);
@@ -258,7 +272,7 @@ gendata_h48(void *buf, uint8_t h, uint8_t maxdepth)
 	for (j = 0; j <= info[0]; j++)
 		DBG_LOG("%" PRIu8 ":\t%" PRIu32 "\n", j, info[j+1]);
 
-	return COCSEP_FULLSIZE + ESEP_TABLESIZE(h, k) + 4*(info[0]+2);
+	return cocsepsize + ESEP_TABLESIZE(h, k) + infosize;
 }
 
 _static uint64_t
@@ -266,10 +280,12 @@ gendata_esep_bfs(bfsarg_esep_t *arg)
 {
 	uint8_t c, m, x;
 	uint32_t cc;
-	uint64_t i, j, k, t, cocsep_coord, sim;
+	int64_t i, j, k, t, cocsep_coord, sim, esep_max;
 	cube_fast_t cube, moved, transd;
 
-	for (i = 0, cc = 0; i < ESEP_MAX(arg->h); i++) {
+	esep_max = (uint64_t)ESEP_MAX(arg->h);
+
+	for (i = 0, cc = 0; i < esep_max; i++) {
 		c = get_esep_pval(arg->buf32, i);
 		if (c != arg->depth - 1)
 			continue;
@@ -288,9 +304,9 @@ gendata_esep_bfs(bfsarg_esep_t *arg)
 			set_esep_pval(arg->buf32, j, arg->depth);
 			cc += x != arg->depth;
 			cocsep_coord = j / H48_ESIZE(arg->h);
-			sim = arg->selfsim[cocsep_coord] >> 1ULL;
-			for (t = 1; t < 48 && sim; t++, sim >>= 1ULL) {
-				if (!(sim & 1ULL))
+			sim = arg->selfsim[cocsep_coord] >> 1;
+			for (t = 1; t < 48 && sim; t++, sim >>= 1) {
+				if (!(sim & 1))
 					continue;
 				transd = transform(moved, t);
 				k = coord_h48(transd, arg->cocsepdata, arg->h);
@@ -308,23 +324,23 @@ gendata_esep_bfs(bfsarg_esep_t *arg)
 
 _static_inline bool get_visited(const uint8_t *a, int64_t i)
 {
-	return a[_visited_ind(i)] & _visited_mask(i);
+	return a[VISITED_IND(i)] & VISITED_MASK(i);
 }
 
 _static_inline void set_visited(uint8_t *a, int64_t i)
 {
-	a[_visited_ind(i)] |= _visited_mask(i);
+	a[VISITED_IND(i)] |= VISITED_MASK(i);
 }
 
 _static_inline uint8_t
 get_esep_pval(const uint32_t *buf32, int64_t i)
 {
-	return (buf32[_esep_ind(i)] & _esep_mask(i)) >> _esep_shift(i);
+	return (buf32[ESEP_IND(i)] & ESEP_MASK(i)) >> ESEP_SHIFT(i);
 }
 
 _static_inline void
 set_esep_pval(uint32_t *buf32, int64_t i, uint8_t val)
 {
-	buf32[_esep_ind(i)] =
-	    (buf32[_esep_ind(i)] & (~_esep_mask(i))) | (val << _esep_shift(i));
+	buf32[ESEP_IND(i)] =
+	    (buf32[ESEP_IND(i)] & (~ESEP_MASK(i))) | (val << ESEP_SHIFT(i));
 }

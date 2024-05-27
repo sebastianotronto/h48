@@ -1,10 +1,12 @@
 typedef __m256i cube_fast_t;
 
-#define _co2_avx2 _mm256_set_epi64x(0, 0, 0, 0x6060606060606060)
-#define _cocw_avx2 _mm256_set_epi64x(0, 0, 0, 0x2020202020202020)
-#define _cp_avx2 _mm256_set_epi64x(0, 0, 0, 0x0707070707070707)
-#define _ep_avx2 _mm256_set_epi64x(0x0F0F0F0F, 0x0F0F0F0F0F0F0F0F, 0, 0)
-#define _eo_avx2 _mm256_set_epi64x(0x10101010, 0x1010101010101010, 0, 0)
+#define _co2_avx2 _mm256_set_epi64x(0, 0, 0, INT64_C(0x6060606060606060))
+#define _cocw_avx2 _mm256_set_epi64x(0, 0, 0, INT64_C(0x2020202020202020))
+#define _cp_avx2 _mm256_set_epi64x(0, 0, 0, INT64_C(0x0707070707070707))
+#define _ep_avx2 \
+    _mm256_set_epi64x(INT64_C(0x0F0F0F0F), INT64_C(0x0F0F0F0F0F0F0F0F), 0, 0)
+#define _eo_avx2 \
+    _mm256_set_epi64x(INT64_C(0x10101010), INT64_C(0x1010101010101010), 0, 0)
 
 _static_inline cube_fast_t fastcube(
     uint8_t, uint8_t, uint8_t, uint8_t, uint8_t,
@@ -194,9 +196,9 @@ coord_fast_co(cube_fast_t c)
 	co = _mm256_and_si256(c, _co2_avx2);
 	_mm256_storeu_si256((__m256i *)mem, co);
 
-	mem[0] >>= 5L;
-	for (i = 0, ret = 0, p = 1; i < 7; i++, mem[0] >>= 8L, p *= 3)
-		ret += (mem[0] & 3L) * p;
+	mem[0] >>= 5;
+	for (i = 0, ret = 0, p = 1; i < 7; i++, mem[0] >>= 8, p *= 3)
+		ret += (mem[0] & 3) * p;
 
 	return ret;
 }
@@ -242,14 +244,14 @@ coord_fast_esep(cube_fast_t c)
 	ep = _mm256_and_si256(c, _ep_avx2);
 	_mm256_storeu_si256((__m256i *)mem, ep);
 
-	mem[3] <<= 8L;
+	mem[3] <<= 8;
 	ret1 = ret2 = 0;
 	k = l = 4;
-	for (i = 0, j = 0; i < 12; i++, mem[i/8 + 2] >>= 8L) {
+	for (i = 0, j = 0; i < 12; i++, mem[i/8 + 2] >>= 8) {
 		e = mem[i/8 + 2];
 
-		bit1 = (e & _esepbit1) >> 2L;
-		bit2 = (e & _esepbit2) >> 3L;
+		bit1 = (e & _esepbit1) >> 2;
+		bit2 = (e & _esepbit2) >> 3;
 		is1 = (1 - bit2) * bit1;
 
 		ret1 += bit2 * binomial[11-i][k];
@@ -305,8 +307,8 @@ _static_inline cube_fast_t
 invcoord_fast_esep(int64_t esep)
 {
 	cube_fast_t eee, ret;
-	int64_t i, j, jj, k, l, s, v, w, is1, set1, set2;
-	uint8_t bit2, bit1, mem[32];
+	int64_t bit1, bit2, i, j, jj, k, l, s, v, w, is1, set1, set2;
+	uint8_t mem[32];
 	uint8_t slice[3] = {0};
 
 	set1 = esep % 70;
@@ -327,7 +329,7 @@ invcoord_fast_esep(int64_t esep)
 		j += (1-bit2);
 		s = 2*bit2 + (1-bit2)*bit1;
 
-		mem[i+16] = (slice[s]++) | (s << 2);
+		mem[i+16] = (slice[s]++) | (uint8_t)(s << 2);
 	}
 
 	ret = cubetofast(solved);

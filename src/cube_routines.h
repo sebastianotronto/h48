@@ -422,8 +422,9 @@ _static int
 writepiece_LST(uint8_t piece, char *buf)
 {
 	char digits[3];
-	int i, len = 0;
+	int i, len;
 
+	len = 0;
 	while (piece != 0) {
 		digits[len++] = (piece % 10) + '0';
 		piece /= 10;
@@ -473,7 +474,8 @@ writecube_H48(cube_t cube, char *buf)
 _static void
 writecube_LST(cube_t cube, char *buf)
 {
-	int i, ptr;
+	int i;
+	size_t ptr;
 	uint8_t piece;
 
 	ptr = 0;

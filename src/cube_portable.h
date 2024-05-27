@@ -143,7 +143,7 @@ compose_corners_inplace(cube_fast_t c1, cube_fast_t c2, cube_fast_t *ret)
 		p = piece2 & _pbits;
 		piece1 = c1.corner[p];
 		aux = (piece2 & _cobits) + (piece1 & _cobits);
-		auy = (aux + _ctwist_cw) >> 2U;
+		auy = (aux + _ctwist_cw) >> 2;
 		orien = (aux + auy) & _cobits2;
 		ret->corner[i] = (piece1 & _pbits) | orien;
 	}
@@ -206,7 +206,7 @@ coord_fast_csep(cube_fast_t c)
 	int64_t ret;
 
 	for (ret = 0, i = 0, p = 1; i < 7; i++, p *= 2)
-		ret += p * ((c.corner[i] & _csepbit) >> 2U);
+		ret += p * ((c.corner[i] & _csepbit) >> 2);
 
 	return ret;
 }
@@ -249,8 +249,8 @@ coord_fast_esep(cube_fast_t c)
 		}
 		*/
 
-		bit1 = (c.edge[i] & _esepbit1) >> 2U;
-		bit2 = (c.edge[i] & _esepbit2) >> 3U;
+		bit1 = (c.edge[i] & _esepbit1) >> 2;
+		bit2 = (c.edge[i] & _esepbit2) >> 3;
 		is1 = (1 - bit2) * bit1;
 
 		ret1 += bit2 * binomial[11-i][k];
@@ -280,22 +280,21 @@ copy_edges_fast(cube_fast_t *dest, cube_fast_t src)
 _static_inline void
 set_eo_fast(cube_fast_t *cube, int64_t eo)
 {
-	int i, sum, flip;
+	uint8_t i, sum, flip;
 
 	for (sum = 0, i = 1; i < 12; i++, eo >>= 1) {
 		flip = eo % 2;
 		sum += flip;
 		cube->edge[i] = (cube->edge[i] & ~_eobit) | (_eobit * flip);
 	}
-	cube->edge[0] = (cube->edge[0] & ~_eobit) | (_eobit * (sum%2));
+	cube->edge[0] = (cube->edge[0] & ~_eobit) | (_eobit * (sum % 2));
 }
 
 _static_inline cube_fast_t
 invcoord_fast_esep(int64_t esep)
 {
 	cube_fast_t ret;
-	int64_t i, j, jj, k, l, s, v, w, is1, set1, set2;
-	uint8_t bit2, bit1;
+	int64_t bit1, bit2, i, j, jj, k, l, s, v, w, is1, set1, set2;
 	uint8_t slice[3] = {0};
 
 	ret = cubetofast(solved);
@@ -317,7 +316,7 @@ invcoord_fast_esep(int64_t esep)
 		j += (1-bit2);
 		s = 2*bit2 + (1-bit2)*bit1;
 
-		ret.edge[i] = (slice[s]++) | (s << 2);
+		ret.edge[i] = (slice[s]++) | (uint8_t)(s << 2);
 	}
 
 	return ret;
