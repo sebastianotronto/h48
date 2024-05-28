@@ -1,4 +1,7 @@
-typedef cube_t cube_fast_t;
+typedef struct {
+	uint8_t corner[8];
+	uint8_t edge[12];
+}  cube_fast_t;
 
 _static_inline cube_fast_t fastcube(
     uint8_t, uint8_t, uint8_t, uint8_t, uint8_t,
@@ -6,6 +9,8 @@ _static_inline cube_fast_t fastcube(
     uint8_t, uint8_t, uint8_t, uint8_t, uint8_t,
     uint8_t, uint8_t, uint8_t, uint8_t, uint8_t
 );
+_static uint8_t corner(cube_fast_t, int);
+_static uint8_t edge(cube_fast_t, int);
 _static cube_fast_t cubetofast(cube_t);
 _static cube_t fasttocube(cube_fast_t);
 _static_inline bool equal_fast(cube_fast_t, cube_fast_t);
@@ -64,6 +69,21 @@ fastcube(
 	};
 
 	return cube;
+}
+
+_static uint8_t
+corner(cube_fast_t c, int i)
+{
+	DBG_ASSERT(i >= 0 && i < 8, 255, "Corner must be between 0 and 7\n");
+
+	return c.corner[i];
+}
+_static uint8_t
+edge(cube_fast_t c, int i)
+{
+	DBG_ASSERT(i >= 0 && i < 12, 255, "Edge must be between 0 and 11\n");
+
+	return c.edge[i];
 }
 
 _static cube_fast_t

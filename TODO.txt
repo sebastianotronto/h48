@@ -1,12 +1,30 @@
-Correctness
-  - check all bitwise operations specifically
-  - consider adding more warnings (-pedantic?) or using more static analyzers
+Refactoring: remove cube_fast_t and add b32 format
+  x added b32 converter by piece (not tested, will be tested automatically)
+  x added piece functions (e.g. corner(cube, i))
+    (would be more efficient to just convert the whole thing to arrays...)
+  - replace all usages of cube_t with cube_fast_t and piece functions
+    (this is mainly in cube_routines)
+    (fix tests in tandem with main code)
+	cubetofast fasttocube
+	zero and solved
+	solvedcube(void)
+	[cube.h] isconsistent, issolvable, issolved, equal, iserror
+	[cube.h] compose, inverse
+	[cube.h] applymoves, applytrans
+	[cube.h] readcube writecube
+	[cube.h] solve
+  - add b32 i/o format as default
+  - remove cube_t type
+  - rename cube_fast_t to cube_t
+  - if all public functions work with strings, always use return value
+    as error code (solve already does this), and use string as buffer
+    to print error
 
 Solver
   - write a solver (how many tricks? some, but not all are needed)
 
 More utilities for tables (in cube.h)
-  - a "dryrun" function that only tells you the size needed
+  - for tables, a "dryrun" function that only tells you the size needed
   - check hash of generated data
 
 Goal: find out which k value is best
@@ -15,9 +33,6 @@ Goal: find out which k value is best
   - benchmark for different sizes!
 
 Refactoring
-  - remove cube type and some low-level utilities from interface,
-    rename cube_fast_t to cube_t
-  - add b64 i/o format, base64 encoded cube, one 6-bit word per piece
   - transformations: remove switch to make shorter, but keep performance
 
 ## H48 optimal solver (some has already been implemented)

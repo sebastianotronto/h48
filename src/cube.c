@@ -9,10 +9,8 @@
 #define DBG_LOG(...) fprintf(stderr, __VA_ARGS__)
 #define DBG_WARN(condition, ...) if (!(condition)) DBG_LOG(__VA_ARGS__);
 #define DBG_ASSERT(condition, retval, ...) \
-	if (!(condition)) {                \
-		DBG_LOG(__VA_ARGS__);      \
-		return retval;             \
-	}
+    if (!(condition)) { DBG_LOG(__VA_ARGS__); return retval; }
+
 #else
 #define _static static
 #define _static_inline static inline

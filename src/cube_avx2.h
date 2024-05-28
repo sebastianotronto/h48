@@ -14,6 +14,8 @@ _static_inline cube_fast_t fastcube(
     uint8_t, uint8_t, uint8_t, uint8_t, uint8_t,
     uint8_t, uint8_t, uint8_t, uint8_t, uint8_t
 );
+_static uint8_t corner(cube_fast_t, int);
+_static uint8_t edge(cube_fast_t, int);
 _static cube_fast_t cubetofast(cube_t);
 _static cube_t fasttocube(cube_fast_t);
 _static_inline bool equal_fast(cube_fast_t, cube_fast_t);
@@ -66,6 +68,28 @@ fastcube(
 		0, 0, 0, 0, 0, 0, 0, 0,
 		c_dbl, c_dfr, c_ubr, c_ufl, c_dbr, c_dfl, c_ubl, c_ufr
 	);
+}
+
+_static uint8_t
+corner(cube_fast_t c, int i)
+{
+	uint8_t aux[32];
+
+	DBG_ASSERT(i >= 0 && i < 8, 255, "Corner must be between 0 and 7\n");
+	_mm256_storeu_si256((__m256i_u *)aux, c);
+
+	return aux[i];
+}
+
+_static uint8_t
+edge(cube_fast_t c, int i)
+{
+	uint8_t aux[32];
+
+	DBG_ASSERT(i >= 0 && i < 12, 255, "Edge must be between 0 and 11\n");
+	_mm256_storeu_si256((__m256i_u *)aux, c);
+
+	return aux[i+16];
 }
 
 _static cube_fast_t
@@ -338,4 +362,3 @@ invcoord_fast_esep(int64_t esep)
 
 	return ret;
 }
-

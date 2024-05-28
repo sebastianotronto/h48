@@ -12,6 +12,10 @@ _static cube_t readcube_LST(const char *);
 _static int writepiece_LST(uint8_t, char *);
 _static void writecube_H48(cube_t, char *);
 _static void writecube_LST(cube_t, char *);
+_static uint8_t b32toedge(char);
+_static uint8_t b32tocorner(char);
+_static char edgetob32(uint8_t);
+_static char cornertob32(uint8_t);
 _static uint8_t readmove(char);
 _static uint8_t readmodifier(char);
 _static uint8_t readtrans(const char *);
@@ -491,6 +495,43 @@ writecube_LST(cube_t cube, char *buf)
 	}
 
 	*(buf+ptr-2) = 0;
+}
+
+_static uint8_t
+b32toedge(char c)
+{
+	DBG_ASSERT((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'g'), 255,
+	    "Error reading base32 piece");
+
+	return c <= 'Z' ? (uint8_t)(c - 'A') : (uint8_t)(c - 'a');
+}
+
+_static uint8_t
+b32tocorner(char c) {
+	uint8_t val;
+
+	DBG_ASSERT((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'g'), 255,
+	    "Error reading base32 piece");
+
+	val = c <= 'Z' ? (uint8_t)(c - 'A') : (uint8_t)(c - 'a') + 26;
+
+	return (val & 7) | ((val & 24) << 2);
+}
+
+_static char
+edgetob32(uint8_t edge)
+{
+	return edge <= 26 ? 'A' + (char)edge : 'a' + (char)(edge - 26);
+}
+
+_static char
+cornertob32(uint8_t corner)
+{
+	uint8_t val;
+
+	val = (corner & 7) | ((corner & 96) >> 2);
+
+	return val <= 26 ? 'A' + (char)val : 'a' + (char)(val - 26);
 }
 
 _static uint8_t
