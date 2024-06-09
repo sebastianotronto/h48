@@ -25,23 +25,6 @@ you operate on the cube only via the functions provided below, you don't
 need to worry about this.
 ******************************************************************************/
 
-typedef struct {
-	uint8_t corner[8];
-	uint8_t edge[12];
-} cube_t;
-
-/* Returns a copy of the solved cube */
-cube_t solvedcube(void);
-
-/* Basic checks on the cube */
-bool isconsistent(cube_t);
-bool issolvable(cube_t);
-bool issolved(cube_t);
-bool equal(cube_t, cube_t);
-
-/* All functions can return an error value, use iserror() to check this */
-bool iserror(cube_t);
-
 /* Apply the second cube on the first as a move sequence */
 cube_t compose(cube_t, cube_t);
 

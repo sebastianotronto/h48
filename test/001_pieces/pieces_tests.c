@@ -1,13 +1,12 @@
 #include "../test.h"
 
-uint8_t corner(cube_fast_t, int);
-uint8_t edge(cube_fast_t, int);
+void pieces(cube_t *, uint8_t [static 8], uint8_t [static 12]);
 
 int main(void) {
 	int i;
+	uint8_t corner[8], edge[12];
 	char str[STRLENMAX], *aux;
 	cube_t cube;
-	cube_fast_t fast;
 
         aux = str;
 	while (fgets(aux, STRLENMAX, stdin) != NULL)
@@ -15,13 +14,13 @@ int main(void) {
 			aux++;
 
 	cube = readcube("H48", str);
-	fast = cubetofast(cube);
+	pieces(&cube, corner, edge);
 
 	for (i = 0; i < 8; i++)
-		printf("%" PRIu8 " ", corner(fast, i));
+		printf("%" PRIu8 " ", corner[i]);
 	printf("\n");
 	for (i = 0; i < 12; i++)
-		printf("%" PRIu8 " ", edge(fast, i));
+		printf("%" PRIu8 " ", edge[i]);
 	printf("\n");
 
 	return 0;

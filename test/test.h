@@ -6,16 +6,14 @@
 
 #define STRLENMAX 10000
 
+#ifdef CUBE_AVX2
+#include <immintrin.h>
+typedef __m256i cube_t;
+#else
 typedef struct {
 	uint8_t corner[8];
 	uint8_t edge[12];
 } cube_t;
-
-#ifdef CUBE_AVX2
-#include <immintrin.h>
-typedef __m256i cube_fast_t;
-#else
-typedef cube_t cube_fast_t;
 #endif
 
 /* Basic functions used in most tests */
@@ -26,5 +24,3 @@ bool issolvable(cube_t);
 bool issolved(cube_t);
 cube_t readcube(char *, char *);
 void writecube(char *, cube_t, char *);
-cube_t fasttocube(cube_fast_t);
-cube_fast_t cubetofast(cube_t);

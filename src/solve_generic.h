@@ -1,19 +1,19 @@
 typedef struct {
-	cube_fast_t cube;
+	cube_t cube;
 	uint8_t depth;
 	int64_t maxsols;
 	char **nextsol;
 	int64_t *nsols;
 	uint8_t nmoves;
 	uint8_t moves[20];
-	uint8_t (*estimate)(cube_fast_t);
+	uint8_t (*estimate)(cube_t);
 } dfsarg_generic_t;
 
 _static void solve_generic_appendsolution(dfsarg_generic_t *);
 _static int solve_generic_dfs(dfsarg_generic_t *);
 _static int64_t solve_generic(cube_t, const char *, int8_t, int8_t, int64_t,
-    int8_t, char *, uint8_t (*)(cube_fast_t));
-_static uint8_t estimate_simple(cube_fast_t);
+    int8_t, char *, uint8_t (*)(cube_t));
+_static uint8_t estimate_simple(cube_t);
 _static int64_t solve_simple(cube_t, int8_t, int8_t, int64_t, int8_t, char *);
 
 int64_t
@@ -135,7 +135,7 @@ solve_generic(
 	int64_t maxsols,
 	int8_t optimal,
 	char *sols,
-	uint8_t (*estimate)(cube_fast_t)
+	uint8_t (*estimate)(cube_t)
 	/* TODO: add validator */
 	/* TODO: maybe add data for estimate */
 	/* TODO: add moveset (and allowednext?) */
@@ -190,7 +190,7 @@ solve_generic(
 	}
 
 	arg = (dfsarg_generic_t) {
-		.cube = cubetofast(cube),
+		.cube = cube,
 		.maxsols = maxsols,
 		.nextsol = &sols,
 		.nsols = &ret,
@@ -223,9 +223,9 @@ solve_generic(
 }
 
 _static uint8_t
-estimate_simple(cube_fast_t cube)
+estimate_simple(cube_t cube)
 {
-	return issolved_fast(cube) ? 0 : 1;
+	return issolved(cube) ? 0 : 1;
 }
 
 _static int64_t

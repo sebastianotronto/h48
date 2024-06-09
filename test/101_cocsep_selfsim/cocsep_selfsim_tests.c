@@ -9,23 +9,23 @@
 
 #define COCSEP_CLASSES 3393
 
-size_t gendata_cocsep(void *, uint64_t *, cube_fast_t *);
-int64_t coord_fast_cocsep(cube_fast_t);
+size_t gendata_cocsep(void *, uint64_t *, cube_t *);
+int64_t coord_cocsep(cube_t);
 
 int main(void) {
 	char str[STRLENMAX];
 	uint32_t buf[300000], data;
 	int64_t coord, coclass;
 	uint64_t selfsim[COCSEP_CLASSES], sim, t;
-	cube_fast_t fast, rep[COCSEP_CLASSES];
+	cube_t cube, rep[COCSEP_CLASSES];
 
 	gendata_cocsep(buf, selfsim, rep);
 
 	/* All cases in the same test so we do not generate data many times */
 
 	while (fgets(str, STRLENMAX, stdin) != NULL) {
-		fast = cubetofast(readcube("H48", str));
-		coord = coord_fast_cocsep(fast);
+		cube = readcube("H48", str);
+		coord = coord_cocsep(cube);
 		data = buf[coord];
 		coclass = (data & (0xFFFU << 16)) >> 16;
 		sim = selfsim[coclass];

@@ -1,24 +1,18 @@
 Refactoring: remove cube_fast_t and add b32 format
-  x added b32 converter by piece (not tested, will be tested automatically)
-  x added piece functions (e.g. corner(cube, i))
-    (would be more efficient to just convert the whole thing to arrays...)
-  - replace all usages of cube_t with cube_fast_t and piece functions
-    (this is mainly in cube_routines)
-    (fix tests in tandem with main code)
-	cubetofast fasttocube
-	zero and solved
-	solvedcube(void)
-	[cube.h] isconsistent, issolvable, issolved, equal, iserror
-	[cube.h] compose, inverse
-	[cube.h] applymoves, applytrans
-	[cube.h] readcube writecube
-	[cube.h] solve
-  - add b32 i/o format as default
-  - remove cube_t type
-  - rename cube_fast_t to cube_t
+  - fix all public functions in cube.h
+    and their implementations in cube_generic
+  - cube i/o format
+    move all formats other than b32 to convert.{c,h}
+    add tests for conversion
+    convert test files (?)
+    make b32 default
+    replace utils/*.c with a generic convert utility
   - if all public functions work with strings, always use return value
     as error code (solve already does this), and use string as buffer
     to print error
+
+Transform with big table
+  - make static cube actually static (how?)
 
 Solver
   - write a solver (how many tricks? some, but not all are needed)

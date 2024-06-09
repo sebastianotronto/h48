@@ -1,18 +1,16 @@
 #include "../test.h"
 
-int64_t coord_fast_eo(cube_fast_t);
+int64_t coord_eo(cube_t);
 
 int main(void) {
 	char str[STRLENMAX];
 	cube_t cube;
-	cube_fast_t fast;
 	int64_t result;
 
 	fgets(str, STRLENMAX, stdin);
 	cube = readcube("H48", str);
-	fast = cubetofast(cube);
 
-	result = coord_fast_eo(fast);
+	result = coord_eo(cube);
 
 	printf("%" PRId64 "\n", result);
 

@@ -1,23 +1,19 @@
 #include "../test.h"
 
-void copy_corners_fast(cube_fast_t *, cube_fast_t);
+void copy_corners(cube_t *, cube_t);
 
 int main(void) {
 	char str[STRLENMAX];
 	cube_t c1, c2;
-	cube_fast_t f1, f2;
 
 	fgets(str, STRLENMAX, stdin);
 	c1 = readcube("H48", str);
-	f1 = cubetofast(c1);
 
 	fgets(str, STRLENMAX, stdin);
 	c2 = readcube("H48", str);
-	f2 = cubetofast(c2);
 
-	copy_corners_fast(&f1, f2);
+	copy_corners(&c1, c2);
 
-	c1 = fasttocube(f1);
 	if (iserror(c1)) {
 		printf("Error setting EO\n");
 	} else if (!isconsistent(c1)) {

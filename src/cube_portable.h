@@ -1,109 +1,48 @@
 typedef struct {
 	uint8_t corner[8];
 	uint8_t edge[12];
-}  cube_fast_t;
+} cube_t;
 
-_static_inline cube_fast_t fastcube(
-    uint8_t, uint8_t, uint8_t, uint8_t, uint8_t,
-    uint8_t, uint8_t, uint8_t, uint8_t, uint8_t,
-    uint8_t, uint8_t, uint8_t, uint8_t, uint8_t,
-    uint8_t, uint8_t, uint8_t, uint8_t, uint8_t
-);
-_static uint8_t corner(cube_fast_t, int);
-_static uint8_t edge(cube_fast_t, int);
-_static cube_fast_t cubetofast(cube_t);
-_static cube_t fasttocube(cube_fast_t);
-_static_inline bool equal_fast(cube_fast_t, cube_fast_t);
-_static_inline bool issolved_fast(cube_fast_t);
-_static_inline cube_fast_t invertco_fast(cube_fast_t);
-_static_inline void compose_edges_inplace(cube_fast_t, cube_fast_t, cube_fast_t *);
-_static_inline void compose_corners_inplace(cube_fast_t, cube_fast_t, cube_fast_t *);
-_static_inline cube_fast_t compose_fast_edges(cube_fast_t, cube_fast_t);
-_static_inline cube_fast_t compose_fast_corners(cube_fast_t, cube_fast_t);
-_static_inline cube_fast_t compose_fast(cube_fast_t, cube_fast_t);
+#define static_cube(c_ufr, c_ubl, c_dfl, c_dbr, c_ufl, c_ubr, c_dfr, c_dbl, \
+    e_uf, e_ub, e_db, e_df, e_ur, e_ul, e_dl, e_dr, e_fr, e_fl, e_bl, e_br) \
+    ((cube_t) { \
+        .corner = { c_ufr, c_ubl, c_dfl, c_dbr, c_ufl, c_ubr, c_dfr, c_dbl }, \
+        .edge = { e_uf, e_ub, e_db, e_df, e_ur, e_ul, \
+                  e_dl, e_dr, e_fr, e_fl, e_bl, e_br } })
+#define zero static_cube( \
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+#define solved static_cube( \
+    0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
 
-_static_inline int64_t coord_fast_co(cube_fast_t);
-_static_inline int64_t coord_fast_csep(cube_fast_t);
-_static_inline int64_t coord_fast_cocsep(cube_fast_t);
-_static_inline int64_t coord_fast_eo(cube_fast_t);
-_static_inline int64_t coord_fast_esep(cube_fast_t);
+_static void pieces(cube_t *, uint8_t [static 8], uint8_t [static 12]);
+_static_inline bool equal(cube_t, cube_t);
+_static_inline cube_t invertco(cube_t);
+_static_inline void compose_edges_inplace(cube_t, cube_t, cube_t *);
+_static_inline void compose_corners_inplace(cube_t, cube_t, cube_t *);
+_static_inline cube_t compose_edges(cube_t, cube_t);
+_static_inline cube_t compose_corners(cube_t, cube_t);
+_static_inline cube_t compose(cube_t, cube_t);
 
-_static_inline void copy_corners_fast(cube_fast_t *, cube_fast_t);
-_static_inline void copy_edges_fast(cube_fast_t *, cube_fast_t);
-_static_inline void set_eo_fast(cube_fast_t *, int64_t);
-_static_inline cube_fast_t invcoord_fast_esep(int64_t);
+_static_inline int64_t coord_co(cube_t);
+_static_inline int64_t coord_csep(cube_t);
+_static_inline int64_t coord_cocsep(cube_t);
+_static_inline int64_t coord_eo(cube_t);
+_static_inline int64_t coord_esep(cube_t);
 
-_static_inline cube_fast_t
-fastcube(
-	uint8_t c_ufr,
-	uint8_t c_ubl,
-	uint8_t c_dfl,
-	uint8_t c_dbr,
-	uint8_t c_ufl,
-	uint8_t c_ubr,
-	uint8_t c_dfr,
-	uint8_t c_dbl,
+_static_inline void copy_corners(cube_t *, cube_t);
+_static_inline void copy_edges(cube_t *, cube_t);
+_static_inline void set_eo(cube_t *, int64_t);
+_static_inline cube_t invcoord_esep(int64_t);
 
-	uint8_t e_uf,
-	uint8_t e_ub,
-	uint8_t e_db,
-	uint8_t e_df,
-	uint8_t e_ur,
-	uint8_t e_ul,
-	uint8_t e_dl,
-	uint8_t e_dr,
-	uint8_t e_fr,
-	uint8_t e_fl,
-	uint8_t e_bl,
-	uint8_t e_br
-)
+_static void
+pieces(cube_t *cube, uint8_t c[static 8], uint8_t e[static 12])
 {
-	cube_fast_t cube = {
-		.corner = {
-			c_ufr, c_ubl, c_dfl, c_dbr, c_ufl, c_ubr, c_dfr, c_dbl
-		},
-		.edge = {
-			e_uf, e_ub, e_db, e_df, e_ur, e_ul,
-			e_dl, e_dr, e_fr, e_fl, e_bl, e_br
-		}
-	};
-
-	return cube;
-}
-
-_static uint8_t
-corner(cube_fast_t c, int i)
-{
-	DBG_ASSERT(i >= 0 && i < 8, 255, "Corner must be between 0 and 7\n");
-
-	return c.corner[i];
-}
-_static uint8_t
-edge(cube_fast_t c, int i)
-{
-	DBG_ASSERT(i >= 0 && i < 12, 255, "Edge must be between 0 and 11\n");
-
-	return c.edge[i];
-}
-
-_static cube_fast_t
-cubetofast(cube_t cube)
-{
-	cube_fast_t fast;
-	memcpy(&fast, &cube, sizeof(cube_fast_t));
-	return fast;
-}
-
-_static cube_t
-fasttocube(cube_fast_t fast)
-{
-	cube_t cube;
-	memcpy(&cube, &fast, sizeof(cube_fast_t));
-	return cube;
+	memcpy(c, cube->corner, 8);
+	memcpy(e, cube->edge, 12);
 }
 
 _static_inline bool
-equal_fast(cube_fast_t c1, cube_fast_t c2)
+equal(cube_t c1, cube_t c2)
 {
 	uint8_t i;
 	bool ret;
@@ -117,17 +56,11 @@ equal_fast(cube_fast_t c1, cube_fast_t c2)
 	return ret;
 }
 
-_static_inline bool
-issolved_fast(cube_fast_t cube)
-{
-	return equal_fast(cube, solved_fast);
-}
-
-_static_inline cube_fast_t
-invertco_fast(cube_fast_t c)
+_static_inline cube_t
+invertco(cube_t c)
 {
 	uint8_t i, piece, orien;
-	cube_fast_t ret;
+	cube_t ret;
 
 	ret = c;
 	for (i = 0; i < 8; i++) {
@@ -140,7 +73,7 @@ invertco_fast(cube_fast_t c)
 }
 
 _static_inline void
-compose_edges_inplace(cube_fast_t c1, cube_fast_t c2, cube_fast_t *ret)
+compose_edges_inplace(cube_t c1, cube_t c2, cube_t *ret)
 {
 	uint8_t i, piece1, piece2, p, orien;
 
@@ -154,7 +87,7 @@ compose_edges_inplace(cube_fast_t c1, cube_fast_t c2, cube_fast_t *ret)
 }
 
 _static_inline void
-compose_corners_inplace(cube_fast_t c1, cube_fast_t c2, cube_fast_t *ret)
+compose_corners_inplace(cube_t c1, cube_t c2, cube_t *ret)
 {
 	uint8_t i, piece1, piece2, p, orien, aux, auy;
 
@@ -169,30 +102,30 @@ compose_corners_inplace(cube_fast_t c1, cube_fast_t c2, cube_fast_t *ret)
 	}
 }
 
-_static_inline cube_fast_t
-compose_fast_edges(cube_fast_t c1, cube_fast_t c2)
+_static_inline cube_t
+compose_edges(cube_t c1, cube_t c2)
 {
-	cube_fast_t ret = zero_fast;
+	cube_t ret = zero;
 
 	compose_edges_inplace(c1, c2, &ret);
 
 	return ret;
 }
 
-_static_inline cube_fast_t
-compose_fast_corners(cube_fast_t c1, cube_fast_t c2)
+_static_inline cube_t
+compose_corners(cube_t c1, cube_t c2)
 {
-	cube_fast_t ret = zero_fast;
+	cube_t ret = zero;
 
 	compose_corners_inplace(c1, c2, &ret);
 
 	return ret;
 }
 
-_static_inline cube_fast_t
-compose_fast(cube_fast_t c1, cube_fast_t c2)
+_static_inline cube_t
+compose(cube_t c1, cube_t c2)
 {
-	cube_fast_t ret = zero_fast;
+	cube_t ret = zero;
 
 	compose_edges_inplace(c1, c2, &ret);
 	compose_corners_inplace(c1, c2, &ret);
@@ -201,7 +134,7 @@ compose_fast(cube_fast_t c1, cube_fast_t c2)
 }
 
 _static_inline int64_t
-coord_fast_co(cube_fast_t c)
+coord_co(cube_t c)
 {
 	int i, p;
 	int64_t ret;
@@ -220,7 +153,7 @@ possible. Encoding this as a number from 0 to C(8,4) would save about 40%
 of space, but we are not going to use this coordinate in large tables.
 */
 _static_inline int64_t
-coord_fast_csep(cube_fast_t c)
+coord_csep(cube_t c)
 {
 	int i, p;
 	int64_t ret;
@@ -232,13 +165,13 @@ coord_fast_csep(cube_fast_t c)
 }
 
 _static_inline int64_t
-coord_fast_cocsep(cube_fast_t c)
+coord_cocsep(cube_t c)
 {
-	return (coord_fast_co(c) << 7) + coord_fast_csep(c);
+	return (coord_co(c) << 7) + coord_csep(c);
 }
 
 _static_inline int64_t
-coord_fast_eo(cube_fast_t c)
+coord_eo(cube_t c)
 {
 	int i, p;
 	int64_t ret;
@@ -254,7 +187,7 @@ We encode the edge separation as a number from 0 to C(12,4)*C(8,4).
 It can be seen as the composition of two "subset index" coordinates.
 */
 _static_inline int64_t
-coord_fast_esep(cube_fast_t c)
+coord_esep(cube_t c)
 {
 	int64_t i, j, jj, k, l, ret1, ret2, bit1, bit2, is1;
 
@@ -286,19 +219,19 @@ coord_fast_esep(cube_fast_t c)
 }
 
 _static_inline void
-copy_corners_fast(cube_fast_t *dest, cube_fast_t src)
+copy_corners(cube_t *dest, cube_t src)
 {
 	memcpy(&dest->corner, src.corner, sizeof(src.corner));
 }
 
 _static_inline void
-copy_edges_fast(cube_fast_t *dest, cube_fast_t src)
+copy_edges(cube_t *dest, cube_t src)
 {
 	memcpy(&dest->edge, src.edge, sizeof(src.edge));
 }
 
 _static_inline void
-set_eo_fast(cube_fast_t *cube, int64_t eo)
+set_eo(cube_t *cube, int64_t eo)
 {
 	uint8_t i, sum, flip;
 
@@ -310,14 +243,14 @@ set_eo_fast(cube_fast_t *cube, int64_t eo)
 	cube->edge[0] = (cube->edge[0] & ~_eobit) | (_eobit * (sum % 2));
 }
 
-_static_inline cube_fast_t
-invcoord_fast_esep(int64_t esep)
+_static_inline cube_t
+invcoord_esep(int64_t esep)
 {
-	cube_fast_t ret;
+	cube_t ret;
 	int64_t bit1, bit2, i, j, jj, k, l, s, v, w, is1, set1, set2;
 	uint8_t slice[3] = {0};
 
-	ret = cubetofast(solved);
+	ret = solved;
 	set1 = esep % 70;
 	set2 = esep / 70;
 

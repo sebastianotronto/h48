@@ -1,15 +1,18 @@
-#define _move(M, c) compose_fast(c, _move_cube_ ## M)
-#define _premove(M, c) compose_fast(_move_cube_ ## M, c)
+#define _move(M, c) compose(c, _move_cube_ ## M)
+#define _premove(M, c) compose(_move_cube_ ## M, c)
 
+_static cube_t cubefromarray(uint8_t [static 8], uint8_t [static 12]);
 _static int permsign(uint8_t *, int);
 _static uint8_t readco(const char *);
 _static uint8_t readcp(const char *);
 _static uint8_t readeo(const char *);
 _static uint8_t readep(const char *);
+_static cube_t readcube_B32(const char *);
 _static cube_t readcube_H48(const char *);
 _static uint8_t readpiece_LST(const char **);
 _static cube_t readcube_LST(const char *);
 _static int writepiece_LST(uint8_t, char *);
+_static void writecube_B32(cube_t, char *);
 _static void writecube_H48(cube_t, char *);
 _static void writecube_LST(cube_t, char *);
 _static uint8_t b32toedge(char);
@@ -21,10 +24,31 @@ _static uint8_t readmodifier(char);
 _static uint8_t readtrans(const char *);
 _static int writemoves(uint8_t *, int, char *);
 _static void writetrans(uint8_t, char *);
-_static cube_fast_t move(cube_fast_t, uint8_t);
-_static cube_fast_t transform_edges(cube_fast_t, uint8_t);
-_static cube_fast_t transform_corners(cube_fast_t, uint8_t);
-_static cube_fast_t transform(cube_fast_t, uint8_t);
+_static cube_t move(cube_t, uint8_t);
+_static cube_t transform_edges(cube_t, uint8_t);
+_static cube_t transform_corners(cube_t, uint8_t);
+_static cube_t transform(cube_t, uint8_t);
+
+_static struct {
+	const char *name;
+	cube_t (*read)(const char *);
+	void (*write)(cube_t, char *);
+} ioformat[] =
+{
+	{ .name = "B32", .read = readcube_B32, .write = writecube_B32 },
+	{ .name = "LST", .read = readcube_LST, .write = writecube_LST },
+	{ .name = "H48", .read = readcube_H48, .write = writecube_H48 },
+	{ .name = "NONE", .read = NULL, .write = NULL },
+};
+
+_static_inline cube_t
+cubefromarray(uint8_t c[static 8], uint8_t e[static 12])
+{
+	return static_cube(
+	    c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7],
+	    e[0], e[1], e[2], e[3], e[4], e[5], e[6], e[7],
+	    e[8], e[9], e[10], e[11]);
+}
 
 cube_t
 solvedcube(void)
@@ -35,13 +59,15 @@ solvedcube(void)
 bool
 isconsistent(cube_t cube)
 {
-	uint8_t i, p, e, piece;
+	uint8_t i, p, e, piece, corner[8], edge[12];
 	bool found[12];
+
+	pieces(&cube, corner, edge);
 
 	for (i = 0; i < 12; i++)
 		found[i] = false;
 	for (i = 0; i < 12; i++) {
-		piece = cube.edge[i];
+		piece = edge[i];
 		p = piece & _pbits;
 		e = piece & _eobit;
 		if (p >= 12)
@@ -57,7 +83,7 @@ isconsistent(cube_t cube)
 	for (i = 0; i < 8; i++)
 		found[i] = false;
 	for (i = 0; i < 8; i++) {
-		piece = cube.corner[i];
+		piece = corner[i];
 		p = piece & _pbits;
 		e = piece & _cobits;
 		if (p >= 8)
@@ -89,22 +115,23 @@ inconsistent_co:
 bool
 issolvable(cube_t cube)
 {
-	uint8_t i, eo, co, piece, edges[12], corners[8];
+	uint8_t i, eo, co, piece, edge[12], corner[8], ep[12], cp[8];
 
 	DBG_ASSERT(isconsistent(cube), false,
 	    "issolvable: cube is inconsistent\n");
 
+	pieces(&cube, corner, edge);
 	for (i = 0; i < 12; i++)
-		edges[i] = cube.edge[i] & _pbits;
+		ep[i] = edge[i] & _pbits;
 	for (i = 0; i < 8; i++)
-		corners[i] = cube.corner[i] & _pbits;
+		cp[i] = corner[i] & _pbits;
 
-	if (permsign(edges, 12) != permsign(corners, 8))
+	if (permsign(ep, 12) != permsign(cp, 8))
 		goto issolvable_parity;
 
 	eo = 0;
 	for (i = 0; i < 12; i++) {
-		piece = cube.edge[i];
+		piece = edge[i];
 		eo += (piece & _eobit) >> _eoshift;
 	}
 	if (eo % 2 != 0)
@@ -112,7 +139,7 @@ issolvable(cube_t cube)
 
 	co = 0;
 	for (i = 0; i < 8; i++) {
-		piece = cube.corner[i];
+		piece = corner[i];
 		co += (piece & _cobits) >> _coshift;
 	}
 	if (co % 3 != 0)
@@ -138,72 +165,44 @@ issolved(cube_t cube)
 }
 
 bool
-equal(cube_t c1, cube_t c2)
-{
-	int i;
-	bool ret;
-
-	ret = true;
-	for (i = 0; i < 8; i++)
-		ret = ret && c1.corner[i] == c2.corner[i];
-	for (i = 0; i < 12; i++)
-		ret = ret && c1.edge[i] == c2.edge[i];
-
-	return ret;
-}
-
-bool
 iserror(cube_t cube)
 {
 	return equal(cube, zero);
 }
 
 cube_t
-compose(cube_t c1, cube_t c2)
-{
-	DBG_ASSERT(isconsistent(c1) && isconsistent(c2),
-	    zero, "compose error: inconsistent cube\n")
-
-	return fasttocube(compose_fast(cubetofast(c1), cubetofast(c2)));
-}
-
-cube_t
 inverse(cube_t cube)
 {
-	cube_t ret;
-	uint8_t i, piece, orien;
+	uint8_t i, piece, orien, e[12], c[8], edge[12], corner[8];
 
 	DBG_ASSERT(isconsistent(cube), zero,
 	    "inverse error: inconsistent cube\n");
 
-	ret = zero;
-
+	pieces(&cube, corner, edge);
+	
 	for (i = 0; i < 12; i++) {
-		piece = cube.edge[i];
+		piece = edge[i];
 		orien = piece & _eobit;
-		ret.edge[piece & _pbits] = i | orien;
+		e[piece & _pbits] = i | orien;
 	}
 
 	for (i = 0; i < 8; i++) {
-		piece = cube.corner[i];
+		piece = corner[i];
 		orien = ((piece << 1) | (piece >> 1)) & _cobits2;
-		ret.corner[piece & _pbits] = i | orien;
+		c[piece & _pbits] = i | orien;
 	}
 
-	return ret;
+	return cubefromarray(c, e);
 }
 
 cube_t
 applymoves(cube_t cube, const char *buf)
 {
-	cube_fast_t fast;
 	uint8_t r, m;
 	const char *b;
 
 	DBG_ASSERT(isconsistent(cube), zero,
 	    "move error: inconsistent cube\n");
-
-	fast = cubetofast(cube);
 
 	for (b = buf; *b != '\0'; b++) {
 		while (*b == ' ' || *b == '\t' || *b == '\n')
@@ -214,11 +213,11 @@ applymoves(cube_t cube, const char *buf)
 			goto applymoves_error;
 		if ((m = readmodifier(*(b+1))) != 0)
 			b++;
-		fast = move(fast, r + m);
+		cube = move(cube, r + m);
 	}
 
 applymoves_finish:
-	return fasttocube(fast);
+	return cube;
 
 applymoves_error:
 	DBG_LOG("applymoves error\n");
@@ -228,34 +227,27 @@ applymoves_error:
 cube_t
 applytrans(cube_t cube, const char *buf)
 {
-	cube_fast_t fast;
 	uint8_t t;
 
 	DBG_ASSERT(isconsistent(cube), zero,
 	    "transformation error: inconsistent cube\n");
 
 	t = readtrans(buf);
-	fast = cubetofast(cube);
-	fast = transform(fast, t);
 
-	return fasttocube(fast);
+	return transform(cube, t);
 }
 
 cube_t
 readcube(const char *format, const char *buf)
 {
-	cube_t cube;
+	int i;
 
-	if (!strcmp(format, "H48")) {
-		cube = readcube_H48(buf);
-	} else if (!strcmp(format, "LST")) {
-		cube = readcube_LST(buf);
-	} else {
-		DBG_LOG("Cannot read cube in the given format\n");
-		cube = zero;
-	}
+	for (i = 0; ioformat[i].read != NULL; i++)
+		if (!strcmp(format, ioformat[i].name))
+			return ioformat[i].read(buf);
 
-	return cube;
+	DBG_LOG("Cannot read cube in the given format\n");
+	return zero;
 }
 
 void
@@ -269,16 +261,16 @@ writecube(const char *format, cube_t cube, char *buf)
 		goto writecube_error;
 	}
 
-	if (!strcmp(format, "H48")) {
-		writecube_H48(cube, buf);
-	} else if (!strcmp(format, "LST")) {
-		writecube_LST(cube, buf);
-	} else {
-		errormsg = "ERROR: cannot write cube in the given format";
-		goto writecube_error;
+	int i;
+
+	for (i = 0; ioformat[i].write != NULL; i++) {
+		if (!strcmp(format, ioformat[i].name)) {
+			ioformat[i].write(cube, buf);
+			return;
+		}
 	}
 
-	return;
+	errormsg = "ERROR: cannot write cube in the given format";
 
 writecube_error:
 	DBG_LOG("writecube error, see stdout for details\n");
@@ -355,11 +347,31 @@ readep(const char *str)
 }
 
 _static cube_t
+readcube_B32(const char *buf)
+{
+	int i;
+	uint8_t c[8], e[12];
+
+	for (i = 0; i < 8; i++) {
+		c[i] = b32tocorner(buf[i]);
+		DBG_ASSERT(c[i] < 255, zero,
+		    "Error reading B32 corner %d (char %d)\n", i, i);
+	}
+
+	for (i = 0; i < 12; i++) {
+		e[i] = b32toedge(buf[i+9]);
+		DBG_ASSERT(e[i] < 255, zero,
+		    "Error reading B32 edge %d (char %d)\n", i, i+9);
+	}
+
+	return cubefromarray(c, e);
+}
+
+_static cube_t
 readcube_H48(const char *buf)
 {
 	int i;
-	uint8_t piece, orient;
-	cube_t ret = {0};
+	uint8_t piece, orient, c[8], e[12];
 	const char *b;
 	
 	b = buf;
@@ -373,7 +385,7 @@ readcube_H48(const char *buf)
 		if ((orient = readeo(b)) == _error)
 			return zero;
 		b++;
-		ret.edge[i] = piece | orient;
+		e[i] = piece | orient;
 	}
 	for (i = 0; i < 8; i++) {
 		while (*b == ' ' || *b == '\t' || *b == '\n')
@@ -384,10 +396,10 @@ readcube_H48(const char *buf)
 		if ((orient = readco(b)) == _error)
 			return zero;
 		b++;
-		ret.corner[i] = piece | orient;
+		c[i] = piece | orient;
 	}
 
-	return ret;
+	return cubefromarray(c, e);
 }
 
 _static uint8_t
@@ -411,15 +423,15 @@ _static cube_t
 readcube_LST(const char *buf)
 {
 	int i;
-	cube_t ret = {0};
+	uint8_t c[8], e[12];
 
 	for (i = 0; i < 8; i++)
-		ret.corner[i] = readpiece_LST(&buf);
+		c[i] = readpiece_LST(&buf);
 
 	for (i = 0; i < 12; i++)
-		ret.edge[i] = readpiece_LST(&buf);
+		e[i] = readpiece_LST(&buf);
 
-	return ret;
+	return cubefromarray(c, e);
 }
 
 _static int
@@ -447,13 +459,34 @@ writepiece_LST(uint8_t piece, char *buf)
 }
 
 _static void
+writecube_B32(cube_t cube, char *buf)
+{
+	int i;
+	uint8_t corner[8], edge[12];
+
+	pieces(&cube, corner, edge);
+
+	for (i = 0; i < 8; i++)
+		buf[i] = cornertob32(corner[i]);
+
+	buf[8] = '=';
+
+	for (i = 0; i < 12; i++)
+		buf[i+9] = edgetob32(edge[i]);
+
+	buf[21] = '\0';
+}
+
+_static void
 writecube_H48(cube_t cube, char *buf)
 {
-	uint8_t piece, perm, orient;
+	uint8_t piece, perm, orient, corner[8], edge[12];
 	int i;
 
+	pieces(&cube, corner, edge);
+
 	for (i = 0; i < 12; i++) {
-		piece = cube.edge[i];
+		piece = edge[i];
 		perm = piece & _pbits;
 		orient = (piece & _eobit) >> _eoshift;
 		buf[4*i    ] = edgestr[perm][0];
@@ -462,7 +495,7 @@ writecube_H48(cube_t cube, char *buf)
 		buf[4*i + 3] = ' ';
 	}
 	for (i = 0; i < 8; i++) {
-		piece = cube.corner[i];
+		piece = corner[i];
 		perm = piece & _pbits;
 		orient = (piece & _cobits) >> _coshift;
 		buf[48 + 5*i    ] = cornerstr[perm][0];
@@ -480,17 +513,18 @@ writecube_LST(cube_t cube, char *buf)
 {
 	int i;
 	size_t ptr;
-	uint8_t piece;
+	uint8_t piece, corner[8], edge[12];
 
 	ptr = 0;
+	pieces(&cube, corner, edge);
 
 	for (i = 0; i < 8; i++) {
-		piece = cube.corner[i];
+		piece = corner[i];
 		ptr += writepiece_LST(piece, buf + ptr);
 	}
 
 	for (i = 0; i < 12; i++) {
-		piece = cube.edge[i];
+		piece = edge[i];
 		ptr += writepiece_LST(piece, buf + ptr);
 	}
 
@@ -500,8 +534,8 @@ writecube_LST(cube_t cube, char *buf)
 _static uint8_t
 b32toedge(char c)
 {
-	DBG_ASSERT((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'g'), 255,
-	    "Error reading base32 piece");
+	if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'g'))
+		return 255;
 
 	return c <= 'Z' ? (uint8_t)(c - 'A') : (uint8_t)(c - 'a');
 }
@@ -510,8 +544,8 @@ _static uint8_t
 b32tocorner(char c) {
 	uint8_t val;
 
-	DBG_ASSERT((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'g'), 255,
-	    "Error reading base32 piece");
+	if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'g'))
+		return 255;
 
 	val = c <= 'Z' ? (uint8_t)(c - 'A') : (uint8_t)(c - 'a') + 26;
 
@@ -616,8 +650,8 @@ writetrans(uint8_t t, char *buf)
 	buf[11] = '\0';
 }
 
-_static cube_fast_t
-move(cube_fast_t c, uint8_t m)
+_static cube_t
+move(cube_t c, uint8_t m)
 {
 	switch (m) {
 	case _move_U:
@@ -658,7 +692,7 @@ move(cube_fast_t c, uint8_t m)
 		return _move(B3, c);
 	default:
 		DBG_LOG("move error, unknown move\n");
-		return zero_fast;
+		return zero;
 	}
 }
 

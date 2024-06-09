@@ -2,12 +2,12 @@
 
 #define COCSEP_CLASSES 3393
 
-size_t gendata_cocsep(void *, uint64_t *, cube_fast_t *);
+size_t gendata_cocsep(void *, uint64_t *, cube_t *);
 
 int main(void) {
 	uint32_t buf[300000], i;
 	uint64_t selfsim[COCSEP_CLASSES];
-	cube_fast_t rep[COCSEP_CLASSES];
+	cube_t rep[COCSEP_CLASSES];
 	size_t result;
 
 	result = gendata_cocsep(buf, selfsim, rep);

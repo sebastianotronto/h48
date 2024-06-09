@@ -19,7 +19,6 @@
 #define DBG_ASSERT(condition, retval, ...)
 #endif
 
-#include "cube.h"
 #include "constants.h"
 
 #if defined(CUBE_AVX2)
@@ -32,8 +31,17 @@
 #include "cube_portable.h"
 #endif
 
-#include "cube_routines.h"
-#include "cube_transform.h" /* TODO: merge with cube_routines? */
+#include "constant_cubes.h"
+#include "cube_generic.h"
+
+/* TODO: work in progress */
+#if 0
+#include "constant_cubes_transform.h"
+#include "cube_transform.h"
+#else
+#include "cube_transform_with_switch.h"
+#endif
+
 #include "moves.h"
 #include "solve_h48.h"
 #include "solve_generic.h"

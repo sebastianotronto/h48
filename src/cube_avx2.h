@@ -1,4 +1,4 @@
-typedef __m256i cube_fast_t;
+typedef __m256i cube_t;
 
 #define _co2_avx2 _mm256_set_epi64x(0, 0, 0, INT64_C(0x6060606060606060))
 #define _cocw_avx2 _mm256_set_epi64x(0, 0, 0, INT64_C(0x2020202020202020))
@@ -8,117 +8,47 @@ typedef __m256i cube_fast_t;
 #define _eo_avx2 \
     _mm256_set_epi64x(INT64_C(0x10101010), INT64_C(0x1010101010101010), 0, 0)
 
-_static_inline cube_fast_t fastcube(
-    uint8_t, uint8_t, uint8_t, uint8_t, uint8_t,
-    uint8_t, uint8_t, uint8_t, uint8_t, uint8_t,
-    uint8_t, uint8_t, uint8_t, uint8_t, uint8_t,
-    uint8_t, uint8_t, uint8_t, uint8_t, uint8_t
-);
-_static uint8_t corner(cube_fast_t, int);
-_static uint8_t edge(cube_fast_t, int);
-_static cube_fast_t cubetofast(cube_t);
-_static cube_t fasttocube(cube_fast_t);
-_static_inline bool equal_fast(cube_fast_t, cube_fast_t);
-_static_inline bool issolved_fast(cube_fast_t);
-_static_inline cube_fast_t invertco_fast(cube_fast_t);
-_static_inline cube_fast_t compose_epcpeo(cube_fast_t, cube_fast_t);
-_static_inline cube_fast_t compose_fast_edges(cube_fast_t, cube_fast_t);
-_static_inline cube_fast_t compose_fast_corners(cube_fast_t, cube_fast_t);
-_static_inline cube_fast_t compose_fast(cube_fast_t, cube_fast_t);
+#define static_cube(c_ufr, c_ubl, c_dfl, c_dbr, c_ufl, c_ubr, c_dfr, c_dbl, \
+    e_uf, e_ub, e_db, e_df, e_ur, e_ul, e_dl, e_dr, e_fr, e_fl, e_bl, e_br) \
+    _mm256_set_epi8(0, 0, 0, 0, e_br, e_bl, e_fl, e_fr, \
+        e_dr, e_dl, e_ul, e_ur, e_df, e_db, e_ub, e_uf, \
+        0, 0, 0, 0, 0, 0, 0, 0, \
+        c_dbl, c_dfr, c_ubr, c_ufl, c_dbr, c_dfl, c_ubl, c_ufr)
+#define zero _mm256_set_epi64x(0, 0, 0, 0)
+#define solved static_cube( \
+    0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
 
-_static_inline int64_t coord_fast_co(cube_fast_t);
-_static_inline int64_t coord_fast_csep(cube_fast_t);
-_static_inline int64_t coord_fast_cocsep(cube_fast_t);
-_static_inline int64_t coord_fast_eo(cube_fast_t);
-_static_inline int64_t coord_fast_esep(cube_fast_t);
+_static void pieces(cube_t *, uint8_t [static 8], uint8_t [static 12]);
+_static_inline bool equal(cube_t, cube_t);
+_static_inline cube_t invertco(cube_t);
+_static_inline cube_t compose_epcpeo(cube_t, cube_t);
+_static_inline cube_t compose_edges(cube_t, cube_t);
+_static_inline cube_t compose_corners(cube_t, cube_t);
+_static_inline cube_t compose(cube_t, cube_t);
 
-_static_inline void copy_corners_fast(cube_fast_t *, cube_fast_t);
-_static_inline void copy_edges_fast(cube_fast_t *, cube_fast_t);
-_static_inline void set_eo_fast(cube_fast_t *, int64_t);
-_static_inline cube_fast_t invcoord_fast_esep(int64_t);
+_static_inline int64_t coord_co(cube_t);
+_static_inline int64_t coord_csep(cube_t);
+_static_inline int64_t coord_cocsep(cube_t);
+_static_inline int64_t coord_eo(cube_t);
+_static_inline int64_t coord_esep(cube_t);
 
-_static_inline cube_fast_t
-fastcube(
-	uint8_t c_ufr,
-	uint8_t c_ubl,
-	uint8_t c_dfl,
-	uint8_t c_dbr,
-	uint8_t c_ufl,
-	uint8_t c_ubr,
-	uint8_t c_dfr,
-	uint8_t c_dbl,
+_static_inline void copy_corners(cube_t *, cube_t);
+_static_inline void copy_edges(cube_t *, cube_t);
+_static_inline void set_eo(cube_t *, int64_t);
+_static_inline cube_t invcoord_esep(int64_t);
 
-	uint8_t e_uf,
-	uint8_t e_ub,
-	uint8_t e_db,
-	uint8_t e_df,
-	uint8_t e_ur,
-	uint8_t e_ul,
-	uint8_t e_dl,
-	uint8_t e_dr,
-	uint8_t e_fr,
-	uint8_t e_fl,
-	uint8_t e_bl,
-	uint8_t e_br
-)
-{
-	return _mm256_set_epi8(
-		0, 0, 0, 0, e_br, e_bl, e_fl, e_fr,
-		e_dr, e_dl, e_ul, e_ur, e_df, e_db, e_ub, e_uf,
-		0, 0, 0, 0, 0, 0, 0, 0,
-		c_dbl, c_dfr, c_ubr, c_ufl, c_dbr, c_dfl, c_ubl, c_ufr
-	);
-}
-
-_static uint8_t
-corner(cube_fast_t c, int i)
+_static void
+pieces(cube_t *cube, uint8_t c[static 8], uint8_t e[static 12])
 {
 	uint8_t aux[32];
 
-	DBG_ASSERT(i >= 0 && i < 8, 255, "Corner must be between 0 and 7\n");
-	_mm256_storeu_si256((__m256i_u *)aux, c);
-
-	return aux[i];
-}
-
-_static uint8_t
-edge(cube_fast_t c, int i)
-{
-	uint8_t aux[32];
-
-	DBG_ASSERT(i >= 0 && i < 12, 255, "Edge must be between 0 and 11\n");
-	_mm256_storeu_si256((__m256i_u *)aux, c);
-
-	return aux[i+16];
-}
-
-_static cube_fast_t
-cubetofast(cube_t a)
-{
-	uint8_t aux[32];
-
-	memset(aux, 0, 32);
-	memcpy(aux, &a.corner, 8);
-	memcpy(aux + 16, &a.edge, 12);
-
-	return _mm256_loadu_si256((__m256i_u *)&aux);
-}
-
-_static cube_t
-fasttocube(cube_fast_t c)
-{
-	cube_t a;
-	uint8_t aux[32];
-
-	_mm256_storeu_si256((__m256i_u *)aux, c);
-	memcpy(&a.corner, aux, 8);
-	memcpy(&a.edge, aux + 16, 12);
-
-	return a;
+	_mm256_storeu_si256((__m256i_u *)aux, *cube);
+	memcpy(c, aux, 8);
+	memcpy(e, aux+16, 12);
 }
 
 _static_inline bool
-equal_fast(cube_fast_t c1, cube_fast_t c2)
+equal(cube_t c1, cube_t c2)
 {
 	int32_t mask;
 	__m256i cmp;
@@ -129,16 +59,10 @@ equal_fast(cube_fast_t c1, cube_fast_t c2)
 	return mask == ~0;
 }
 
-_static_inline bool
-issolved_fast(cube_fast_t cube)
+_static_inline cube_t
+invertco(cube_t c)
 {
-	return equal_fast(cube, solved_fast);
-}
-
-_static_inline cube_fast_t
-invertco_fast(cube_fast_t c)
-{
-        cube_fast_t co, shleft, shright, summed, newco, cleanco, ret;
+        cube_t co, shleft, shright, summed, newco, cleanco, ret;
 
         co = _mm256_and_si256(c, _co2_avx2);
         shleft = _mm256_slli_epi32(co, 1);
@@ -151,10 +75,10 @@ invertco_fast(cube_fast_t c)
         return ret;
 }
 
-_static_inline cube_fast_t
-compose_epcpeo(cube_fast_t c1, cube_fast_t c2)
+_static_inline cube_t
+compose_epcpeo(cube_t c1, cube_t c2)
 {
-	cube_fast_t b, s, eo2;
+	cube_t b, s, eo2;
 
 	/* Permute and clean unused bits */
 	s = _mm256_shuffle_epi8(c1, c2);
@@ -171,27 +95,27 @@ compose_epcpeo(cube_fast_t c1, cube_fast_t c2)
 	return s;
 }
 
-_static_inline cube_fast_t
-compose_fast_edges(cube_fast_t c1, cube_fast_t c2)
+_static_inline cube_t
+compose_edges(cube_t c1, cube_t c2)
 {
 	return compose_epcpeo(c1, c2);
 }
 
-_static_inline cube_fast_t
-compose_fast_corners(cube_fast_t c1, cube_fast_t c2)
+_static_inline cube_t
+compose_corners(cube_t c1, cube_t c2)
 {
 	/*
 	 * We do a full compose. Minor optimizations are possible, like
 	 * saving one instruction by not doing EO, but it should not
 	 * be significant.
 	 */
-	return compose_fast(c1, c2);
+	return compose(c1, c2);
 }
 
-_static_inline cube_fast_t
-compose_fast(cube_fast_t c1, cube_fast_t c2)
+_static_inline cube_t
+compose(cube_t c1, cube_t c2)
 {
-	cube_fast_t s, co1, co2, aux, auy1, auy2, auz1, auz2;
+	cube_t s, co1, co2, aux, auy1, auy2, auz1, auz2;
 
 	s = compose_epcpeo(c1, c2);
 
@@ -212,9 +136,9 @@ compose_fast(cube_fast_t c1, cube_fast_t c2)
 }
 
 _static_inline int64_t
-coord_fast_co(cube_fast_t c)
+coord_co(cube_t c)
 {
-	cube_fast_t co;
+	cube_t co;
 	int64_t mem[4], ret, i, p;
 
 	co = _mm256_and_si256(c, _co2_avx2);
@@ -228,9 +152,9 @@ coord_fast_co(cube_fast_t c)
 }
 
 _static_inline int64_t
-coord_fast_csep(cube_fast_t c)
+coord_csep(cube_t c)
 {
-	cube_fast_t cp, shifted;
+	cube_t cp, shifted;
 	int64_t mask;
 
 	cp = _mm256_and_si256(c, _cp_avx2);
@@ -241,15 +165,15 @@ coord_fast_csep(cube_fast_t c)
 }
 
 _static_inline int64_t
-coord_fast_cocsep(cube_fast_t c)
+coord_cocsep(cube_t c)
 {
-	return (coord_fast_co(c) << 7) + coord_fast_csep(c);
+	return (coord_co(c) << 7) + coord_csep(c);
 }
 
 _static_inline int64_t
-coord_fast_eo(cube_fast_t c)
+coord_eo(cube_t c)
 {
-	cube_fast_t eo, shifted;
+	cube_t eo, shifted;
 	int64_t mask;
 
 	eo = _mm256_and_si256(c, _eo_avx2);
@@ -260,9 +184,9 @@ coord_fast_eo(cube_fast_t c)
 }
 
 _static_inline int64_t
-coord_fast_esep(cube_fast_t c)
+coord_esep(cube_t c)
 {
-	cube_fast_t ep;
+	cube_t ep;
 	int64_t e, mem[4], i, j, jj, k, l, ret1, ret2, bit1, bit2, is1;
 
 	ep = _mm256_and_si256(c, _ep_avx2);
@@ -291,19 +215,19 @@ coord_fast_esep(cube_fast_t c)
 }
 
 _static_inline void
-copy_corners_fast(cube_fast_t *dest, cube_fast_t src)
+copy_corners(cube_t *dest, cube_t src)
 {
 	*dest = _mm256_blend_epi32(*dest, src, 0x0F);
 }
 
 _static_inline void
-copy_edges_fast(cube_fast_t *dest, cube_fast_t src)
+copy_edges(cube_t *dest, cube_t src)
 {
 	*dest = _mm256_blend_epi32(*dest, src, 0xF0);
 }
 
 _static_inline void
-set_eo_fast(cube_fast_t *cube, int64_t eo)
+set_eo(cube_t *cube, int64_t eo)
 {
 	int64_t eo12, eotop, eobot;
 	__m256i veo;
@@ -327,10 +251,10 @@ set_eo_fast(cube_fast_t *cube, int64_t eo)
 	*cube = _mm256_or_si256(*cube, veo);
 }
 
-_static_inline cube_fast_t
-invcoord_fast_esep(int64_t esep)
+_static_inline cube_t
+invcoord_esep(int64_t esep)
 {
-	cube_fast_t eee, ret;
+	cube_t eee, ret;
 	int64_t bit1, bit2, i, j, jj, k, l, s, v, w, is1, set1, set2;
 	uint8_t mem[32];
 	uint8_t slice[3] = {0};
@@ -356,9 +280,9 @@ invcoord_fast_esep(int64_t esep)
 		mem[i+16] = (slice[s]++) | (uint8_t)(s << 2);
 	}
 
-	ret = cubetofast(solved);
+	ret = solved;
 	eee = _mm256_loadu_si256((__m256i_u *)&mem);
-	copy_edges_fast(&ret, eee);
+	copy_edges(&ret, eee);
 
 	return ret;
 }
