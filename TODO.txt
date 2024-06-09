@@ -1,7 +1,5 @@
 Refactoring: remove cube_fast_t and add b32 format
-  - cleanup cube.h
-    remove some documentation, move to new file
-    create src/cube_pulic.h for implementations of cube.h stuff
+  - see TODO comments in cube.h
   - switch to b32 by default (part 1)
     add tests for b32 (write at some by hand)
   - fix utility code in utils/*.c

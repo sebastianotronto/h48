@@ -1,7 +1,7 @@
 #define _move(M, c) compose(c, _move_cube_ ## M)
 #define _premove(M, c) compose(_move_cube_ ## M, c)
 
-_static cube_t solvedcube();
+_static cube_t solvedcube(void);
 _static bool isconsistent(cube_t);
 _static bool issolvable(cube_t);
 _static bool issolved(cube_t);
@@ -16,7 +16,7 @@ _static cube_t transform_corners(cube_t, uint8_t);
 _static cube_t transform(cube_t, uint8_t);
 
 _static cube_t
-solvedcube()
+solvedcube(void)
 {
 	return solved;
 }
