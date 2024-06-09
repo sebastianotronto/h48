@@ -22,6 +22,7 @@ _static_inline void compose_corners_inplace(cube_t, cube_t, cube_t *);
 _static_inline cube_t compose_edges(cube_t, cube_t);
 _static_inline cube_t compose_corners(cube_t, cube_t);
 _static_inline cube_t compose(cube_t, cube_t);
+_static_inline cube_t inverse(cube_t);
 
 _static_inline int64_t coord_co(cube_t);
 _static_inline int64_t coord_csep(cube_t);
@@ -129,6 +130,27 @@ compose(cube_t c1, cube_t c2)
 
 	compose_edges_inplace(c1, c2, &ret);
 	compose_corners_inplace(c1, c2, &ret);
+
+	return ret;
+}
+
+cube_t
+inverse(cube_t cube)
+{
+	uint8_t i, piece, orien;
+	cube_t ret;
+
+	for (i = 0; i < 12; i++) {
+		piece = cube.edge[i];
+		orien = piece & _eobit;
+		ret.edge[piece & _pbits] = i | orien;
+	}
+
+	for (i = 0; i < 8; i++) {
+		piece = cube.corner[i];
+		orien = ((piece << 1) | (piece >> 1)) & _cobits2;
+		ret.corner[piece & _pbits] = i | orien;
+	}
 
 	return ret;
 }

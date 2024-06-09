@@ -1,18 +1,23 @@
 Refactoring: remove cube_fast_t and add b32 format
-  - fix all public functions in cube.h
-    and their implementations in cube_generic
-  - cube i/o format
-    move all formats other than b32 to convert.{c,h}
-    add tests for conversion
-    convert test files (?)
-    make b32 default
-    replace utils/*.c with a generic convert utility
+  - cleanup cube.h
+    remove some documentation, move to new file
+    create src/cube_pulic.h for implementations of cube.h stuff
+  - switch to b32 by default (part 1)
+    add tests for b32 (write at some by hand)
+  - fix utility code in utils/*.c
+    replace h48_to_lst with convert.c
+    fix invert.c
+    fix utils/*.sh scripts to use the new convert
+    convert all utils/cubes/*.txt files in b32 format
+  - switch to b32 by default (part 2)
+    change all tests to use b32
   - if all public functions work with strings, always use return value
     as error code (solve already does this), and use string as buffer
     to print error
 
 Transform with big table
   - make static cube actually static (how?)
+  - if not possible, cleanup in some way
 
 Solver
   - write a solver (how many tricks? some, but not all are needed)

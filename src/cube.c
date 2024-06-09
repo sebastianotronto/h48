@@ -31,8 +31,10 @@
 #include "cube_portable.h"
 #endif
 
+#include "io_move_trans.h"
 #include "constant_cubes.h"
 #include "cube_generic.h"
+#include "io_cube.h"
 
 /* TODO: work in progress */
 #if 0
