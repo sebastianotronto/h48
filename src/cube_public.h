@@ -1,7 +1,7 @@
-int check(cube_t, char [static 22]);
+int check_error(cube_t, char [static 22]);
 
 int
-check(cube_t cube, char result[static 22])
+check_error(cube_t cube, char result[static 22])
 {
 	if (!isconsistent(cube)) {
 		writecube("B32", zero, result);
@@ -25,7 +25,7 @@ nissy_compose(
 
 	res = compose(c, p);
 
-	return check(res, result);
+	return check_error(res, result);
 }
 
 int

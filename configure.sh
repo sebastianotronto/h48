@@ -2,8 +2,13 @@
 
 cc=${CC:-cc}
 
-detectarch() { ${cc} -march=native -dM -E - </dev/null | grep "$1"; }
-detectsan() { ${cc} -fsanitize=$1 -dM -E -x c - </dev/null | grep "SANITIZE"; }
+detectarch() {
+	${cc} -march=native -dM -E - </dev/null 2>/dev/null | grep "$1"
+}
+detectsan() {
+	${cc} -fsanitize=$1 -dM -E -x c - </dev/null 2>/dev/null \
+		| grep "SANITIZE"
+}
 
 [ -n "$(detectarch __AVX2__)" ] && detected="AVX2"
 [ -n "$(detectarch __ARM_NEON)" ] && detected="NEON"

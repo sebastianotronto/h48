@@ -1,6 +1,9 @@
 #!/bin/sh
 
-detectsan() { cc -fsanitize=$1 -dM -E -x c - </dev/null | grep "SANITIZE"; }
+detectsan() {
+	cc -fsanitize=$1 -dM -E -x c - </dev/null 2>/dev/null \
+		| grep "SANITIZE"
+}
 
 re="${TEST:-$@}"
 
