@@ -324,17 +324,17 @@ writecube_LST(cube_t cube, char *buf)
 _static uint8_t
 b32toedge(char c)
 {
-	if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'g'))
+	if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'f')))
 		return 255;
 
-	return c <= 'Z' ? (uint8_t)(c - 'A') : (uint8_t)(c - 'a');
+	return c <= 'Z' ? (uint8_t)(c - 'A') : (uint8_t)(c - 'a') + 26;
 }
 
 _static uint8_t
 b32tocorner(char c) {
 	uint8_t val;
 
-	if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'g'))
+	if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'f')))
 		return 255;
 
 	val = c <= 'Z' ? (uint8_t)(c - 'A') : (uint8_t)(c - 'a') + 26;
@@ -345,7 +345,7 @@ b32tocorner(char c) {
 _static char
 edgetob32(uint8_t edge)
 {
-	return edge <= 26 ? 'A' + (char)edge : 'a' + (char)(edge - 26);
+	return edge < 26 ? 'A' + (char)edge : 'a' + (char)(edge - 26);
 }
 
 _static char
@@ -355,5 +355,5 @@ cornertob32(uint8_t corner)
 
 	val = (corner & 7) | ((corner & 96) >> 2);
 
-	return val <= 26 ? 'A' + (char)val : 'a' + (char)(val - 26);
+	return val < 26 ? 'A' + (char)val : 'a' + (char)(val - 26);
 }

@@ -1,14 +1,13 @@
 Refactoring: remove cube_fast_t and add b32 format
   - see TODO comments in cube.h
-  - switch to b32 by default (part 1)
-    add tests for b32 (write at some by hand)
   - fix utility code in utils/*.c
     replace h48_to_lst with convert.c
     fix invert.c
     fix utils/*.sh scripts to use the new convert
     convert all utils/cubes/*.txt files in b32 format
-  - switch to b32 by default (part 2)
+  - switch to b32 by default
     change all tests to use b32
+    split read and write for H48
   - if all public functions work with strings, always use return value
     as error code (solve already does this), and use string as buffer
     to print error
