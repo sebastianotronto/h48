@@ -57,25 +57,6 @@ solve(
 	return -1;
 }
 
-void
-multisolve(
-	int n,
-	cube_t *cube,
-	const char *solver,
-	const void *data,
-	char *sols
-)
-{
-	char *s;
-	int i;
-
-	s = sols;
-	for (i = 0; i < n; i++) {
-		solve(cube[i], solver, "", "normal", 0, -1, 1, 0, NULL, s);
-		while (s++);
-	}
-}
-
 _static void
 solve_generic_appendsolution(dfsarg_generic_t *arg)
 {

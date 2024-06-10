@@ -47,3 +47,5 @@
 #include "moves.h"
 #include "solve_h48.h"
 #include "solve_generic.h"
+
+#include "cube_public.h"

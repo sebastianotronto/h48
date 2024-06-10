@@ -1,20 +1,40 @@
-/*
-All the functions below return 0 in case of success and a positive number
-in case of error. See (TODO: documentation) for details.
-*/
+int check(cube_t, char [static 22]);
 
-int nissy_compose(
+int
+check(cube_t cube, char result[static 22])
+{
+	if (!isconsistent(cube)) {
+		writecube("B32", zero, result);
+		return 2;
+	}
+
+	return issolvable(cube) ? 0 : 1;
+}
+
+int
+nissy_compose(
 	const char cube[static 22],
 	const char permutation[static 22],
 	char result[static 22]
-);
+)
+{
+	cube_t c, p, res;
 
-int nissy_inverse(
+	c = readcube("B32", cube);
+	p = readcube("B32", permutation);
+
+	res = compose(c, p);
+
+	return check(res, result);
+}
+
+int
+nissy_inverse(
 	const char cube[static 22],
 	char result[static 22]
 );
 
-int nissy_applyoves(
+int nissy_applymoves(
 	const char cube[static 22],
 	const char *moves,
 	char result[static 22]
@@ -43,14 +63,13 @@ int nissy_writecube(
 	char *result
 );
 
-int nissy_gendata(
+int64_t nissy_gendata(
 	const char *solver,
 	const char *options,
-	void *generated_data,
-	int64_t *generated_bytes
+	void *data
 );
 
-int nissy_solve(
+int64_t nissy_solve(
 	const char cube[static 22],
 	const char *solver, 
 	const char *options,
@@ -60,6 +79,5 @@ int nissy_solve(
 	int64_t maxsolutions,
 	int8_t optimal,
 	const void *data,
-	char *solutions,
-	int *n_solutions
+	char *solutions
 );

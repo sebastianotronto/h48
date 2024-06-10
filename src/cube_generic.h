@@ -8,6 +8,7 @@ _static bool issolved(cube_t);
 _static bool iserror(cube_t);
 _static cube_t applymoves(cube_t, const char *);
 _static cube_t applytrans(cube_t, const char *);
+_static cube_t frommoves(const char *);
 
 _static int permsign(uint8_t *, int);
 _static cube_t move(cube_t, uint8_t);
@@ -162,6 +163,12 @@ applymoves_finish:
 applymoves_error:
 	DBG_LOG("applymoves error\n");
 	return zero;
+}
+
+_static cube_t
+frommoves(const char *buf)
+{
+	return applymoves(solved, buf);
 }
 
 _static cube_t
