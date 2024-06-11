@@ -1,8 +1,7 @@
 Refactoring: remove cube_fast_t and add b32 format
-  - see TODO comments in cube.h
   - fix utility code in utils/*.c
-    replace h48_to_lst with convert.c
-    fix invert.c
+    replace h48_to_lst with convert.c (use convert from cube.h)
+    fix invert.c (use inverse from cube.h)
     fix utils/*.sh scripts to use the new convert
     convert all utils/cubes/*.txt files in b32 format
   - switch to b32 by default
@@ -20,6 +19,7 @@ Solver
   - write a solver (how many tricks? some, but not all are needed)
 
 More utilities for tables (in cube.h)
+  - cleanup solve and gendata in cube.h and cube_public.h
   - for tables, a "dryrun" function that only tells you the size needed
   - check hash of generated data
 

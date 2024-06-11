@@ -60,7 +60,7 @@ writecube(const char *format, cube_t cube, char *buf)
 	size_t len;
 
 	if (!isconsistent(cube)) {
-		errormsg = "ERROR: cannot write inconsistent cube";
+		errormsg = "ERROR: inconsistent";
 		goto writecube_error;
 	}
 
@@ -73,7 +73,7 @@ writecube(const char *format, cube_t cube, char *buf)
 		}
 	}
 
-	errormsg = "ERROR: cannot write cube in the given format";
+	errormsg = "ERROR: format";
 
 writecube_error:
 	DBG_LOG("writecube error, see stdout for details\n");

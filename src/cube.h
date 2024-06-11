@@ -1,6 +1,7 @@
 /*
-All the functions below return 0 in case of success and a positive number
-in case of error. See (TODO: documentation) for details.
+All the functions below return 0 in case of success and a positive
+number in case of error, unless otherwise specified. See (TODO:
+documentation) for details.
 */
 
 int nissy_compose(
@@ -43,13 +44,21 @@ int nissy_writecube(
 	char *result
 );
 
-int nissy_gendata(
+int nissy_convertcube(
+	const char *format_in,
+	const char *format_out,
+	const char *cube_string,
+	char *result
+);
+
+/* Returns the number of bytes written, or -1 in case of error */
+int64_t nissy_gendata(
 	const char *solver,
 	const char *options,
 	void *generated_data,
-	int64_t *generated_bytes
 );
 
+/* Returns the number of solutions found, or -1 in case of error */
 int nissy_solve(
 	const char cube[static 22],
 	const char *solver, 
@@ -61,5 +70,4 @@ int nissy_solve(
 	int8_t optimal,
 	const void *data,
 	char *solutions,
-	int *n_solutions
 );
