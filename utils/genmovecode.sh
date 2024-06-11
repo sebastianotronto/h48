@@ -1,9 +1,9 @@
 #!/bin/sh
 
-gcc -DDEBUG h48_to_lst.c ../src/cube.c -o h48_to_lst
+cc -DDEBUG h48_to_lst.c ../src/cube.c -o h48_to_lst
 
 gen() {
-	for f in cubse/move_??_*.txt; do
+	for f in cubes/move_??_*.txt; do
 		move="$(echo $f | sed 's/.*_// ; s/\.txt//')"
 		printf '#define _move_cube_%s fastcube( \\\n    ' "$move"
 		./h48_to_lst <"$f"

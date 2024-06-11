@@ -1,7 +1,7 @@
 #!/bin/sh
 
-gcc -DDEBUG h48_to_lst.c ../src/cube.c -o h48_to_lst
-gcc -DDEBUG invert.c ../src/cube.c -o invert
+cc -DDEBUG h48_to_lst.c ../src/cube.c -o h48_to_lst
+cc -DDEBUG invert.c ../src/cube.c -o invert
 
 lineavx() { printf '#define _trans_cube_%s ' "$1"; }
 linesrc() { printf '_static cube_fast_t _trans_cube_%s = ' "$1"; }

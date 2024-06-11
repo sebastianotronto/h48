@@ -55,7 +55,7 @@ int nissy_convertcube(
 int64_t nissy_gendata(
 	const char *solver,
 	const char *options,
-	void *generated_data,
+	void *generated_data
 );
 
 /* Returns the number of solutions found, or -1 in case of error */
@@ -69,5 +69,5 @@ int nissy_solve(
 	int64_t maxsolutions,
 	int8_t optimal,
 	const void *data,
-	char *solutions,
+	char *solutions
 );

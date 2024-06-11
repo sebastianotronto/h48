@@ -1,20 +1,3 @@
-Refactoring: remove cube_fast_t and add b32 format
-  - fix utility code in utils/*.c
-    replace h48_to_lst with convert.c (use convert from cube.h)
-    fix invert.c (use inverse from cube.h)
-    fix utils/*.sh scripts to use the new convert
-    convert all utils/cubes/*.txt files in b32 format
-  - switch to b32 by default
-    change all tests to use b32
-    split read and write for H48
-  - if all public functions work with strings, always use return value
-    as error code (solve already does this), and use string as buffer
-    to print error
-
-Transform with big table
-  - make static cube actually static (how?)
-  - if not possible, cleanup in some way
-
 Solver
   - write a solver (how many tricks? some, but not all are needed)
 
@@ -27,9 +10,6 @@ Goal: find out which k value is best
   - temporarily call current table and solver "k4" instead of h48
   - write table generation and solver for k2 and k1
   - benchmark for different sizes!
-
-Refactoring
-  - transformations: remove switch to make shorter, but keep performance
 
 ## H48 optimal solver (some has already been implemented)
 
@@ -87,6 +67,7 @@ switch. Here NISS may be useful.
 * Use multi-move (up to 4/5 moves at once)
 * see if vcube's method to flip all corners is better
 * find a better way for computing the inverse?
+* Transform with big table: make static cube actually static (how?)
 
 ## Improvements and other things
 
