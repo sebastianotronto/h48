@@ -1,7 +1,5 @@
-generated
 config.mk
 benchmark/results
-old/benchmark/results
 benchmark/run
 gen
 debuggen

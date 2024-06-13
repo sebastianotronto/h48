@@ -18,7 +18,7 @@ test: debugcube.o
 	CUBETYPE=${CUBETYPE} TEST=${TEST} ./test/test.sh
 
 benchmark: cube.o
-	CUBETYPE=${CUBETYPE} ./benchmark/bench.sh
+	CUBETYPE=${CUBETYPE} ./benchmark/benchmark.sh
 
 gen: cube.o
 	${CC} ${CFLAGS} -o gen cube.o tables/tables.c

@@ -235,12 +235,18 @@ int64_t
 gendata(const char *solver, const char *options, void *data)
 {
 	int64_t ret;
-	uint8_t maxdepth;
+	uint8_t maxdepth, h, i, j;
 
 	if (!strcmp(solver, "H48")) {
-		/* TODO: write a generic parser for options */
-		maxdepth = atoi(options);
-		ret = gendata_h48(data, 0, maxdepth);
+		/*
+		TODO: write a generic parser for options
+		for now it accepts "h;maxdepth"
+		*/
+		for (i = 0; options[i] != ';'; i++) ;
+		for (j = i; options[j]; j++) ;
+		h = atoi(options);
+		maxdepth = atoi(&options[i+1]);
+		ret = gendata_h48(data, h, maxdepth);
 	} else {
 		DBG_LOG("gendata: implemented only for H48 solver\n");
 		ret = -1;

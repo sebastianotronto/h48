@@ -1,4 +1,9 @@
+Fixes
+  - tables/tables.c: fix, use new nissy_gendata and nissy_datasize
+
 Solver
+  - benchmark for solve
+    table generation, where to keep tables? in benchmark folder or in tables/?
   - write a solver (how many tricks? some, but not all are needed)
 
 More utilities for tables (in cube.h)
