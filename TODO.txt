@@ -3,7 +3,6 @@ Solver
 
 More utilities for tables (in cube.h)
   - cleanup solve and gendata in cube.h and cube_public.h
-  - for tables, a "dryrun" function that only tells you the size needed
   - check hash of generated data
 
 Goal: find out which k value is best

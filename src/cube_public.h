@@ -1,3 +1,5 @@
+#include "cube.h"
+
 int write_result(cube_t, char [static 22]);
 
 int
@@ -124,6 +126,16 @@ nissy_writecube(
 )
 {
 	return nissy_convertcube("B32", format, cube, result);
+}
+
+int64_t
+nissy_datasize(
+	const char *solver,
+	const char *options
+)
+{
+	/* gendata() handles a NULL *data as a "dryrun" request */
+	return nissy_gendata(solver, options, NULL);
 }
 
 int64_t
