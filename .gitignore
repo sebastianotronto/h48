@@ -5,7 +5,7 @@ gen
 debuggen
 perf.data
 perf.data.old
-tables/data/*
+tables/*
 test/*/runtest
 test/run
 test/last.*

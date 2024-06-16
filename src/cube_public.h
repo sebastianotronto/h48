@@ -1,8 +1,8 @@
 #include "cube.h"
 
-int write_result(cube_t, char [static 22]);
+_static int64_t write_result(cube_t, char [static 22]);
 
-int
+_static int64_t
 write_result(cube_t cube, char result[static 22])
 {
 	if (!isconsistent(cube)) {
@@ -15,7 +15,7 @@ write_result(cube_t cube, char result[static 22])
 	return issolvable(cube) ? 0 : 1;
 }
 
-int
+int64_t
 nissy_compose(
 	const char cube[static 22],
 	const char permutation[static 22],
@@ -31,7 +31,7 @@ nissy_compose(
 	return write_result(res, result);
 }
 
-int
+int64_t
 nissy_inverse(
 	const char cube[static 22],
 	char result[static 22]
@@ -45,7 +45,7 @@ nissy_inverse(
 	return write_result(res, result);
 }
 
-int
+int64_t
 nissy_applymoves(
 	const char cube[static 22],
 	const char *moves,
@@ -60,7 +60,7 @@ nissy_applymoves(
 	return write_result(res, result);
 }
 
-int
+int64_t
 nissy_applytrans(
 	const char cube[static 22],
 	const char *transformation,
@@ -75,7 +75,7 @@ nissy_applytrans(
 	return write_result(res, result);
 }
 
-int
+int64_t
 nissy_frommoves(
 	const char *moves,
 	char result[static 22]
@@ -88,7 +88,7 @@ nissy_frommoves(
 	return write_result(res, result);
 }
 
-int
+int64_t
 nissy_readcube(
 	const char *format,
 	const char *cube_string,
@@ -102,7 +102,7 @@ nissy_readcube(
 	return write_result(res, result);
 }
 
-int
+int64_t
 nissy_convertcube(
 	const char *format_in,
 	const char *format_out,
@@ -118,7 +118,7 @@ nissy_convertcube(
 	return isconsistent(c) ? 0 : 2;
 }
 
-int
+int64_t
 nissy_writecube(
 	const char *format,
 	const char cube[static 22],

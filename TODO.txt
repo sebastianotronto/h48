@@ -1,3 +1,8 @@
+Shell and nissy_run
+  x done shell.c, but it is ugly (as expected)
+  - move stuff from solve_generic to cube_public
+  - make shell a bit nicer?
+
 Fixes
   - tables/tables.c: fix, use new nissy_gendata and nissy_datasize
 
@@ -14,6 +19,8 @@ Goal: find out which k value is best
   - temporarily call current table and solver "k4" instead of h48
   - write table generation and solver for k2 and k1
   - benchmark for different sizes!
+
+Read / write: replace by convertcube only?
 
 ## H48 optimal solver (some has already been implemented)
 
@@ -90,13 +97,14 @@ switch. Here NISS may be useful.
 
 ## "Front-end"
 
+* nissy shell: make more usable, meaningful error messages etc
+  for example, it should check that the solver is valid
 * Write adapter code for other languages:
   python
   hare (see blog post 2023-12-01 for ffi)
   rust, go
   dart ffi, js
   java
-* add also example code (e.g. an optimal solver) in examples/
 
 ## More documentation?
 

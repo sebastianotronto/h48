@@ -12,7 +12,7 @@ debugcube.o: clean
 	${CC} -D${CUBETYPE} ${DBGFLAGS} -c -o debugcube.o src/cube.c
 
 clean:
-	rm -rf *.o gen debuggen
+	rm -rf *.o run
 
 test: debugcube.o
 	CUBETYPE=${CUBETYPE} TEST=${TEST} ./test/test.sh
@@ -20,10 +20,8 @@ test: debugcube.o
 benchmark: cube.o
 	CUBETYPE=${CUBETYPE} ./benchmark/benchmark.sh
 
-gen: cube.o
-	${CC} ${CFLAGS} -o gen cube.o tables/tables.c
+shell: cube.o
+	mkdir -p tables
+	${CC} ${CFLAGS} -o run cube.o shell.c
 
-debuggen: debugcube.o
-	${CC} ${DBGFLAGS} -o debuggen debugcube.o tables/tables.c
-
-.PHONY: all clean test benchmark gen debuggen
+.PHONY: all clean test benchmark shell
