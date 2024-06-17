@@ -4,7 +4,7 @@ int64_t coord_eo(cube_t);
 void set_eo(cube_t *, int64_t);
 void pieces(cube_t *, uint8_t [static 8], uint8_t [static 12]);
 
-int main(void) {
+void run(void) {
 	char str[STRLENMAX];
 	cube_t cube;
 	uint8_t edge[12], corner[8];
@@ -33,6 +33,4 @@ int main(void) {
 		writecube("H48", cube, str);
 		printf("%s\n", str);
 	}
-
-	return 0;
 }

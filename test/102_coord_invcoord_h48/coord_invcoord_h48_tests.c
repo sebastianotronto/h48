@@ -7,7 +7,7 @@ int64_t coord_h48(cube_t, const uint32_t *, uint8_t);
 cube_t invcoord_h48(int64_t, const cube_t *, uint8_t);
 cube_t transform(cube_t, uint8_t);
 
-int main(void) {
+void run(void) {
 	char str[STRLENMAX];
 	int i;
 	bool found;
@@ -33,6 +33,4 @@ int main(void) {
 		printf("%d %s\n", i, found ? "ok" : "ERROR");
 		i++;
 	}
-
-	return 0;
 }

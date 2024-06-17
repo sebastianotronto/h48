@@ -166,3 +166,9 @@ nissy_solve(
 	/* TODO: move solve_generic here? */
 	return -1;
 }
+
+void
+nissy_setlogger(void (*log)(const char *, va_list))
+{
+	nissy_log = log;
+}

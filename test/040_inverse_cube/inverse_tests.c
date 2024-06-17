@@ -2,7 +2,7 @@
 
 cube_t inverse(cube_t);
 
-int main(void) {
+void run(void) {
 	char str[STRLENMAX];
 	cube_t cube, inv;
 
@@ -18,6 +18,4 @@ int main(void) {
 		writecube("H48", inv, str);
 		printf("%s\n", str);
 	}
-
-	return 0;
 }

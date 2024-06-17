@@ -2,7 +2,7 @@
 
 cube_t compose(cube_t, cube_t);
 
-int main(void) {
+void run(void) {
 	char str[STRLENMAX];
 	cube_t c1, c2, c3;
 
@@ -21,6 +21,4 @@ int main(void) {
 		writecube("H48", c3, str);
 		printf("%s\n", str);
 	}
-
-	return 0;
 }

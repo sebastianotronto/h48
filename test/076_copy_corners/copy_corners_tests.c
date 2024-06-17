@@ -2,7 +2,7 @@
 
 void copy_corners(cube_t *, cube_t);
 
-int main(void) {
+void run(void) {
 	char str[STRLENMAX];
 	cube_t c1, c2;
 
@@ -22,6 +22,4 @@ int main(void) {
 		writecube("H48", c1, str);
 		printf("%s\n", str);
 	}
-
-	return 0;
 }

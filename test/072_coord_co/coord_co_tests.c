@@ -2,7 +2,7 @@
 
 int64_t coord_co(cube_t);
 
-int main(void) {
+void run(void) {
 	char str[STRLENMAX];
 	cube_t cube;
 	int64_t result;
@@ -13,6 +13,4 @@ int main(void) {
 	result = coord_co(cube);
 
 	printf("%" PRId64 "\n", result);
-
-	return 0;
 }

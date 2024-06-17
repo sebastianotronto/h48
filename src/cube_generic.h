@@ -65,16 +65,16 @@ isconsistent(cube_t cube)
 	return true;
 
 inconsistent_ep:
-	DBG_LOG("Inconsistent EP\n");
+	_log("Inconsistent EP\n");
 	return false;
 inconsistent_cp:
-	DBG_LOG("Inconsistent CP\n");
+	_log("Inconsistent CP\n");
 	return false;
 inconsistent_eo:
-	DBG_LOG("Inconsistent EO\n");
+	_log("Inconsistent EO\n");
 	return false;
 inconsistent_co:
-	DBG_LOG("Inconsistent CO\n");
+	_log("Inconsistent CO\n");
 	return false;
 }
 
@@ -114,13 +114,13 @@ issolvable(cube_t cube)
 	return true;
 
 issolvable_parity:
-	DBG_LOG("EP and CP parities are different\n");
+	_log("EP and CP parities are different\n");
 	return false;
 issolvable_eo:
-	DBG_LOG("Odd number of flipped edges\n");
+	_log("Odd number of flipped edges\n");
 	return false;
 issolvable_co:
-	DBG_LOG("Sum of corner orientation is not multiple of 3\n");
+	_log("Sum of corner orientation is not multiple of 3\n");
 	return false;
 }
 
@@ -161,7 +161,7 @@ applymoves_finish:
 	return cube;
 
 applymoves_error:
-	DBG_LOG("applymoves error\n");
+	_log("applymoves error\n");
 	return zero;
 }
 
@@ -238,7 +238,7 @@ move(cube_t c, uint8_t m)
 	case _move_B3:
 		return _move(B3, c);
 	default:
-		DBG_LOG("move error, unknown move\n");
+		_log("move error, unknown move\n");
 		return zero;
 	}
 }

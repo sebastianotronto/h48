@@ -6,7 +6,7 @@ cube_t applymoves(cube_t, char *);
 cube_t applytrans(cube_t, char *);
 extern char *transstr[];
 
-int main(void) {
+void run(void) {
 	uint8_t t, tinv;
 	cube_t cube;
 
@@ -33,6 +33,4 @@ int main(void) {
 				    transstr[t], tinv);
 		}
 	}
-
-	return 0;
 }

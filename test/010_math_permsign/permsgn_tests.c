@@ -2,7 +2,7 @@
 
 int permsign(uint8_t *, int);
 
-int main(void) {
+void run(void) {
 	char str[STRLENMAX];
 	uint8_t a[100];
 	int n, i, p;
@@ -17,6 +17,4 @@ int main(void) {
 
 	p = permsign(a, n);
 	printf("%d\n", p);
-
-	return 0;
 }

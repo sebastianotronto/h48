@@ -1,6 +1,6 @@
 #include "../test.h"
 
-int main(void) {
+void run(void) {
 	char str[STRLENMAX], *aux;
 	cube_t cube;
 
@@ -19,6 +19,4 @@ int main(void) {
 		writecube("LST", cube, str);
 		printf("%s\n", str);
 	}
-
-	return 0;
 }

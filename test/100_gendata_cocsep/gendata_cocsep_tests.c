@@ -4,7 +4,7 @@
 
 size_t gendata_cocsep(void *, uint64_t *, cube_t *);
 
-int main(void) {
+void run(void) {
 	uint32_t buf[300000], i;
 	uint64_t selfsim[COCSEP_CLASSES];
 	cube_t rep[COCSEP_CLASSES];
@@ -17,6 +17,4 @@ int main(void) {
 	printf("Max value: %" PRIu32 "\n", buf[result/4-11]);
 	for (i = 0; i < 10; i++)
 		printf("%" PRIu32 ": %" PRIu32 "\n", i, buf[result/4-10+i]);
-
-	return 0;
 }

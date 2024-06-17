@@ -11,7 +11,7 @@ static char *moves[] = {
 	"B", "B2", "B'",
 };
 
-int main(void) {
+void run(void) {
 	char movestr[STRLENMAX];
 	uint8_t m[100];
 	int n, i, j;
@@ -32,6 +32,4 @@ int main(void) {
 	    n > 1 ? moves[m[n-2]] : "-",
 	    n > 0 ? moves[m[n-1]] : "-");
 	printf("%s\n", allowednextmove(m, n) ? "true" : "false");
-
-	return 0;
 }

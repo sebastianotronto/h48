@@ -12,7 +12,7 @@
 size_t gendata_cocsep(void *, uint64_t *, cube_t *);
 int64_t coord_cocsep(cube_t);
 
-int main(void) {
+void run(void) {
 	char str[STRLENMAX];
 	uint32_t buf[300000], data;
 	int64_t coord, coclass;
@@ -35,6 +35,4 @@ int main(void) {
 		}
 		printf("\n");
 	}
-
-	return 0;
 }

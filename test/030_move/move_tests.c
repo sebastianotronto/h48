@@ -2,7 +2,7 @@
 
 cube_t applymoves(cube_t, char *);
 
-int main(void) {
+void run(void) {
 	char movestr[STRLENMAX], cubestr[STRLENMAX];
 	cube_t cube;
 
@@ -20,6 +20,4 @@ int main(void) {
 		writecube("H48", cube, cubestr);
 		printf("%s\n", cubestr);
 	}
-
-	return 0;
 }

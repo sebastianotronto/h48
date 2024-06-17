@@ -3,7 +3,7 @@
 int64_t coord_esep(cube_t);
 cube_t invcoord_esep(int64_t);
 
-int main(void) {
+void run(void) {
 	char str[STRLENMAX];
 	cube_t cube;
 	int64_t i;
@@ -16,6 +16,4 @@ int main(void) {
 	i = coord_esep(cube);
 
 	printf("%" PRId64 "\n", i);
-
-	return 0;
 }

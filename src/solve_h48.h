@@ -146,13 +146,13 @@ gendata_cocsep(void *buf, uint64_t *selfsim, cube_t *rep)
 		.rep = rep
 	};
 	for (i = 0, n = 0, cc = 0; i < 10; i++) {
-		DBG_LOG("cocsep: generating depth %" PRIu8 "\n", i);
+		_log("cocsep: generating depth %" PRIu8 "\n", i);
 		memset(visited, 0, COCSEP_VISITEDSIZE);
 		arg.depth = 0;
 		arg.maxdepth = i;
 		cc = gendata_cocsep_dfs(&arg);
 		info[i+2] = cc;
-		DBG_LOG("found %" PRIu32 "\n", cc);
+		_log("found %" PRIu32 "\n", cc);
 	}
 
 	info[0] = (uint32_t)n;
@@ -161,12 +161,12 @@ gendata_cocsep(void *buf, uint64_t *selfsim, cube_t *rep)
 	    "cocsep: computed %" PRIu16 " symmetry classes, "
 	    "expected %zu\n", n, COCSEP_CLASSES);
 
-	DBG_LOG("cocsep data computed\n");
-	DBG_LOG("Symmetry classes: %" PRIu32 "\n", info[0]);
-	DBG_LOG("Maximum pruning value: %" PRIu32 "\n", info[1]);
-	DBG_LOG("Pruning value distribution:\n");
+	_log("cocsep data computed\n");
+	_log("Symmetry classes: %" PRIu32 "\n", info[0]);
+	_log("Maximum pruning value: %" PRIu32 "\n", info[1]);
+	_log("Pruning value distribution:\n");
 	for (j = 0; j < 10; j++)
-		DBG_LOG("%" PRIu8 ":\t%" PRIu32 "\n", j, info[j+2]);
+		_log("%" PRIu8 ":\t%" PRIu32 "\n", j, info[j+2]);
 
 gendata_cocsep_return_size:
 	return COCSEP_FULLSIZE;
@@ -264,21 +264,21 @@ gendata_h48(void *buf, uint8_t h, uint8_t maxdepth)
 		tot < esep_max && arg.depth <= maxdepth;
 		arg.depth++
 	) {
-		DBG_LOG("esep: generating depth %" PRIu8 "\n", arg.depth);
+		_log("esep: generating depth %" PRIu8 "\n", arg.depth);
 		cc = gendata_esep_bfs(&arg);
 		tot += cc;
 		info[arg.depth+1] = cc;
-		DBG_LOG("found %" PRIu64 "\n", cc);
+		_log("found %" PRIu64 "\n", cc);
 	}
 
 	info[0] = arg.depth-1;
 	infosize = 4 * (size_t)(info[0] + 2);
 
-	DBG_LOG("h48 pruning table computed\n");
-	DBG_LOG("Maximum pruning value: %" PRIu32 "\n", info[0]);
-	DBG_LOG("Pruning value distribution:\n");
+	_log("h48 pruning table computed\n");
+	_log("Maximum pruning value: %" PRIu32 "\n", info[0]);
+	_log("Pruning value distribution:\n");
 	for (j = 0; j <= info[0]; j++)
-		DBG_LOG("%" PRIu8 ":\t%" PRIu32 "\n", j, info[j+1]);
+		_log("%" PRIu8 ":\t%" PRIu32 "\n", j, info[j+1]);
 
 gendata_h48_return_size:
 	return cocsepsize + ESEP_TABLESIZE(h, k) + infosize;

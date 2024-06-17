@@ -49,7 +49,7 @@ readcube(const char *format, const char *buf)
 		if (!strcmp(format, ioformat[i].name))
 			return ioformat[i].read(buf);
 
-	DBG_LOG("Cannot read cube in the given format\n");
+	_log("Cannot read cube in the given format\n");
 	return zero;
 }
 
@@ -76,7 +76,7 @@ writecube(const char *format, cube_t cube, char *buf)
 	errormsg = "ERROR: format";
 
 writecube_error:
-	DBG_LOG("writecube error, see stdout for details\n");
+	_log("writecube error, see stdout for details\n");
 	len = strlen(errormsg);
 	memcpy(buf, errormsg, len);
 	buf[len] = '\n';
@@ -93,7 +93,7 @@ readco(const char *str)
 	if (*str == '2')
 		return _ctwist_ccw;
 
-	DBG_LOG("Error reading CO\n");
+	_log("Error reading CO\n");
 	return _error;
 }
 
@@ -107,7 +107,7 @@ readcp(const char *str)
 		    !strncmp(str, cornerstralt[c], 3))
 			return c;
 
-	DBG_LOG("Error reading CP\n");
+	_log("Error reading CP\n");
 	return _error;
 }
 
@@ -119,7 +119,7 @@ readeo(const char *str)
 	if (*str == '1')
 		return _eflip;
 
-	DBG_LOG("Error reading EO\n");
+	_log("Error reading EO\n");
 	return _error;
 }
 
@@ -132,7 +132,7 @@ readep(const char *str)
 		if (!strncmp(str, edgestr[e], 2))
 			return e;
 
-	DBG_LOG("Error reading EP\n");
+	_log("Error reading EP\n");
 	return _error;
 }
 

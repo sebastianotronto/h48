@@ -49,11 +49,11 @@ solve(
 			solutions
 		);
 	} else {
-		DBG_LOG("solve: unknown solver '%s'\n", solver);
+		_log("solve: unknown solver '%s'\n", solver);
 		return -1;
 	}
 
-	DBG_LOG("solve: error\n");
+	_log("solve: error\n");
 	return -1;
 }
 
@@ -63,7 +63,7 @@ solve_generic_appendsolution(dfsarg_generic_t *arg)
 	int strl;
 
 	strl = writemoves(arg->moves, arg->depth, *arg->nextsol);
-	DBG_LOG("Solution found: %s\n", *arg->nextsol);
+	_log("Solution found: %s\n", *arg->nextsol);
 	*arg->nextsol += strl;
 	**arg->nextsol = '\n';
 	(*arg->nextsol)++;
@@ -126,12 +126,12 @@ solve_generic(
 	int64_t ret, tmp, first;
 
 	if (!issolvable(cube)) {
-		DBG_LOG("solve: cube is not solvable\n");
+		_log("solve: cube is not solvable\n");
 		return -1;
 	}
 
 	if (issolved(cube)) {
-		DBG_LOG("solve: cube is already solved\n");
+		_log("solve: cube is already solved\n");
 		sols[0] = '\n';
 		sols[1] = 0;
 		return 1;
@@ -141,32 +141,32 @@ solve_generic(
 	    "solve: NISS not implemented yet, 'nisstype' ignored\n");
 
 	if (minmoves < 0) {
-		DBG_LOG("solve: 'minmoves' is negative, setting to 0\n");
+		_log("solve: 'minmoves' is negative, setting to 0\n");
 		minmoves = 0;
 	}
 
 	if (maxmoves < 0) {
-		DBG_LOG("solve: invalid 'maxmoves', setting to 20\n");
+		_log("solve: invalid 'maxmoves', setting to 20\n");
 		maxmoves = 20;
 	}
 
 	if (maxsols < 0) {
-		DBG_LOG("solve: 'maxsols' is negative\n");
+		_log("solve: 'maxsols' is negative\n");
 		return -1;
 	}
 
 	if (maxsols == 0) {
-		DBG_LOG("solve: 'maxsols' is 0\n");
+		_log("solve: 'maxsols' is 0\n");
 		return 0;
 	}
 
 	if (sols == NULL) {
-		DBG_LOG("solve: return parameter 'sols' is NULL\n");
+		_log("solve: return parameter 'sols' is NULL\n");
 		return -1;
 	}
 
 	if (estimate == NULL) {
-		DBG_LOG("solve: 'estimate' is NULL\n");
+		_log("solve: 'estimate' is NULL\n");
 		return -1;
 	}
 
@@ -187,7 +187,7 @@ solve_generic(
 		if (tmp != 0)
 			first = arg.depth;
 
-		DBG_LOG("Found %" PRId64 " solution%s at depth %" PRIu8 "\n",
+		_log("Found %" PRId64 " solution%s at depth %" PRIu8 "\n",
 		        tmp, tmp == 1 ? "" : "s", arg.depth);
 
 		if (ret >= maxsols)
@@ -248,7 +248,7 @@ gendata(const char *solver, const char *options, void *data)
 		maxdepth = atoi(&options[i+1]);
 		ret = gendata_h48(data, h, maxdepth);
 	} else {
-		DBG_LOG("gendata: implemented only for H48 solver\n");
+		_log("gendata: implemented only for H48 solver\n");
 		ret = -1;
 	}
 

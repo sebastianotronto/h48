@@ -1,3 +1,5 @@
+/* include: inttypes, stdarg, stdbool, string */
+
 /*
 All the functions below return 0 in case of success and a positive
 number in case of error, unless otherwise specified. See (TODO:
@@ -81,3 +83,5 @@ int64_t nissy_solve(
 	const void *data,
 	char *solutions
 );
+
+void nissy_setlogger(void (*logger_function)(const char *, va_list));

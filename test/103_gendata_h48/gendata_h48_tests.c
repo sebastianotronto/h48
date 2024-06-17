@@ -6,7 +6,7 @@
 
 size_t gendata_h48(void *, uint8_t, uint8_t);
 
-int main(void) {
+void run(void) {
 	char str[STRLENMAX];
 	uint8_t h, i;
 	uint32_t *buf, *h48info;
@@ -31,5 +31,4 @@ int main(void) {
 		printf("%" PRIu32 ": %" PRIu32 "\n", i, h48info[i+1]);
 
 	free(buf);
-	return 0;
 }

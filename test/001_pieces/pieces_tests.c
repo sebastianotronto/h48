@@ -2,7 +2,7 @@
 
 void pieces(cube_t *, uint8_t [static 8], uint8_t [static 12]);
 
-int main(void) {
+void run(void) {
 	int i;
 	uint8_t corner[8], edge[12];
 	char str[STRLENMAX], *aux;
@@ -22,6 +22,4 @@ int main(void) {
 	for (i = 0; i < 12; i++)
 		printf("%" PRIu8 " ", edge[i]);
 	printf("\n");
-
-	return 0;
 }

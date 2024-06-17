@@ -49,7 +49,7 @@ readtrans(const char *buf)
 		if (!strncmp(buf, transstr[t], 11))
 			return t;
 
-	DBG_LOG("readtrans error\n");
+	_log("readtrans error\n");
 	return _error;
 }
 

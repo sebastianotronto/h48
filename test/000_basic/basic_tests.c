@@ -17,7 +17,7 @@ check2(cube_t cube1, char *name1, cube_t cube2, char *name2)
 	    equal(cube1, cube2) ? "" : " NOT");
 }
 
-int main(void) {
+void run(void) {
 	cube_t zero, solved;
 
 	memset(&zero, 0, sizeof(cube_t));
@@ -28,6 +28,4 @@ int main(void) {
 	check2(solved, "Solved", solved, "Solved");
 	check2(solved, "Solved", zero, "Zero");
 	check2(zero, "Zero", solved, "Solved");
-
-	return 0;
 }
