@@ -168,7 +168,7 @@ nissy_solve(
 }
 
 void
-nissy_setlogger(void (*log)(const char *, va_list))
+nissy_setlogger(void (*log)(const char *, ...))
 {
 	nissy_log = log;
 }

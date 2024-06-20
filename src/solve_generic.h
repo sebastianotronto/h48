@@ -49,11 +49,11 @@ solve(
 			solutions
 		);
 	} else {
-		_log("solve: unknown solver '%s'\n", solver);
+		LOG("solve: unknown solver '%s'\n", solver);
 		return -1;
 	}
 
-	_log("solve: error\n");
+	LOG("solve: error\n");
 	return -1;
 }
 
@@ -63,7 +63,7 @@ solve_generic_appendsolution(dfsarg_generic_t *arg)
 	int strl;
 
 	strl = writemoves(arg->moves, arg->depth, *arg->nextsol);
-	_log("Solution found: %s\n", *arg->nextsol);
+	LOG("Solution found: %s\n", *arg->nextsol);
 	*arg->nextsol += strl;
 	**arg->nextsol = '\n';
 	(*arg->nextsol)++;
@@ -126,12 +126,12 @@ solve_generic(
 	int64_t ret, tmp, first;
 
 	if (!issolvable(cube)) {
-		_log("solve: cube is not solvable\n");
+		LOG("solve: cube is not solvable\n");
 		return -1;
 	}
 
 	if (issolved(cube)) {
-		_log("solve: cube is already solved\n");
+		LOG("solve: cube is already solved\n");
 		sols[0] = '\n';
 		sols[1] = 0;
 		return 1;
@@ -141,32 +141,32 @@ solve_generic(
 	    "solve: NISS not implemented yet, 'nisstype' ignored\n");
 
 	if (minmoves < 0) {
-		_log("solve: 'minmoves' is negative, setting to 0\n");
+		LOG("solve: 'minmoves' is negative, setting to 0\n");
 		minmoves = 0;
 	}
 
 	if (maxmoves < 0) {
-		_log("solve: invalid 'maxmoves', setting to 20\n");
+		LOG("solve: invalid 'maxmoves', setting to 20\n");
 		maxmoves = 20;
 	}
 
 	if (maxsols < 0) {
-		_log("solve: 'maxsols' is negative\n");
+		LOG("solve: 'maxsols' is negative\n");
 		return -1;
 	}
 
 	if (maxsols == 0) {
-		_log("solve: 'maxsols' is 0\n");
+		LOG("solve: 'maxsols' is 0\n");
 		return 0;
 	}
 
 	if (sols == NULL) {
-		_log("solve: return parameter 'sols' is NULL\n");
+		LOG("solve: return parameter 'sols' is NULL\n");
 		return -1;
 	}
 
 	if (estimate == NULL) {
-		_log("solve: 'estimate' is NULL\n");
+		LOG("solve: 'estimate' is NULL\n");
 		return -1;
 	}
 
@@ -187,7 +187,7 @@ solve_generic(
 		if (tmp != 0)
 			first = arg.depth;
 
-		_log("Found %" PRId64 " solution%s at depth %" PRIu8 "\n",
+		LOG("Found %" PRId64 " solution%s at depth %" PRIu8 "\n",
 		        tmp, tmp == 1 ? "" : "s", arg.depth);
 
 		if (ret >= maxsols)
@@ -248,7 +248,7 @@ gendata(const char *solver, const char *options, void *data)
 		maxdepth = atoi(&options[i+1]);
 		ret = gendata_h48(data, h, maxdepth);
 	} else {
-		_log("gendata: implemented only for H48 solver\n");
+		LOG("gendata: implemented only for H48 solver\n");
 		ret = -1;
 	}
 

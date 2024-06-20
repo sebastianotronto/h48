@@ -84,4 +84,4 @@ int64_t nissy_solve(
 	char *solutions
 );
 
-void nissy_setlogger(void (*logger_function)(const char *, va_list));
+void nissy_setlogger(void (*logger_function)(const char *, ...));

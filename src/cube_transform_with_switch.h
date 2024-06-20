@@ -118,7 +118,7 @@ transform_edges(cube_t c, uint8_t t)
 	case _trans_BLm:
 		return _trans_edges_mirrored(BLm, c);
 	default:
-		_log("transform error, unknown transformation\n");
+		LOG("transform error, unknown transformation\n");
 		return zero;
 	}
 }
@@ -224,7 +224,7 @@ transform_corners(cube_t c, uint8_t t)
 	case _trans_BLm:
 		return _trans_corners_mirrored(BLm, c);
 	default:
-		_log("transform error, unknown transformation\n");
+		LOG("transform error, unknown transformation\n");
 		return zero;
 	}
 }
@@ -330,7 +330,7 @@ transform(cube_t c, uint8_t t)
 	case _trans_BLm:
 		return _trans_mirrored(BLm, c);
 	default:
-		_log("transform error, unknown transformation\n");
+		LOG("transform error, unknown transformation\n");
 		return zero;
 	}
 }

@@ -3,27 +3,16 @@
 #include <stdbool.h>
 #include <string.h>
 
-void (*nissy_log)(const char *, va_list);
+void (*nissy_log)(const char *, ...);
 
-void
-_log(const char *str, ...) /* TODO: rename */
-{
-	va_list args;
-
-	if (nissy_log != NULL) {
-		va_start(args, str);
-		nissy_log(str, args);
-		va_end(args);
-	}
-}
+#define LOG(...) if (nissy_log != NULL) nissy_log(__VA_ARGS__);
 
 #ifdef DEBUG
 #define _static
 #define _static_inline
-#define DBG_WARN(condition, ...) if (!(condition)) _log(__VA_ARGS__);
+#define DBG_WARN(condition, ...) if (!(condition)) LOG(__VA_ARGS__);
 #define DBG_ASSERT(condition, retval, ...) \
-    if (!(condition)) { _log(__VA_ARGS__); return retval; }
-
+    if (!(condition)) { LOG(__VA_ARGS__); return retval; }
 #else
 #define _static static
 #define _static_inline static inline
