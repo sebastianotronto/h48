@@ -34,19 +34,7 @@ int64_t nissy_frommoves(
 	char result[static 22]
 );
 
-int64_t nissy_readcube(
-	const char *format,
-	const char *cube_string,
-	char result[static 22]
-);
-
-int64_t nissy_writecube(
-	const char *format,
-	const char cube[static 22],
-	char *result
-);
-
-int64_t nissy_convertcube(
+int64_t nissy_convert(
 	const char *format_in,
 	const char *format_out,
 	const char *cube_string,

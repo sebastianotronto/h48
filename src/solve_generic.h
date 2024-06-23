@@ -16,47 +16,6 @@ _static int64_t solve_generic(cube_t, const char *, int8_t, int8_t, int64_t,
 _static uint8_t estimate_simple(cube_t);
 _static int64_t solve_simple(cube_t, int8_t, int8_t, int64_t, int8_t, char *);
 
-int64_t
-solve(
-	cube_t cube,
-	const char *solver,
-	const char *options,
-	const char *nisstype,
-	int8_t minmoves,
-	int8_t maxmoves,
-	int64_t maxsols,
-	int8_t optimal,
-	const void *data,
-	char *solutions
-)
-{
-	DBG_WARN(!strcmp(options, ""),
-	     "solve: 'options' not implemented yet, ignoring\n");
-
-	DBG_WARN(!strcmp(nisstype, ""),
-	     "solve: NISS not implemented yet, ignoring 'nisstype'\n");
-
-	DBG_WARN(data == NULL,
-	    "solve: 'data' not implemented yet, ignoring\n");
-
-	if (!strcmp(solver, "optimal") || !strcmp(solver, "simple")) {
-		return solve_simple(
-			cube,
-			minmoves,
-			maxmoves,
-			maxsols,
-			optimal,
-			solutions
-		);
-	} else {
-		LOG("solve: unknown solver '%s'\n", solver);
-		return -1;
-	}
-
-	LOG("solve: error\n");
-	return -1;
-}
-
 _static void
 solve_generic_appendsolution(dfsarg_generic_t *arg)
 {
@@ -125,44 +84,11 @@ solve_generic(
 	dfsarg_generic_t arg;
 	int64_t ret, tmp, first;
 
-	if (!issolvable(cube)) {
-		LOG("solve: cube is not solvable\n");
-		return -1;
-	}
-
 	if (issolved(cube)) {
 		LOG("solve: cube is already solved\n");
 		sols[0] = '\n';
 		sols[1] = 0;
 		return 1;
-	}
-
-	DBG_WARN(!strcmp(nisstype, ""),
-	    "solve: NISS not implemented yet, 'nisstype' ignored\n");
-
-	if (minmoves < 0) {
-		LOG("solve: 'minmoves' is negative, setting to 0\n");
-		minmoves = 0;
-	}
-
-	if (maxmoves < 0) {
-		LOG("solve: invalid 'maxmoves', setting to 20\n");
-		maxmoves = 20;
-	}
-
-	if (maxsols < 0) {
-		LOG("solve: 'maxsols' is negative\n");
-		return -1;
-	}
-
-	if (maxsols == 0) {
-		LOG("solve: 'maxsols' is 0\n");
-		return 0;
-	}
-
-	if (sols == NULL) {
-		LOG("solve: return parameter 'sols' is NULL\n");
-		return -1;
 	}
 
 	if (estimate == NULL) {
@@ -229,28 +155,4 @@ solve_simple(
 		solutions,
 		&estimate_simple
 	);
-}
-
-int64_t
-gendata(const char *solver, const char *options, void *data)
-{
-	int64_t ret;
-	uint8_t maxdepth, h, i, j;
-
-	if (!strcmp(solver, "H48")) {
-		/*
-		TODO: write a generic parser for options
-		for now it accepts "h;maxdepth"
-		*/
-		for (i = 0; options[i] != ';'; i++) ;
-		for (j = i; options[j]; j++) ;
-		h = atoi(options);
-		maxdepth = atoi(&options[i+1]);
-		ret = gendata_h48(data, h, maxdepth);
-	} else {
-		LOG("gendata: implemented only for H48 solver\n");
-		ret = -1;
-	}
-
-	return ret;
 }

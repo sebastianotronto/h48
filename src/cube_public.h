@@ -89,20 +89,6 @@ nissy_frommoves(
 }
 
 int64_t
-nissy_readcube(
-	const char *format,
-	const char *cube_string,
-	char result[static 22]
-)
-{
-	cube_t res;
-
-	res = readcube(format, cube_string);
-
-	return write_result(res, result);
-}
-
-int64_t
 nissy_convertcube(
 	const char *format_in,
 	const char *format_out,
@@ -116,16 +102,6 @@ nissy_convertcube(
 	writecube(format_out, c, result);
 
 	return isconsistent(c) ? 0 : 2;
-}
-
-int64_t
-nissy_writecube(
-	const char *format,
-	const char cube[static 22],
-	char *result
-)
-{
-	return nissy_convertcube("B32", format, cube, result);
 }
 
 int64_t
@@ -145,8 +121,22 @@ nissy_gendata(
 	void *data
 )
 {
-	/* TODO: move gendata here? */
-	return gendata(solver, options, data);
+	int64_t ret;
+	uint8_t maxdepth, h, i, j;
+
+	if (!strcmp(solver, "H48")) {
+		/*  options are in the form "h;maxdepth" */
+		for (i = 0; options[i] != ';'; i++) ;
+		for (j = i; options[j]; j++) ;
+		h = atoi(options);
+		maxdepth = atoi(&options[i+1]);
+		ret = gendata_h48(data, h, maxdepth);
+	} else {
+		LOG("gendata: implemented only for H48 solver\n");
+		ret = -1;
+	}
+
+	return ret;
 }
 
 int64_t
@@ -163,8 +153,53 @@ nissy_solve(
 	char *solutions
 )
 {
-	/* TODO: move solve_generic here? */
-	return -1;
+	cube_t c;
+	int64_t ret;
+
+	c = readcube_B32(cube);
+
+	if (!issolvable(c)) {
+		LOG("solve: cube is not solvable\n");
+		return -1;
+	}
+
+	if (minmoves < 0) {
+		LOG("solve: 'minmoves' is negative, setting it to 0\n");
+		minmoves = 0;
+	}
+
+	if (maxmoves < 0) {
+		LOG("solve: 'maxmoves' is negative, setting it to 20\n");
+		maxmoves = 20;
+	}
+
+	if (maxsolutions < 0) {
+		LOG("solve: 'maxsols' is negative, stopping\n");
+		return -1;
+	}
+
+	if (maxsolutions == 0) {
+		LOG("solve: 'maxsols' is 0, returning no solution\n");
+		return 0;
+	}
+
+	if (solutions == NULL) {
+		LOG("solve: return parameter 'solutions' is NULL, stopping\n");
+		return -1;
+	}
+
+	if (!strcmp(solver, "h48")) {
+		LOG("h48 solver not implemented yet\n");
+		ret = -1;
+	} else if (!strcmp(solver, "simple")) {
+		ret = solve_simple(
+		    c, minmoves, maxmoves, maxsolutions, optimal, solutions);
+	} else {
+		LOG("solve: unknown solver '%s'\n", solver);
+		ret = -1;
+	}
+
+	return ret;
 }
 
 void

@@ -1,26 +1,22 @@
-Shell and nissy_run
-  x done shell.c, but it is ugly (as expected)
-  - move stuff from solve_generic to cube_public
-  - make shell a bit nicer?
-
-Fixes
-  - tables/tables.c: fix, use new nissy_gendata and nissy_datasize
-
 Solver
+  - write a solver (how many tricks? some, but not all are needed)
   - benchmark for solve
     table generation, where to keep tables? in benchmark folder or in tables/?
-  - write a solver (how many tricks? some, but not all are needed)
+  - remove solve_simple and maybe the whole solve_generic
 
-More utilities for tables (in cube.h)
-  - cleanup solve and gendata in cube.h and cube_public.h
-  - check hash of generated data
+Cleanup cube_public and interface
+  - remove options, use only solver name
+    cleanup also benchmark
+  - write a generic parse + dispatch to solver
+    (maybe use helper function from solve_h48 for parsing hXkY)
 
 Goal: find out which k value is best
   - temporarily call current table and solver "k4" instead of h48
   - write table generation and solver for k2 and k1
   - benchmark for different sizes!
 
-Read / write: replace by convertcube only?
+Improvements
+  - check hash of generated data
 
 ## H48 optimal solver (some has already been implemented)
 
