@@ -89,7 +89,7 @@ nissy_frommoves(
 }
 
 int64_t
-nissy_convertcube(
+nissy_convert(
 	const char *format_in,
 	const char *format_out,
 	const char *cube_string,
@@ -155,6 +155,7 @@ nissy_solve(
 {
 	cube_t c;
 	int64_t ret;
+	int h;
 
 	c = readcube_B32(cube);
 
@@ -188,8 +189,12 @@ nissy_solve(
 		return -1;
 	}
 
-	if (!strcmp(solver, "h48")) {
-		LOG("h48 solver not implemented yet\n");
+	/* TODO define and use solve_options_t */
+	if (!strcmp(solver, "H48")) {
+		h = atoi(options); /* TODO: better parsing */
+		ret = solve_h48(
+		    c, minmoves, maxmoves, maxsolutions,
+		    (uint8_t)h, data, solutions);
 		ret = -1;
 	} else if (!strcmp(solver, "simple")) {
 		ret = solve_simple(

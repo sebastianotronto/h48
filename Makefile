@@ -24,4 +24,8 @@ shell: cube.o
 	mkdir -p tables
 	${CC} ${CFLAGS} -o run cube.o shell.c
 
-.PHONY: all clean test benchmark shell
+debugshell: debugcube.o
+	mkdir -p tables
+	${CC} ${DBGFLAGS} -o run debugcube.o shell.c
+
+.PHONY: all clean test benchmark shell debugshell

@@ -5,6 +5,7 @@ gen
 debuggen
 perf.data
 perf.data.old
+run
 tables/*
 test/*/runtest
 test/run

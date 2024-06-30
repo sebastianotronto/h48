@@ -1,8 +1,16 @@
 Solver
-  - write a solver (how many tricks? some, but not all are needed)
+  - fix and cleanup current implementation
+	- fails for UFRUFU when using full table
+	  SOMETHING IS WRONG FOR coord_h48 = 3! (pvalue 15??)
+	- do not copy dfsarg, change and undo
+	- implement and use premove (and test) instead of inverting
   - benchmark for solve
     table generation, where to keep tables? in benchmark folder or in tables/?
+  - more tricks for solver, optimize, try larger tables
   - remove solve_simple and maybe the whole solve_generic
+  - shell: silently accept other formats too?
+  - shell: allow generating multiple tables for different options
+  - gendata: move info at start of tables?
 
 Cleanup cube_public and interface
   - remove options, use only solver name
@@ -17,6 +25,8 @@ Goal: find out which k value is best
 
 Improvements
   - check hash of generated data
+  - use interleaved tables (e.g. big table with k=2 or k=1 and interleaved
+    small table with k=4 for better backup pruning)
 
 ## H48 optimal solver (some has already been implemented)
 

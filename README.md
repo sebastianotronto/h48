@@ -27,3 +27,20 @@ $ TEST=coord make test
 ```
 
 Due to ongoing changes, benchmarks are currently broken.
+
+## Solving
+
+Notes for myself while this is work in progress
+
+```
+$ make shell
+$ ./run frommoves -moves (scramble)
+```
+
+copy the result, then
+
+```
+$ ./run solve -solver "H48" -options "2;20" -n 1 -M 10 -cube (paste here)
+```
+
+Options can be changed from `2;20` to `n;20` for larger tables.

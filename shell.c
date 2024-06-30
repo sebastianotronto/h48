@@ -1,5 +1,6 @@
 #include <inttypes.h>
 #include <errno.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -28,7 +29,6 @@ typedef struct {
 	int8_t maxmoves;
 	int8_t optimal;
 	int64_t maxsolutions;
-	int64_t datasize; /* Option for gendata + solve, TODO change? */
 } args_t;
 
 static void print_cube_result(int64_t, char [static 22]);
@@ -39,9 +39,7 @@ static int64_t inverse_exec(args_t *);
 static int64_t applymoves_exec(args_t *);
 static int64_t applytrans_exec(args_t *);
 static int64_t frommoves_exec(args_t *);
-static int64_t readcube_exec(args_t *);
-static int64_t writecube_exec(args_t *);
-static int64_t convertcube_exec(args_t *);
+static int64_t convert_exec(args_t *);
 static int64_t datasize_exec(args_t *);
 static int64_t gendata_exec(args_t *);
 static int64_t solve_exec(args_t *);
@@ -76,9 +74,7 @@ struct {
 	COMMAND("applymoves", applymoves_exec),
 	COMMAND("applytrans", applytrans_exec),
 	COMMAND("frommoves", frommoves_exec),
-	COMMAND("readcube", readcube_exec),
-	COMMAND("writecube", writecube_exec),
-	COMMAND("convertcube", convertcube_exec),
+	COMMAND("convert", convert_exec),
 	COMMAND("datasize", datasize_exec),
 	COMMAND("gendata", gendata_exec),
 	COMMAND("solve", solve_exec),
@@ -199,43 +195,19 @@ frommoves_exec(args_t *args)
 	char result[22];
 	int64_t ret;
 
-	ret = nissy_frommoves(args->str_trans, result);
+	ret = nissy_frommoves(args->str_moves, result);
 	print_cube_result(ret, result);
 
 	return ret;
 }
 
 static int64_t
-readcube_exec(args_t *args)
-{
-	char result[22];
-	int64_t ret;
-
-	ret = nissy_readcube(args->str_format, args->str_cube, result);
-	print_cube_result(ret, result);
-
-	return ret;
-}
-
-static int64_t
-writecube_exec(args_t *args)
+convert_exec(args_t *args)
 {
 	char result[PRINTCUBE_BUFFER_SIZE];
 	int64_t ret;
 
-	ret = nissy_writecube(args->str_format, args->str_cube, result);
-	print_str_result(ret, result);
-
-	return ret;
-}
-
-static int64_t
-convertcube_exec(args_t *args)
-{
-	char result[PRINTCUBE_BUFFER_SIZE];
-	int64_t ret;
-
-	ret = nissy_convertcube(
+	ret = nissy_convert(
 	    args->str_format_in, args->str_format_out, args->str_cube, result);
 	print_str_result(ret, result);
 
@@ -275,14 +247,17 @@ gendata_exec(args_t *args)
 
 	if (tablepaths[i] == NULL) {
 		fprintf(stderr, "Cannot write data to file\n");
+		fclose(file);
 		return -2;
 	}
 
 	size = nissy_datasize(args->str_solver, args->str_options);
+
 	if (size < 0) {
 		fprintf(stderr,
 		    "Unknown error in retrieving data size"
 		    "(make sure solver is valid)\n");
+		fclose(file);
 		return -3;
 	}
 
@@ -291,19 +266,23 @@ gendata_exec(args_t *args)
 	ret = nissy_gendata(args->str_solver, args->str_options, buf);
 	if (ret < 0) {
 		fprintf(stderr, "Unknown error in generating data\n");
+		fclose(file);
 		free(buf);
 		return -4;
 	}
 	if (ret != size) {
-		fprintf(stderr, "Unknown error: unexpected data size\n");
+		fprintf(stderr, "Unknown error: unexpected data size "
+				 "(got %zu, expected %zu)\n", ret, size);
+		fclose(file);
 		free(buf);
 		return -5;
 	}
 
 	written = fwrite(buf, size, 1, file);
+	fclose(file);
 	free(buf);
 
-	if (written != (int64_t)size) {
+	if (written != 1) {
 		fprintf(stderr,
 		    "Error: data was generated correctly, but could not be "
 		    "written to file (generated %" PRId64 " bytes, written "
@@ -311,7 +290,6 @@ gendata_exec(args_t *args)
 		return -6;
 	}
 
-	args->datasize = size;
 	fprintf(stderr, "Data written to %s\n", path);
 
 	return 0;
@@ -323,7 +301,7 @@ solve_exec(args_t *args)
 	int i;
 	FILE *file;
 	char *buf, solutions[SOLUTIONS_BUFFER_SIZE], path[MAX_PATH_LENGTH];
-	int64_t ret, gendata_ret;
+	int64_t ret, gendata_ret, size;
 	size_t read;
 
 	for (i = 0; tablepaths[i] != NULL; i++) {
@@ -344,23 +322,30 @@ solve_exec(args_t *args)
 	}
 
 	/* Ugh, this is not elegant TODO */
-	for (i = 0; tablepaths[i] != NULL; i++) {
-		strcpy(path, tablepaths[i]);
-		strcat(path, args->str_solver);
-		file = fopen(path, "rb");
-		if (file != NULL)
-			break;
+	if (file == NULL) {
+		for (i = 0; tablepaths[i] != NULL; i++) {
+			strcpy(path, tablepaths[i]);
+			strcat(path, args->str_solver);
+			file = fopen(path, "rb");
+			if (file != NULL)
+				break;
+		}
 	}
 
 	if (tablepaths[i] == NULL) {
 		fprintf(stderr, "Error: data file not found\n");
+		fclose(file);
 		return -1;
 	}
 
-	buf = malloc(args->datasize);
-	read = fread(buf, args->datasize, 1, file);
-	if (read != args->datasize) {
-		fprintf(stderr, "Error reading data from file\n");
+	size = nissy_datasize(args->str_solver, args->str_options);
+	buf = malloc(size);
+	read = fread(buf, size, 1, file);
+	fclose(file);
+	if (read != 1) {
+  		fprintf(stderr, "Error reading data from file: "
+		    "fread() returned %zu instead of 1 when attempting to"
+		    "read %" PRId64 " bytes from file %s\n", read, size, path);
 		return -2;
 	}
 
@@ -413,7 +398,7 @@ parse_args(int argc, char **argv, args_t *args)
 				    options[j].name);
 				return 1;
 			}
-			if (!options[j].set(n, argv+i, args)) {
+			if (!options[j].set(n, argv+i+1, args)) {
 				fprintf(stderr,
 				    "Error parsing arguments for option %s\n",
 				    options[j].name);
@@ -448,7 +433,8 @@ parse_int64(char *argv, int64_t *result)
 {
 	*result = strtoll(argv, NULL, 10);
 
-	return errno != 0;
+	/* TODO: figure out how errno works and use it */
+	return true;
 }
 
 static bool
@@ -565,10 +551,21 @@ set_maxsolutions(int argc, char **argv, args_t *args)
 	return parse_int64(argv[0], &args->maxsolutions);
 }
 
+void log_stderr(const char *str, ...)
+{
+	va_list args;
+
+	va_start(args, str);
+	vfprintf(stderr, str, args);
+	va_end(args);
+}
+
 int main(int argc, char **argv)
 {
 	int parse_error;
 	args_t args;
+
+	nissy_setlogger(log_stderr);
 
 	parse_error = parse_args(argc-1, argv+1, &args);
 	if (parse_error)

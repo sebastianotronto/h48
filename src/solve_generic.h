@@ -21,7 +21,7 @@ solve_generic_appendsolution(dfsarg_generic_t *arg)
 {
 	int strl;
 
-	strl = writemoves(arg->moves, arg->depth, *arg->nextsol);
+	strl = writemoves(arg->moves, arg->nmoves, *arg->nextsol);
 	LOG("Solution found: %s\n", *arg->nextsol);
 	*arg->nextsol += strl;
 	**arg->nextsol = '\n';
@@ -53,7 +53,6 @@ solve_generic_dfs(dfsarg_generic_t *arg)
 		return 1;
 	}
 
-	/* memcpy(&nextarg, arg, sizeof(dfsarg_generic_t)); */
 	nextarg = *arg;
 	nextarg.nmoves = arg->nmoves + 1;
 	for (m = 0, ret = 0; m < 18; m++) {
