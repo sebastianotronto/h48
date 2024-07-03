@@ -1,4 +1,4 @@
-#include "../benchmark.h"
+#include "../timerun.h"
 #include "../../src/cube.h"
 
 #define MAXDEPTH 10
@@ -6,10 +6,13 @@
 #define OPTIONS "2;10"
 #define LONGOPTIONS "h = 2, max depth = 10"
 
+#define COCSEPSIZE 1119792
+#define ETABLESIZE(h) (((3393 * 495 * 70) >> 1) << (size_t)(h))
+
 char *buf;
 
 void run(void) {
-	uint32_t *buf32;
+	uint32_t *h48info;
 	int i;
 	int64_t s;
 
@@ -19,9 +22,9 @@ void run(void) {
 		printf("Error generating table\n");
 	} else {
 		printf("Succesfully generated %" PRId64 " bytes. Table:\n", s);
-		buf32 = (uint32_t *)&buf[s-sizeof(uint32_t)*(MAXDEPTH+1)];
-		for (i = 0; i <= MAXDEPTH; i++)
-			printf("%d:\t%" PRId32 "\n", i, buf32[i]);
+		h48info = (uint32_t *)buf + (ETABLESIZE(HVALUE) + COCSEPSIZE) / 4;
+		for (i = 0; i < MAXDEPTH+1; i++)
+			printf("%d:\t%" PRIu32 "\n", i, h48info[i+1]);
 	}
 }
 
@@ -36,7 +39,9 @@ int main() {
 
 	buf = malloc(size);
 
-	time_benchmark(run, "gendata_h48 " LONGOPTIONS);
+	timerun(run, "benchmark gendata_h48 " LONGOPTIONS);
+
+	free(buf);
 
 	return 0;
 }

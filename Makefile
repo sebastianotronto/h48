@@ -17,8 +17,8 @@ clean:
 test: debugcube.o
 	CUBETYPE=${CUBETYPE} TEST=${TEST} ./test/test.sh
 
-benchmark: cube.o
-	CUBETYPE=${CUBETYPE} ./benchmark/benchmark.sh
+tool: cube.o
+	CUBETYPE=${CUBETYPE} ./tools/run_tool.sh
 
 shell: cube.o
 	mkdir -p tables
@@ -28,4 +28,4 @@ debugshell: debugcube.o
 	mkdir -p tables
 	${CC} ${DBGFLAGS} -o run debugcube.o shell.c
 
-.PHONY: all clean test benchmark shell debugshell
+.PHONY: all clean test tool shell debugshell

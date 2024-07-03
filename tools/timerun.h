@@ -5,7 +5,7 @@
 #include <time.h>
 
 double
-time_benchmark(void (*run)(void), char *name)
+timerun(void (*run)(void), char *name)
 {
 	struct timespec start, end;
 	double tdiff, tdsec, tdnano;
@@ -19,7 +19,7 @@ time_benchmark(void (*run)(void), char *name)
 		return -1.0;
 	}
 
-	printf("Benchmark: %s\n\n", name);
+	printf("Running tool: %s\n", name);
 	printf("==========\n");
 	fflush(stdout);
 
