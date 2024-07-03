@@ -1,7 +1,29 @@
+Check stats for all tables using H48stats solver
+  - implement gencube
+    - move cubefromarray from cube_io to where needed
+    - implement in cube_generic
+    - fix in cube_public
+    - add tests
+    - test shell
+    - optional: dr states (just to check options)
+  - implement tool for stats
+    - output to file, only write cocsep to stdout
+
+Bug in esep table generation
+  - Fails for UFRUFU, try command
+    ./run solve -solver H48 -options "2;20" -n 1 -M 10 -cube \
+         "$(./run frommoves -moves "UFRUFU")"
+  - Fundamental error in how tables are generated, each coordinate has too
+    many representative. I need to use the big table with the full coordinate
+    first (h=11, ~241 billion positions, 60Gb with k=2). From this the smaller
+    tables can be easily deduced.
+  - Investigate the possibility of computing smaller tables directly in some
+    other way, even if slow.
+  - use dfs for computing big table, save distance %3 until the last two steps,
+    then clean the table and double loop over moves to fill the value
+
 Solver
-  - fix and cleanup current implementation
-	- fails for UFRUFU when using full table
-	  SOMETHING IS WRONG FOR coord_h48 = 3! (pvalue 15??)
+  - cleanup h48 solver
 	- do not copy dfsarg, change and undo
 	- implement and use premove (and test) instead of inverting
   - benchmark for solve

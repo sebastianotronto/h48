@@ -57,6 +57,15 @@ typedef struct {
 	char **nextsol;
 } dfsarg_solveh48_t;
 
+typedef struct {
+	cube_t cube;
+	int8_t nmoves;
+	int8_t depth;
+	uint8_t moves[MAX_SOLUTION_LENGTH];
+	uint32_t *cocsepdata;
+	char *s;
+} dfsarg_solveh48stats_t;
+
 _static_inline int64_t coord_h48(cube_t, const uint32_t *, uint8_t);
 _static_inline int64_t coord_h48_edges(cube_t, int64_t, uint8_t, uint8_t);
 _static_inline cube_t invcoord_h48(int64_t, const cube_t *, uint8_t);
@@ -77,6 +86,9 @@ _static_inline int8_t get_h48_bound(cube_t, uint32_t, uint8_t, uint32_t *);
 _static_inline bool solve_h48_stop(dfsarg_solveh48_t *);
 _static int64_t solve_h48_dfs(dfsarg_solveh48_t *);
 _static int64_t solve_h48(cube_t, int8_t, int8_t, int8_t, uint8_t, const void *, char *);
+
+_static int64_t solve_h48stats_dfs(dfsarg_solveh48stats_t *);
+_static int64_t solve_h48stats(cube_t, int8_t, const void *, char [static 13]);
 
 _static_inline int64_t
 coord_h48(cube_t c, const uint32_t *cocsepdata, uint8_t h)
@@ -104,9 +116,15 @@ coord_h48_edges(cube_t c, int64_t coclass, uint8_t t, uint8_t h)
 	d = transform_edges(c, t);
 	esep = coord_esep(d);
 	eo = coord_eo(d);
-	edges = (esep << (int64_t)h) + (eo >> (11 - (int64_t)h));
+	edges = (esep << 11) + eo;
 
+	return (coclass * H48_ESIZE(11) + edges) >> (11 - (int64_t)h);
+
+/*
+TODO: decide which alternative is better, if above or below
+	edges = (esep << (int64_t)h) + (eo >> (11 - (int64_t)h));
 	return coclass * H48_ESIZE(h) + edges;
+*/
 }
 
 /*
@@ -160,7 +178,8 @@ gendata_cocsep(void *buf, uint64_t *selfsim, cube_t *rep)
 	buf32 = (uint32_t *)buf;
 	info = buf32 + COCSEP_TABLESIZE;
 	memset(buf32, 0xFF, sizeof(uint32_t) * COCSEP_TABLESIZE);
-	memset(selfsim, 0, sizeof(uint64_t) * COCSEP_CLASSES);
+	if (selfsim != NULL)
+		memset(selfsim, 0, sizeof(uint64_t) * COCSEP_CLASSES);
 
 	arg = (dfsarg_cocsep_t) {
 		.cube = solved,
@@ -221,7 +240,8 @@ gendata_cocsep_dfs(dfsarg_cocsep_t *arg)
 			d = transform_corners(arg->cube, t);
 			j = coord_cocsep(d);
 			is = (i == j);
-			arg->selfsim[*arg->n] |= is << t;
+			if (arg->selfsim != NULL)
+				arg->selfsim[*arg->n] |= is << t;
 			set_visited(arg->visited, j);
 			tinv = inverse_trans(t);
 			olddepth = (uint8_t)(arg->buf32[j] & 0xFF);
@@ -232,7 +252,8 @@ gendata_cocsep_dfs(dfsarg_cocsep_t *arg)
 			depth = (uint32_t)arg->depth;
 			arg->buf32[j] = class | ttrep | depth;
 		}
-		arg->rep[*arg->n] = arg->cube;
+		if (arg->rep != NULL)
+			arg->rep[*arg->n] = arg->cube;
 		(*arg->n)++;
 
 		return cc;
@@ -524,4 +545,86 @@ LOG("Data for coord = %" PRId64 ": %" PRIu8 "\n",
 i, get_esep_pval(arg.h48data, i));
 */
 	return nsols;
+}
+
+/*
+The h48stats solver computes how many moves it takes to solve to each of
+the 13 h48 coordinates: the corner-only coordinate, and 12 cocsep+esep
+coordinates with h from 0 to 11.  The solutions array is filled with
+the length of the solutions: solutions[0] contains the value for the
+corner-only coordinate, and for i>0 solutions[i] contains the value for
+the cocsep+esep coordinate with h=i-1. The solution array is therefore
+not a printable string.
+*/
+_static int64_t
+solve_h48stats_dfs(dfsarg_solveh48stats_t *arg)
+{
+	int8_t bound, u;
+	uint8_t m;
+	uint32_t d;
+	int64_t coord, h;
+	dfsarg_solveh48stats_t nextarg;
+
+	bound = get_h48_cdata(arg->cube, arg->cocsepdata, &d);
+	if (bound + arg->nmoves > arg->depth)
+		return 0;
+
+	u = COCLASS(d) == 0 && arg->s[0] == 99;
+	arg->s[0] = u * arg->nmoves + (1-u) * arg->s[0];
+	
+	coord = coord_h48_edges(arg->cube, COCLASS(d), TTREP(d), 11);
+	for (h = 0; h <= 11; h++) {
+		u = coord >> (11-h) == 0 && arg->s[h+1] == 99;
+		arg->s[h+1] = u * arg->nmoves + (1-u) * arg->s[h+1];
+	}
+
+	if (arg->s[12] != 99)
+		return 0;
+
+	nextarg = *arg;
+	nextarg.nmoves = arg->nmoves + 1;
+	for (m = 0; m < 18; m++) {
+		nextarg.moves[arg->nmoves] = m;
+		if (!allowednextmove(nextarg.moves, nextarg.nmoves)) {
+			/* If a move is not allowed, neither are its 180
+			 * and 270 degree variations */
+			m += 2;
+			continue;
+		}
+		nextarg.cube = move(arg->cube, m);
+		solve_h48stats_dfs(&nextarg);
+	}
+
+	return 0;
+}
+
+_static int64_t
+solve_h48stats(
+	cube_t cube,
+	int8_t maxmoves,
+	const void *data,
+	char solutions[static 13]
+)
+{
+	int i;
+	dfsarg_solveh48stats_t arg;
+
+	arg = (dfsarg_solveh48stats_t) {
+		.cube = cube,
+		.cocsepdata = (uint32_t *)data,
+		.s = solutions
+	};
+
+	for (i = 0; i < 13; i++)
+		solutions[i] = (char)99;
+
+	for  (arg.depth = 0;
+	      arg.depth <= maxmoves && solutions[12] == 99;
+	      arg.depth++)
+	{
+		arg.nmoves = 0;
+		solve_h48stats_dfs(&arg);
+	}
+
+	return 0;
 }

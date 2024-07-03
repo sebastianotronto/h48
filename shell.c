@@ -29,6 +29,7 @@ typedef struct {
 	int8_t maxmoves;
 	int8_t optimal;
 	int64_t maxsolutions;
+	uint8_t id[16];
 } args_t;
 
 static void print_cube_result(int64_t, char [static 22]);
@@ -40,6 +41,7 @@ static int64_t applymoves_exec(args_t *);
 static int64_t applytrans_exec(args_t *);
 static int64_t frommoves_exec(args_t *);
 static int64_t convert_exec(args_t *);
+static int64_t gencube_exec(args_t *);
 static int64_t datasize_exec(args_t *);
 static int64_t gendata_exec(args_t *);
 static int64_t solve_exec(args_t *);
@@ -63,6 +65,7 @@ static bool set_minmoves(int, char **, args_t *);
 static bool set_maxmoves(int, char **, args_t *);
 static bool set_optimal(int, char **, args_t *);
 static bool set_maxsolutions(int, char **, args_t *);
+static bool set_id(int, char **, args_t *);
  
 #define COMMAND(N, E) { .name = N, .exec = E }
 struct {
@@ -75,6 +78,7 @@ struct {
 	COMMAND("applytrans", applytrans_exec),
 	COMMAND("frommoves", frommoves_exec),
 	COMMAND("convert", convert_exec),
+	COMMAND("gencube", gencube_exec),
 	COMMAND("datasize", datasize_exec),
 	COMMAND("gendata", gendata_exec),
 	COMMAND("solve", solve_exec),
@@ -102,6 +106,7 @@ struct {
 	OPTION("-M", 1, set_maxmoves),
 	OPTION("-O", 1, set_optimal),
 	OPTION("-n", 1, set_maxsolutions),
+	OPTION("-id", 16, set_id),
 	OPTION(NULL, 0, NULL)
 };
 
@@ -209,6 +214,18 @@ convert_exec(args_t *args)
 
 	ret = nissy_convert(
 	    args->str_format_in, args->str_format_out, args->str_cube, result);
+	print_str_result(ret, result);
+
+	return ret;
+}
+
+static int64_t
+gencube_exec(args_t *args)
+{
+	char result[PRINTCUBE_BUFFER_SIZE];
+	int64_t ret;
+
+	ret = nissy_gencube(args->id, args->str_options, result);
 	print_str_result(ret, result);
 
 	return ret;
@@ -549,6 +566,21 @@ static bool
 set_maxsolutions(int argc, char **argv, args_t *args)
 {
 	return parse_int64(argv[0], &args->maxsolutions);
+}
+
+static bool
+set_id(int argc, char **argv, args_t *args)
+{
+	int i;
+	int64_t n;
+
+	for (i = 0; i < 16; i++) {
+		if (!parse_int64(argv[i], &n))
+			return false;
+		args->id[i] = (uint8_t)n;
+	}
+
+	return true;
 }
 
 void log_stderr(const char *str, ...)

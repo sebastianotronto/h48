@@ -105,6 +105,18 @@ nissy_convert(
 }
 
 int64_t
+nissy_gencube(
+	uint8_t id[16],
+	const char *options,
+	char result[static 22]
+)
+{
+	/* TODO: compute cube from id % (number of positions) */
+	/* options can be used for generating e.g. DR-state cube */
+	return -1;
+}
+
+int64_t
 nissy_datasize(
 	const char *solver,
 	const char *options
@@ -131,6 +143,8 @@ nissy_gendata(
 		h = atoi(options);
 		maxdepth = atoi(&options[i+1]);
 		ret = gendata_h48(data, h, maxdepth);
+	} else if (!strcmp(solver, "H48stats")) {
+		ret = gendata_cocsep(data, NULL, NULL);
 	} else {
 		LOG("gendata: implemented only for H48 solver\n");
 		ret = -1;
@@ -196,6 +210,8 @@ nissy_solve(
 		    c, minmoves, maxmoves, maxsolutions,
 		    (uint8_t)h, data, solutions);
 		ret = -1;
+	} else if (!strcmp(solver, "H48stats")) {
+		ret = solve_h48stats(c, maxmoves, data, solutions);
 	} else if (!strcmp(solver, "simple")) {
 		ret = solve_simple(
 		    c, minmoves, maxmoves, maxsolutions, optimal, solutions);
