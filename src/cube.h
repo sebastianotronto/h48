@@ -41,8 +41,11 @@ int64_t nissy_convert(
 	char *result
 );
 
-int64_t nissy_gencube(
-	uint8_t id[16],
+int64_t nissy_getcube(
+	int64_t ep,
+	int64_t eo,
+	int64_t cp,
+	int64_t co,
 	const char *options,
 	char result[static 22]
 );

@@ -21,6 +21,7 @@ void (*nissy_log)(const char *, ...);
 #endif
 
 #include "constants.h"
+#include "utils.h"
 
 #if defined(CUBE_AVX2)
 #include <immintrin.h>

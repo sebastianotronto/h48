@@ -5,17 +5,13 @@
 #define MAXMOVES 20
 #define NCUBES 1000
 
-typedef struct { uint8_t n[16]; } i128;
-
 char *buf;
 
-i128 rand128(void) {
-	uint8_t i, j;
-	i128 ret = {0};
+uint64_t rand64(void) {
+	uint64_t i, ret;
 
-	for (i = 0; i < 16; i++)
-		for (j = 0; j < 8; j++)
-			ret.n[i] |= (uint8_t)(rand() % 2) << j;
+	for (i = 0, ret = 0; i < 64; i++)
+		ret |= (uint64_t)(rand() % 2) << i;
 
 	return ret;
 }
@@ -28,7 +24,7 @@ void run(void) {
 	uint32_t *h48info;
 	int i, j;
 	char sols[13], cube[22];
-	int64_t s, v[13][100] = {0};
+	int64_t s, ep, eo, cp, co, v[13][100] = {0};
 
 	s = nissy_gendata("H48stats", "", buf);
 
@@ -38,7 +34,11 @@ void run(void) {
 	}
 
 	for (i = 0; i < NCUBES; i++) {
-		nissy_gencube(rand128(), "", cube);
+		ep = rand64();
+		eo = rand64();
+		cp = rand64();
+		co = rand64();
+		nissy_getcube(ep, eo, cp, co, "fix", cube);
 		nissy_solve(cube, "H48stats",
 		    "", "", "", 0, MAXMOVES, 1, -1, buf, sols);
 		for (j = 0; j < 13; j++)

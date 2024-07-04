@@ -1,11 +1,18 @@
 Check stats for all tables using H48stats solver
-  - implement gencube
-    - move cubefromarray from cube_io to where needed
+  - implement getcube
+    x implement stuff in utils.h
+      x implement functions
+      x unit tests for permtoindex and indextoperm
+    x move cubefromarray from cube_io to where needed (cube_generic)
     - implement in cube_generic
-    - fix in cube_public
-    - add tests
+      x getcube_fix
+      - getcube
+	x permutation
+	- orientation
+      - unit tests
+    x fix in cube_public
     - test shell
-    - optional: dr states (just to check options)
+    - optional: dr states (includes "fix" option)
   - implement tool for stats
     - output to file, only write cocsep to stdout
 
@@ -49,6 +56,10 @@ Improvements
   - check hash of generated data
   - use interleaved tables (e.g. big table with k=2 or k=1 and interleaved
     small table with k=4 for better backup pruning)
+
+small things
+  - maybe move part of the logic for coord_h48 (and its inverse) to
+    utils.h (subsettoindex-like)
 
 ## H48 optimal solver (some has already been implemented)
 

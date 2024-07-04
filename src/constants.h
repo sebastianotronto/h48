@@ -2,10 +2,14 @@
 #define _bit_u32(i) (UINT32_C(1) << (uint32_t)(i))
 #define _bit_u64(i) (UINT64_C(1) << (uint64_t)(i))
 
+#define _max_factorial INT64_C(12)
+
 #define _2p11  INT64_C(2048)
 #define _2p12  INT64_C(4096)
 #define _3p7   INT64_C(2187)
 #define _3p8   INT64_C(6561)
+#define _12f   INT64_C(479001600)
+#define _8f    INT64_C(40320)
 #define _12c4  INT64_C(495)
 #define _8c4   INT64_C(70)
 

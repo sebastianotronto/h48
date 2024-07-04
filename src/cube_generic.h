@@ -1,6 +1,7 @@
 #define _move(M, c) compose(c, _move_cube_ ## M)
 #define _premove(M, c) compose(_move_cube_ ## M, c)
 
+_static cube_t cubefromarray(uint8_t [static 8], uint8_t [static 12]);
 _static cube_t solvedcube(void);
 _static bool isconsistent(cube_t);
 _static bool issolvable(cube_t);
@@ -9,12 +10,22 @@ _static bool iserror(cube_t);
 _static cube_t applymoves(cube_t, const char *);
 _static cube_t applytrans(cube_t, const char *);
 _static cube_t frommoves(const char *);
+_static void getcube_fix(int64_t *, int64_t *, int64_t *, int64_t *);
+_static cube_t getcube(int64_t, int64_t, int64_t, int64_t);
 
-_static int permsign(uint8_t *, int);
 _static cube_t move(cube_t, uint8_t);
 _static cube_t transform_edges(cube_t, uint8_t);
 _static cube_t transform_corners(cube_t, uint8_t);
 _static cube_t transform(cube_t, uint8_t);
+
+_static cube_t
+cubefromarray(uint8_t c[static 8], uint8_t e[static 12])
+{
+	return static_cube(
+	    c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7],
+	    e[0], e[1], e[2], e[3], e[4], e[5], e[6], e[7],
+	    e[8], e[9], e[10], e[11]);
+}
 
 _static cube_t
 solvedcube(void)
@@ -171,6 +182,39 @@ frommoves(const char *buf)
 	return applymoves(solved, buf);
 }
 
+_static void
+getcube_fix(int64_t *ep, int64_t *eo, int64_t *cp, int64_t *co)
+{
+	uint8_t e[12], c[8], aux;
+
+        *ep %= _12f;
+	*eo %= _2p11;
+	*cp %= _8f;
+	*cp %= _3p7;
+
+	indextoperm(*ep, 12, e);
+	indextoperm(*cp, 8, c);
+	if (permsign(e, 12) != permsign(c, 8)) {
+		aux = c[0];
+		c[0] = c[1];
+		c[1] = aux;
+		*cp = permtoindex(c, 8);
+	}
+}
+
+_static cube_t
+getcube(int64_t ep, int64_t eo, int64_t cp, int64_t co)
+{
+	uint8_t e[12], c[8];
+
+	indextoperm(ep, 12, e);
+	indextoperm(cp, 8, c);
+
+	/* TODO: orientation */
+
+	return cubefromarray(c, e);
+}
+
 _static cube_t
 applytrans(cube_t cube, const char *buf)
 {
@@ -182,19 +226,6 @@ applytrans(cube_t cube, const char *buf)
 	t = readtrans(buf);
 
 	return transform(cube, t);
-}
-
-_static int
-permsign(uint8_t *a, int n)
-{
-	int i, j;
-	uint8_t ret = 0;
-
-	for (i = 0; i < n; i++)
-		for (j = i+1; j < n; j++)
-			ret += a[i] > a[j] ? 1 : 0;
-
-	return ret % 2;
 }
 
 _static cube_t

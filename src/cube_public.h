@@ -2,6 +2,16 @@
 
 _static int64_t write_result(cube_t, char [static 22]);
 
+/* TODO: add option to get DR, maybe C-only, E-only, eo... */
+#define GETCUBE_OPTIONS(S, F) { .option = S, .fix = F }
+struct {
+	char *option;
+	void (*fix)(int64_t *, int64_t *, int64_t *, int64_t *);
+} getcube_options[] = {
+	GETCUBE_OPTIONS("fix", getcube_fix),
+	GETCUBE_OPTIONS(NULL, NULL)
+};
+
 _static int64_t
 write_result(cube_t cube, char result[static 22])
 {
@@ -105,15 +115,25 @@ nissy_convert(
 }
 
 int64_t
-nissy_gencube(
-	uint8_t id[16],
+nissy_getcube(
+	int64_t ep,
+	int64_t eo,
+	int64_t cp,
+	int64_t co,
 	const char *options,
 	char result[static 22]
 )
 {
-	/* TODO: compute cube from id % (number of positions) */
-	/* options can be used for generating e.g. DR-state cube */
-	return -1;
+	int i;
+	cube_t c;
+
+	for (i = 0; getcube_options[i].option != NULL; i++)
+		if (!strcmp(options, getcube_options[i].option))
+			getcube_options[i].fix(&ep, &eo, &cp, &co);
+
+	c = getcube(ep, eo, cp, co);
+
+	return write_result(c, result);
 }
 
 int64_t

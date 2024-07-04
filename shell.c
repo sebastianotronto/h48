@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #include "src/cube.h"
 
@@ -29,7 +30,6 @@ typedef struct {
 	int8_t maxmoves;
 	int8_t optimal;
 	int64_t maxsolutions;
-	uint8_t id[16];
 } args_t;
 
 static void print_cube_result(int64_t, char [static 22]);
@@ -41,7 +41,7 @@ static int64_t applymoves_exec(args_t *);
 static int64_t applytrans_exec(args_t *);
 static int64_t frommoves_exec(args_t *);
 static int64_t convert_exec(args_t *);
-static int64_t gencube_exec(args_t *);
+static int64_t randomcube_exec(args_t *);
 static int64_t datasize_exec(args_t *);
 static int64_t gendata_exec(args_t *);
 static int64_t solve_exec(args_t *);
@@ -66,6 +66,8 @@ static bool set_maxmoves(int, char **, args_t *);
 static bool set_optimal(int, char **, args_t *);
 static bool set_maxsolutions(int, char **, args_t *);
 static bool set_id(int, char **, args_t *);
+
+static uint64_t rand64(void);
  
 #define COMMAND(N, E) { .name = N, .exec = E }
 struct {
@@ -78,7 +80,7 @@ struct {
 	COMMAND("applytrans", applytrans_exec),
 	COMMAND("frommoves", frommoves_exec),
 	COMMAND("convert", convert_exec),
-	COMMAND("gencube", gencube_exec),
+	COMMAND("randomcube", randomcube_exec),
 	COMMAND("datasize", datasize_exec),
 	COMMAND("gendata", gendata_exec),
 	COMMAND("solve", solve_exec),
@@ -106,7 +108,6 @@ struct {
 	OPTION("-M", 1, set_maxmoves),
 	OPTION("-O", 1, set_optimal),
 	OPTION("-n", 1, set_maxsolutions),
-	OPTION("-id", 16, set_id),
 	OPTION(NULL, 0, NULL)
 };
 
@@ -115,6 +116,17 @@ char *tablepaths[] = {
 	"",
 	NULL
 };
+
+static uint64_t
+rand64(void)
+{
+	uint64_t i, ret;
+
+	for (i = 0, ret = 0; i < 64; i++)
+		ret |= (uint64_t)(rand() % 2) << i;
+
+	return ret;
+}
 
 static void
 print_cube_result(int64_t ret, char result[static 22])
@@ -220,12 +232,16 @@ convert_exec(args_t *args)
 }
 
 static int64_t
-gencube_exec(args_t *args)
+randomcube_exec(args_t *args)
 {
 	char result[PRINTCUBE_BUFFER_SIZE];
-	int64_t ret;
+	int64_t ret, ep, eo, cp, co;
 
-	ret = nissy_gencube(args->id, args->str_options, result);
+	ep = rand64();
+	eo = rand64();
+	cp = rand64();
+	co = rand64();
+	ret = nissy_getcube(ep, eo, cp, co, args->str_options, result);
 	print_str_result(ret, result);
 
 	return ret;
@@ -289,7 +305,7 @@ gendata_exec(args_t *args)
 	}
 	if (ret != size) {
 		fprintf(stderr, "Unknown error: unexpected data size "
-				 "(got %zu, expected %zu)\n", ret, size);
+		    "got %" PRId64 ", expected %" PRId64)\n", ret, size);
 		fclose(file);
 		free(buf);
 		return -5;
@@ -303,7 +319,7 @@ gendata_exec(args_t *args)
 		fprintf(stderr,
 		    "Error: data was generated correctly, but could not be "
 		    "written to file (generated %" PRId64 " bytes, written "
-		    "%zu)\n", written, size);
+		    "%zu)\n", size, written);
 		return -6;
 	}
 
@@ -384,8 +400,26 @@ solve_exec(args_t *args)
 static int
 parse_args(int argc, char **argv, args_t *args)
 {
-/* TODO: this function should set sensible defaults for all options */
 	int i, j, n;
+
+	*args = (args_t) {
+		.command_index = -1,
+		.cube = "",
+		.cube_perm = "",
+		.str_cube = "",
+		.str_format = "",
+		.str_format_in = "",
+		.str_format_out = "",
+		.str_moves = "",
+		.str_trans = "",
+		.str_solver = "",
+		.str_options = "",
+		.str_nisstype = "",
+		.minmoves = 0,
+		.maxmoves = 20,
+		.optimal = -1,
+		.maxsolutions = 1,
+	};
 
 	if (argc == 0) {
 		printf("No command given\n");
@@ -568,21 +602,6 @@ set_maxsolutions(int argc, char **argv, args_t *args)
 	return parse_int64(argv[0], &args->maxsolutions);
 }
 
-static bool
-set_id(int argc, char **argv, args_t *args)
-{
-	int i;
-	int64_t n;
-
-	for (i = 0; i < 16; i++) {
-		if (!parse_int64(argv[i], &n))
-			return false;
-		args->id[i] = (uint8_t)n;
-	}
-
-	return true;
-}
-
 void log_stderr(const char *str, ...)
 {
 	va_list args;
@@ -597,6 +616,7 @@ int main(int argc, char **argv)
 	int parse_error;
 	args_t args;
 
+	srand(time(NULL));
 	nissy_setlogger(log_stderr);
 
 	parse_error = parse_args(argc-1, argv+1, &args);

@@ -1,5 +1,3 @@
-_static cube_t cubefromarray(uint8_t [static 8], uint8_t [static 12]);
-
 _static uint8_t readco(const char *);
 _static uint8_t readcp(const char *);
 _static uint8_t readeo(const char *);
@@ -30,15 +28,6 @@ _static struct {
 	{ .name = "H48", .read = readcube_H48, .write = writecube_H48 },
 	{ .name = "NONE", .read = NULL, .write = NULL },
 };
-
-_static_inline cube_t
-cubefromarray(uint8_t c[static 8], uint8_t e[static 12])
-{
-	return static_cube(
-	    c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7],
-	    e[0], e[1], e[2], e[3], e[4], e[5], e[6], e[7],
-	    e[8], e[9], e[10], e[11]);
-}
 
 cube_t
 readcube(const char *format, const char *buf)
