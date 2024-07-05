@@ -185,34 +185,45 @@ frommoves(const char *buf)
 _static void
 getcube_fix(int64_t *ep, int64_t *eo, int64_t *cp, int64_t *co)
 {
-	uint8_t e[12], c[8], aux;
+	uint8_t e[12], c[8], coarr[8];
 
-        *ep %= _12f;
-	*eo %= _2p11;
-	*cp %= _8f;
-	*cp %= _3p7;
+        *ep = (*ep % _12f + _12f) % _12f;
+	*eo = (*eo % _2p11 + _2p11) % _2p11;
+	*cp = (*cp % _8f + _8f) % _8f;
+	*co = (*cp % _3p7 + _3p7) % _3p7;
 
 	indextoperm(*ep, 12, e);
 	indextoperm(*cp, 8, c);
 	if (permsign(e, 12) != permsign(c, 8)) {
-		aux = c[0];
-		c[0] = c[1];
-		c[1] = aux;
+		_swap(c[0], c[1]);
 		*cp = permtoindex(c, 8);
+
+		sumzerotodigits(*co, 8, 3, coarr);
+		_swap(coarr[0], coarr[1]);
+		*co = digitstosumzero(coarr, 8, 3);
 	}
 }
 
 _static cube_t
 getcube(int64_t ep, int64_t eo, int64_t cp, int64_t co)
 {
-	uint8_t e[12], c[8];
+	uint8_t i, earr[12], carr[8], eoarr[12], coarr[8];
 
-	indextoperm(ep, 12, e);
-	indextoperm(cp, 8, c);
+	sumzerotodigits(eo, 12, 2, eoarr);
+	DBG_ASSERT(eoarr[0] != _error, zero, "Error making EO");
+	indextoperm(ep, 12, earr);
+	DBG_ASSERT(earr[0] != _error, zero, "Error making EP");
+	for (i = 0; i < 12; i++)
+		earr[i] |= eoarr[i] << _eoshift;
 
-	/* TODO: orientation */
+	sumzerotodigits(co, 8, 3, coarr);
+	DBG_ASSERT(coarr[0] != _error, zero, "Error making CO");
+	indextoperm(cp, 8, carr);
+	DBG_ASSERT(carr[0] != _error, zero, "Error making CP");
+	for (i = 0; i < 8; i++)
+		carr[i] |= coarr[i] << _coshift;
 
-	return cubefromarray(c, e);
+	return cubefromarray(carr, earr);
 }
 
 _static cube_t

@@ -241,7 +241,7 @@ randomcube_exec(args_t *args)
 	eo = rand64();
 	cp = rand64();
 	co = rand64();
-	ret = nissy_getcube(ep, eo, cp, co, args->str_options, result);
+	ret = nissy_getcube(ep, eo, cp, co, "fix", result);
 	print_str_result(ret, result);
 
 	return ret;
@@ -305,7 +305,7 @@ gendata_exec(args_t *args)
 	}
 	if (ret != size) {
 		fprintf(stderr, "Unknown error: unexpected data size "
-		    "got %" PRId64 ", expected %" PRId64)\n", ret, size);
+		    "got %" PRId64 ", expected %" PRId64 ")\n", ret, size);
 		fclose(file);
 		free(buf);
 		return -5;

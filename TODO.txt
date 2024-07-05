@@ -1,19 +1,4 @@
 Check stats for all tables using H48stats solver
-  - implement getcube
-    x implement stuff in utils.h
-      x implement functions
-      x unit tests for permtoindex and indextoperm
-      x implement digit array to sumzero and inverse
-      x unit tests for digit arra to sumzero
-    x move cubefromarray from cube_io to where needed (cube_generic)
-    - implement in cube_generic
-      x getcube_fix
-      - getcube
-	x permutation
-	- orientation
-      - unit tests
-    x fix in cube_public
-    - test shell
     - optional: dr states (includes "fix" option)
   - implement tool for stats
     - output to file, only write cocsep to stdout

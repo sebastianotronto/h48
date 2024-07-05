@@ -1,3 +1,5 @@
+#define _swap(x, y) do { x ^= y; y ^= x; x ^= y; } while (0)
+
 _static int64_t factorial(int64_t);
 _static bool isperm(uint8_t *, int64_t);
 _static int64_t permtoindex(uint8_t *, int64_t);
@@ -138,7 +140,7 @@ digitstosumzero(uint8_t *a, uint8_t n, uint8_t b)
 		return -1;
 	}
 
-	for (i = 1, ret = 0, p = 1; i < n; i++, p *= (int64_t)b) {
+	for (i = 1, ret = 0, p = 1, sum = 0; i < n; i++, p *= (int64_t)b) {
 		if (a[i] >= b) {
 			LOG("Error: digit %" PRIu8 " larger than maximum"
 			    " (b=%" PRIu8 "\n", a[i], b);
@@ -168,7 +170,7 @@ sumzerotodigits(int64_t d, uint8_t n, uint8_t b, uint8_t *a)
 		goto digitstosumzero_error;
 	}
 
-	for (i = 1; i < n; i++, d /= (int64_t)b) {
+	for (i = 1, sum = 0; i < n; i++, d /= (int64_t)b) {
 		a[i] = (uint8_t)(d % (int64_t)b);
 		sum += a[i];
 	}
