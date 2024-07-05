@@ -3,6 +3,8 @@ Check stats for all tables using H48stats solver
     x implement stuff in utils.h
       x implement functions
       x unit tests for permtoindex and indextoperm
+      x implement digit array to sumzero and inverse
+      x unit tests for digit arra to sumzero
     x move cubefromarray from cube_io to where needed (cube_generic)
     - implement in cube_generic
       x getcube_fix
@@ -60,6 +62,9 @@ Improvements
 small things
   - maybe move part of the logic for coord_h48 (and its inverse) to
     utils.h (subsettoindex-like)
+  - rename TYPE build switch to something more intuitive like ARCH
+    remove one of TYPE and CUBE_TYPE (why do I have two?)
+  - merge constants and utils?
 
 ## H48 optimal solver (some has already been implemented)
 

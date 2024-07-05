@@ -3,6 +3,8 @@ _static bool isperm(uint8_t *, int64_t);
 _static int64_t permtoindex(uint8_t *, int64_t);
 _static void indextoperm(int64_t, int64_t, uint8_t *);
 _static int permsign(uint8_t *, int64_t);
+_static int64_t digitstosumzero(uint8_t *, uint8_t, uint8_t);
+_static void sumzerotodigits(int64_t, uint8_t, uint8_t, uint8_t *);
 
 _static int64_t
 factorial(int64_t n)
@@ -39,7 +41,7 @@ isperm(uint8_t *a, int64_t n)
 	memset(aux, false, n);
 	
 	for (i = 0; i < n; i++) {
-		if (a[i] < 0 || a[i] >= n)
+		if (a[i] >= n)
 			return false;
 		else
 			aux[a[i]] = true;
@@ -122,4 +124,58 @@ permsign(uint8_t *a, int64_t n)
 			ret += a[i] > a[j] ? 1 : 0;
 
 	return ret % 2;
+}
+
+_static int64_t
+digitstosumzero(uint8_t *a, uint8_t n, uint8_t b)
+{
+	int64_t ret, p;
+	uint8_t i, sum;
+
+	if (!((n == 8 && b == 3 ) || (n == 12 && b == 2))) {
+		LOG("Won't compute 'sumzero' for n=%" PRIu8 "and b=%" PRIu8
+		    " (use n=8 b=3 or n=12 b=2)\n", n, b);
+		return -1;
+	}
+
+	for (i = 1, ret = 0, p = 1; i < n; i++, p *= (int64_t)b) {
+		if (a[i] >= b) {
+			LOG("Error: digit %" PRIu8 " larger than maximum"
+			    " (b=%" PRIu8 "\n", a[i], b);
+			return -1;
+		}
+		sum += a[i];
+		ret += p * (int64_t)a[i];
+	}
+
+	if ((sum + a[0]) % b != 0) {
+		LOG("Error: digits do not have sum zero modulo b\n");
+		return -1;
+	}
+
+	return ret;
+}
+
+_static void
+sumzerotodigits(int64_t d, uint8_t n, uint8_t b, uint8_t *a)
+{
+	uint8_t sum;
+	int64_t i;
+
+	if (!((n == 8 && b == 3 ) || (n == 12 && b == 2))) {
+		LOG("Won't compute 'digits' for n=%" PRIu8 "and b=%" PRIu8
+		    " (use n=8 b=3 or n=12 b=2)\n");
+		goto digitstosumzero_error;
+	}
+
+	for (i = 1; i < n; i++, d /= (int64_t)b) {
+		a[i] = (uint8_t)(d % (int64_t)b);
+		sum += a[i];
+	}
+	a[0] = (b - (sum % b)) % b;
+
+	return;
+
+digitstosumzero_error:
+	memset(a, _error, n);
 }
