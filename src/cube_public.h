@@ -156,17 +156,22 @@ nissy_gendata(
 	int64_t ret;
 	uint8_t maxdepth, h, i, j;
 
-	if (!strcmp(solver, "H48")) {
+	if (!strcmp(solver, "h48")) {
 		/*  options are in the form "h;maxdepth" */
 		for (i = 0; options[i] != ';'; i++) ;
 		for (j = i; options[j]; j++) ;
 		h = atoi(options);
-		maxdepth = atoi(&options[i+1]);
-		ret = gendata_h48(data, h, maxdepth);
-	} else if (!strcmp(solver, "H48stats")) {
-		ret = gendata_cocsep(data, NULL, NULL);
+		if (h != 0) {
+			LOG("Temporarily only h=0 is supported\n");
+			ret = -1;
+		} else {
+			maxdepth = atoi(&options[i+1]);
+			ret = gendata_h48h0k4(data, maxdepth);
+		}
+	} else if (!strcmp(solver, "h48stats")) {
+		ret = gendata_h48h0k4(data, 20);
 	} else {
-		LOG("gendata: implemented only for H48 solver\n");
+		LOG("gendata: implemented only for h48 solver\n");
 		ret = -1;
 	}
 
@@ -224,13 +229,13 @@ nissy_solve(
 	}
 
 	/* TODO define and use solve_options_t */
-	if (!strcmp(solver, "H48")) {
+	if (!strcmp(solver, "h48")) {
 		h = atoi(options); /* TODO: better parsing */
 		ret = solve_h48(
 		    c, minmoves, maxmoves, maxsolutions,
 		    (uint8_t)h, data, solutions);
 		ret = -1;
-	} else if (!strcmp(solver, "H48stats")) {
+	} else if (!strcmp(solver, "h48stats")) {
 		ret = solve_h48stats(c, maxmoves, data, solutions);
 	} else if (!strcmp(solver, "simple")) {
 		ret = solve_simple(

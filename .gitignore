@@ -10,5 +10,6 @@ tables/*
 test/*/runtest
 test/run
 test/last.*
+tools/results
 *.o
 *.s

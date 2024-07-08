@@ -1,7 +1,5 @@
 Check stats for all tables using H48stats solver
-    - optional: dr states (includes "fix" option)
-  - implement tool for stats
-    - output to file, only write cocsep to stdout
+  - what now?
 
 Bug in esep table generation
   - Fails for UFRUFU, try command
@@ -18,8 +16,9 @@ Bug in esep table generation
 
 Solver
   - cleanup h48 solver
-	- do not copy dfsarg, change and undo
-	- implement and use premove (and test) instead of inverting
+    - do not copy dfsarg, change and undo
+    - implement and use premove (and test) instead of inverting
+    - improve name of tables file in shell.c (include h value, maybe k, max)
   - benchmark for solve
     table generation, where to keep tables? in benchmark folder or in tables/?
   - more tricks for solver, optimize, try larger tables

@@ -36,7 +36,6 @@ typedef struct {
 
 typedef struct {
 	uint8_t depth;
-	uint8_t h;
 	uint32_t *cocsepdata;
 	uint32_t *buf32;
 	uint64_t *selfsim;
@@ -63,6 +62,7 @@ typedef struct {
 	int8_t depth;
 	uint8_t moves[MAX_SOLUTION_LENGTH];
 	uint32_t *cocsepdata;
+	uint32_t *h48data;
 	char *s;
 } dfsarg_solveh48stats_t;
 
@@ -72,8 +72,8 @@ _static_inline cube_t invcoord_h48(int64_t, const cube_t *, uint8_t);
 
 _static size_t gendata_cocsep(void *, uint64_t *, cube_t *);
 _static uint32_t gendata_cocsep_dfs(dfsarg_cocsep_t *);
-_static size_t gendata_h48(void *, uint8_t, uint8_t);
-_static uint64_t gendata_esep_bfs(bfsarg_esep_t *);
+_static size_t gendata_h48h0k4(void *, uint8_t);
+_static uint64_t gendata_h48h0k4_bfs(bfsarg_esep_t *);
 
 _static_inline bool get_visited(const uint8_t *, int64_t);
 _static_inline void set_visited(uint8_t *, int64_t);
@@ -88,7 +88,7 @@ _static int64_t solve_h48_dfs(dfsarg_solveh48_t *);
 _static int64_t solve_h48(cube_t, int8_t, int8_t, int8_t, uint8_t, const void *, char *);
 
 _static int64_t solve_h48stats_dfs(dfsarg_solveh48stats_t *);
-_static int64_t solve_h48stats(cube_t, int8_t, const void *, char [static 13]);
+_static int64_t solve_h48stats(cube_t, int8_t, const void *, char [static 12]);
 
 _static_inline int64_t
 coord_h48(cube_t c, const uint32_t *cocsepdata, uint8_t h)
@@ -119,12 +119,6 @@ coord_h48_edges(cube_t c, int64_t coclass, uint8_t t, uint8_t h)
 	edges = (esep << 11) + eo;
 
 	return (coclass * H48_ESIZE(11) + edges) >> (11 - (int64_t)h);
-
-/*
-TODO: decide which alternative is better, if above or below
-	edges = (esep << (int64_t)h) + (eo >> (11 - (int64_t)h));
-	return coclass * H48_ESIZE(h) + edges;
-*/
 }
 
 /*
@@ -133,7 +127,8 @@ the given value, because it works up to symmetry. This means that the
 returned cube is a transformed cube of one that gives the correct value.
 */
 _static_inline cube_t
-invcoord_h48(int64_t i, const cube_t *crep, uint8_t h) {
+invcoord_h48(int64_t i, const cube_t *crep, uint8_t h)
+{
 	cube_t ret;
 	int64_t hh, coclass, ee, esep, eo;
 
@@ -274,9 +269,8 @@ TODO description
 generating fixed table with h=0, k=4
 */
 _static size_t
-gendata_h48(void *buf, uint8_t h, uint8_t maxdepth)
+gendata_h48h0k4(void *buf, uint8_t maxdepth)
 {
-	const int k = 4; /* TODO: other cases? */
 	uint32_t j, *buf32, *info, *cocsepdata;
 	bfsarg_esep_t arg;
 	int64_t sc, cc, tot, esep_max;
@@ -290,19 +284,18 @@ gendata_h48(void *buf, uint8_t h, uint8_t maxdepth)
 	infosize = 88;
 
 	if (buf == NULL)
-		goto gendata_h48_return_size;
+		goto gendata_h48h0k4_return_size;
 
-	esep_max = (int64_t)ESEP_MAX(h);
+	esep_max = (int64_t)ESEP_MAX(0);
 	cocsepdata = (uint32_t *)buf;
 	buf32 = cocsepdata + cocsepsize / 4;
-	info = buf32 + (ESEP_TABLESIZE(h, k) / sizeof(uint32_t));
-	memset(buf32, 0xFF, ESEP_TABLESIZE(h, k));
+	info = buf32 + (ESEP_TABLESIZE(0, 4) / sizeof(uint32_t));
+	memset(buf32, 0xFF, ESEP_TABLESIZE(0, 4));
 
-	sc = coord_h48(solved, cocsepdata, h);
+	sc = coord_h48(solved, cocsepdata, 0);
 	set_esep_pval(buf32, sc, 0);
 	info[1] = 1;
 	arg = (bfsarg_esep_t) {
-		.h = h,
 		.cocsepdata = cocsepdata,
 		.buf32 = buf32,
 		.crep = crep,
@@ -314,7 +307,7 @@ gendata_h48(void *buf, uint8_t h, uint8_t maxdepth)
 		arg.depth++
 	) {
 		LOG("esep: generating depth %" PRIu8 "\n", arg.depth);
-		cc = gendata_esep_bfs(&arg);
+		cc = gendata_h48h0k4_bfs(&arg);
 		tot += cc;
 		info[arg.depth+1] = cc;
 		LOG("found %" PRIu64 "\n", cc);
@@ -328,25 +321,25 @@ gendata_h48(void *buf, uint8_t h, uint8_t maxdepth)
 	for (j = 0; j <= info[0]; j++)
 		LOG("%" PRIu8 ":\t%" PRIu32 "\n", j, info[j+1]);
 
-gendata_h48_return_size:
-	return cocsepsize + ESEP_TABLESIZE(h, k) + infosize;
+gendata_h48h0k4_return_size:
+	return cocsepsize + ESEP_TABLESIZE(0, 4) + infosize;
 }
 
 _static uint64_t
-gendata_esep_bfs(bfsarg_esep_t *arg)
+gendata_h48h0k4_bfs(bfsarg_esep_t *arg)
 {
 	uint8_t c, m, x;
 	uint32_t cc;
 	int64_t i, j, k, t, cocsep_coord, sim, esep_max;
 	cube_t cube, moved, transd;
 
-	esep_max = (uint64_t)ESEP_MAX(arg->h);
+	esep_max = (uint64_t)ESEP_MAX(0);
 
 	for (i = 0, cc = 0; i < esep_max; i++) {
 		c = get_esep_pval(arg->buf32, i);
 		if (c != arg->depth - 1)
 			continue;
-		cube = invcoord_h48(i, arg->crep, arg->h);
+		cube = invcoord_h48(i, arg->crep, 0);
 		for (m = 0; m < 18; m++) {
 			/*
 			 * TODO: here we can optimize by computing at first
@@ -354,19 +347,19 @@ gendata_esep_bfs(bfsarg_esep_t *arg)
 			 * the edge parts for each transformation.
 			 */
 			moved = move(cube, m);
-			j = coord_h48(moved, arg->cocsepdata, arg->h);
+			j = coord_h48(moved, arg->cocsepdata, 0);
 			x = get_esep_pval(arg->buf32, j);
 			if (x <= arg->depth)
 				continue;
 			set_esep_pval(arg->buf32, j, arg->depth);
 			cc += x != arg->depth;
-			cocsep_coord = j / H48_ESIZE(arg->h);
+			cocsep_coord = j / H48_ESIZE(0);
 			sim = arg->selfsim[cocsep_coord] >> 1;
 			for (t = 1; t < 48 && sim; t++, sim >>= 1) {
 				if (!(sim & 1))
 					continue;
 				transd = transform(moved, t);
-				k = coord_h48(transd, arg->cocsepdata, arg->h);
+				k = coord_h48(transd, arg->cocsepdata, 0);
 				x = get_esep_pval(arg->buf32, k);
 				if (x <= arg->depth)
 					continue;
@@ -539,46 +532,45 @@ solve_h48(
 		solve_h48_dfs(&arg);
 	}
 
-/*
-for (int64_t i = 0; i < 4; i++)
-LOG("Data for coord = %" PRId64 ": %" PRIu8 "\n",
-i, get_esep_pval(arg.h48data, i));
-*/
 	return nsols;
 }
 
 /*
-The h48stats solver computes how many moves it takes to solve to each of
-the 13 h48 coordinates: the corner-only coordinate, and 12 cocsep+esep
-coordinates with h from 0 to 11.  The solutions array is filled with
-the length of the solutions: solutions[0] contains the value for the
-corner-only coordinate, and for i>0 solutions[i] contains the value for
-the cocsep+esep coordinate with h=i-1. The solution array is therefore
-not a printable string.
+The h48stats solver computes how many moves it takes to solve to
+each of the 12 h48 coordinates, one for each value of h from 0 to 11.
+The solutions array is filled with the length of the solutions. The
+solution array is therefore not a printable string.
 */
 _static int64_t
 solve_h48stats_dfs(dfsarg_solveh48stats_t *arg)
 {
+	const int64_t limit = 11;
+
 	int8_t bound, u;
 	uint8_t m;
 	uint32_t d;
 	int64_t coord, h;
 	dfsarg_solveh48stats_t nextarg;
 
+	/* Check cocsep lower bound (corners only) */
 	bound = get_h48_cdata(arg->cube, arg->cocsepdata, &d);
 	if (bound + arg->nmoves > arg->depth)
 		return 0;
 
-	u = COCLASS(d) == 0 && arg->s[0] == 99;
-	arg->s[0] = u * arg->nmoves + (1-u) * arg->s[0];
+	/* Check h48 lower bound for h=0 (esep, but no eo) */
+	coord = coord_h48_edges(arg->cube, COCLASS(d), TTREP(d), 0);
+	bound = get_esep_pval(arg->h48data, coord);
+	if (bound + arg->nmoves > arg->depth)
+		return 0;
 	
+	/* Update all other values, if solved */
 	coord = coord_h48_edges(arg->cube, COCLASS(d), TTREP(d), 11);
-	for (h = 0; h <= 11; h++) {
-		u = coord >> (11-h) == 0 && arg->s[h+1] == 99;
-		arg->s[h+1] = u * arg->nmoves + (1-u) * arg->s[h+1];
+	for (h = 0; h <= limit; h++) {
+		u = coord >> (11-h) == 0 && arg->s[h] == 99;
+		arg->s[h] = u * arg->nmoves + (1-u) * arg->s[h];
 	}
 
-	if (arg->s[12] != 99)
+	if (arg->s[limit] != 99)
 		return 0;
 
 	nextarg = *arg;
@@ -603,23 +595,27 @@ solve_h48stats(
 	cube_t cube,
 	int8_t maxmoves,
 	const void *data,
-	char solutions[static 13]
+	char solutions[static 12]
 )
 {
 	int i;
+	size_t cocsepsize;
 	dfsarg_solveh48stats_t arg;
+
+	cocsepsize = gendata_cocsep(NULL, NULL, NULL);
 
 	arg = (dfsarg_solveh48stats_t) {
 		.cube = cube,
 		.cocsepdata = (uint32_t *)data,
+		.h48data = ((uint32_t *)data) + (cocsepsize/4),
 		.s = solutions
 	};
 
-	for (i = 0; i < 13; i++)
+	for (i = 0; i < 12; i++)
 		solutions[i] = (char)99;
 
 	for  (arg.depth = 0;
-	      arg.depth <= maxmoves && solutions[12] == 99;
+	      arg.depth <= maxmoves && solutions[11] == 99;
 	      arg.depth++)
 	{
 		arg.nmoves = 0;
