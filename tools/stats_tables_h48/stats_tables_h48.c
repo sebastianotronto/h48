@@ -31,6 +31,7 @@ void run(void) {
 	int i, j, k;
 	char sols[12], cube[22];
 	int64_t ep, eo, cp, co, v[12][100] = {0};
+	double avg;
 
 	for (i = 0; i < NCUBES; i++) {
 		ep = rand64();
@@ -48,8 +49,13 @@ void run(void) {
 
 	for (j = 0; j < 12; j++) {
 		printf("Data for h=%d\n", j);
-		for (k = 0; k <= 16; k++)
+		avg = 0.0;
+		for (k = 0; k <= 16; k++) {
 			printf("%d\t%" PRId64 "\n", k, v[j][k]);
+			avg += v[j][k] * k;
+		}
+		avg /= (double)NCUBES;
+		printf("Average: %.4lf\n", avg);
 		printf("\n");
 	}
 }
