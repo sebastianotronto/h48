@@ -1,11 +1,19 @@
+#include <pthread.h>
 #include <stdarg.h>
 #include <time.h>
 #include "../timerun.h"
 #include "../../src/cube.h"
 
 #define MAXMOVES 20
-#define NCUBES 10000
-#define LOG_EVERY (NCUBES / 20)
+#define NTHREADS 32
+#define NCUBES_PER_THREAD 10000
+#define LOG_EVERY (NCUBES_PER_THREAD / 10)
+
+typedef struct {
+	int n;
+	int thread_id;
+	int64_t v[12][100];
+} thread_arg_t;
 
 const char *filename = "tables/h48h0k4";
 char *buf;
@@ -27,13 +35,16 @@ void log_stderr(const char *str, ...) {
 	va_end(args);
 }
 
-void run(void) {
-	int i, j, k;
+static void *
+run_thread(void *arg)
+{
 	char sols[12], cube[22];
-	int64_t ep, eo, cp, co, v[12][100] = {0};
-	double avg;
+	int64_t ep, eo, cp, co;
+	int i, j;
 
-	for (i = 0; i < NCUBES; i++) {
+	thread_arg_t *a = (thread_arg_t *)arg;
+
+	for (i = 0; i < a->n; i++) {
 		ep = rand64();
 		eo = rand64();
 		cp = rand64();
@@ -42,19 +53,42 @@ void run(void) {
 		nissy_solve(cube, "h48stats", "", "",
 		    0, MAXMOVES, 1, -1, buf, sols);
 		for (j = 0; j < 12; j++)
-			v[j][(int)sols[j]]++;
+			a->v[j][(int)sols[j]]++;
 		if ((i+1) % LOG_EVERY == 0)
-			fprintf(stderr, "%d cubes solved...\n", i+1);
+			fprintf(stderr, "[thread %d] %d cubes solved...\n",
+			    a->thread_id, i+1);
 	}
 
+	return NULL;
+}
+
+void run(void) {
+	int64_t i, j, k, tot;
+	double avg;
+	pthread_t thread[NTHREADS];
+	thread_arg_t arg[NTHREADS];
+
+	for (i = 0; i < NTHREADS; i++) {
+		arg[i] = (thread_arg_t) {
+			.thread_id = i,
+			.n = NCUBES_PER_THREAD,
+			.v = {{0}}
+		};
+		pthread_create(&thread[i], NULL, run_thread, &arg[i]);
+	}
+
+	for (i = 0; i < NTHREADS; i++)
+		pthread_join(thread[i], NULL);
+
 	for (j = 0; j < 12; j++) {
-		printf("Data for h=%d\n", j);
-		avg = 0.0;
-		for (k = 0; k <= 16; k++) {
-			printf("%d\t%" PRId64 "\n", k, v[j][k]);
-			avg += v[j][k] * k;
+		printf("Data for h=%" PRId64 "\n", j);
+		for (k = 0, avg = 0.0; k <= 16; k++) {
+			for (i = 0, tot = 0; i < NTHREADS; i++)
+				tot += arg[i].v[j][k];
+			printf("%" PRId64 "\t%" PRId64 "\n", k, tot);
+			avg += tot * k;
 		}
-		avg /= (double)NCUBES;
+		avg /= (double)(NCUBES_PER_THREAD * NTHREADS);
 		printf("Average: %.4lf\n", avg);
 		printf("\n");
 	}
