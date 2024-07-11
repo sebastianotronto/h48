@@ -127,7 +127,7 @@ int getdata(int64_t size) {
 	return 0;
 }
 
-int main() {
+int main(void) {
 	int64_t size;
 
 	srand(time(NULL));

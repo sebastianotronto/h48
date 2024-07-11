@@ -21,9 +21,10 @@ WFLAGS="-pedantic -Wall -Wextra -Wno-unused-parameter -Wno-unused-function"
 [ -n "$(detectsan address)" ] && ADDR="-fsanitize=address"
 [ -n "$(detectsan undefined)" ] && UNDEF="-fsanitize=undefined"
 SAN="$ADDR $UNDEF"
+LIBS="-lpthread"
 
-CFLAGS="$STD $WFLAGS $AVX -O3"
-DBGFLAGS="$STD $WFLAGS $SAN $AVX -g3 -DDEBUG"
+CFLAGS="$STD $LIBS $WFLAGS $AVX -O3"
+DBGFLAGS="$STD $LIBS $WFLAGS $SAN $AVX -g3 -DDEBUG"
 
 echo "Cube type: CUBE_$TYPE"
 echo "Compiler: ${CC:-cc}"

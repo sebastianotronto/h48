@@ -99,7 +99,6 @@ switch. Here NISS may be useful.
 * transform edges only for h48 coord calculation
 * ptable: since it is fully symmetric, do only U or U2 at depth 1
 * use threads: how to detect at runtime? what is sane number to default to?
-  pthreads or threads.h?
 * multisolve with adaptive threading
 * Trans: don't do full compose, for some trans composing perm is enough.
   Split out sumco() as a separate function and refactor, optimize.

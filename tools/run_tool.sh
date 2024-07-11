@@ -5,19 +5,7 @@ if [ -z "$TOOL" ]; then
 	exit 1
 fi
 
-CC="cc -std=c99 -pedantic -Wall -Wextra \
-    -Wno-unused-parameter -Wno-unused-function -D$CUBETYPE \
-    -D_POSIX_C_SOURCE=199309L"
-
-if [ -n "$DEBUG" ]; then
-	CC="$CC -fsanitize=address -g3"
-	CUBEOBJ="debugcube.o"
-else
-	CC="$CC -O3"
-	CUBEOBJ="cube.o"
-fi
-
-[ "$CUBETYPE" = "CUBE_AVX2" ] && CC="$CC -mavx2"
+CC="$CC -D_POSIX_C_SOURCE=199309L"
 
 BIN="tools/run"
 d="$(date +'%Y-%m-%d-%H-%M-%S')"
