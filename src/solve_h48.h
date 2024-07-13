@@ -24,6 +24,13 @@
 #define MAX_SOLUTION_LENGTH 20
 
 typedef struct {
+	int64_t n;
+	int64_t capacity;
+	int64_t mod;
+	int64_t *table;
+} h48set_t;
+
+typedef struct {
 	cube_t cube;
 	uint8_t depth;
 	uint8_t maxdepth;
@@ -66,6 +73,13 @@ typedef struct {
 	char *s;
 } dfsarg_solveh48stats_t;
 
+_static void h48set_create(h48set_t *, int64_t, int64_t);
+_static void h48set_clear(h48set_t *);
+_static void h48set_destroy(h48set_t *);
+_static_inline int64_t h48set_lookup(h48set_t *, int64_t);
+_static_inline void h48set_insert(h48set_t *, int64_t);
+_static_inline bool h48set_contains(h48set_t *, int64_t);
+
 _static_inline int64_t coord_h48(cube_t, const uint32_t *, uint8_t);
 _static_inline int64_t coord_h48_edges(cube_t, int64_t, uint8_t, uint8_t);
 _static_inline cube_t invcoord_h48(int64_t, const cube_t *, uint8_t);
@@ -89,6 +103,69 @@ _static int64_t solve_h48(cube_t, int8_t, int8_t, int8_t, uint8_t, const void *,
 
 _static int64_t solve_h48stats_dfs(dfsarg_solveh48stats_t *);
 _static int64_t solve_h48stats(cube_t, int8_t, const void *, char [static 12]);
+
+_static void
+h48set_create(h48set_t *set, int64_t capacity, int64_t mod)
+{
+	set->capacity = capacity;
+	set->mod = mod;
+
+	set->table = malloc(set->capacity * sizeof(int64_t));
+	h48set_clear(set);
+}
+
+_static void
+h48set_clear(h48set_t *set)
+{
+	int64_t i;
+
+	for (i = 0; i < set->capacity; i++)
+		set->table[i] = -1;
+
+	set->n = 0;
+}
+
+_static void
+h48set_destroy(h48set_t *set)
+{
+	free(set->table);
+}
+
+/* Returns the index in where x should be inserted, or -1 if x is in the set */
+_static_inline int64_t
+h48set_lookup(h48set_t *set, int64_t x)
+{
+	int64_t hash, i;
+
+	hash = ((x % set->capacity) * set->mod) % set->capacity;
+	for (i = hash; set->table[i] != -1; i = (i+1) % set->capacity)
+		if (set->table[i] == x)
+			return -1;
+
+	return i;
+}
+
+_static_inline void
+h48set_insert(h48set_t *set, int64_t x)
+{
+	int64_t i;
+
+	i = h48set_lookup(set, x);
+	if (i != -1) {
+		set->table[i] = x;
+		set->n++;
+	}
+}
+
+_static_inline bool
+h48set_contains(h48set_t *set, int64_t x)
+{
+	int64_t i;
+
+	i = h48set_lookup(set, x);
+
+	return i == -1;
+}
 
 _static_inline int64_t
 coord_h48(cube_t c, const uint32_t *cocsepdata, uint8_t h)
