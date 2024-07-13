@@ -1,5 +1,8 @@
 Check stats for all tables using H48stats solver
-  - what now?
+  - try DFS for h0 solver
+    - compare results, the bfs method could be wrong
+    - if faster: remove bfs
+    - if slower: why do I get different results with the new bfs?
 
 Bug in esep table generation
   - Fails for UFRUFU, try command

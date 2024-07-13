@@ -46,6 +46,7 @@ typedef struct {
 	uint32_t *cocsepdata;
 	uint32_t *buf32;
 	uint64_t *selfsim;
+	int64_t done;
 	cube_t *crep;
 } bfsarg_esep_t;
 
@@ -88,7 +89,9 @@ _static_inline cube_t invcoord_h48(int64_t, const cube_t *, uint8_t);
 _static size_t gendata_cocsep(void *, uint64_t *, cube_t *);
 _static uint32_t gendata_cocsep_dfs(dfsarg_cocsep_t *);
 _static size_t gendata_h48h0k4(void *, uint8_t);
-_static uint64_t gendata_h48h0k4_bfs(bfsarg_esep_t *);
+_static int64_t gendata_h48h0k4_bfs(bfsarg_esep_t *);
+_static int64_t gendata_h48h0k4_bfs_fromdone(bfsarg_esep_t *);
+_static int64_t gendata_h48h0k4_bfs_fromnew(bfsarg_esep_t *);
 
 _static_inline bool get_visited(const uint8_t *, int64_t);
 _static_inline void set_visited(uint8_t *, int64_t);
@@ -363,7 +366,7 @@ gendata_h48h0k4(void *buf, uint8_t maxdepth)
 {
 	uint32_t j, *buf32, *info, *cocsepdata;
 	bfsarg_esep_t arg;
-	int64_t sc, cc, tot, esep_max;
+	int64_t sc, cc, esep_max;
 	uint64_t selfsim[COCSEP_CLASSES];
 	cube_t crep[COCSEP_CLASSES];
 	size_t cocsepsize, infosize;
@@ -388,19 +391,19 @@ gendata_h48h0k4(void *buf, uint8_t maxdepth)
 	arg = (bfsarg_esep_t) {
 		.cocsepdata = cocsepdata,
 		.buf32 = buf32,
-		.crep = crep,
-		.selfsim = selfsim
+		.selfsim = selfsim,
+		.crep = crep
 	};
 	for (
-		tot = 1, arg.depth = 1, cc = 0;
-		tot < esep_max && arg.depth <= maxdepth;
+		arg.done = 1, arg.depth = 1, cc = 0;
+		arg.done < esep_max && arg.depth <= maxdepth;
 		arg.depth++
 	) {
 		LOG("esep: generating depth %" PRIu8 "\n", arg.depth);
 		cc = gendata_h48h0k4_bfs(&arg);
-		tot += cc;
+		arg.done += cc;
 		info[arg.depth+1] = cc;
-		LOG("found %" PRIu64 "\n", cc);
+		LOG("found %" PRId64 "\n", cc);
 	}
 
 	info[0] = arg.depth-1;
@@ -415,17 +418,31 @@ gendata_h48h0k4_return_size:
 	return cocsepsize + ESEP_TABLESIZE(0, 4) + infosize;
 }
 
-_static uint64_t
+_static int64_t
 gendata_h48h0k4_bfs(bfsarg_esep_t *arg)
+{
+/*
+TODO: the new method gives a slightly different answer. If the new
+method is correct, then the old bfs method is wrong. Which one is it?   
+Try also DFS and compare results (it could be faster).
+/*
+	if (2 * arg->done < (int64_t)ESEP_MAX(0))
+		return gendata_h48h0k4_bfs_fromdone(arg);
+	else
+		return gendata_h48h0k4_bfs_fromnew(arg);
+*/
+	return gendata_h48h0k4_bfs_fromdone(arg);
+}
+
+_static int64_t
+gendata_h48h0k4_bfs_fromdone(bfsarg_esep_t *arg)
 {
 	uint8_t c, m, x;
 	uint32_t cc;
-	int64_t i, j, k, t, cocsep_coord, sim, esep_max;
+	int64_t i, j, k, t, cocsep_coord, sim;
 	cube_t cube, moved, transd;
 
-	esep_max = (uint64_t)ESEP_MAX(0);
-
-	for (i = 0, cc = 0; i < esep_max; i++) {
+	for (i = 0, cc = 0; i < (int64_t)ESEP_MAX(0); i++) {
 		c = get_esep_pval(arg->buf32, i);
 		if (c != arg->depth - 1)
 			continue;
@@ -462,12 +479,54 @@ gendata_h48h0k4_bfs(bfsarg_esep_t *arg)
 	return cc;
 }
 
-_static_inline bool get_visited(const uint8_t *a, int64_t i)
+_static int64_t
+gendata_h48h0k4_bfs_fromnew(bfsarg_esep_t *arg)
+{
+	uint8_t c, m, x;
+	uint32_t cc;
+	int64_t i, j, t, cocsep_coord, sim;
+	cube_t cube, moved, transd;
+
+	for (i = 0, cc = 0; i < (int64_t)ESEP_MAX(0); i++) {
+		c = get_esep_pval(arg->buf32, i);
+		if (c != 0xF)
+			continue;
+		cube = invcoord_h48(i, arg->crep, 0);
+		for (m = 0; m < 18; m++) {
+			moved = move(cube, m);
+			j = coord_h48(moved, arg->cocsepdata, 0);
+			x = get_esep_pval(arg->buf32, j);
+			if (x < arg->depth)
+				goto neighbor_found;
+		}
+		continue;
+neighbor_found:
+		set_esep_pval(arg->buf32, i, arg->depth);
+		cc++;
+		cocsep_coord = i / H48_ESIZE(0);
+		sim = arg->selfsim[cocsep_coord] >> 1;
+		for (t = 1; t < 48 && sim; t++, sim >>= 1) {
+			if (!(sim & 1))
+				continue;
+			transd = transform(cube, t);
+			j = coord_h48(transd, arg->cocsepdata, 0);
+			x = get_esep_pval(arg->buf32, j);
+			set_esep_pval(arg->buf32, j, arg->depth);
+			cc += x == 0xF;
+		}
+	}
+
+	return cc;
+}
+
+_static_inline bool
+get_visited(const uint8_t *a, int64_t i)
 {
 	return a[VISITED_IND(i)] & VISITED_MASK(i);
 }
 
-_static_inline void set_visited(uint8_t *a, int64_t i)
+_static_inline void
+set_visited(uint8_t *a, int64_t i)
 {
 	a[VISITED_IND(i)] |= VISITED_MASK(i);
 }

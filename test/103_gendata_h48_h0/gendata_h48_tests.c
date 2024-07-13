@@ -4,7 +4,7 @@
 #define COCSEPSIZE 1119792
 #define ETABLESIZE ((3393 * 495 * 70) >> 1)
 
-size_t gendata_h48h0k4(void *, uint8_t);
+int64_t gendata_h48h0k4(void *, uint8_t);
 
 void run(void) {
 	char str[STRLENMAX];

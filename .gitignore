@@ -1,6 +1,4 @@
 config.mk
-benchmark/results
-benchmark/run
 gen
 debuggen
 perf.data
