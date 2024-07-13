@@ -79,6 +79,7 @@ _static void h48set_destroy(h48set_t *);
 _static_inline int64_t h48set_lookup(h48set_t *, int64_t);
 _static_inline void h48set_insert(h48set_t *, int64_t);
 _static_inline bool h48set_contains(h48set_t *, int64_t);
+_static inline int64_t h48set_save(h48set_t *, int64_t *);
 
 _static_inline int64_t coord_h48(cube_t, const uint32_t *, uint8_t);
 _static_inline int64_t coord_h48_edges(cube_t, int64_t, uint8_t, uint8_t);
@@ -165,6 +166,18 @@ h48set_contains(h48set_t *set, int64_t x)
 	i = h48set_lookup(set, x);
 
 	return i == -1;
+}
+
+_static int64_t
+h48set_save(h48set_t *set, int64_t *a)
+{
+	int64_t i, j;
+
+	for (i = 0, j = 0; i < set->capacity; i++)
+		if (set->table[i] != -1)
+			a[j++] = set->table[i];
+
+	return j;
 }
 
 _static_inline int64_t
