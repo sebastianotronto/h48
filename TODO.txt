@@ -1,3 +1,12 @@
+Bug in cocsepdata
+  - Add tests for ttrep
+    - check that ttrep indeed brings to representative
+  - Fix?
+  - Once fixed, fix other tests
+    - maybe add longtest, e.g. as a tool?
+  - Clean up mixed bfs fromdone / fromnew, use as new for h0k4
+  - Re-do stats
+
 Check stats for all tables using H48stats solver
   - try DFS for h0 solver
     - compare results, the bfs method could be wrong

@@ -3,7 +3,7 @@
  * and the cube that is one quarter-turn-move off (all such cases are
  * equivalent due to symmetry). Adding more tests requires figuring out
  * by hand which one is the first position in its class to be reached.
- * Note that the .out file need a space before each newline.
+ * Note that the .out files need a space before each newline.
  */
 #include "../test.h"
 

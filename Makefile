@@ -15,7 +15,7 @@ clean:
 	rm -rf *.o run
 
 test: debugcube.o
-	CC="${CC} ${DBGFLAGS}" ./test/test.sh
+	CC="${CC} -D${CUBETYPE} ${DBGFLAGS}" ./test/test.sh
 
 tool: cube.o
 	mkdir -p tools/results
