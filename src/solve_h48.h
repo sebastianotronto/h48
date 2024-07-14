@@ -307,9 +307,9 @@ gendata_cocsep_return_size:
 _static uint32_t
 gendata_cocsep_dfs(dfsarg_cocsep_t *arg)
 {
-	uint8_t m, tinv;
-	uint32_t cc, class, ttrep, depth, olddepth;
-	uint64_t t, is;
+	uint8_t m;
+	uint32_t cc, class, ttrep, depth, olddepth, tinv;
+	uint64_t t;
 	int64_t i, j;
 	cube_t d;
 	dfsarg_cocsep_t nextarg;
@@ -324,24 +324,25 @@ gendata_cocsep_dfs(dfsarg_cocsep_t *arg)
 		if ((arg->buf32[i] & 0xFF) != 0xFF)
 			return 0;
 
+		if (arg->rep != NULL)
+			arg->rep[*arg->n] = arg->cube;
 		for (t = 0, cc = 0; t < 48; t++) {
 			d = transform_corners(arg->cube, t);
 			j = coord_cocsep(d);
-			is = (i == j);
-			if (arg->selfsim != NULL)
-				arg->selfsim[*arg->n] |= is << t;
+			if (i == j && arg->selfsim != NULL)
+				arg->selfsim[*arg->n] |= UINT64_C(1) << t;
+			if (COCLASS(arg->buf32[j]) != UINT32_C(0xFFFF))
+				continue;
 			set_visited(arg->visited, j);
-			tinv = inverse_trans(t) * (1-is);
-			olddepth = (uint8_t)(arg->buf32[j] & 0xFF);
+			tinv = inverse_trans(t);
+			olddepth = arg->buf32[j] & 0xFF;
 			cc += olddepth == 0xFF;
 
-			class = (uint32_t)(*arg->n) << 16;
-			ttrep = (uint32_t)tinv << 8;
+			class = (uint32_t)(*arg->n) << UINT32_C(16);
+			ttrep = (uint32_t)tinv << UINT32_C(8);
 			depth = (uint32_t)arg->depth;
 			arg->buf32[j] = class | ttrep | depth;
 		}
-		if (arg->rep != NULL)
-			arg->rep[*arg->n] = arg->cube;
 		(*arg->n)++;
 
 		return cc;
@@ -467,6 +468,7 @@ gendata_h48h0k4_bfs_fromdone(bfsarg_esep_t *arg)
 					transd = transform(moved, t);
 					k = coord_h48(transd, arg->cocsepdata, 0);
 					if (k != j) {
+/*
 LOG("t=%" PRId64 ", tinv=%" PRIu8 "\n", t, inverse_trans(t));
 int64_t ccm = coord_cocsep(moved);
 int64_t repm = coord_cocsep(arg->crep[j/H48_ESIZE(0)]);
@@ -474,12 +476,6 @@ LOG("moved: full %" PRId64 ", cocsep %" PRId64 ", rep %" PRId64 ", ttrep %" PRId
 int64_t cct = coord_cocsep(transd);
 int64_t rept = coord_cocsep(arg->crep[k/H48_ESIZE(0)]);
 LOG("moved: full %" PRId64 ", cocsep %" PRId64 ", rep %" PRId64 ", ttrep %" PRId32 "\n", j, cct, rept, TTREP(arg->cocsepdata[cct]));
-/*
-		char q[150];
-		writecube_H48(moved, q);
-		LOG("%s\n", q)
-		writecube_H48(transd, q);
-		LOG("%s\n", q)
 */
 					}
 					continue;
