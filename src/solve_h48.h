@@ -422,16 +422,10 @@ gendata_h48h0k4_return_size:
 _static int64_t
 gendata_h48h0k4_bfs(bfsarg_esep_t *arg)
 {
-/*
-TODO: the new method gives a slightly different answer. If the new
-method is correct, then the old bfs method is wrong. Which one is it?   
-Try also DFS and compare results (it could be faster).
-*/
 	if (2 * arg->done < (int64_t)ESEP_MAX(0))
 		return gendata_h48h0k4_bfs_fromdone(arg);
 	else
 		return gendata_h48h0k4_bfs_fromnew(arg);
-//	return gendata_h48h0k4_bfs_fromnew(arg);
 }
 
 _static int64_t
@@ -464,22 +458,7 @@ gendata_h48h0k4_bfs_fromdone(bfsarg_esep_t *arg)
 			cocsep_coord = j / H48_ESIZE(0);
 			sim = arg->selfsim[cocsep_coord] >> UINT64_C(1);
 			for (t = 1; t < 48 && sim; t++, sim >>= UINT64_C(1)) {
-				if (!(sim & UINT64_C(1))) {
-					transd = transform(moved, t);
-					k = coord_h48(transd, arg->cocsepdata, 0);
-					if (k != j) {
-/*
-LOG("t=%" PRId64 ", tinv=%" PRIu8 "\n", t, inverse_trans(t));
-int64_t ccm = coord_cocsep(moved);
-int64_t repm = coord_cocsep(arg->crep[j/H48_ESIZE(0)]);
-LOG("moved: full %" PRId64 ", cocsep %" PRId64 ", rep %" PRId64 ", ttrep %" PRId32 "\n", j, ccm, repm, TTREP(arg->cocsepdata[ccm]));
-int64_t cct = coord_cocsep(transd);
-int64_t rept = coord_cocsep(arg->crep[k/H48_ESIZE(0)]);
-LOG("moved: full %" PRId64 ", cocsep %" PRId64 ", rep %" PRId64 ", ttrep %" PRId32 "\n", j, cct, rept, TTREP(arg->cocsepdata[cct]));
-*/
-					}
-					continue;
-				}
+				/* TODO: use only selfsim */
 				transd = transform(moved, t);
 				k = coord_h48(transd, arg->cocsepdata, 0);
 				x = get_esep_pval(arg->buf32, k);
@@ -512,10 +491,7 @@ gendata_h48h0k4_bfs_fromnew(bfsarg_esep_t *arg)
 			j = coord_h48(moved, arg->cocsepdata, 0);
 			x = get_esep_pval(arg->buf32, j);
 			if (x < arg->depth)
-{
-if (x < arg->depth -1) LOG("WAT %" PRIu8 " while scanning %" PRIu8 "\n",x, arg->depth);
 				goto neighbor_found;
-}
 		}
 		continue;
 neighbor_found:
@@ -524,8 +500,7 @@ neighbor_found:
 		cocsep_coord = i / H48_ESIZE(0);
 		sim = arg->selfsim[cocsep_coord] >> 1;
 		for (t = 1; t < 48 && sim; t++, sim >>= 1) {
-			if (!(sim & 1))
-				continue;
+			/* TODO: use only selfsim */
 			transd = transform(cube, t);
 			j = coord_h48(transd, arg->cocsepdata, 0);
 			x = get_esep_pval(arg->buf32, j);

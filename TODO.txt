@@ -1,30 +1,14 @@
-Bug in cocsepdata
-  - Add tests for ttrep
-    - check that ttrep indeed brings to representative
-  - Fix?
-  - Once fixed, fix other tests
-    - maybe add longtest, e.g. as a tool?
-  - Clean up mixed bfs fromdone / fromnew, use as new for h0k4
-  - Re-do stats
-
-Check stats for all tables using H48stats solver
-  - try DFS for h0 solver
-    - compare results, the bfs method could be wrong
-    - if faster: remove bfs
-    - if slower: why do I get different results with the new bfs?
-
 Bug in esep table generation
+  - Re-do stats
+  - Add long-running test for h0k4 (maybe as a tool?)
+  - try DFS for h0 solver
+  - use dfs for computing big table, save distance %3 until the last two steps,
+    then clean the table and double loop over moves to fill the value
+  - dfs for tables with h=1 to 10?
+
   - Fails for UFRUFU, try command
     ./run solve -solver H48 -options "2;20" -n 1 -M 10 -cube \
          "$(./run frommoves -moves "UFRUFU")"
-  - Fundamental error in how tables are generated, each coordinate has too
-    many representative. I need to use the big table with the full coordinate
-    first (h=11, ~241 billion positions, 60Gb with k=2). From this the smaller
-    tables can be easily deduced.
-  - Investigate the possibility of computing smaller tables directly in some
-    other way, even if slow.
-  - use dfs for computing big table, save distance %3 until the last two steps,
-    then clean the table and double loop over moves to fill the value
 
 Solver
   - cleanup h48 solver
@@ -118,6 +102,10 @@ switch. Here NISS may be useful.
 * see if vcube's method to flip all corners is better
 * find a better way for computing the inverse?
 * Transform with big table: make static cube actually static (how?)
+* Use selfsim: in generating some tables, it is in thery possible to only check
+  the few transformations that give self-similarity instead of all 48.
+  The performance drop is almost insignificant, but I would like to figure out
+  the mistake I made previously.
 
 ## Improvements and other things
 
