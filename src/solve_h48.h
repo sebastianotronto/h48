@@ -30,7 +30,7 @@
 typedef struct {
 	uint64_t n;
 	uint64_t capacity;
-	uint64_t mod;
+	uint64_t randomizer;
 	uint64_t *table;
 } h48map_t;
 
@@ -112,7 +112,8 @@ _static_inline void set_esep_pval(uint32_t *, int64_t, uint8_t);
 
 _static size_t gendata_cocsep(void *, uint64_t *, cube_t *);
 _static uint32_t gendata_cocsep_dfs(dfsarg_cocsep_t *);
-_static int64_t gen_h48map_short(uint8_t, const uint32_t *, h48map_t *);
+_static uint64_t gen_h48short(
+    uint8_t, const uint32_t *, const cube_t *, const uint64_t *, h48map_t *);
 _static size_t gendata_h48h0k4(void *, uint8_t);
 _static int64_t gendata_h48h0k4_bfs(bfsarg_esep_t *);
 _static int64_t gendata_h48h0k4_bfs_fromdone(bfsarg_esep_t *);
@@ -123,16 +124,17 @@ _static_inline int8_t get_h48_cdata(cube_t, uint32_t *, uint32_t *);
 _static_inline int8_t get_h48_bound(cube_t, uint32_t, uint8_t, uint32_t *);
 _static_inline bool solve_h48_stop(dfsarg_solveh48_t *);
 _static int64_t solve_h48_dfs(dfsarg_solveh48_t *);
-_static int64_t solve_h48(cube_t, int8_t, int8_t, int8_t, uint8_t, const void *, char *);
+_static int64_t solve_h48(
+    cube_t, int8_t, int8_t, int8_t, uint8_t, const void *, char *);
 
 _static int64_t solve_h48stats_dfs(dfsarg_solveh48stats_t *);
 _static int64_t solve_h48stats(cube_t, int8_t, const void *, char [static 12]);
 
 _static void
-h48map_create(h48map_t *map, uint64_t capacity, uint64_t mod)
+h48map_create(h48map_t *map, uint64_t capacity, uint64_t randomizer)
 {
 	map->capacity = capacity;
-	map->mod = mod;
+	map->randomizer = randomizer;
 
 	map->table = malloc(map->capacity * sizeof(int64_t));
 	h48map_clear(map);
@@ -156,7 +158,7 @@ h48map_lookup(h48map_t *map, uint64_t x)
 {
 	uint64_t hash, i;
 
-	hash = ((x % map->capacity) * map->mod) % map->capacity;
+	hash = ((x % map->capacity) * map->randomizer) % map->capacity;
 	for (i = hash;
 	     map->table[i] != MAP_UNSET && (map->table[i] & MAP_KEYMASK) != x;
 	     i = (i+1) % map->capacity
@@ -384,32 +386,55 @@ gendata_cocsep_dfs(dfsarg_cocsep_t *arg)
 	return cc;
 }
 
-_static int64_t
-gen_h48map_short(uint8_t n, const uint32_t *cocsepdata, h48map_t *map)
-{
-/*
-	uint8_t i, j, m;
-	int64_t coord;
-	cube_t cube, d;
+_static uint64_t
+gen_h48short(
+	uint8_t n,
+	const uint32_t *cocsepdata,
+	const cube_t *crep,
+	const uint64_t *selfsim,
+	h48map_t *map
+) {
+	uint8_t i, m, t;
+	int64_t coord, cc;
+	uint64_t j, oldn, sim;
+	kvpair_t kv;
+	cube_t cube, d, e;
 
 	cube = solvedcube();
 	coord = coord_h48(cube, cocsepdata, 11);
+	h48map_insertmin(map, coord, 0);
+	oldn = 0;
+	LOG("Short h48: generating depth 0\nfound %" PRIu8 "\n", map->n-oldn);
 	for (i = 0; i < n; i++) {
-		for (j = 0; (coord = h48map_next(map, &j)) != -1; ) {
-			cube = invcoord_h48(coord, cocsepdata, 11);
+		LOG("Short h48: generating depth %" PRIu8 "\n", i+1);
+		j = 0;
+		oldn = map->n;
+		for (kv = h48map_nextkvpair(map, &j);
+		     j != map->capacity;
+		     kv = h48map_nextkvpair(map, &j)
+		) {
+			if (kv.val != i)
+				continue;
+			cube = invcoord_h48(kv.key, crep, 11);
 			for (m = 0; m < 18; m++) {
 				d = move(cube, m);
-TODO
+				coord = coord_h48(d, cocsepdata, 11);
+				h48map_insertmin(map, coord, i+1);
+				cc = coord / H48_ESIZE(11);
+				sim = selfsim[cc] >> UINT64_C(1);
+				for (t = 1; t < 48 && sim; t++) {
+				/* TODO: optimize by using transform_edges,
+				   corner coordinate is kept */
+					e = transform(d, t);
+					coord = coord_h48(e, cocsepdata, 11);
+					h48map_insertmin(map, coord, i+1);
+				}
 			}
 		}
+		LOG("found %" PRIu8 "\n", map->n-oldn);
 	}
-*/
-}
 
-_static int64_t
-gen_h48set_short_dfs(dfsarg_genh48set_t *arg)
-{
-	/* TODO */
+	return map->n;
 }
 
 /*
@@ -511,7 +536,7 @@ gendata_h48h0k4_bfs_fromdone(bfsarg_esep_t *arg)
 			cc += x != arg->depth;
 			cocsep_coord = j / H48_ESIZE(0);
 			sim = arg->selfsim[cocsep_coord] >> UINT64_C(1);
-			for (t = 1; t < 48 && sim; t++, sim >>= UINT64_C(1)) {
+			for (t = 1; t < 48 && sim; t++) {
 				/* TODO: use only selfsim */
 				transd = transform(moved, t);
 				k = coord_h48(transd, arg->cocsepdata, 0);
@@ -553,7 +578,7 @@ neighbor_found:
 		cc++;
 		cocsep_coord = i / H48_ESIZE(0);
 		sim = arg->selfsim[cocsep_coord] >> 1;
-		for (t = 1; t < 48 && sim; t++, sim >>= 1) {
+		for (t = 1; t < 48 && sim; t++) {
 			/* TODO: use only selfsim */
 			transd = transform(cube, t);
 			j = coord_h48(transd, arg->cocsepdata, 0);

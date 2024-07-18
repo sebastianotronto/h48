@@ -1,18 +1,19 @@
 Bug in esep table generation
-  - add pre-computation of h48 coordinates at distance <=7?
-    - unit tests (but how do I test? just leave it there to check regressions)
-  - Add long-running test for h0k4 (maybe as a tool?)
   - compute all tables for h<11
-    - compute visited up to a fixed depth (7? 8?)
+    x compute visited up to a fixed depth 8
     - compute additional step (if needed) to fill <=base
-    - brute-force the last 2 steps (only 18 moves + 18*15 move pairs)
+    - brute-force the last 2 steps (only 18 moves + 18*15 move pairs, + sim)
     - compare with known h0 results (from long-running test)
   - compute table for h=11
-    - is is worth pre-computing stuff?
     - can it be unified to the other computation, or is it much better
       to do it ad hoc?
+  - Add long-running test for h0k4 (maybe as a tool?)
+    - tests for other sizes?
   - optimize
     - use cached values for invcoord_esep? check if it is faster
+    - Unify and improve performance of finding nasty sim
+      (right now we don't even use selfsim)
+    - parallelize with pthread
 
 (OLD:
   - Fails for UFRUFU, try command

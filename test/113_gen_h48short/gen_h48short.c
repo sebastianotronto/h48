@@ -1,7 +1,7 @@
 #include "../test.h"
 
-#define MAP_KEYSHIFT          UINT64_C(40)
-#define MAXPOS 1000
+#define COCSEP_CLASSES 3393
+#define MAXPOS 200
 
 typedef struct {
 	uint64_t n;
@@ -17,9 +17,10 @@ typedef struct {
 
 void h48map_create(h48map_t *, uint64_t, uint64_t);
 void h48map_destroy(h48map_t *);
-void h48map_insertmin(h48map_t *, uint64_t, uint64_t);
-uint64_t h48map_value(h48map_t *, uint64_t);
 kvpair_t h48map_nextkvpair(h48map_t *, uint64_t *);
+size_t gendata_cocsep(void *, uint64_t *, cube_t *);
+uint64_t gen_h48short(
+    uint8_t, const uint32_t *, const cube_t *, const uint64_t *, h48map_t *);
 
 char str[STRLENMAX];
 
@@ -38,23 +39,19 @@ uint64_t readl(void) {
 }
 
 void run(void) {
+	uint32_t cocsepdata[300000];
 	h48map_t map;
-	uint64_t n, i, j, capacity, randomizer, x, y, v;
-	kvpair_t kv, a[MAXPOS], b[MAXPOS];
+	uint64_t n, i, j, capacity, randomizer, selfsim[COCSEP_CLASSES];
+	kvpair_t kv, b[MAXPOS];
+	cube_t crep[COCSEP_CLASSES];
 
 	capacity = readl();
 	randomizer = readl();
 	n = readl();
 
-	for (i = 0; i < n; i++) {
-		x = readl();
-		y = readl();
-		a[i] = (kvpair_t) { .key = x, .val = y };
-	}
-
 	h48map_create(&map, capacity, randomizer);
-	for (i = 0; i < n; i++)
-		h48map_insertmin(&map, a[i].key, a[i].val);
+	gendata_cocsep(cocsepdata, selfsim, crep);
+	gen_h48short(n, cocsepdata, crep, selfsim, &map);
 
 	i = 0;
 	for (kv = h48map_nextkvpair(&map, &i), j = 0;
@@ -68,16 +65,6 @@ void run(void) {
 	printf("%" PRIu64 "\n", map.n);
 	for (i = 0; i < j; i++)
 		printf("%" PRIu64 " %" PRIu64 "\n", b[i].key, b[i].val);
-	if (map.n != j)
-		printf("Wrong number of elements: map->n = %" PRIu64 ", "
-		    "but scan returns %" PRIu64 "\n", map.n, j);
-	for (i = 0; i < n; i++) {
-		v = h48map_value(&map, a[i].key);
-		if (v > a[i].val)
-			printf("Value for key %" PRId64 " is larger than "
-			    "expected (%" PRIu64 " > %" PRIu64 ")\n",
-			    a[i].key, v, a[i].val);
-	}
 
 	h48map_destroy(&map);
 }
