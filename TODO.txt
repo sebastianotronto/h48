@@ -1,14 +1,38 @@
 Bug in esep table generation
-  - Re-do stats
+  - add pre-computation of h48 coordinates at distance <=7?
+    - unit tests (but how do I test? just leave it there to check regressions)
   - Add long-running test for h0k4 (maybe as a tool?)
-  - try DFS for h0 solver
-  - use dfs for computing big table, save distance %3 until the last two steps,
-    then clean the table and double loop over moves to fill the value
-  - dfs for tables with h=1 to 10?
+  - compute all tables for h<11
+    - compute visited up to a fixed depth (7? 8?)
+    - compute additional step (if needed) to fill <=base
+    - brute-force the last 2 steps (only 18 moves + 18*15 move pairs)
+    - compare with known h0 results (from long-running test)
+  - compute table for h=11
+    - is is worth pre-computing stuff?
+    - can it be unified to the other computation, or is it much better
+      to do it ad hoc?
+  - optimize
+    - use cached values for invcoord_esep? check if it is faster
 
+(OLD:
   - Fails for UFRUFU, try command
     ./run solve -solver H48 -options "2;20" -n 1 -M 10 -cube \
          "$(./run frommoves -moves "UFRUFU")"
+)
+
+table base for k=2 (4 most common values start at)
+  0	8
+  1	8
+  2	8
+  3	8 or 9 (very close)
+  4	9
+  5	9
+  6	9
+  7	9 or 10 (very close)
+  8	10
+  9	10
+  10	10
+  11	11
 
 Solver
   - cleanup h48 solver

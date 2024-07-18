@@ -1,3 +1,7 @@
+#define MAP_UNSET             UINT64_C(0xFFFFFFFFFFFFFFFF)
+#define MAP_KEYMASK           UINT64_C(0xFFFFFFFFFF)
+#define MAP_KEYSHIFT          UINT64_C(40)
+
 #define COCSEP_CLASSES        ((size_t)3393)
 #define COCSEP_TABLESIZE      ((size_t)_3p7 << (size_t)7)
 #define COCSEP_VISITEDSIZE    ((COCSEP_TABLESIZE + (size_t)7) / (size_t)8)
@@ -24,11 +28,16 @@
 #define MAX_SOLUTION_LENGTH 20
 
 typedef struct {
-	int64_t n;
-	int64_t capacity;
-	int64_t mod;
-	int64_t *table;
-} h48set_t;
+	uint64_t n;
+	uint64_t capacity;
+	uint64_t mod;
+	uint64_t *table;
+} h48map_t;
+
+typedef struct {
+	uint64_t key;
+	uint64_t val;
+} kvpair_t;
 
 typedef struct {
 	cube_t cube;
@@ -40,6 +49,16 @@ typedef struct {
 	uint64_t *selfsim;
 	cube_t *rep;
 } dfsarg_cocsep_t;
+
+/* TODO keep or not? */
+typedef struct {
+	cube_t cube;
+	int8_t nmoves;
+	int8_t depth;
+	uint8_t moves[MAX_SOLUTION_LENGTH];
+	uint32_t *cocsepdata;
+	h48map_t *visited;
+} dfsarg_genh48set_t;
 
 typedef struct {
 	uint8_t depth;
@@ -74,29 +93,30 @@ typedef struct {
 	char *s;
 } dfsarg_solveh48stats_t;
 
-_static void h48set_create(h48set_t *, int64_t, int64_t);
-_static void h48set_clear(h48set_t *);
-_static void h48set_destroy(h48set_t *);
-_static_inline int64_t h48set_lookup(h48set_t *, int64_t);
-_static_inline void h48set_insert(h48set_t *, int64_t);
-_static_inline bool h48set_contains(h48set_t *, int64_t);
-_static inline int64_t h48set_save(h48set_t *, int64_t *);
+_static void h48map_create(h48map_t *, uint64_t, uint64_t);
+_static void h48map_clear(h48map_t *);
+_static void h48map_destroy(h48map_t *);
+_static uint64_t h48map_lookup(h48map_t *, uint64_t);
+_static void h48map_insertmin(h48map_t *, uint64_t, uint64_t);
+_static uint64_t h48map_value(h48map_t *, uint64_t);
+_static kvpair_t h48map_nextkvpair(h48map_t *, uint64_t *);
 
 _static_inline int64_t coord_h48(cube_t, const uint32_t *, uint8_t);
 _static_inline int64_t coord_h48_edges(cube_t, int64_t, uint8_t, uint8_t);
 _static_inline cube_t invcoord_h48(int64_t, const cube_t *, uint8_t);
 
-_static size_t gendata_cocsep(void *, uint64_t *, cube_t *);
-_static uint32_t gendata_cocsep_dfs(dfsarg_cocsep_t *);
-_static size_t gendata_h48h0k4(void *, uint8_t);
-_static int64_t gendata_h48h0k4_bfs(bfsarg_esep_t *);
-_static int64_t gendata_h48h0k4_bfs_fromdone(bfsarg_esep_t *);
-_static int64_t gendata_h48h0k4_bfs_fromnew(bfsarg_esep_t *);
-
 _static_inline bool get_visited(const uint8_t *, int64_t);
 _static_inline void set_visited(uint8_t *, int64_t);
 _static_inline uint8_t get_esep_pval(const uint32_t *, int64_t);
 _static_inline void set_esep_pval(uint32_t *, int64_t, uint8_t);
+
+_static size_t gendata_cocsep(void *, uint64_t *, cube_t *);
+_static uint32_t gendata_cocsep_dfs(dfsarg_cocsep_t *);
+_static int64_t gen_h48map_short(uint8_t, const uint32_t *, h48map_t *);
+_static size_t gendata_h48h0k4(void *, uint8_t);
+_static int64_t gendata_h48h0k4_bfs(bfsarg_esep_t *);
+_static int64_t gendata_h48h0k4_bfs_fromdone(bfsarg_esep_t *);
+_static int64_t gendata_h48h0k4_bfs_fromnew(bfsarg_esep_t *);
 
 _static void solve_h48_appendsolution(dfsarg_solveh48_t *);
 _static_inline int8_t get_h48_cdata(cube_t, uint32_t *, uint32_t *);
@@ -109,78 +129,84 @@ _static int64_t solve_h48stats_dfs(dfsarg_solveh48stats_t *);
 _static int64_t solve_h48stats(cube_t, int8_t, const void *, char [static 12]);
 
 _static void
-h48set_create(h48set_t *set, int64_t capacity, int64_t mod)
+h48map_create(h48map_t *map, uint64_t capacity, uint64_t mod)
 {
-	set->capacity = capacity;
-	set->mod = mod;
+	map->capacity = capacity;
+	map->mod = mod;
 
-	set->table = malloc(set->capacity * sizeof(int64_t));
-	h48set_clear(set);
+	map->table = malloc(map->capacity * sizeof(int64_t));
+	h48map_clear(map);
 }
 
 _static void
-h48set_clear(h48set_t *set)
+h48map_clear(h48map_t *map)
 {
-	int64_t i;
-
-	for (i = 0; i < set->capacity; i++)
-		set->table[i] = -1;
-
-	set->n = 0;
+	memset(map->table, 0xFF, map->capacity * sizeof(uint64_t));
+	map->n = 0;
 }
 
 _static void
-h48set_destroy(h48set_t *set)
+h48map_destroy(h48map_t *map)
 {
-	free(set->table);
+	free(map->table);
 }
 
-/* Returns the index in where x should be inserted, or -1 if x is in the set */
-_static_inline int64_t
-h48set_lookup(h48set_t *set, int64_t x)
+_static_inline uint64_t
+h48map_lookup(h48map_t *map, uint64_t x)
 {
-	int64_t hash, i;
+	uint64_t hash, i;
 
-	hash = ((x % set->capacity) * set->mod) % set->capacity;
-	for (i = hash; set->table[i] != -1; i = (i+1) % set->capacity)
-		if (set->table[i] == x)
-			return -1;
+	hash = ((x % map->capacity) * map->mod) % map->capacity;
+	for (i = hash;
+	     map->table[i] != MAP_UNSET && (map->table[i] & MAP_KEYMASK) != x;
+	     i = (i+1) % map->capacity
+	) ;
 
 	return i;
 }
 
 _static_inline void
-h48set_insert(h48set_t *set, int64_t x)
+h48map_insertmin(h48map_t *map, uint64_t key, uint64_t val)
 {
-	int64_t i;
+	uint64_t i, oldval, min;
 
-	i = h48set_lookup(set, x);
-	if (i != -1) {
-		set->table[i] = x;
-		set->n++;
+	i = h48map_lookup(map, key);
+	oldval = map->table[i] >> MAP_KEYSHIFT;
+	min = _min(val, oldval);
+
+	map->n += map->table[i] == MAP_UNSET;
+	map->table[i] = (key & MAP_KEYMASK) | (min << MAP_KEYSHIFT);
+}
+
+_static_inline uint64_t
+h48map_value(h48map_t *map, uint64_t key)
+{
+	return map->table[h48map_lookup(map, key)] >> MAP_KEYSHIFT;
+}
+
+_static kvpair_t
+h48map_nextkvpair(h48map_t *map, uint64_t *p)
+{
+	kvpair_t kv;
+	uint64_t pair;
+
+	kv.key = MAP_UNSET;
+	kv.val = MAP_UNSET;
+
+	DBG_ASSERT(*p < map->capacity, kv,
+	    "Error looping over map: given index %" PRIu64 " is out of "
+	    "range [0,%" PRIu64 "]", *p, map->capacity);
+
+	for ( ; *p < map->capacity; (*p)++) {
+		if (map->table[*p] != MAP_UNSET) {
+			pair = map->table[(*p)++];
+			kv.key = pair & MAP_KEYMASK;
+			kv.val = pair >> MAP_KEYSHIFT;
+			return kv;
+		}
 	}
-}
 
-_static_inline bool
-h48set_contains(h48set_t *set, int64_t x)
-{
-	int64_t i;
-
-	i = h48set_lookup(set, x);
-
-	return i == -1;
-}
-
-_static int64_t
-h48set_save(h48set_t *set, int64_t *a)
-{
-	int64_t i, j;
-
-	for (i = 0, j = 0; i < set->capacity; i++)
-		if (set->table[i] != -1)
-			a[j++] = set->table[i];
-
-	return j;
+	return kv;
 }
 
 _static_inline int64_t
@@ -356,6 +382,34 @@ gendata_cocsep_dfs(dfsarg_cocsep_t *arg)
 	}
 
 	return cc;
+}
+
+_static int64_t
+gen_h48map_short(uint8_t n, const uint32_t *cocsepdata, h48map_t *map)
+{
+/*
+	uint8_t i, j, m;
+	int64_t coord;
+	cube_t cube, d;
+
+	cube = solvedcube();
+	coord = coord_h48(cube, cocsepdata, 11);
+	for (i = 0; i < n; i++) {
+		for (j = 0; (coord = h48map_next(map, &j)) != -1; ) {
+			cube = invcoord_h48(coord, cocsepdata, 11);
+			for (m = 0; m < 18; m++) {
+				d = move(cube, m);
+TODO
+			}
+		}
+	}
+*/
+}
+
+_static int64_t
+gen_h48set_short_dfs(dfsarg_genh48set_t *arg)
+{
+	/* TODO */
 }
 
 /*
@@ -756,9 +810,9 @@ solve_h48stats(
 	for (i = 0; i < 12; i++)
 		solutions[i] = (char)99;
 
-	for  (arg.depth = 0;
-	      arg.depth <= maxmoves && solutions[11] == 99;
-	      arg.depth++)
+	for (arg.depth = 0;
+	     arg.depth <= maxmoves && solutions[11] == 99;
+	     arg.depth++)
 	{
 		arg.nmoves = 0;
 		solve_h48stats_dfs(&arg);
