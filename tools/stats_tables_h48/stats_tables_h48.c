@@ -1,5 +1,4 @@
 #include <pthread.h>
-#include <stdarg.h>
 #include <time.h>
 #include "../timerun.h"
 #include "../../src/cube.h"

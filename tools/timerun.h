@@ -1,8 +1,20 @@
+#include <stdarg.h>
 #include <stdbool.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <time.h>
+
+void
+log_stderr(const char *str, ...)
+{
+	va_list args;
+
+	va_start(args, str);
+	vfprintf(stderr, str, args);
+	va_end(args);
+}
+
 
 double
 timerun(void (*run)(void), char *name)
