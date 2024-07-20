@@ -22,7 +22,7 @@ transform_edges(cube_t c, uint8_t t)
 {
 	switch (t) {
 	case _trans_UFr:
-		return _trans_edges_rotation(UFr, c);
+		return c;
 	case _trans_ULr:
 		return _trans_edges_rotation(ULr, c);
 	case _trans_UBr:
@@ -128,7 +128,7 @@ transform_corners(cube_t c, uint8_t t)
 {
 	switch (t) {
 	case _trans_UFr:
-		return _trans_corners_rotation(UFr, c);
+		return c;
 	case _trans_ULr:
 		return _trans_corners_rotation(ULr, c);
 	case _trans_UBr:
@@ -234,7 +234,7 @@ transform(cube_t c, uint8_t t)
 {
 	switch (t) {
 	case _trans_UFr:
-		return _trans_rotation(UFr, c);
+		return c;
 	case _trans_ULr:
 		return _trans_rotation(ULr, c);
 	case _trans_UBr:

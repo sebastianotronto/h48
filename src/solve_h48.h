@@ -35,13 +35,14 @@ _t by _ttrep).
 #define _foreach_h48sim(_cube, _cocsepdata, _selfsim, _h, _action) \
 	int64_t _cocsep = coord_cocsep(_cube); \
 	uint8_t _ttrep = TTREP(_cocsepdata[_cocsep]); \
+	uint8_t _inverse_ttrep = inverse_trans(_ttrep); \
 	int64_t _coclass = COCLASS(_cocsepdata[_cocsep]); \
 	cube_t _rep = transform(_cube, _ttrep); \
 	uint64_t _sim = _selfsim[_coclass]; \
 	for (uint8_t _t = 0; _t < 48 && _sim; _t++, _sim >>= 1) { \
 		if (!(_sim & 1)) continue; \
 		_cube = transform(_rep, _t); \
-		_cube = transform(_cube, inverse_trans(_ttrep)); \
+		_cube = transform(_cube, _inverse_ttrep); \
 		_action \
 	}
 
@@ -512,7 +513,9 @@ gendata_h48h0k4_return_size:
 _static int64_t
 gendata_h48h0k4_bfs(bfsarg_esep_t *arg)
 {
-	if (2 * arg->done < (int64_t)ESEP_MAX(0))
+	const uint8_t breakpoint = 10; /* Hand-picked optimal */
+
+	if (arg->depth < breakpoint)
 		return gendata_h48h0k4_bfs_fromdone(arg);
 	else
 		return gendata_h48h0k4_bfs_fromnew(arg);
@@ -567,31 +570,13 @@ gendata_h48h0k4_bfs_fromnew(bfsarg_esep_t *arg)
 			x = get_esep_pval(arg->buf32, j);
 			if (x >= arg->depth)
 				continue;
-#if 0
-			cube_t transd;
-			int64_t t, cocsep_coord, sim;
-
-			set_esep_pval(arg->buf32, i, arg->depth);
-			cc++;
-			cocsep_coord = i / H48_ESIZE(0);
-			sim = arg->selfsim[cocsep_coord] >> 1;
-			for (t = 1; t < 48 && sim; t++) {
-				transd = transform(cube, t);
-				j = coord_h48(transd, arg->cocsepdata, 0);
-				x = get_esep_pval(arg->buf32, j);
-				set_esep_pval(arg->buf32, j, arg->depth);
-				cc += x == 0xF;
-			}
-#else
 			_foreach_h48sim(cube, arg->cocsepdata, arg->selfsim, 0,
 				j = coord_h48(cube, arg->cocsepdata, 0);
 				x = get_esep_pval(arg->buf32, j);
 				set_esep_pval(arg->buf32, j, arg->depth);
 				cc += x == 0xF;
 			)
-#endif
-
-			break;
+			break; /* Enough to find one, skip the rest */
 		}
 	}
 

@@ -23,7 +23,7 @@ void run(void) {
 	} else {
 		printf("Succesfully generated %" PRId64 " bytes. Table:\n", s);
 		h48info = (uint32_t *)buf + (ETABLESIZE(HVALUE) + COCSEPSIZE) / 4;
-		for (i = 0; i < MAXDEPTH+1; i++)
+		for (i = 0; i < MAXDEPTH+1 && h48info[i+1]; i++)
 			printf("%d:\t%" PRIu32 "\n", i, h48info[i+1]);
 	}
 }
