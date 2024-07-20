@@ -27,6 +27,24 @@
 
 #define MAX_SOLUTION_LENGTH 20
 
+/*
+TODO: This loop other similar h48 coordinates can be improved by only
+transforming edges, but we need to compose transformations (i.e. conjugate
+_t by _ttrep).
+*/
+#define _foreach_h48sim(_cube, _cocsepdata, _selfsim, _h, _action) \
+	int64_t _cocsep = coord_cocsep(_cube); \
+	uint8_t _ttrep = TTREP(_cocsepdata[_cocsep]); \
+	int64_t _coclass = COCLASS(_cocsepdata[_cocsep]); \
+	cube_t _rep = transform(_cube, _ttrep); \
+	uint64_t _sim = _selfsim[_coclass]; \
+	for (uint8_t _t = 0; _t < 48 && _sim; _t++, _sim >>= 1) { \
+		if (!(_sim & 1)) continue; \
+		_cube = transform(_rep, _t); \
+		_cube = transform(_cube, inverse_trans(_ttrep)); \
+		_action \
+	}
+
 typedef struct {
 	uint64_t n;
 	uint64_t capacity;
@@ -229,12 +247,12 @@ coord_h48(cube_t c, const uint32_t *cocsepdata, uint8_t h)
 }
 
 _static_inline int64_t
-coord_h48_edges(cube_t c, int64_t coclass, uint8_t t, uint8_t h)
+coord_h48_edges(cube_t c, int64_t coclass, uint8_t ttrep, uint8_t h)
 {
 	cube_t d;
 	int64_t esep, eo, edges;
 
-	d = transform_edges(c, t);
+	d = transform_edges(c, ttrep);
 	esep = coord_esep(d);
 	eo = coord_eo(d);
 	edges = (esep << 11) + eo;
@@ -394,11 +412,11 @@ gen_h48short(
 	const uint64_t *selfsim,
 	h48map_t *map
 ) {
-	uint8_t i, m, t;
-	int64_t coord, cc;
-	uint64_t j, oldn, sim;
+	uint8_t i, m;
+	int64_t coord;
+	uint64_t j, oldn;
 	kvpair_t kv;
-	cube_t cube, d, e;
+	cube_t cube, d;
 
 	cube = solvedcube();
 	coord = coord_h48(cube, cocsepdata, 11);
@@ -418,17 +436,10 @@ gen_h48short(
 			cube = invcoord_h48(kv.key, crep, 11);
 			for (m = 0; m < 18; m++) {
 				d = move(cube, m);
-				coord = coord_h48(d, cocsepdata, 11);
-				h48map_insertmin(map, coord, i+1);
-				cc = coord / H48_ESIZE(11);
-				sim = selfsim[cc] >> UINT64_C(1);
-				for (t = 1; t < 48 && sim; t++) {
-				/* TODO: optimize by using transform_edges,
-				   corner coordinate is kept */
-					e = transform(d, t);
-					coord = coord_h48(e, cocsepdata, 11);
+				_foreach_h48sim(d, cocsepdata, selfsim, 11,
+					coord = coord_h48(d, cocsepdata, 11);
 					h48map_insertmin(map, coord, i+1);
-				}
+				)
 			}
 		}
 		LOG("found %" PRIu8 "\n", map->n-oldn);
@@ -512,9 +523,8 @@ gendata_h48h0k4_bfs_fromdone(bfsarg_esep_t *arg)
 {
 	uint8_t c, m, x;
 	uint32_t cc;
-	int64_t i, j, k, t, cocsep_coord;
-	uint64_t sim;
-	cube_t cube, moved, transd;
+	int64_t i, j, k;
+	cube_t cube, moved;
 
 	for (i = 0, cc = 0; i < (int64_t)ESEP_MAX(0); i++) {
 		c = get_esep_pval(arg->buf32, i);
@@ -522,30 +532,16 @@ gendata_h48h0k4_bfs_fromdone(bfsarg_esep_t *arg)
 			continue;
 		cube = invcoord_h48(i, arg->crep, 0);
 		for (m = 0; m < 18; m++) {
-			/*
-			 * TODO: here we can optimize by computing at first
-			 * only the corner part of the coordinate, and then
-			 * the edge parts for each transformation.
-			 */
 			moved = move(cube, m);
 			j = coord_h48(moved, arg->cocsepdata, 0);
-			x = get_esep_pval(arg->buf32, j);
-			if (x <= arg->depth)
+			if (get_esep_pval(arg->buf32, j) <= arg->depth)
 				continue;
-			set_esep_pval(arg->buf32, j, arg->depth);
-			cc += x != arg->depth;
-			cocsep_coord = j / H48_ESIZE(0);
-			sim = arg->selfsim[cocsep_coord] >> UINT64_C(1);
-			for (t = 1; t < 48 && sim; t++) {
-				/* TODO: use only selfsim */
-				transd = transform(moved, t);
-				k = coord_h48(transd, arg->cocsepdata, 0);
+			_foreach_h48sim(moved, arg->cocsepdata, arg->selfsim, 0,
+				k = coord_h48(moved, arg->cocsepdata, 0);
 				x = get_esep_pval(arg->buf32, k);
-				if (x <= arg->depth)
-					continue;
 				set_esep_pval(arg->buf32, k, arg->depth);
 				cc += x != arg->depth;
-			}
+			)
 		}
 	}
 
@@ -557,8 +553,8 @@ gendata_h48h0k4_bfs_fromnew(bfsarg_esep_t *arg)
 {
 	uint8_t c, m, x;
 	uint32_t cc;
-	int64_t i, j, t, cocsep_coord, sim;
-	cube_t cube, moved, transd;
+	int64_t i, j;
+	cube_t cube, moved;
 
 	for (i = 0, cc = 0; i < (int64_t)ESEP_MAX(0); i++) {
 		c = get_esep_pval(arg->buf32, i);
@@ -569,22 +565,33 @@ gendata_h48h0k4_bfs_fromnew(bfsarg_esep_t *arg)
 			moved = move(cube, m);
 			j = coord_h48(moved, arg->cocsepdata, 0);
 			x = get_esep_pval(arg->buf32, j);
-			if (x < arg->depth)
-				goto neighbor_found;
-		}
-		continue;
-neighbor_found:
-		set_esep_pval(arg->buf32, i, arg->depth);
-		cc++;
-		cocsep_coord = i / H48_ESIZE(0);
-		sim = arg->selfsim[cocsep_coord] >> 1;
-		for (t = 1; t < 48 && sim; t++) {
-			/* TODO: use only selfsim */
-			transd = transform(cube, t);
-			j = coord_h48(transd, arg->cocsepdata, 0);
-			x = get_esep_pval(arg->buf32, j);
-			set_esep_pval(arg->buf32, j, arg->depth);
-			cc += x == 0xF;
+			if (x >= arg->depth)
+				continue;
+#if 0
+			cube_t transd;
+			int64_t t, cocsep_coord, sim;
+
+			set_esep_pval(arg->buf32, i, arg->depth);
+			cc++;
+			cocsep_coord = i / H48_ESIZE(0);
+			sim = arg->selfsim[cocsep_coord] >> 1;
+			for (t = 1; t < 48 && sim; t++) {
+				transd = transform(cube, t);
+				j = coord_h48(transd, arg->cocsepdata, 0);
+				x = get_esep_pval(arg->buf32, j);
+				set_esep_pval(arg->buf32, j, arg->depth);
+				cc += x == 0xF;
+			}
+#else
+			_foreach_h48sim(cube, arg->cocsepdata, arg->selfsim, 0,
+				j = coord_h48(cube, arg->cocsepdata, 0);
+				x = get_esep_pval(arg->buf32, j);
+				set_esep_pval(arg->buf32, j, arg->depth);
+				cc += x == 0xF;
+			)
+#endif
+
+			break;
 		}
 	}
 

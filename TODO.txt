@@ -1,4 +1,7 @@
-Bug in esep table generation
+H48 table generation
+  - fix gendata tool
+    - use to test generation of full h0k4 table
+    - remove ifdef and old code
   - compute all tables for h<11
     x compute visited up to a fixed depth 8
     - compute additional step (if needed) to fill <=base
@@ -10,9 +13,7 @@ Bug in esep table generation
   - Add long-running test for h0k4 (maybe as a tool?)
     - tests for other sizes?
   - optimize
-    - use cached values for invcoord_esep? check if it is faster
-    - Unify and improve performance of finding nasty sim
-      (right now we don't even use selfsim)
+    - use only transform_edges (need compose trans)
     - parallelize with pthread
 
 (OLD:
