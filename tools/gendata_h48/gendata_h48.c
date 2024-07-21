@@ -9,10 +9,26 @@
 #define COCSEPSIZE 1119792
 #define ETABLESIZE(h) (((3393 * 495 * 70) >> 1) << (size_t)(h))
 
+uint32_t expected[21] = {
+	[0] = 1,
+	[1] = 1,
+	[2] = 4,
+	[3] = 34,
+	[4] = 331,
+	[5] = 3612,
+	[6] = 41605,
+	[7] = 474128,
+	[8] = 4953846,
+	[9] = 34776317,
+	[10] = 68566704,
+	[11] = 8749194,
+	[12] = 1673,
+};
+
 char *buf;
 
 void run(void) {
-	uint32_t *h48info;
+	uint32_t *h48info, x;
 	int i;
 	int64_t s;
 
@@ -23,8 +39,14 @@ void run(void) {
 	} else {
 		printf("Succesfully generated %" PRId64 " bytes. Table:\n", s);
 		h48info = (uint32_t *)buf + (ETABLESIZE(HVALUE) + COCSEPSIZE) / 4;
-		for (i = 0; i < MAXDEPTH+1 && h48info[i+1]; i++)
-			printf("%d:\t%" PRIu32 "\n", i, h48info[i+1]);
+		for (i = 0; i < MAXDEPTH+1 && h48info[i+1]; i++) {
+			x = h48info[i+1];
+			printf("%d:\t%" PRIu32, i, x);
+			if (x != expected[i])
+				printf(" <--- Error! Expected: %" PRIu32 "\n",
+				    expected[i]);
+			printf("\n");
+		}
 	}
 }
 
