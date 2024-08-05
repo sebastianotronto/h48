@@ -13,10 +13,36 @@
 #define SOLUTIONS_BUFFER_SIZE 500000 /* Should be enough */
 #define MAX_PATH_LENGTH 10000 /* Should be enough */
 
+#define _flag_cube         "-cube"
+#define _flag_perm         "-perm"
+#define _flag_command      "-command"
+#define _flag_str_cube     "-cubestr"
+#define _flag_format       "-format"
+#define _flag_format_in    "-fin"
+#define _flag_format_out   "-fout"
+#define _flag_moves        "-moves"
+#define _flag_trans        "-trans"
+#define _flag_solver       "-solver"
+#define _flag_options      "-options"
+#define _flag_nisstype     "-nisstype"
+#define _flag_minmoves     "-m"
+#define _flag_maxmoves     "-M"
+#define _flag_optimal      "-O"
+#define _flag_maxsolutions "-n"
+
+#define _info_cubeformat(cube) cube " must be given in B32 format."
+#define _info_movesformat "The accepted moves are U, D, R, L, F and B, " \
+    "optionally followed by a 2, a ' or a 3."
+#define _info_transformat "The transformation must be given in the format " \
+    "(rotation|mirrored) (2 letters), for exmple " \
+    "'rotation UF' or 'mirrored BL'."
+#define _info_formats "The available formats are H48, B32 and SRC."
+
 typedef struct {
 	int command_index;
 	char cube[22];
 	char cube_perm[22];
+	char *str_command;
 	char *str_cube;
 	char *str_format;
 	char *str_format_in;
@@ -45,6 +71,7 @@ static int64_t randomcube_exec(args_t *);
 static int64_t datasize_exec(args_t *);
 static int64_t gendata_exec(args_t *);
 static int64_t solve_exec(args_t *);
+static int64_t help_exec(args_t *);
 
 static int parse_args(int, char **, args_t *);
 static bool parse_int8(char *, int8_t *);
@@ -52,6 +79,7 @@ static bool parse_int64(char *, int64_t *);
 
 static bool set_cube(int, char **, args_t *);
 static bool set_cube_perm(int, char **, args_t *);
+static bool set_str_command(int, char **, args_t *);
 static bool set_str_cube(int, char **, args_t *);
 static bool set_str_format(int, char **, args_t *);
 static bool set_str_format_in(int, char **, args_t *);
@@ -68,24 +96,6 @@ static bool set_maxsolutions(int, char **, args_t *);
 static bool set_id(int, char **, args_t *);
 
 static uint64_t rand64(void);
- 
-#define COMMAND(N, E) { .name = N, .exec = E }
-struct {
-	char *name;
-	int64_t (*exec)(args_t *);
-} commands[] = {
-	COMMAND("compose", compose_exec),
-	COMMAND("inverse", inverse_exec),
-	COMMAND("applymoves", applymoves_exec),
-	COMMAND("applytrans", applytrans_exec),
-	COMMAND("frommoves", frommoves_exec),
-	COMMAND("convert", convert_exec),
-	COMMAND("randomcube", randomcube_exec),
-	COMMAND("datasize", datasize_exec),
-	COMMAND("gendata", gendata_exec),
-	COMMAND("solve", solve_exec),
-	COMMAND(NULL, NULL)
-};
 
 #define OPTION(N, A, S) { .name = N, .nargs = A, .set = S }
 struct {
@@ -93,22 +103,117 @@ struct {
 	int nargs;
 	bool (*set)(int, char **, args_t *);
 } options[] = {
-	OPTION("-cube", 1, set_cube),
-	OPTION("-perm", 1, set_cube_perm),
-	OPTION("-cubestr", 1, set_str_cube),
-	OPTION("-format", 1, set_str_format),
-	OPTION("-fin", 1, set_str_format_in),
-	OPTION("-fout", 1, set_str_format_out),
-	OPTION("-moves", 1, set_str_moves),
-	OPTION("-trans", 1, set_str_trans),
-	OPTION("-solver", 1, set_str_solver),
-	OPTION("-options", 1, set_str_options), /* TODO: remove, use only solver */
-	OPTION("-nisstype", 1, set_str_nisstype), /* TODO: remove, use flags */
-	OPTION("-m", 1, set_minmoves),
-	OPTION("-M", 1, set_maxmoves),
-	OPTION("-O", 1, set_optimal),
-	OPTION("-n", 1, set_maxsolutions),
+	OPTION(_flag_cube, 1, set_cube),
+	OPTION(_flag_perm, 1, set_cube_perm),
+	OPTION(_flag_command, 1, set_str_command),
+	OPTION(_flag_str_cube, 1, set_str_cube),
+	OPTION(_flag_format, 1, set_str_format),
+	OPTION(_flag_format_in, 1, set_str_format_in),
+	OPTION(_flag_format_out, 1, set_str_format_out),
+	OPTION(_flag_moves, 1, set_str_moves),
+	OPTION(_flag_trans, 1, set_str_trans),
+	OPTION(_flag_solver, 1, set_str_solver),
+	OPTION(_flag_options, 1, set_str_options), /* TODO: remove, use only solver */
+	OPTION(_flag_nisstype, 1, set_str_nisstype), /* TODO: remove, use flags */
+	OPTION(_flag_minmoves, 1, set_minmoves),
+	OPTION(_flag_maxmoves, 1, set_maxmoves),
+	OPTION(_flag_optimal, 1, set_optimal),
+	OPTION(_flag_maxsolutions, 1, set_maxsolutions),
 	OPTION(NULL, 0, NULL)
+};
+ 
+#define COMMAND(N, S, D, E) { .name = N, .syn = S, .desc = D, .exec = E }
+struct {
+	char *name;
+	char *syn;
+	char *desc;
+	int64_t (*exec)(args_t *);
+} commands[] = {
+/* TODO: add synopsis and description here */
+	COMMAND(
+		"compose",
+		"compose " _flag_cube " CUBE " _flag_perm " PERM",
+		"Apply on CUBE the permutation defined by PERM. "
+		_info_cubeformat("CUBE and PERM"),
+		compose_exec
+	),
+	COMMAND(
+		"inverse",
+		"inverse " _flag_cube " CUBE ",
+		"Compute the inverse of the given CUBE. "
+		_info_cubeformat("CUBE"),
+		inverse_exec
+	),
+	COMMAND(
+		"applymoves",
+		"applymoves " _flag_cube " CUBE " _flag_moves " MOVES",
+		"Apply the given MOVES to the given CUBE. "
+		_info_cubeformat("CUBE") " " _info_movesformat,
+		applymoves_exec
+	),
+	COMMAND(
+		"applytrans",
+		"applytrans " _flag_cube " CUBE " _flag_trans " TRANS",
+		"Apply the single transformation TRANS to the given CUBE. "
+		_info_cubeformat("CUBE") " " _info_transformat,
+		applytrans_exec
+	),
+	COMMAND(
+		"frommoves",
+		"frommoves " _flag_moves " MOVES",
+		"Return the cube obtained by applying the given MOVES "
+		"to a solved cube. " _info_movesformat,
+		frommoves_exec
+	),
+	COMMAND(
+		"convert",
+		"convert " _flag_str_cube " CUBESTR "
+		_flag_format_in " FORMAT_IN " _flag_format_out " FORMAT_OUT",
+		"Convert the cube described by CUBESTR from FORMAT_IN to "
+		"FORMAT_OUT."
+		_info_formats " "
+		"CUBESTR must be a valid cube in the FORMAT_IN format.",
+		convert_exec
+	),
+	COMMAND(
+		"randomcube",
+		"randomcube",
+		"Returns a random cube in B32 format.",
+		randomcube_exec
+	),
+	COMMAND(
+		"datasize",
+		"datasize" _flag_solver " SOLVER " _flag_options " OPTIONS",
+		"Return the size in bytes of the data table used by "
+		"SOLVER when called with the given OPTIONS.",
+		datasize_exec
+	),
+	COMMAND(
+		"gendata",
+		"gendata" _flag_solver " SOLVER " _flag_options " OPTIONS",
+		"Generate the data table used by "
+		"SOLVER when called with the given OPTIONS.",
+		gendata_exec
+	),
+	COMMAND(
+		"solve",
+		"solve" _flag_solver " SOLVER " _flag_options " OPTIONS "
+		"[" _flag_minmoves " n] [" _flag_maxmoves " N] "
+		_flag_cube " CUBE",
+		"Solve the given CUBE using SOLVER with the given OPTIONS, "
+		"using at least n and at most N moves. "
+		_info_cubeformat("CUBE"),
+		solve_exec
+	),
+	COMMAND(
+		"help",
+		"help [" _flag_command " COMMAND]",
+		"If no COMMAND is specified, prints some generic information "
+		"and the list of commands. Otherwise it prints detailed "
+		"information about the specified COMMAND.",
+		help_exec
+	),
+	COMMAND(NULL, NULL, NULL, NULL)
 };
 
 char *tablepaths[] = {
@@ -397,6 +502,33 @@ solve_exec(args_t *args)
 	return 0;
 }
 
+static int64_t
+help_exec(args_t *args)
+{
+	int i;
+
+	if (args->str_command == NULL || args->str_command[0] == '\0') {
+		printf("This is a rudimentary shell for the H48 library.\n");
+		printf("Available commands and usage:\n\n");
+		for (i = 0; commands[i].name != NULL; i++)
+			printf("%-15s%s\n", commands[i].name, commands[i].syn);
+		printf("\nUse 'help COMMAND' for more information.\n");
+	} else {
+		for (i = 0; commands[i].name != NULL; i++)
+			if (!strcmp(args->str_command, commands[i].name))
+				break;
+		if (commands[i].name == NULL) {
+			printf("Unknown command %s\n", args->str_command);
+			return 1;
+		}
+		printf("Command %s\n\n", commands[i].name);
+		printf("Synopsis: %s\n\n", commands[i].syn);
+		printf("Description: %s\n", commands[i].desc);
+	}
+
+	return 0;
+}
+
 static int
 parse_args(int argc, char **argv, args_t *args)
 {
@@ -507,6 +639,14 @@ set_cube_perm(int argc, char **argv, args_t *args)
 }
 
 static bool
+set_str_command(int argc, char **argv, args_t *args)
+{
+	args->str_command = argv[0];
+
+	return true;
+}
+
+static bool
 set_str_cube(int argc, char **argv, args_t *args)
 {
 	args->str_cube = argv[0];
@@ -602,7 +742,8 @@ set_maxsolutions(int argc, char **argv, args_t *args)
 	return parse_int64(argv[0], &args->maxsolutions);
 }
 
-void log_stderr(const char *str, ...)
+void
+log_stderr(const char *str, ...)
 {
 	va_list args;
 
@@ -611,7 +752,8 @@ void log_stderr(const char *str, ...)
 	va_end(args);
 }
 
-int main(int argc, char **argv)
+int
+main(int argc, char **argv)
 {
 	int parse_error;
 	args_t args;

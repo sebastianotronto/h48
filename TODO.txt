@@ -1,7 +1,19 @@
-H48 table generation
-  - fix gendata tool
-    - use to test generation of full h0k4 table
-    - remove ifdef and old code
+# Documentation and cleanup
+
+- Add comments to cube.h
+  - one for each function?
+- Internal documentation
+  - h48 solver and co
+    - what is h and k
+  - cube representation and base routines?
+- Split files
+  - h48 into:
+    - h48_base (coordinate computation)
+    - h48_map (only the hashmap thing)
+    - h48_gendata (table generation)
+    - h48_solve (including stats solver)
+
+# H48 table generation
   - compute all tables for h<11
     x compute visited up to a fixed depth 8
     - compute additional step (if needed) to fill <=base
@@ -10,17 +22,21 @@ H48 table generation
   - compute table for h=11
     - can it be unified to the other computation, or is it much better
       to do it ad hoc?
+    - derive small tables from the large one to check correctness
+      - this requires too much ram, but I can print the summary of the table
   - Add long-running test for h0k4 (maybe as a tool?)
     - tests for other sizes?
+  - gendata tool: save tables?
   - optimize
     - use only transform_edges (need compose trans)
     - parallelize with pthread
 
-(OLD:
-  - Fails for UFRUFU, try command
+# Solver (Enrico)
+
+- Add a solver for h=0
+- check if this (or equivalent) works:
     ./run solve -solver H48 -options "2;20" -n 1 -M 10 -cube \
          "$(./run frommoves -moves "UFRUFU")"
-)
 
 table base for k=2 (4 most common values start at)
   0	8
