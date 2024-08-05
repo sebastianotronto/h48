@@ -227,3 +227,6 @@ The cube after the move F looks like this:
 ```
 MBODSFQH=ZBCYEFGHQTKL
 ```
+
+A cube in B32 format is always 21 characters long (22 if the terminating
+null character is included).

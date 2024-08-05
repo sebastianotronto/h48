@@ -1,7 +1,5 @@
 # Documentation and cleanup
 
-- Add comments to cube.h
-  - one for each function?
 - Internal documentation
   - h48 solver and co
     - what is h and k
