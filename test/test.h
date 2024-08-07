@@ -7,9 +7,16 @@
 
 #define STRLENMAX 10000
 
-#ifdef CUBE_AVX2
+#if defined(CUBE_AVX2)
 #include <immintrin.h>
 typedef __m256i cube_t;
+#elif defined(CUBE_NEON)
+#include <stdlib.h>
+#include <arm_neon.h>
+typedef struct {
+	uint8x16_t corner;
+	uint8x16_t edge;
+} cube_t;
 #else
 typedef struct {
 	uint8_t corner[8];
