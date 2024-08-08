@@ -12,7 +12,7 @@ for t in test/*; do
 		continue
 	fi
 	
-	# Verifica se $t è una directory e se il suo nome inizia con tre cifre
+	# Verify if $t is a directory and if its name starts with three digits
 	if [ -d "$t" ] && echo "$(basename "$t")" | grep -Eq '^[0-9]{3}'; then
 		$CC -o $TESTBIN $t/*.c $CUBEOBJ || exit 1
 		for cin in $t/*.in; do
