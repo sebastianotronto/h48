@@ -5,6 +5,12 @@ typedef struct
 	uint8x16_t edge;
 } cube_t;
 
+#define _co2_neon vdupq_n_u8(0x60)
+#define _cocw_neon vdupq_n_u8(0x20)
+#define _cp_neon vdupq_n_u8(0x07)
+#define _ep_neon vcombine_u8(vdupq_n_u8(0x0F), vdupq_n_u8(0x0F))
+#define _eo_neon vcombine_u8(vdupq_n_u8(0x10), vdupq_n_u8(0x10))
+
 // static cube
 #define static_cube(c_ufr, c_ubl, c_dfl, c_dbr, c_ufl, c_ubr, c_dfr, c_dbl, \
 					e_uf, e_ub, e_db, e_df, e_ur, e_ul, e_dl, e_dr, e_fr, e_fl, e_bl, e_br) \
@@ -82,39 +88,21 @@ equal(cube_t c1, cube_t c2)
 	return vgetq_lane_u64(cmp_result, 0) == ~0ULL && vgetq_lane_u64(cmp_result, 1) == ~0ULL;
 }
 
-_static_inline cube_t 
+_static_inline cube_t
 invertco(cube_t c)
 {
 	cube_t ret;
+	uint8x16_t co, shleft, shright, summed, newco, cleanco;
 
-	// Copy the corner vector to an array
-	uint8_t corners[16];
-	vst1q_u8(corners, c.corner);
-
-	uint8_t corner_result[16] = {0};
-
-	// Process the corners
-	for (uint8_t i = 0; i < 8; i++)
-	{
-		uint8_t piece = corners[i];
-		uint8_t orien = ((piece << 1) | (piece >> 1)) & _cobits2;
-		corner_result[i] = (piece & _pbits) | orien;
-	}
-
-	// Copy the results back to the NEON corner vector
-	ret.corner = vld1q_u8(corner_result);
-
-	// Mask to clear the last 64 bits of the corner field
-	uint8x16_t mask_last_64 = vsetq_lane_u64(0, vreinterpretq_u64_u8(ret.corner), 1);
-	ret.corner = vreinterpretq_u8_u64(mask_last_64);
-
-	// Copy the edge vector as it is
+	co = vandq_u8(c.corner, _co2_neon);
+	shleft = vshlq_n_u8(co, 1);
+	shright = vshrq_n_u8(co, 1);
+	summed = vorrq_u8(shleft, shright);
+	newco = vandq_u8(summed, _co2_neon);
+	cleanco = veorq_u8(c.corner, co);
+	ret.corner = vorrq_u8(cleanco, newco);
 	ret.edge = c.edge;
-
-	// Mask to clear the last 32 bits of the edge field
-	uint8x16_t mask_last_32 = vsetq_lane_u32(0, vreinterpretq_u32_u8(ret.edge), 3);
-	ret.edge = vreinterpretq_u8_u32(mask_last_32);
-
+	
 	return ret;
 }
 
