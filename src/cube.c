@@ -27,6 +27,8 @@ void (*nissy_log)(const char *, ...);
 #include <immintrin.h>
 #include "cube_avx2.h"
 #elif defined(CUBE_NEON)
+#include <stdlib.h>
+#include <arm_neon.h>
 #include "cube_neon.h"
 #else
 #include <stdlib.h> /* TODO: check if can be removed */
