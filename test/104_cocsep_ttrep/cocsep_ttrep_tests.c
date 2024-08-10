@@ -29,7 +29,7 @@ void run(void) {
 			l = coord_cocsep(c);
 			if (k != l)
 				printf("cocsep %" PRId64 " (%" PRId64 "): "
-				    "%" PRId64 " ttrep %" PRIu8
+				    "%" PRId64 " ttrep %" PRIu32
 				    " ->  %" PRId64 "\n", i, l, j, tt, k);
 		}
 	}
