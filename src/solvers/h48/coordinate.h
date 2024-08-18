@@ -1,0 +1,68 @@
+#define H48_ESIZE(h) ((_12c4 * _8c4) << (int64_t)(h))
+
+#define COCLASS_MASK (UINT32_C(0xFFFF) << UINT32_C(16))
+#define COCLASS(x)   (((x) & COCLASS_MASK) >> UINT32_C(16))
+#define TTREP_MASK   (UINT32_C(0xFF) << UINT32_C(8))
+#define TTREP(x)     (((x) & TTREP_MASK) >> UINT32_C(8))
+
+_static_inline int64_t coord_h48(cube_t, const uint32_t *, uint8_t);
+_static_inline int64_t coord_h48_edges(cube_t, int64_t, uint8_t, uint8_t);
+_static_inline cube_t invcoord_h48(int64_t, const cube_t *, uint8_t);
+
+_static_inline int64_t
+coord_h48(cube_t c, const uint32_t *cocsepdata, uint8_t h)
+{
+	int64_t cocsep, coclass;
+	uint32_t data;
+	uint8_t ttrep;
+
+	DBG_ASSERT(h <= 11, -1, "coord_h48: h must be between 0 and 11\n");
+
+	cocsep = coord_cocsep(c);
+	data = cocsepdata[cocsep];
+	coclass = (int64_t)COCLASS(data);
+	ttrep = (int64_t)TTREP(data);
+
+	return coord_h48_edges(c, coclass, ttrep, h);
+}
+
+_static_inline int64_t
+coord_h48_edges(cube_t c, int64_t coclass, uint8_t ttrep, uint8_t h)
+{
+	cube_t d;
+	int64_t esep, eo, edges;
+
+	d = transform_edges(c, ttrep);
+	esep = coord_esep(d);
+	eo = coord_eo(d);
+	edges = (esep << 11) + eo;
+
+	return (coclass * H48_ESIZE(11) + edges) >> (11 - (int64_t)h);
+}
+
+/*
+This function does not necessarily return a cube whose coordinate is
+the given value, because it works up to symmetry. This means that the
+returned cube is a transformed cube of one that gives the correct value.
+*/
+_static_inline cube_t
+invcoord_h48(int64_t i, const cube_t *crep, uint8_t h)
+{
+	cube_t ret;
+	int64_t hh, coclass, ee, esep, eo;
+
+	DBG_ASSERT(h <= 11, zero,
+	    "invcoord_h48: h must be between 0 and 11\n");
+
+	hh = (int64_t)h;
+	coclass = i / H48_ESIZE(h);
+	ee = i % H48_ESIZE(h);
+	esep = ee >> hh;
+	eo = (ee & ((1 << hh) - 1)) << (11 - hh);
+
+	ret = invcoord_esep(esep);
+	copy_corners(&ret, crep[coclass]);
+	set_eo(&ret, eo);
+
+	return ret;
+}

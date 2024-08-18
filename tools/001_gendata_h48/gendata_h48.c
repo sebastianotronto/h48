@@ -1,5 +1,5 @@
 #include "../timerun.h"
-#include "../../src/cube.h"
+#include "../../src/nissy.h"
 
 #define MAXDEPTH 20
 #define HVALUE 0

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-cc -DDEBUG h48_to_lst.c ../src/cube.c -o h48_to_lst
+cc -DDEBUG h48_to_lst.c ../src/nissy.c -o h48_to_lst
 
 gen() {
 	for f in cubes/move_??_*.txt; do

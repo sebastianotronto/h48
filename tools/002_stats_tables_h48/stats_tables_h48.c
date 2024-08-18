@@ -1,7 +1,7 @@
 #include <pthread.h>
 #include <time.h>
 #include "../timerun.h"
-#include "../../src/cube.h"
+#include "../../src/nissy.h"
 
 #define MAXMOVES 20
 #define NTHREADS 32

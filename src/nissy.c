@@ -1,4 +1,14 @@
-#include "cube.h"
+#include <inttypes.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <string.h>
+
+#include "utils/utils.h"
+#include "arch/arch.h"
+#include "core/core.h"
+#include "solvers/solvers.h"
+
+#include "nissy.h"
 
 _static int64_t write_result(cube_t, char [static 22]);
 

@@ -7,7 +7,7 @@
 #include <string.h>
 #include <time.h>
 
-#include "src/cube.h"
+#include "src/nissy.h"
 
 #define PRINTCUBE_BUFFER_SIZE 1024 /* Should be enough */
 #define SOLUTIONS_BUFFER_SIZE 500000 /* Should be enough */

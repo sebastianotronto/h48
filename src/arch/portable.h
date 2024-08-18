@@ -1,8 +1,3 @@
-typedef struct {
-	uint8_t corner[8];
-	uint8_t edge[12];
-} cube_t;
-
 #define static_cube(c_ufr, c_ubl, c_dfl, c_dbr, c_ufl, c_ubr, c_dfr, c_dbl, \
     e_uf, e_ub, e_db, e_df, e_ur, e_ul, e_dl, e_dr, e_fr, e_fl, e_bl, e_br) \
     ((cube_t) { \
@@ -13,27 +8,6 @@ typedef struct {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
 #define solved static_cube( \
     0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
-
-_static void pieces(cube_t *, uint8_t [static 8], uint8_t [static 12]);
-_static_inline bool equal(cube_t, cube_t);
-_static_inline cube_t invertco(cube_t);
-_static_inline void compose_edges_inplace(cube_t, cube_t, cube_t *);
-_static_inline void compose_corners_inplace(cube_t, cube_t, cube_t *);
-_static_inline cube_t compose_edges(cube_t, cube_t);
-_static_inline cube_t compose_corners(cube_t, cube_t);
-_static_inline cube_t compose(cube_t, cube_t);
-_static_inline cube_t inverse(cube_t);
-
-_static_inline int64_t coord_co(cube_t);
-_static_inline int64_t coord_csep(cube_t);
-_static_inline int64_t coord_cocsep(cube_t);
-_static_inline int64_t coord_eo(cube_t);
-_static_inline int64_t coord_esep(cube_t);
-
-_static_inline void copy_corners(cube_t *, cube_t);
-_static_inline void copy_edges(cube_t *, cube_t);
-_static_inline void set_eo(cube_t *, int64_t);
-_static_inline cube_t invcoord_esep(int64_t);
 
 _static void
 pieces(cube_t *cube, uint8_t c[static 8], uint8_t e[static 12])

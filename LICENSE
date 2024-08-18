@@ -2,7 +2,9 @@ The following license applies to every C source code and header file
 distributed with this LICENSE file.
 
     h48 - a prototype for an optimal rubik's cube solver
-    Copyright (C) 2023 Sebastiano Tronto <sebastiano@tronto.net>
+    Copyright (C) 2023-2024
+    Sebastiano Tronto <sebastiano@tronto.net>
+    Enrico Tenuti <>
 
     This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

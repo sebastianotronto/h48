@@ -2,7 +2,7 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
-#include "../src/cube.h"
+#include "../src/nissy.h"
 
 #define STRLENMAX 1000
 

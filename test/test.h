@@ -1,3 +1,5 @@
+#define TEST_H
+
 #include <inttypes.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -5,24 +7,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define STRLENMAX 10000
+#include "../src/arch/arch.h"
 
-#if defined(CUBE_AVX2)
-#include <immintrin.h>
-typedef __m256i cube_t;
-#elif defined(CUBE_NEON)
-#include <stdlib.h>
-#include <arm_neon.h>
-typedef struct {
-	uint8x16_t corner;
-	uint8x16_t edge;
-} cube_t;
-#else
-typedef struct {
-	uint8_t corner[8];
-	uint8_t edge[12];
-} cube_t;
-#endif
+#define STRLENMAX 10000
 
 /* Basic functions used in most tests */
 cube_t solvedcube(void);

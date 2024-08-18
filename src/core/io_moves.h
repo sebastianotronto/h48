@@ -1,8 +1,6 @@
 _static uint8_t readmove(char);
 _static uint8_t readmodifier(char);
-_static uint8_t readtrans(const char *);
 _static int writemoves(uint8_t *, int, char *);
-_static void writetrans(uint8_t, char *);
 
 _static uint8_t
 readmove(char c)
@@ -40,19 +38,6 @@ readmodifier(char c)
 	}
 }
 
-_static uint8_t
-readtrans(const char *buf)
-{
-	uint8_t t;
-
-	for (t = 0; t < 48; t++)
-		if (!strncmp(buf, transstr[t], 11))
-			return t;
-
-	LOG("readtrans error\n");
-	return _error;
-}
-
 _static int
 writemoves(uint8_t *m, int n, char *buf)
 {
@@ -74,14 +59,4 @@ writemoves(uint8_t *m, int n, char *buf)
 	*b = '\0';
 
 	return b - buf;
-}
-
-_static void
-writetrans(uint8_t t, char *buf)
-{
-	if (t >= 48)
-		memcpy(buf, "error trans", 11);
-	else
-		memcpy(buf, transstr[t], 11);
-	buf[11] = '\0';
 }

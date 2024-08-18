@@ -1,5 +1,3 @@
-typedef __m256i cube_t;
-
 #define _co2_avx2 _mm256_set_epi64x(0, 0, 0, INT64_C(0x6060606060606060))
 #define _cocw_avx2 _mm256_set_epi64x(0, 0, 0, INT64_C(0x2020202020202020))
 #define _cp_avx2 _mm256_set_epi64x(0, 0, 0, INT64_C(0x0707070707070707))
@@ -17,26 +15,6 @@ typedef __m256i cube_t;
 #define zero _mm256_set_epi64x(0, 0, 0, 0)
 #define solved static_cube( \
     0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
-
-_static void pieces(cube_t *, uint8_t [static 8], uint8_t [static 12]);
-_static_inline bool equal(cube_t, cube_t);
-_static_inline cube_t invertco(cube_t);
-_static_inline cube_t compose_epcpeo(cube_t, cube_t);
-_static_inline cube_t compose_edges(cube_t, cube_t);
-_static_inline cube_t compose_corners(cube_t, cube_t);
-_static_inline cube_t compose(cube_t, cube_t);
-_static_inline cube_t inverse(cube_t);
-
-_static_inline int64_t coord_co(cube_t);
-_static_inline int64_t coord_csep(cube_t);
-_static_inline int64_t coord_cocsep(cube_t);
-_static_inline int64_t coord_eo(cube_t);
-_static_inline int64_t coord_esep(cube_t);
-
-_static_inline void copy_corners(cube_t *, cube_t);
-_static_inline void copy_edges(cube_t *, cube_t);
-_static_inline void set_eo(cube_t *, int64_t);
-_static_inline cube_t invcoord_esep(int64_t);
 
 _static void
 pieces(cube_t *cube, uint8_t c[static 8], uint8_t e[static 12])
