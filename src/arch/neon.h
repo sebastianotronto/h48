@@ -4,6 +4,9 @@
 #define _ep_neon vcombine_u8(vdupq_n_u8(0x0F), vdupq_n_u8(0x0F))
 #define _eo_neon vcombine_u8(vdupq_n_u8(0x10), vdupq_n_u8(0x10))
 
+_static_inline uint8x16_t compose_edges_slim(uint8x16_t, uint8x16_t);
+_static_inline uint8x16_t compose_corners_slim(uint8x16_t, uint8x16_t);
+
 // static cube
 #define static_cube(c_ufr, c_ubl, c_dfl, c_dbr, c_ufl, c_ubr, c_dfr, c_dbl, \
 					e_uf, e_ub, e_db, e_df, e_ur, e_ul, e_dl, e_dr, e_fr, e_fl, e_bl, e_br) \
