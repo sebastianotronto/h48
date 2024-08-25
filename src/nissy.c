@@ -164,22 +164,23 @@ nissy_gendata(
 )
 {
 	int64_t ret;
-	uint8_t maxdepth, h, i, j;
+	uint8_t i;
+	gendata_h48_arg_t arg;
 
+	arg.buf = data;
 	if (!strcmp(solver, "h48")) {
-		/*  options are in the form "h;maxdepth" */
+		/*  options are in the form "h;k;maxdepth" */
+		arg.h = atoi(options);
 		for (i = 0; options[i] != ';'; i++) ;
-		for (j = i; options[j]; j++) ;
-		h = atoi(options);
-		if (h != 0) {
-			LOG("Temporarily only h=0 is supported\n");
-			ret = -1;
-		} else {
-			maxdepth = atoi(&options[i+1]);
-			ret = gendata_h48h0k4(data, maxdepth);
-		}
+		arg.k = atoi(&options[i+1]);
+		for (i = i+1; options[i] != ';'; i++) ;
+		arg.maxdepth = atoi(&options[i+1]);
+		ret = gendata_h48(&arg);
 	} else if (!strcmp(solver, "h48stats")) {
-		ret = gendata_h48h0k4(data, 20);
+		arg.h = 0;
+		arg.k = 4;
+		arg.maxdepth = 20;
+		ret = gendata_h48(&arg);
 	} else {
 		LOG("gendata: implemented only for h48 solver\n");
 		ret = -1;

@@ -1,4 +1,5 @@
 #include "coordinate.h"
 #include "map.h"
-#include "gendata.h"
+#include "gendata_cocsep.h"
+#include "gendata_full.h"
 #include "solve.h"

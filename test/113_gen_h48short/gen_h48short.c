@@ -15,12 +15,19 @@ typedef struct {
 	uint64_t val;
 } kvpair_t;
 
+typedef struct {
+	uint8_t maxdepth;
+	const uint32_t *cocsepdata;
+	const cube_t *crep;
+	const uint64_t *selfsim;
+	h48map_t *map;
+} gendata_h48short_arg_t;
+
 void h48map_create(h48map_t *, uint64_t, uint64_t);
 void h48map_destroy(h48map_t *);
 kvpair_t h48map_nextkvpair(h48map_t *, uint64_t *);
 size_t gendata_cocsep(void *, uint64_t *, cube_t *);
-uint64_t gen_h48short(
-    uint8_t, const uint32_t *, const cube_t *, const uint64_t *, h48map_t *);
+uint64_t gen_h48short(gendata_h48short_arg_t *);
 
 char str[STRLENMAX];
 
@@ -41,17 +48,22 @@ uint64_t readl(void) {
 void run(void) {
 	uint32_t cocsepdata[300000];
 	h48map_t map;
-	uint64_t n, i, j, capacity, randomizer, selfsim[COCSEP_CLASSES];
+	uint64_t i, j, capacity, randomizer, selfsim[COCSEP_CLASSES];
 	kvpair_t kv, b[MAXPOS];
+	gendata_h48short_arg_t arg;
 	cube_t crep[COCSEP_CLASSES];
 
 	capacity = readl();
 	randomizer = readl();
-	n = readl();
+	arg.maxdepth = readl();
+	arg.cocsepdata = cocsepdata;
+	arg.crep = crep;
+	arg.selfsim = selfsim;
+	arg.map = &map;
 
 	h48map_create(&map, capacity, randomizer);
 	gendata_cocsep(cocsepdata, selfsim, crep);
-	gen_h48short(n, cocsepdata, crep, selfsim, &map);
+	gen_h48short(&arg);
 
 	i = 0;
 	for (kv = h48map_nextkvpair(&map, &i), j = 0;
