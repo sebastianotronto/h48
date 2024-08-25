@@ -10,6 +10,7 @@
 
 #include "nissy.h"
 
+_static int parse_h48_options(const char *, uint8_t *, uint8_t *, uint8_t *);
 _static int64_t write_result(cube_t, char [static 22]);
 
 /* TODO: add option to get DR, maybe C-only, E-only, eo... */
@@ -21,6 +22,36 @@ struct {
 	GETCUBE_OPTIONS("fix", getcube_fix),
 	GETCUBE_OPTIONS(NULL, NULL)
 };
+
+_static int
+parse_h48_options(const char *buf, uint8_t *h, uint8_t *k, uint8_t *maxdepth)
+{
+	int i;
+
+	/* TODO temporarily, options are in the form "h;k;maxdepth" */
+	if (h != NULL)
+		*h = atoi(buf);
+	for (i = 0; buf[i] != ';'; i++)
+		if (buf[i] == 0)
+			goto parse_h48_options_error;
+	if (k != NULL)
+		*k = atoi(&buf[i+1]);
+	for (i = i+1; buf[i] != ';'; i++)
+		if (buf[i] == 0)
+			goto parse_h48_options_error;
+	if (maxdepth != NULL)
+		*maxdepth = atoi(&buf[i+1]);
+
+	return (*h <= 11 && (*k == 2 || *k == 4) && *maxdepth <= 20) ? 0 : 1;
+
+parse_h48_options_error:
+	*h = 0;
+	*k = 0;
+	*maxdepth = 0;
+	LOG("Error parsing options: must be in \"h;k;maxdepth\" format "
+	    " (instead it was \"%s\")\n", buf);
+	return -1;
+}
 
 _static int64_t
 write_result(cube_t cube, char result[static 22])
@@ -163,19 +194,19 @@ nissy_gendata(
 	void *data
 )
 {
+	int p;
 	int64_t ret;
-	uint8_t i;
 	gendata_h48_arg_t arg;
 
 	arg.buf = data;
 	if (!strcmp(solver, "h48")) {
-		/*  options are in the form "h;k;maxdepth" */
-		arg.h = atoi(options);
-		for (i = 0; options[i] != ';'; i++) ;
-		arg.k = atoi(&options[i+1]);
-		for (i = i+1; options[i] != ';'; i++) ;
-		arg.maxdepth = atoi(&options[i+1]);
-		ret = gendata_h48(&arg);
+		p = parse_h48_options(options, &arg.h, &arg.k, &arg.maxdepth);
+		if (p != 0) {
+			LOG("gendata: ould not parse options\n");
+			ret = -1;
+		} else {
+			ret = gendata_h48(&arg);
+		}
 	} else if (!strcmp(solver, "h48stats")) {
 		arg.h = 0;
 		arg.k = 4;
@@ -204,8 +235,9 @@ nissy_solve(
 )
 {
 	cube_t c;
+	int p;
 	int64_t ret;
-	int h;
+	uint8_t h, k;
 
 	c = readcube_B32(cube);
 
@@ -241,11 +273,14 @@ nissy_solve(
 
 	/* TODO define and use solve_options_t */
 	if (!strcmp(solver, "h48")) {
-		h = atoi(options); /* TODO: better parsing */
-		ret = solve_h48(
-		    c, minmoves, maxmoves, maxsolutions,
-		    (uint8_t)h, data, solutions);
-		ret = -1;
+		p = parse_h48_options(options, &h, &k, NULL);
+		if (p != 0) {
+			LOG("gendata: could not parse options\n");
+			ret = -1;
+		} else {
+			ret = solve_h48(c, minmoves, maxmoves, maxsolutions,
+			    h, k, data, solutions);
+		}
 	} else if (!strcmp(solver, "h48stats")) {
 		ret = solve_h48stats(c, maxmoves, data, solutions);
 	} else if (!strcmp(solver, "simple")) {

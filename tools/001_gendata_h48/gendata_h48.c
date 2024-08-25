@@ -3,8 +3,8 @@
 
 #define MAXDEPTH 20
 #define HVALUE 0
-#define OPTIONS "0;20"
-#define LONGOPTIONS "h = 0, max depth = 20"
+#define OPTIONS "0;4;20"
+#define LONGOPTIONS "h = 0, k = 4, max depth = 20"
 
 #define COCSEPSIZE 1119792
 #define ETABLESIZE(h) (((3393 * 495 * 70) >> 1) << (size_t)(h))

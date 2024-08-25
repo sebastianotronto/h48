@@ -8,6 +8,11 @@ typedef struct {
 	uint64_t capacity;
 	uint64_t randomizer;
 	uint64_t *table;
+	uint32_t *info;
+	uint32_t *cocsepdata;
+	uint32_t *h48data;
+	uint64_t selfsim[COCSEP_CLASSES];
+	cube_t crep[COCSEP_CLASSES];
 } h48map_t;
 
 typedef struct {

@@ -7,6 +7,7 @@ typedef struct {
 	int64_t *nsols;
 	int64_t maxsolutions;
 	uint8_t h;
+	uint8_t k;
 	uint32_t *cocsepdata;
 	uint32_t *h48data;
 	char **nextsol;
@@ -26,7 +27,7 @@ _static void solve_h48_appendsolution(dfsarg_solveh48_t *);
 _static_inline bool solve_h48_stop(dfsarg_solveh48_t *);
 _static int64_t solve_h48_dfs(dfsarg_solveh48_t *);
 _static int64_t solve_h48(
-    cube_t, int8_t, int8_t, int8_t, uint8_t, const void *, char *);
+    cube_t, int8_t, int8_t, int8_t, uint8_t, uint8_t, const void *, char *);
 
 _static int64_t solve_h48stats_dfs(dfsarg_solveh48stats_t *);
 _static int64_t solve_h48stats(cube_t, int8_t, const void *, char [static 12]);
@@ -59,12 +60,12 @@ solve_h48_stop(dfsarg_solveh48_t *arg)
 		return true;
 
 /*
-	bound = get_h48_bound(arg->cube, data, arg->h, arg->h48data);
+	bound = get_h48_bound(arg->cube, data, arg->h, arg->k, arg->h48data);
 LOG("Using pval %" PRId8 "\n", bound);
 	if (bound + arg->nmoves > arg->depth)
 		return true;
 
-	bound = get_h48_bound(arg->inverse, data_inv, arg->h, arg->h48data);
+	bound = get_h48_bound(arg->inverse, data_inv, arg->h, arg->k, arg->h48data);
 	if (bound + arg->nmoves > arg->depth)
 		return true;
 */
@@ -119,6 +120,7 @@ solve_h48(
 	int8_t maxmoves,
 	int8_t maxsolutions,
 	uint8_t h,
+	uint8_t k,
 	const void *data,
 	char *solutions
 )
@@ -132,6 +134,7 @@ solve_h48(
 		.nsols = &nsols,
 		.maxsolutions = maxsolutions,
 		.h = h,
+		.k = k,
 		.cocsepdata = (uint32_t *)data,
 		.h48data = ((uint32_t *)data) + COCSEP_FULLSIZE / 4,
 		.nextsol = &solutions
@@ -175,7 +178,7 @@ solve_h48stats_dfs(dfsarg_solveh48stats_t *arg)
 
 	/* Check h48 lower bound for h=0 (esep, but no eo) */
 	coord = coord_h48_edges(arg->cube, COCLASS(d), TTREP(d), 0);
-	bound = get_esep_pval(arg->h48data, coord);
+	bound = get_esep_pval(arg->h48data, coord, 4);
 	if (bound + arg->nmoves > arg->depth)
 		return 0;
 	

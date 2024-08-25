@@ -1,43 +1,50 @@
 #include "../test.h"
 
+#define COCSEP_CLASSES 3393
 #define COCSEPSIZE 1119792
-#define ETABLESIZE ((3393 * 495 * 70) >> 1)
 
-int64_t gendata_h48h0k4(void *, uint8_t);
+typedef struct {
+	uint8_t h;
+	uint8_t k;
+	uint8_t maxdepth;
+	void *buf;
+	uint32_t *info;
+	uint32_t *cocsepdata;
+	uint32_t *h48data;
+	uint64_t selfsim[COCSEP_CLASSES];
+	cube_t crep[COCSEP_CLASSES];
+} gendata_h48_arg_t;
 
-int64_t gendata_h48_fixture(void *buf, uint8_t maxdepth, uint8_t h) {
-	if (h == 0)
-		return gendata_h48h0k4(buf, maxdepth);
-	fprintf(stderr, "Error: gendata h48 for h>0 not implemented yet\n");
-	exit(1);
-}
+int64_t gendata_h48(gendata_h48_arg_t *);
 
 void run(void) {
 	char str[STRLENMAX];
-	uint8_t i, maxdepth, h;
-	uint32_t *buf, *h48info;
-	size_t result;
+	uint8_t i;
+	gendata_h48_arg_t arg;
+	size_t result, sz;
 
 	fgets(str, STRLENMAX, stdin);
-	maxdepth = atoi(str);
+	arg.maxdepth = atoi(str);
 	fgets(str, STRLENMAX, stdin);
-	h = atoi(str);
+	arg.h = atoi(str);
+	arg.k = 4;
 
-	buf = (uint32_t *)malloc(sizeof(uint32_t) * 60000000);
-	result = gendata_h48_fixture(buf, maxdepth, h);
-	h48info = buf + (ETABLESIZE + COCSEPSIZE) / 4;
+	sz = gendata_h48(&arg); /* With buf = NULL returns data size */
+	arg.buf = malloc(sz);
+	result = gendata_h48(&arg);
 
 	printf("%zu\n\n", result);
 
 	printf("cocsepdata:\n");
-	printf("Classes: %" PRIu32 "\n", buf[COCSEPSIZE/4-12]);
-	printf("Max value: %" PRIu32 "\n", buf[COCSEPSIZE/4-11]);
+	printf("Classes: %" PRIu32 "\n", arg.cocsepdata[COCSEPSIZE/4-12]);
+	printf("Max value: %" PRIu32 "\n", arg.cocsepdata[COCSEPSIZE/4-11]);
 	for (i = 0; i < 10; i++)
-		printf("%" PRIu32 ": %" PRIu32 "\n", i, buf[COCSEPSIZE/4-10+i]);
+		printf("%" PRIu32 ": %" PRIu32 "\n",
+		    i, arg.cocsepdata[COCSEPSIZE/4-10+i]);
 
 	printf("\nh48:\n");
-	for (i = 0; i < maxdepth+1; i++)
-		printf("%" PRIu32 ": %" PRIu32 "\n", i, h48info[i+1]);
+	for (i = 0; i < arg.maxdepth+1; i++)
+		printf("%" PRIu32 ": %" PRIu32 "\n", i, arg.info[i+1]);
 
-	free(buf);
+	free(arg.buf);
 }
