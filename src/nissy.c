@@ -26,23 +26,31 @@ struct {
 _static int
 parse_h48_options(const char *buf, uint8_t *h, uint8_t *k, uint8_t *maxdepth)
 {
+	bool h_valid, k_valid, maxdepth_valid;
 	int i;
 
 	/* TODO temporarily, options are in the form "h;k;maxdepth" */
 	if (h != NULL)
 		*h = atoi(buf);
+	h_valid = h == NULL || *h <= 11;
+
 	for (i = 0; buf[i] != ';'; i++)
 		if (buf[i] == 0)
 			goto parse_h48_options_error;
+
 	if (k != NULL)
 		*k = atoi(&buf[i+1]);
+	k_valid = k == NULL || (*k == 2 || *k == 4);
+
 	for (i = i+1; buf[i] != ';'; i++)
 		if (buf[i] == 0)
 			goto parse_h48_options_error;
+
 	if (maxdepth != NULL)
 		*maxdepth = atoi(&buf[i+1]);
+	maxdepth_valid = maxdepth == NULL || *maxdepth <= 20;
 
-	return (*h <= 11 && (*k == 2 || *k == 4) && *maxdepth <= 20) ? 0 : 1;
+	return h_valid && k_valid && maxdepth_valid ? 0 : 1;
 
 parse_h48_options_error:
 	*h = 0;
@@ -202,7 +210,7 @@ nissy_gendata(
 	if (!strcmp(solver, "h48")) {
 		p = parse_h48_options(options, &arg.h, &arg.k, &arg.maxdepth);
 		if (p != 0) {
-			LOG("gendata: ould not parse options\n");
+			LOG("gendata: could not parse options\n");
 			ret = -1;
 		} else {
 			ret = gendata_h48(&arg);
