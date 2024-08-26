@@ -11,6 +11,10 @@ typedef struct {
 	uint32_t *cocsepdata;
 	uint32_t *h48data;
 	char **nextsol;
+	bool niss;
+	int8_t npremoves;
+	uint8_t premoves[MAXLEN];
+	int8_t totmoves;
 } dfsarg_solveh48_t;
 
 typedef struct {
@@ -35,41 +39,63 @@ _static int64_t solve_h48stats(cube_t, int8_t, const void *, char [static 12]);
 _static void
 solve_h48_appendsolution(dfsarg_solveh48_t *arg)
 {
-	int strl;
+    int strl;
+    char *solution = *arg->nextsol; 
 
-	strl = writemoves(arg->moves, arg->nmoves, *arg->nextsol);
-	LOG("Solution found: %s\n", *arg->nextsol);
-	*arg->nextsol += strl;
-	**arg->nextsol = '\n';
-	(*arg->nextsol)++;
-	(*arg->nsols)++;
+    strl = writemoves(arg->moves, arg->nmoves, *arg->nextsol);
+    *arg->nextsol += strl; 
+
+    if (arg->npremoves) {
+        **arg->nextsol = ' ';
+        (*arg->nextsol)++;
+
+		uint8_t* invertedpremoves = invertpremoves(arg->premoves, arg->npremoves);
+        strl = writemoves(invertedpremoves, arg->npremoves, *arg->nextsol);
+		free(invertedpremoves);
+        *arg->nextsol += strl;
+    }
+    LOG("Solution found: %s\n", solution);
+
+    **arg->nextsol = '\n';
+    (*arg->nextsol)++;
+    (*arg->nsols)++;
 }
 
 _static_inline bool
 solve_h48_stop(dfsarg_solveh48_t *arg)
 {
 	uint32_t data, data_inv;
-	int8_t bound;
+	int8_t bound, newbound;
+	bool niss = false;
 
 	bound = get_h48_cdata(arg->cube, arg->cocsepdata, &data);
-	if (bound + arg->nmoves > arg->depth)
+	if (bound + arg->totmoves > arg->depth)
 		return true;
 
-	bound = get_h48_cdata(arg->inverse, arg->cocsepdata, &data_inv);
-	if (bound + arg->nmoves > arg->depth)
+	newbound = get_h48_cdata(arg->inverse, arg->cocsepdata, &data_inv);
+	if (newbound + arg->totmoves > arg->depth)
 		return true;
+	if (newbound < bound) {
+		bound = newbound;
+		niss = true;
+	}
 
-/*
-	bound = get_h48_bound(arg->cube, data, arg->h, arg->k, arg->h48data);
-LOG("Using pval %" PRId8 "\n", bound);
-	if (bound + arg->nmoves > arg->depth)
+	newbound = get_h48_bound(arg->cube, data, arg->h, arg->k, arg->h48data);
+ 	// LOG("Using pval %" PRId8 "\n", bound);
+	if (newbound + arg->totmoves > arg->depth)
 		return true;
-
-	bound = get_h48_bound(arg->inverse, data_inv, arg->h, arg->k, arg->h48data);
-	if (bound + arg->nmoves > arg->depth)
+	if (newbound < bound) {
+		bound = newbound;
+		niss = false;
+	}
+	newbound = get_h48_bound(arg->inverse, data_inv, arg->h, arg->k, arg->h48data);
+	if (newbound + arg->totmoves > arg->depth)
 		return true;
-*/
-
+	if (newbound < bound) {
+		bound = newbound;
+		niss = true;
+	}
+	arg->niss = niss;
 	return false;
 }
 
@@ -87,7 +113,7 @@ solve_h48_dfs(dfsarg_solveh48_t *arg)
 		return 0;
 
 	if (issolved(arg->cube)) {
-		if (arg->nmoves != arg->depth)
+		if (arg->totmoves != arg->depth)
 			return 0;
 		solve_h48_appendsolution(arg);
 		return 1;
@@ -95,20 +121,38 @@ solve_h48_dfs(dfsarg_solveh48_t *arg)
 
 	/* TODO: avoid copy, change arg and undo changes after recursion */
 	nextarg = *arg;
-	nextarg.nmoves = arg->nmoves + 1;
 	ret = 0;
-	for (m = 0; m < 18; m++) {
-		nextarg.moves[arg->nmoves] = m;
-		if (!allowednextmove(nextarg.moves, nextarg.nmoves)) {
+	nextarg.totmoves = arg->totmoves + 1;
+	if(arg->niss) {
+		nextarg.npremoves = arg->npremoves + 1;
+		for (m = 0; m < 18; m++) {
+			nextarg.premoves[arg->npremoves] = m;
+		if (!allowednextmove(nextarg.premoves, nextarg.npremoves)) {
 			/* If a move is not allowed, neither are its 180
 			 * and 270 degree variations */
 			m += 2;
 			continue;
 		}
-		nextarg.cube = move(arg->cube, m);
-		nextarg.inverse = inverse(nextarg.cube); /* TODO: use premove */
+		nextarg.cube = premove(arg->cube, m);
+		nextarg.inverse = move(arg->inverse, m);
 		ret += solve_h48_dfs(&nextarg);
+		}
+	} else {
+		nextarg.nmoves = arg->nmoves + 1;
+		for (m = 0; m < 18; m++) {
+			nextarg.moves[arg->nmoves] = m;
+			if (!allowednextmove(nextarg.moves, nextarg.nmoves)) {
+				/* If a move is not allowed, neither are its 180
+				* and 270 degree variations */
+				m += 2;
+				continue;
+			}
+			nextarg.cube = move(arg->cube, m);
+			nextarg.inverse = premove(arg->inverse, m);
+			ret += solve_h48_dfs(&nextarg);
+		}
 	}
+
 
 	return ret;
 }
