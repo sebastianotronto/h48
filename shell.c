@@ -183,21 +183,21 @@ struct {
 	),
 	COMMAND(
 		"datasize",
-		"datasize" _flag_solver " SOLVER " _flag_options " OPTIONS",
+		"datasize " _flag_solver " SOLVER " _flag_options " OPTIONS",
 		"Return the size in bytes of the data table used by "
 		"SOLVER when called with the given OPTIONS.",
 		datasize_exec
 	),
 	COMMAND(
 		"gendata",
-		"gendata" _flag_solver " SOLVER " _flag_options " OPTIONS",
+		"gendata " _flag_solver " SOLVER " _flag_options " OPTIONS",
 		"Generate the data table used by "
 		"SOLVER when called with the given OPTIONS.",
 		gendata_exec
 	),
 	COMMAND(
 		"solve",
-		"solve" _flag_solver " SOLVER " _flag_options " OPTIONS "
+		"solve " _flag_solver " SOLVER " _flag_options " OPTIONS "
 		"[" _flag_minmoves " n] [" _flag_maxmoves " N] "
 		_flag_cube " CUBE",
 		"Solve the given CUBE using SOLVER with the given OPTIONS, "

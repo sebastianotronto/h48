@@ -1,6 +1,6 @@
-#define H48_COORDMAX_NOEO    (COCSEP_CLASSES * (size_t)_12c4 * (size_t)_8c4)
-#define H48_COORDMAX(h)      (H48_COORDMAX_NOEO << (size_t)(h))
-#define H48_TABLESIZE(h, k)  (H48_COORDMAX((h)) / ((size_t)8 / (size_t)(k)))
+#define H48_COORDMAX_NOEO    ((int64_t)(COCSEP_CLASSES * _12c4 * _8c4))
+#define H48_COORDMAX(h)      ((int64_t)(H48_COORDMAX_NOEO << (int64_t)(h)))
+#define H48_TABLESIZE(h, k)  ((size_t)H48_COORDMAX((h)) / ((size_t)8 / (size_t)(k)))
 
 #define H48_COEFF(k)         (UINT32_C(32) / (uint32_t)(k))
 #define H48_INDEX(i, k)      ((uint32_t)(i) / H48_COEFF(k))
@@ -55,7 +55,23 @@ typedef struct {
 	uint64_t *selfsim;
 	int64_t done;
 	cube_t *crep;
-} bfsarg_esep_t;
+} h48h0k4_bfs_arg_t;
+
+typedef struct {
+	cube_t cube;
+	uint8_t moves[4];
+	uint8_t h;
+	uint8_t k;
+	uint8_t base;
+	uint8_t depth;
+	uint8_t shortdepth;
+	uint8_t maxdepth;
+	uint32_t *cocsepdata;
+	uint32_t *h48data;
+	uint64_t *selfsim;
+	cube_t *crep;
+	h48map_t *shortcubes;
+} h48k2_dfs_arg_t;
 
 _static_inline uint8_t get_esep_pval(const uint32_t *, int64_t, uint8_t);
 _static_inline void set_esep_pval(uint32_t *, int64_t, uint8_t, uint8_t);
@@ -63,10 +79,11 @@ _static_inline void set_esep_pval(uint32_t *, int64_t, uint8_t, uint8_t);
 _static uint64_t gen_h48short(gendata_h48short_arg_t *);
 _static size_t gendata_h48(gendata_h48_arg_t *);
 _static size_t gendata_h48h0k4(gendata_h48_arg_t *);
-_static int64_t gendata_h48h0k4_bfs(bfsarg_esep_t *);
-_static int64_t gendata_h48h0k4_bfs_fromdone(bfsarg_esep_t *);
-_static int64_t gendata_h48h0k4_bfs_fromnew(bfsarg_esep_t *);
+_static int64_t gendata_h48h0k4_bfs(h48h0k4_bfs_arg_t *);
+_static int64_t gendata_h48h0k4_bfs_fromdone(h48h0k4_bfs_arg_t *);
+_static int64_t gendata_h48h0k4_bfs_fromnew(h48h0k4_bfs_arg_t *);
 _static size_t gendata_h48k2(gendata_h48_arg_t *);
+_static void gendata_h48k2_dfs(h48k2_dfs_arg_t *arg);
 
 _static_inline int8_t get_h48_bound(cube_t, uint32_t, uint8_t, uint8_t, uint32_t *);
 
@@ -150,31 +167,17 @@ _static size_t
 gendata_h48h0k4(gendata_h48_arg_t *arg)
 {
 	uint32_t j;
-	bfsarg_esep_t bfsarg;
+	h48h0k4_bfs_arg_t bfsarg;
 	int64_t sc, cc, esep_max;
-/*
-	uint64_t selfsim[COCSEP_CLASSES];
-	cube_t crep[COCSEP_CLASSES];
-	size_t cocsepsize, infosize;
-*/
 
 	if (arg->buf == NULL)
 		goto gendata_h48h0k4_return_size;
-/*
-	cocsepsize = gendata_cocsep(buf, selfsim, crep);
-	infosize = 88;
-
-	cocsepdata = (uint32_t *)buf;
-	buf32 = cocsepdata + cocsepsize / 4;
-	info = buf32 + (H48_TABLESIZE(0, 4) / sizeof(uint32_t));
-	memset(buf32, 0xFF, H48_TABLESIZE(0, 4));
-*/
 
 	esep_max = (int64_t)H48_COORDMAX(0);
 	sc = coord_h48(solved, arg->cocsepdata, 0);
 	set_esep_pval(arg->h48data, sc, 4, 0);
 	arg->info[1] = 1;
-	bfsarg = (bfsarg_esep_t) {
+	bfsarg = (h48h0k4_bfs_arg_t) {
 		.cocsepdata = arg->cocsepdata,
 		.buf32 = arg->h48data,
 		.selfsim = arg->selfsim,
@@ -205,7 +208,7 @@ gendata_h48h0k4_return_size:
 }
 
 _static int64_t
-gendata_h48h0k4_bfs(bfsarg_esep_t *arg)
+gendata_h48h0k4_bfs(h48h0k4_bfs_arg_t *arg)
 {
 	const uint8_t breakpoint = 10; /* Hand-picked optimal */
 
@@ -216,7 +219,7 @@ gendata_h48h0k4_bfs(bfsarg_esep_t *arg)
 }
 
 _static int64_t
-gendata_h48h0k4_bfs_fromdone(bfsarg_esep_t *arg)
+gendata_h48h0k4_bfs_fromdone(h48h0k4_bfs_arg_t *arg)
 {
 	uint8_t c, m, x;
 	uint32_t cc;
@@ -246,7 +249,7 @@ gendata_h48h0k4_bfs_fromdone(bfsarg_esep_t *arg)
 }
 
 _static int64_t
-gendata_h48h0k4_bfs_fromnew(bfsarg_esep_t *arg)
+gendata_h48h0k4_bfs_fromnew(h48h0k4_bfs_arg_t *arg)
 {
 	uint8_t c, m, x;
 	uint32_t cc;
@@ -298,9 +301,13 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 		[11] = 10
 	};
 
-	uint64_t nshort;
+	uint8_t t;
+	int64_t j;
+	uint64_t nshort, i;
 	h48map_t shortcubes;
+	kvpair_t kv;
 	gendata_h48short_arg_t shortarg;
+	h48k2_dfs_arg_t dfsarg;
 
 	DBG_ASSERT(base[arg->h] == 8, 0, "Only implemented for h <= 3 (base 8)\n");
 
@@ -317,15 +324,82 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 		.map = &shortcubes
 	};
 	nshort = gen_h48short(&shortarg);
-	LOG("Found %" PRIu64 "\n", nshort);
+	LOG("Cubes in <= %" PRIu8 " moves: %" PRIu64 "\n", shortdepth, nshort);
 
-	/* TODO: loop over map, set all found to 0, do 2 moves each */
-	LOG("The rest is not implemented yet\n");
+	dfsarg = (h48k2_dfs_arg_t){
+		.h = arg->h,
+		.k = arg->k,
+		.base = base[arg->h],
+		.depth = shortdepth,
+		.shortdepth = shortdepth,
+		.maxdepth = arg->maxdepth,
+		.cocsepdata = arg->cocsepdata,
+		.h48data = arg->h48data,
+		.selfsim = arg->selfsim,
+		.crep = arg->crep,
+		.shortcubes = &shortcubes
+	};
+
+	i = 0;
+	for (kv = h48map_nextkvpair(&shortcubes, &i);
+	     i != shortcubes.capacity;
+	     kv = h48map_nextkvpair(&shortcubes, &i)
+	) {
+		/* TODO maybe over all sim? */
+		dfsarg.cube = invcoord_h48(kv.key, arg->crep, 11);
+		gendata_h48k2_dfs(&dfsarg);
+	}
 
 	h48map_destroy(&shortcubes);
 
+	/* TODO: move info update to dfs? */
+	memset(arg->info, 0, 5 * sizeof(arg->info[0]));
+	arg->info[0] = base[arg->k];
+	for (j = 0; j < H48_COORDMAX(arg->h); j++) {
+		t = get_esep_pval(arg->h48data, j, 2);
+		arg->info[1 + t]++;
+	}
+
 gendata_h48k2_return_size:
 	return H48_TABLESIZE(arg->h, 2);
+}
+
+_static void
+gendata_h48k2_dfs(h48k2_dfs_arg_t *arg)
+{
+	uint8_t nmoves;
+	uint64_t val;
+	int64_t coord, fullcoord;
+	h48k2_dfs_arg_t nextarg;
+	uint8_t m;
+
+	fullcoord = coord_h48(arg->cube, arg->cocsepdata, 11);
+	coord = fullcoord >> (int64_t)(11 - arg->h);
+
+	val = h48map_value(arg->shortcubes, fullcoord);
+
+	if (arg->depth >= arg->base && arg->depth <= arg->base + 2)
+		set_esep_pval(
+		    arg->h48data, coord, arg->k, arg->depth - arg->base);
+
+	if ((val < arg->shortdepth) ||
+	    (arg->depth > arg->shortdepth && val != MAP_UNSET) ||
+	    (arg->depth >= arg->maxdepth || arg->depth >= arg->base + 2))
+		return;
+
+	/* TODO: avoid copy, change arg and undo changes after recursion */
+	nextarg = *arg;
+	nextarg.depth = arg->depth + 1;
+	nmoves = nextarg.depth - arg->shortdepth;
+	for (m = 0; m < 18; m++) {
+		nextarg.moves[nmoves - 1] = m;
+		if (!allowednextmove(nextarg.moves, nmoves)) {
+			m += 2;
+			continue;
+		}
+		nextarg.cube = move(arg->cube, m);
+		gendata_h48k2_dfs(&nextarg);
+	}
 }
 
 _static_inline uint8_t

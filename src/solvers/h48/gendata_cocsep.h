@@ -18,13 +18,13 @@ typedef struct {
 	uint8_t *visited;
 	uint64_t *selfsim;
 	cube_t *rep;
-} dfsarg_cocsep_t;
+} cocsep_dfs_arg_t;
 
 _static_inline bool get_visited(const uint8_t *, int64_t);
 _static_inline void set_visited(uint8_t *, int64_t);
 
 _static size_t gendata_cocsep(void *, uint64_t *, cube_t *);
-_static uint32_t gendata_cocsep_dfs(dfsarg_cocsep_t *);
+_static uint32_t gendata_cocsep_dfs(cocsep_dfs_arg_t *);
 
 _static_inline int8_t get_h48_cdata(cube_t, uint32_t *, uint32_t *);
 
@@ -45,7 +45,7 @@ gendata_cocsep(void *buf, uint64_t *selfsim, cube_t *rep)
 	uint32_t *buf32, *info, cc;
 	uint16_t n;
 	uint8_t i, j, visited[COCSEP_VISITEDSIZE];
-	dfsarg_cocsep_t arg;
+	cocsep_dfs_arg_t arg;
 
 	if (buf == NULL)
 		goto gendata_cocsep_return_size;
@@ -56,7 +56,7 @@ gendata_cocsep(void *buf, uint64_t *selfsim, cube_t *rep)
 	if (selfsim != NULL)
 		memset(selfsim, 0, sizeof(uint64_t) * COCSEP_CLASSES);
 
-	arg = (dfsarg_cocsep_t) {
+	arg = (cocsep_dfs_arg_t) {
 		.cube = solved,
 		.n = &n,
 		.buf32 = buf32,
@@ -92,14 +92,14 @@ gendata_cocsep_return_size:
 }
 
 _static uint32_t
-gendata_cocsep_dfs(dfsarg_cocsep_t *arg)
+gendata_cocsep_dfs(cocsep_dfs_arg_t *arg)
 {
 	uint8_t m;
 	uint32_t cc, class, ttrep, depth, olddepth, tinv;
 	uint64_t t;
 	int64_t i, j;
 	cube_t d;
-	dfsarg_cocsep_t nextarg;
+	cocsep_dfs_arg_t nextarg;
 
 	i = coord_cocsep(arg->cube);
 	olddepth = (uint8_t)(arg->buf32[i] & 0xFF);
@@ -135,7 +135,7 @@ gendata_cocsep_dfs(dfsarg_cocsep_t *arg)
 		return cc;
 	}
 
-	memcpy(&nextarg, arg, sizeof(dfsarg_cocsep_t));
+	memcpy(&nextarg, arg, sizeof(cocsep_dfs_arg_t));
 	nextarg.depth++;
 	for (m = 0, cc = 0; m < 18; m++) {
 		nextarg.cube = move(arg->cube, m);
