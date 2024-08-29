@@ -11,10 +11,9 @@ typedef struct {
 	uint32_t *cocsepdata;
 	uint32_t *h48data;
 	char **nextsol;
-	bool niss;
+	uint8_t nissbranch;
 	int8_t npremoves;
 	uint8_t premoves[MAXLEN];
-	int8_t totmoves;
 } dfsarg_solveh48_t;
 
 typedef struct {
@@ -65,37 +64,30 @@ _static_inline bool
 solve_h48_stop(dfsarg_solveh48_t *arg)
 {
 	uint32_t data, data_inv;
-	int8_t bound, newbound;
-	bool niss = false;
+	int8_t bound;
 
+	arg->nissbranch = NONISS;
 	bound = get_h48_cdata(arg->cube, arg->cocsepdata, &data);
-	if (bound + arg->totmoves > arg->depth)
+	if (bound + arg->nmoves + arg->npremoves > arg->depth)
 		return true;
 
-	newbound = get_h48_cdata(arg->inverse, arg->cocsepdata, &data_inv);
-	if (newbound + arg->totmoves > arg->depth)
+	bound = get_h48_cdata(arg->inverse, arg->cocsepdata, &data_inv);
+	if (bound + arg->nmoves + arg->npremoves > arg->depth)
 		return true;
-	if (newbound < bound) {
-		bound = newbound;
-		niss = true;
-	}
 
-	newbound = get_h48_bound(arg->cube, data, arg->h, arg->k, arg->h48data);
+	bound = get_h48_bound(arg->cube, data, arg->h, arg->k, arg->h48data);
  	// LOG("Using pval %" PRId8 "\n", bound);
-	if (newbound + arg->totmoves > arg->depth)
+	if (bound + arg->nmoves + arg->npremoves > arg->depth)
 		return true;
-	if (newbound < bound) {
-		bound = newbound;
-		niss = false;
-	}
-	newbound = get_h48_bound(arg->inverse, data_inv, arg->h, arg->k, arg->h48data);
-	if (newbound + arg->totmoves > arg->depth)
+	if (bound + arg->nmoves + arg->npremoves == arg->depth)
+		arg->nissbranch = INVERSEBRANCH;
+
+	bound = get_h48_bound(arg->inverse, data_inv, arg->h, arg->k, arg->h48data);
+	if (bound + arg->nmoves + arg->npremoves > arg->depth)
 		return true;
-	if (newbound < bound) {
-		bound = newbound;
-		niss = true;
-	}
-	arg->niss = niss;
+	if (bound + arg->nmoves + arg->npremoves == arg->depth)
+		arg->nissbranch = BRANCH;
+
 	return false;
 }
 
@@ -113,7 +105,7 @@ solve_h48_dfs(dfsarg_solveh48_t *arg)
 		return 0;
 
 	if (issolved(arg->cube)) {
-		if (arg->totmoves != arg->depth)
+		if (arg->nmoves + arg->npremoves != arg->depth)
 			return 0;
 		solve_h48_appendsolution(arg);
 		return 1;
@@ -122,34 +114,28 @@ solve_h48_dfs(dfsarg_solveh48_t *arg)
 	/* TODO: avoid copy, change arg and undo changes after recursion */
 	nextarg = *arg;
 	ret = 0;
-	nextarg.totmoves = arg->totmoves + 1;
-	if(arg->niss) {
-		nextarg.npremoves = arg->npremoves + 1;
+	uint32_t allowed;
+	if(arg->nissbranch & 0x01) {
+		allowed = allowednextmoveH48(arg->premoves, arg->npremoves, arg->nissbranch);
 		for (m = 0; m < 18; m++) {
-			nextarg.premoves[arg->npremoves] = m;
-		if (!allowednextmove(nextarg.premoves, nextarg.npremoves)) {
-			/* If a move is not allowed, neither are its 180
-			 * and 270 degree variations */
-			m += 2;
-			continue;
-		}
-		nextarg.cube = premove(arg->cube, m);
-		nextarg.inverse = move(arg->inverse, m);
-		ret += solve_h48_dfs(&nextarg);
+			if(allowed & (1 << m)) {
+				nextarg.npremoves = arg->npremoves + 1;
+				nextarg.premoves[arg->npremoves] = m;
+				nextarg.inverse = move(arg->inverse, m);
+				nextarg.cube = premove(arg->cube, m);
+				ret += solve_h48_dfs(&nextarg);
+			}
 		}
 	} else {
-		nextarg.nmoves = arg->nmoves + 1;
+		allowed = allowednextmoveH48(arg->moves, arg->nmoves, arg->nissbranch);
 		for (m = 0; m < 18; m++) {
-			nextarg.moves[arg->nmoves] = m;
-			if (!allowednextmove(nextarg.moves, nextarg.nmoves)) {
-				/* If a move is not allowed, neither are its 180
-				* and 270 degree variations */
-				m += 2;
-				continue;
+			if (allowed & (1 << m)) {
+				nextarg.nmoves = arg->nmoves + 1;
+				nextarg.moves[arg->nmoves] = m;
+				nextarg.cube = move(arg->cube, m);
+				nextarg.inverse = premove(arg->inverse, m);
+				ret += solve_h48_dfs(&nextarg);
 			}
-			nextarg.cube = move(arg->cube, m);
-			nextarg.inverse = premove(arg->inverse, m);
-			ret += solve_h48_dfs(&nextarg);
 		}
 	}
 
@@ -192,6 +178,7 @@ solve_h48(
 		LOG("Found %" PRId64 " solutions, searching at depth %"
 		    PRId8 "\n", nsols, arg.depth);
 		arg.nmoves = 0;
+		arg.npremoves = 0;
 		solve_h48_dfs(&arg);
 	}
 

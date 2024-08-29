@@ -13,10 +13,12 @@ _static cube_t frommoves(const char *);
 _static void getcube_fix(int64_t *, int64_t *, int64_t *, int64_t *);
 _static cube_t getcube(int64_t, int64_t, int64_t, int64_t);
 
-_static cube_t move(cube_t, uint8_t);
 _static cube_t transform_edges(cube_t, uint8_t);
 _static cube_t transform_corners(cube_t, uint8_t);
 _static cube_t transform(cube_t, uint8_t);
+
+/* declared in moves.h */
+_static cube_t move(cube_t, uint8_t);
 
 _static cube_t
 cubefromarray(uint8_t c[static 8], uint8_t e[static 12])
@@ -238,159 +240,6 @@ applytrans(cube_t cube, const char *buf)
 
 	return transform(cube, t);
 }
-
-_static cube_t
-move(cube_t c, uint8_t m)
-{
-	switch (m) {
-	case _move_U:
-		return _move(U, c);
-	case _move_U2:
-		return _move(U2, c);
-	case _move_U3:
-		return _move(U3, c);
-	case _move_D:
-		return _move(D, c);
-	case _move_D2:
-		return _move(D2, c);
-	case _move_D3:
-		return _move(D3, c);
-	case _move_R:
-		return _move(R, c);
-	case _move_R2:
-		return _move(R2, c);
-	case _move_R3:
-		return _move(R3, c);
-	case _move_L:
-		return _move(L, c);
-	case _move_L2:
-		return _move(L2, c);
-	case _move_L3:
-		return _move(L3, c);
-	case _move_F:
-		return _move(F, c);
-	case _move_F2:
-		return _move(F2, c);
-	case _move_F3:
-		return _move(F3, c);
-	case _move_B:
-		return _move(B, c);
-	case _move_B2:
-		return _move(B2, c);
-	case _move_B3:
-		return _move(B3, c);
-	default:
-		LOG("move error, unknown move\n");
-		return zero;
-	}
-}
-
-_static cube_t
-premove(cube_t c, uint8_t m){
-		switch (m) {
-	case _move_U:
-		return _premove(U3, c);
-	case _move_U2:
-		return _premove(U2, c);
-	case _move_U3:
-		return _premove(U, c);
-	case _move_D:
-		return _premove(D3, c);
-	case _move_D2:
-		return _premove(D2, c);
-	case _move_D3:
-		return _premove(D, c);
-	case _move_R:
-		return _premove(R3, c);
-	case _move_R2:
-		return _premove(R2, c);
-	case _move_R3:
-		return _premove(R, c);
-	case _move_L:
-		return _premove(L3, c);
-	case _move_L2:
-		return _premove(L2, c);
-	case _move_L3:
-		return _premove(L, c);
-	case _move_F:
-		return _premove(F3, c);
-	case _move_F2:
-		return _premove(F2, c);
-	case _move_F3:
-		return _premove(F, c);
-	case _move_B:
-		return _premove(B3, c);
-	case _move_B2:
-		return _premove(B2, c);
-	case _move_B3:
-		return _premove(B, c);
-	default:
-		LOG("move error, unknown move\n");
-		return zero;
-	}
-}
-_static uint8_t
-invertmove(uint8_t m)
-{
-	switch (m) {
-	case _move_U:
-		return _move_U3;
-	case _move_U2:
-		return _move_U2;
-	case _move_U3:
-		return _move_U;
-	case _move_D:
-		return _move_D3;
-	case _move_D2:
-		return _move_D2;
-	case _move_D3:
-		return _move_D;
-	case _move_R:
-		return _move_R3;
-	case _move_R2:
-		return _move_R2;
-	case _move_R3:
-		return _move_R;
-	case _move_L:
-		return _move_L3;
-	case _move_L2:
-		return _move_L2;
-	case _move_L3:
-		return _move_L;
-	case _move_F:
-		return _move_F3;
-	case _move_F2:
-		return _move_F2;
-	case _move_F3:
-		return _move_F;
-	case _move_B:
-		return _move_B3;
-	case _move_B2:
-		return _move_B2;
-	case _move_B3:
-		return _move_B;
-	default:
-		LOG("invertmove error, unknown move\n");
-		return _error;
-	}
-}
-
-_static uint8_t*
-invertpremoves(uint8_t *moves, uint8_t nmoves)
-{
-	uint8_t i;
-	uint8_t *ret = malloc(nmoves * sizeof(uint8_t));
-
-	for (i = 0; i < nmoves; i++)
-		ret[i] = invertmove(moves[i]);
-
-	// invert elements in the array
-	for (i = 0; i < nmoves / 2; i++)
-		_swap(ret[i], ret[nmoves - i - 1]);
-	return ret;
-}
-
-
 
 /*
 TODO transform is now relegated to a separated file because it is too long.
