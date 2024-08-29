@@ -367,7 +367,7 @@ gendata_h48k2_return_size:
 _static void
 gendata_h48k2_dfs(h48k2_dfs_arg_t *arg)
 {
-	uint8_t nmoves;
+	uint8_t nmoves, oldval, newval;
 	uint64_t val;
 	int64_t coord, fullcoord;
 	h48k2_dfs_arg_t nextarg;
@@ -378,9 +378,11 @@ gendata_h48k2_dfs(h48k2_dfs_arg_t *arg)
 
 	val = h48map_value(arg->shortcubes, fullcoord);
 
-	if (arg->depth >= arg->base && arg->depth <= arg->base + 2)
-		set_esep_pval(
-		    arg->h48data, coord, arg->k, arg->depth - arg->base);
+	if (arg->depth >= arg->base && arg->depth <= arg->base + 2) {
+		oldval = get_esep_pval(arg->h48data, coord, arg->k);
+		newval = _min(oldval, arg->depth - arg->base);
+		set_esep_pval(arg->h48data, coord, arg->k, newval);
+	}
 
 	if ((val < arg->shortdepth) ||
 	    (arg->depth > arg->shortdepth && val != MAP_UNSET) ||
