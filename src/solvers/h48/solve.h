@@ -66,7 +66,7 @@ solve_h48_stop(dfsarg_solveh48_t *arg)
 	uint32_t data, data_inv;
 	int8_t bound;
 
-	arg->nissbranch = NONISS;
+	arg->nissbranch = NORMAL;
 	bound = get_h48_cdata(arg->cube, arg->cocsepdata, &data);
 	if (bound + arg->nmoves + arg->npremoves > arg->depth)
 		return true;
@@ -86,7 +86,7 @@ solve_h48_stop(dfsarg_solveh48_t *arg)
 	if (bound + arg->nmoves + arg->npremoves > arg->depth)
 		return true;
 	if (bound + arg->nmoves + arg->npremoves == arg->depth)
-		arg->nissbranch = BRANCH;
+		arg->nissbranch = NORMALBRANCH;
 
 	return false;
 }
@@ -115,7 +115,7 @@ solve_h48_dfs(dfsarg_solveh48_t *arg)
 	nextarg = *arg;
 	ret = 0;
 	uint32_t allowed;
-	if(arg->nissbranch & 0x01) {
+	if(arg->nissbranch & INVERSE) {
 		allowed = allowednextmoveH48(arg->premoves, arg->npremoves, arg->nissbranch);
 		for (m = 0; m < 18; m++) {
 			if(allowed & (1 << m)) {
@@ -138,7 +138,6 @@ solve_h48_dfs(dfsarg_solveh48_t *arg)
 			}
 		}
 	}
-
 
 	return ret;
 }

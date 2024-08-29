@@ -1,8 +1,8 @@
 /* probably these can be placed in constants file */
-#define NONISS 0x00
-#define NISS 0x01
+#define NORMAL 0x00
+#define INVERSE 0x01
 #define INVERSEBRANCH 0x03
-#define BRANCH 0x02
+#define NORMALBRANCH 0x02
 #define ALLMOVES 0x3FFFF
 #define NOHALFTURNS 0x2DB6D
 
@@ -53,7 +53,7 @@ _static uint32_t
 allowednextmoveH48(uint8_t *moves, uint8_t n, uint32_t h48branch)
 {
 	uint32_t result = ALLMOVES;
-	if (h48branch & BRANCH)
+	if (h48branch & NORMALBRANCH)
 		result &= NOHALFTURNS;
 	if (n < 1)
 		return result;
