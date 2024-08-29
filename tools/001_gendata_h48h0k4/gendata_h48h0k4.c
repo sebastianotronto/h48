@@ -1,5 +1,4 @@
-#include "../timerun.h"
-#include "../../src/nissy.h"
+#include "../tool.h"
 
 #define MAXDEPTH 20
 #define HVALUE 0
