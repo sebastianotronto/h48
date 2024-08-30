@@ -1,6 +1,7 @@
 #define MAP_UNSET             UINT64_C(0xFFFFFFFFFFFFFFFF)
 #define MAP_KEYMASK           UINT64_C(0xFFFFFFFFFF)
 #define MAP_KEYSHIFT          UINT64_C(40)
+#define MAP_UNSET_VAL         (MAP_UNSET >> MAP_KEYSHIFT)
 
 typedef struct {
 	uint64_t n;
@@ -84,8 +85,8 @@ h48map_nextkvpair(h48map_t *map, uint64_t *p)
 	kvpair_t kv;
 	uint64_t pair;
 
-	kv.key = MAP_UNSET;
-	kv.val = MAP_UNSET;
+	kv.key = MAP_KEYMASK;
+	kv.val = MAP_UNSET_VAL;
 
 	DBG_ASSERT(*p < map->capacity, kv,
 	    "Error looping over map: given index %" PRIu64 " is out of "

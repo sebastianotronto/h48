@@ -1,6 +1,7 @@
 #define H48_COORDMAX_NOEO    ((int64_t)(COCSEP_CLASSES * _12c4 * _8c4))
 #define H48_COORDMAX(h)      ((int64_t)(H48_COORDMAX_NOEO << (int64_t)(h)))
-#define H48_TABLESIZE(h, k)  ((size_t)H48_COORDMAX((h)) / ((size_t)8 / (size_t)(k)))
+#define H48_DIV(k)           ((size_t)8 / (size_t)(k))
+#define H48_TABLESIZE(h, k)  _div_round_up((size_t)H48_COORDMAX((h)), H48_DIV(k))
 
 #define H48_COEFF(k)         (UINT32_C(32) / (uint32_t)(k))
 #define H48_INDEX(i, k)      ((uint32_t)(i) / H48_COEFF(k))
@@ -140,7 +141,7 @@ gendata_h48(gendata_h48_arg_t *arg)
 	cocsepsize = gendata_cocsep(
 	    (void *)arg->cocsepdata, arg->selfsim, arg->crep);
 	arg->h48data = arg->cocsepdata + (cocsepsize / sizeof(uint32_t));
-	arg->info = arg->h48data +
+	arg->info = arg->h48data + 1 +
 	    (H48_TABLESIZE(arg->h, arg->k) / sizeof(uint32_t));
 
 	if (arg->buf != NULL)
@@ -341,18 +342,27 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 	};
 
 	i = 0;
+int jj = 0;
 	for (kv = h48map_nextkvpair(&shortcubes, &i);
 	     i != shortcubes.capacity;
 	     kv = h48map_nextkvpair(&shortcubes, &i)
 	) {
-		/* TODO maybe over all sim? */
 		dfsarg.cube = invcoord_h48(kv.key, arg->crep, 11);
+
+#if 1
 		gendata_h48k2_dfs(&dfsarg);
+#else
+		/* It looks like this is not necessary, we get the same result */
+		_foreach_h48sim(
+			dfsarg.cube, arg->cocsepdata, arg->selfsim, arg->h,
+			gendata_h48k2_dfs(&dfsarg);
+		)
+#endif
+if ((++jj) % 1000 == 0) LOG("Done %d distance 8 cubes\n", jj);
 	}
 
 	h48map_destroy(&shortcubes);
 
-	/* TODO: move info update to dfs? */
 	memset(arg->info, 0, 5 * sizeof(arg->info[0]));
 	arg->info[0] = base[arg->k];
 	for (j = 0; j < H48_COORDMAX(arg->h); j++) {
@@ -384,8 +394,7 @@ gendata_h48k2_dfs(h48k2_dfs_arg_t *arg)
 		set_esep_pval(arg->h48data, coord, arg->k, newval);
 	}
 
-	if ((val < arg->shortdepth) ||
-	    (arg->depth > arg->shortdepth && val != MAP_UNSET) ||
+	if ((arg->depth > arg->shortdepth && val != MAP_UNSET_VAL) ||
 	    (arg->depth >= arg->maxdepth || arg->depth >= arg->base + 2))
 		return;
 
