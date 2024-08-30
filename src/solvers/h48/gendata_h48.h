@@ -60,7 +60,7 @@ typedef struct {
 
 typedef struct {
 	cube_t cube;
-	uint8_t moves[4];
+	uint8_t moves[MAXLEN];
 	uint8_t h;
 	uint8_t k;
 	uint8_t base;
@@ -310,8 +310,6 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 	gendata_h48short_arg_t shortarg;
 	h48k2_dfs_arg_t dfsarg;
 
-	DBG_ASSERT(base[arg->h] == 8, 0, "Only implemented for h <= 3 (base 8)\n");
-
 	if (arg->buf == NULL)
 		goto gendata_h48k2_return_size;
 
@@ -342,23 +340,12 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 	};
 
 	i = 0;
-int jj = 0;
 	for (kv = h48map_nextkvpair(&shortcubes, &i);
 	     i != shortcubes.capacity;
 	     kv = h48map_nextkvpair(&shortcubes, &i)
 	) {
 		dfsarg.cube = invcoord_h48(kv.key, arg->crep, 11);
-
-#if 1
 		gendata_h48k2_dfs(&dfsarg);
-#else
-		/* It looks like this is not necessary, we get the same result */
-		_foreach_h48sim(
-			dfsarg.cube, arg->cocsepdata, arg->selfsim, arg->h,
-			gendata_h48k2_dfs(&dfsarg);
-		)
-#endif
-if ((++jj) % 100000 == 0) LOG("Done %d distance 8 cubes\n", jj);
 	}
 
 	h48map_destroy(&shortcubes);
@@ -377,6 +364,7 @@ gendata_h48k2_return_size:
 _static void
 gendata_h48k2_dfs(h48k2_dfs_arg_t *arg)
 {
+	cube_t ccc;
 	bool toodeep, backtracked;
 	uint8_t nmoves, oldval, newval;
 	uint64_t mval;
@@ -384,14 +372,18 @@ gendata_h48k2_dfs(h48k2_dfs_arg_t *arg)
 	h48k2_dfs_arg_t nextarg;
 	uint8_t m;
 
-	fullcoord = coord_h48(arg->cube, arg->cocsepdata, 11);
-	coord = fullcoord >> (int64_t)(11 - arg->h);
+	ccc = arg->cube;
+	_foreach_h48sim(ccc, arg->cocsepdata, arg->selfsim, 11,
+		fullcoord = coord_h48(ccc, arg->cocsepdata, 11);
+		coord = fullcoord >> (int64_t)(11 - arg->h);
+		oldval = get_esep_pval(arg->h48data, coord, arg->k);
+		newval = arg->depth >= arg->base ? arg->depth - arg->base : 0;
+		set_esep_pval(
+		    arg->h48data, coord, arg->k, _min(oldval, newval));
+	)
+
+	fullcoord = coord_h48(arg->cube, arg->cocsepdata, 11); /* Necessary? */
 	mval = h48map_value(arg->shortcubes, fullcoord);
-
-	oldval = get_esep_pval(arg->h48data, coord, arg->k);
-	newval = arg->depth >= arg->base ? arg->depth - arg->base : 0;
-	set_esep_pval(arg->h48data, coord, arg->k, _min(oldval, newval));
-
 	backtracked = mval <= arg->shortdepth && arg->depth != arg->shortdepth;
 	toodeep = arg->depth >= arg->maxdepth;
 	if (backtracked || toodeep)
