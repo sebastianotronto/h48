@@ -2,26 +2,18 @@
 
 #define MAXDEPTH 20
 #define HVALUE 0
-#define OPTIONS "0;4;20"
-#define LONGOPTIONS "h = 0, k = 4, max depth = 20"
+#define OPTIONS "0;2;20"
+#define LONGOPTIONS "h = 0, k = 2, max depth = 20"
 
 #define COCSEPSIZE 1119792
-#define ETABLESIZE(h) (((3393 * 495 * 70) >> 1) << (size_t)(h))
+#define ETABLESIZE(h) (((3393 * 495 * 70) >> 2) << (size_t)(h))
 
 uint32_t expected[21] = {
-	[0] = 1,
-	[1] = 1,
-	[2] = 4,
-	[3] = 34,
-	[4] = 331,
-	[5] = 3612,
-	[6] = 41605,
-	[7] = 474128,
-	[8] = 4953846,
-	[9] = 34776317,
-	[10] = 68566704,
-	[11] = 8749194,
-	[12] = 1673,
+	/* Base value is 8 */
+	[0] = 5473562,
+	[1] = 34776317,
+	[2] = 68566704,
+	[3] = 8750867,
 };
 
 char *buf;
@@ -38,7 +30,7 @@ void run(void) {
 	} else {
 		printf("Succesfully generated %" PRId64 " bytes. Table:\n", s);
 		h48info = (uint32_t *)buf + 1 + (ETABLESIZE(HVALUE) + COCSEPSIZE) / 4;
-		for (i = 0; i < MAXDEPTH+1 && h48info[i+1]; i++) {
+		for (i = 0; i < 4; i++) {
 			x = h48info[i+1];
 			printf("%d:\t%" PRIu32, i, x);
 			if (x != expected[i])
