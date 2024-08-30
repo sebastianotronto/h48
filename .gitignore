@@ -8,6 +8,7 @@ tables/*
 test/*/runtest
 test/run
 test/run.DSYM
+run.DSYM
 test/last.*
 tools/results
 .vscode

@@ -11,6 +11,9 @@ typedef struct {
 	uint32_t *cocsepdata;
 	uint32_t *h48data;
 	char **nextsol;
+	uint8_t nissbranch;
+	int8_t npremoves;
+	uint8_t premoves[MAXLEN];
 } dfsarg_solveh48_t;
 
 typedef struct {
@@ -26,8 +29,7 @@ typedef struct {
 _static void solve_h48_appendsolution(dfsarg_solveh48_t *);
 _static_inline bool solve_h48_stop(dfsarg_solveh48_t *);
 _static int64_t solve_h48_dfs(dfsarg_solveh48_t *);
-_static int64_t solve_h48(
-    cube_t, int8_t, int8_t, int8_t, uint8_t, uint8_t, const void *, char *);
+_static int64_t solve_h48(cube_t, int8_t, int8_t, int8_t, uint8_t, uint8_t, const void *, char *);
 
 _static int64_t solve_h48stats_dfs(dfsarg_solveh48stats_t *);
 _static int64_t solve_h48stats(cube_t, int8_t, const void *, char [static 12]);
@@ -36,10 +38,22 @@ _static void
 solve_h48_appendsolution(dfsarg_solveh48_t *arg)
 {
 	int strl;
+	char *solution = *arg->nextsol; 
 
 	strl = writemoves(arg->moves, arg->nmoves, *arg->nextsol);
-	LOG("Solution found: %s\n", *arg->nextsol);
-	*arg->nextsol += strl;
+	*arg->nextsol += strl; 
+
+	if (arg->npremoves) {
+		**arg->nextsol = ' ';
+		(*arg->nextsol)++;
+
+		uint8_t* invertedpremoves = invertpremoves(arg->premoves, arg->npremoves);
+		strl = writemoves(invertedpremoves, arg->npremoves, *arg->nextsol);
+		free(invertedpremoves);
+		*arg->nextsol += strl;
+	}
+	LOG("Solution found: %s\n", solution);
+
 	**arg->nextsol = '\n';
 	(*arg->nextsol)++;
 	(*arg->nsols)++;
@@ -51,24 +65,27 @@ solve_h48_stop(dfsarg_solveh48_t *arg)
 	uint32_t data, data_inv;
 	int8_t bound;
 
+	arg->nissbranch = NORMAL;
 	bound = get_h48_cdata(arg->cube, arg->cocsepdata, &data);
-	if (bound + arg->nmoves > arg->depth)
+	if (bound + arg->nmoves + arg->npremoves > arg->depth)
 		return true;
 
 	bound = get_h48_cdata(arg->inverse, arg->cocsepdata, &data_inv);
-	if (bound + arg->nmoves > arg->depth)
+	if (bound + arg->nmoves + arg->npremoves > arg->depth)
 		return true;
 
-/*
 	bound = get_h48_bound(arg->cube, data, arg->h, arg->k, arg->h48data);
-LOG("Using pval %" PRId8 "\n", bound);
-	if (bound + arg->nmoves > arg->depth)
+ 	// LOG("Using pval %" PRId8 "\n", bound);
+	if (bound + arg->nmoves + arg->npremoves > arg->depth)
 		return true;
+	if (bound + arg->nmoves + arg->npremoves == arg->depth)
+		arg->nissbranch = INVERSEBRANCH;
 
 	bound = get_h48_bound(arg->inverse, data_inv, arg->h, arg->k, arg->h48data);
-	if (bound + arg->nmoves > arg->depth)
+	if (bound + arg->nmoves + arg->npremoves > arg->depth)
 		return true;
-*/
+	if (bound + arg->nmoves + arg->npremoves == arg->depth)
+		arg->nissbranch = NORMALBRANCH;
 
 	return false;
 }
@@ -87,7 +104,7 @@ solve_h48_dfs(dfsarg_solveh48_t *arg)
 		return 0;
 
 	if (issolved(arg->cube)) {
-		if (arg->nmoves != arg->depth)
+		if (arg->nmoves + arg->npremoves != arg->depth)
 			return 0;
 		solve_h48_appendsolution(arg);
 		return 1;
@@ -95,19 +112,30 @@ solve_h48_dfs(dfsarg_solveh48_t *arg)
 
 	/* TODO: avoid copy, change arg and undo changes after recursion */
 	nextarg = *arg;
-	nextarg.nmoves = arg->nmoves + 1;
 	ret = 0;
-	for (m = 0; m < 18; m++) {
-		nextarg.moves[arg->nmoves] = m;
-		if (!allowednextmove(nextarg.moves, nextarg.nmoves)) {
-			/* If a move is not allowed, neither are its 180
-			 * and 270 degree variations */
-			m += 2;
-			continue;
+	uint32_t allowed;
+	if(arg->nissbranch & INVERSE) {
+		allowed = allowednextmoveH48(arg->premoves, arg->npremoves, arg->nissbranch);
+		for (m = 0; m < 18; m++) {
+			if(allowed & (1 << m)) {
+				nextarg.npremoves = arg->npremoves + 1;
+				nextarg.premoves[arg->npremoves] = m;
+				nextarg.inverse = move(arg->inverse, m);
+				nextarg.cube = premove(arg->cube, m);
+				ret += solve_h48_dfs(&nextarg);
+			}
 		}
-		nextarg.cube = move(arg->cube, m);
-		nextarg.inverse = inverse(nextarg.cube); /* TODO: use premove */
-		ret += solve_h48_dfs(&nextarg);
+	} else {
+		allowed = allowednextmoveH48(arg->moves, arg->nmoves, arg->nissbranch);
+		for (m = 0; m < 18; m++) {
+			if (allowed & (1 << m)) {
+				nextarg.nmoves = arg->nmoves + 1;
+				nextarg.moves[arg->nmoves] = m;
+				nextarg.cube = move(arg->cube, m);
+				nextarg.inverse = premove(arg->inverse, m);
+				ret += solve_h48_dfs(&nextarg);
+			}
+		}
 	}
 
 	return ret;
@@ -148,6 +176,7 @@ solve_h48(
 		LOG("Found %" PRId64 " solutions, searching at depth %"
 		    PRId8 "\n", nsols, arg.depth);
 		arg.nmoves = 0;
+		arg.npremoves = 0;
 		solve_h48_dfs(&arg);
 	}
 
