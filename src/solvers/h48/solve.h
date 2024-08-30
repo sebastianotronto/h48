@@ -29,8 +29,7 @@ typedef struct {
 _static void solve_h48_appendsolution(dfsarg_solveh48_t *);
 _static_inline bool solve_h48_stop(dfsarg_solveh48_t *);
 _static int64_t solve_h48_dfs(dfsarg_solveh48_t *);
-_static int64_t solve_h48(
-    cube_t, int8_t, int8_t, int8_t, uint8_t, uint8_t, const void *, char *);
+_static int64_t solve_h48(cube_t, int8_t, int8_t, int8_t, uint8_t, uint8_t, const void *, char *);
 
 _static int64_t solve_h48stats_dfs(dfsarg_solveh48stats_t *);
 _static int64_t solve_h48stats(cube_t, int8_t, const void *, char [static 12]);
@@ -38,26 +37,26 @@ _static int64_t solve_h48stats(cube_t, int8_t, const void *, char [static 12]);
 _static void
 solve_h48_appendsolution(dfsarg_solveh48_t *arg)
 {
-    int strl;
-    char *solution = *arg->nextsol; 
+	int strl;
+	char *solution = *arg->nextsol; 
 
-    strl = writemoves(arg->moves, arg->nmoves, *arg->nextsol);
-    *arg->nextsol += strl; 
+	strl = writemoves(arg->moves, arg->nmoves, *arg->nextsol);
+	*arg->nextsol += strl; 
 
-    if (arg->npremoves) {
-        **arg->nextsol = ' ';
-        (*arg->nextsol)++;
+	if (arg->npremoves) {
+		**arg->nextsol = ' ';
+		(*arg->nextsol)++;
 
 		uint8_t* invertedpremoves = invertpremoves(arg->premoves, arg->npremoves);
-        strl = writemoves(invertedpremoves, arg->npremoves, *arg->nextsol);
+		strl = writemoves(invertedpremoves, arg->npremoves, *arg->nextsol);
 		free(invertedpremoves);
-        *arg->nextsol += strl;
-    }
-    LOG("Solution found: %s\n", solution);
+		*arg->nextsol += strl;
+	}
+	LOG("Solution found: %s\n", solution);
 
-    **arg->nextsol = '\n';
-    (*arg->nextsol)++;
-    (*arg->nsols)++;
+	**arg->nextsol = '\n';
+	(*arg->nextsol)++;
+	(*arg->nsols)++;
 }
 
 _static_inline bool

@@ -12,6 +12,7 @@ _static uint32_t allowednextmoveH48(uint8_t *, uint8_t, uint32_t);
 _static_inline uint8_t inverse_trans(uint8_t);
 _static_inline uint8_t movebase(uint8_t);
 _static_inline uint8_t moveaxis(uint8_t);
+_static_inline uint32_t disable_moves(uint32_t, uint8_t);
 
 _static cube_t move(cube_t, uint8_t);
 _static cube_t premove(cube_t, uint8_t);
@@ -43,10 +44,10 @@ allowednextmove(uint8_t *moves, uint8_t n)
 	return axis[1] != axis[2] || base[0] != base[2];
 }
 
-static uint32_t 
+_static_inline uint32_t 
 disable_moves(uint32_t current_result, uint8_t base_index)
 {
-	return current_result & ~((1 << base_index) | (1 << (base_index + 1)) | (1 << (base_index + 2)));
+	return current_result & ~(7 << base_index);
 }
 
 _static uint32_t
@@ -144,7 +145,7 @@ move(cube_t c, uint8_t m)
 _static cube_t
 premove(cube_t c, uint8_t m)
 {
-		switch (m) {
+	switch (m) {
 	case _move_U:
 		return _premove(U3, c);
 	case _move_U2:
