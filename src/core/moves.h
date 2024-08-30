@@ -62,8 +62,8 @@ allowednextmoveH48(uint8_t *moves, uint8_t n, uint32_t h48branch)
 	uint8_t axis1 = moveaxis(moves[n-1]);
 
 	result = disable_moves(result, base1 * 3);
-	if (base1 >= 9)
-		result = disable_moves(result, (base1 * 3) - 9);
+	if (base1 % 2)
+		result = disable_moves(result, (base1 - 1) * 3);
 
 	if (n == 1)
 		return result;
