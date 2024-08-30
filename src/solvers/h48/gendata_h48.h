@@ -333,7 +333,7 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 		.base = base[arg->h],
 		.depth = shortdepth,
 		.shortdepth = shortdepth,
-		.maxdepth = arg->maxdepth,
+		.maxdepth = _min(arg->maxdepth, base[arg->h]+2),
 		.cocsepdata = arg->cocsepdata,
 		.h48data = arg->h48data,
 		.selfsim = arg->selfsim,
@@ -358,7 +358,7 @@ int jj = 0;
 			gendata_h48k2_dfs(&dfsarg);
 		)
 #endif
-if ((++jj) % 1000 == 0) LOG("Done %d distance 8 cubes\n", jj);
+if ((++jj) % 100000 == 0) LOG("Done %d distance 8 cubes\n", jj);
 	}
 
 	h48map_destroy(&shortcubes);
@@ -377,30 +377,29 @@ gendata_h48k2_return_size:
 _static void
 gendata_h48k2_dfs(h48k2_dfs_arg_t *arg)
 {
+	bool toodeep, backtracked;
 	uint8_t nmoves, oldval, newval;
-	uint64_t val;
+	uint64_t mval;
 	int64_t coord, fullcoord;
 	h48k2_dfs_arg_t nextarg;
 	uint8_t m;
 
 	fullcoord = coord_h48(arg->cube, arg->cocsepdata, 11);
 	coord = fullcoord >> (int64_t)(11 - arg->h);
+	mval = h48map_value(arg->shortcubes, fullcoord);
 
-	val = h48map_value(arg->shortcubes, fullcoord);
+	oldval = get_esep_pval(arg->h48data, coord, arg->k);
+	newval = arg->depth >= arg->base ? arg->depth - arg->base : 0;
+	set_esep_pval(arg->h48data, coord, arg->k, _min(oldval, newval));
 
-	if (arg->depth >= arg->base && arg->depth <= arg->base + 2) {
-		oldval = get_esep_pval(arg->h48data, coord, arg->k);
-		newval = _min(oldval, arg->depth - arg->base);
-		set_esep_pval(arg->h48data, coord, arg->k, newval);
-	}
-
-	if ((arg->depth > arg->shortdepth && val != MAP_UNSET_VAL) ||
-	    (arg->depth >= arg->maxdepth || arg->depth >= arg->base + 2))
+	backtracked = mval <= arg->shortdepth && arg->depth != arg->shortdepth;
+	toodeep = arg->depth >= arg->maxdepth;
+	if (backtracked || toodeep)
 		return;
 
 	/* TODO: avoid copy, change arg and undo changes after recursion */
 	nextarg = *arg;
-	nextarg.depth = arg->depth + 1;
+	nextarg.depth++;
 	nmoves = nextarg.depth - arg->shortdepth;
 	for (m = 0; m < 18; m++) {
 		nextarg.moves[nmoves - 1] = m;

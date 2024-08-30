@@ -135,7 +135,7 @@ gendata_cocsep_dfs(cocsep_dfs_arg_t *arg)
 		return cc;
 	}
 
-	memcpy(&nextarg, arg, sizeof(cocsep_dfs_arg_t));
+	nextarg = *arg;
 	nextarg.depth++;
 	for (m = 0, cc = 0; m < 18; m++) {
 		nextarg.cube = move(arg->cube, m);
