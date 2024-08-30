@@ -304,7 +304,7 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 
 	uint8_t t;
 	int64_t j;
-	uint64_t nshort, i;
+	uint64_t nshort, i, ii;
 	h48map_t shortcubes;
 	kvpair_t kv;
 	gendata_h48short_arg_t shortarg;
@@ -339,13 +339,15 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 		.shortcubes = &shortcubes
 	};
 
-	i = 0;
+	i = ii = 0;
 	for (kv = h48map_nextkvpair(&shortcubes, &i);
 	     i != shortcubes.capacity;
 	     kv = h48map_nextkvpair(&shortcubes, &i)
 	) {
 		dfsarg.cube = invcoord_h48(kv.key, arg->crep, 11);
 		gendata_h48k2_dfs(&dfsarg);
+		if (++i % UINT64_C(1000000) == 0)
+			LOG("Processed %" PRIu64 " short cubes\n", ii);
 	}
 
 	h48map_destroy(&shortcubes);
