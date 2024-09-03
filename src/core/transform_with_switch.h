@@ -17,6 +17,11 @@
         invertco(compose(compose(_trans_cube_ ## T, c), \
         _trans_cube_ ## T ## _inverse))
 
+_static cube_t transform_edges(cube_t, uint8_t);
+_static cube_t transform_corners(cube_t, uint8_t);
+_static cube_t transform(cube_t, uint8_t);
+_static cube_t applytrans(cube_t, const char *);
+
 _static cube_t
 transform_edges(cube_t c, uint8_t t)
 {
@@ -333,4 +338,17 @@ transform(cube_t c, uint8_t t)
 		LOG("transform error, unknown transformation %" PRIu8 "\n", t);
 		return zero;
 	}
+}
+
+_static cube_t
+applytrans(cube_t cube, const char *buf)
+{
+	uint8_t t;
+
+	DBG_ASSERT(isconsistent(cube), zero,
+	    "transformation error: inconsistent cube\n");
+
+	t = readtrans(buf);
+
+	return transform(cube, t);
 }

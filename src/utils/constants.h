@@ -97,6 +97,13 @@ _static int64_t binomial[12][12] = {
 #define _trans_BDm UINT8_C(46)
 #define _trans_BLm UINT8_C(47)
 
+#define _mm_normal         UINT32_C(0x00)
+#define _mm_inverse        UINT32_C(0x01)
+#define _mm_inversebranch  UINT32_C(0x03)
+#define _mm_normalbranch   UINT32_C(0x02)
+#define _mm_allmoves       UINT32_C(0x3FFFF)
+#define _mm_nohalfturns    UINT32_C(0x2DB6D)
+
 #define _c_ufr      UINT8_C(0)
 #define _c_ubl      UINT8_C(1)
 #define _c_dfl      UINT8_C(2)

@@ -19,6 +19,11 @@
         invertco(compose(compose(_trans_cube_ ## T, c), \
         _trans_cube_ ## T ## _inverse))
 
+_static cube_t transform_edges(cube_t, uint8_t);
+_static cube_t transform_corners(cube_t, uint8_t);
+_static cube_t transform(cube_t, uint8_t);
+_static cube_t applytrans(cube_t, const char *);
+
 static cube_t cube_trans_table[48] = {
 	[_trans_UFr] = _trans_cube_UFr,
 	[_trans_UFm] = _trans_cube_UFm,
@@ -173,4 +178,17 @@ transform(cube_t c, uint8_t t)
 	ret = compose(ret, trans_inv);
 
 	return t < 24 ? ret : invertco(ret);
+}
+
+_static cube_t
+applytrans(cube_t cube, const char *buf)
+{
+	uint8_t t;
+
+	DBG_ASSERT(isconsistent(cube), zero,
+	    "transformation error: inconsistent cube\n");
+
+	t = readtrans(buf);
+
+	return transform(cube, t);
 }

@@ -1,6 +1,6 @@
 #include "../test.h"
 
-uint32_t allowednextmoveH48(uint8_t *, uint8_t, uint32_t);
+uint32_t allowednextmove_h48(uint8_t *, uint8_t, uint32_t);
 
 static char *moves[] = {
 	"U", "U2", "U'",
@@ -33,6 +33,6 @@ void run(void) {
 	fprintf(stderr, "Last two: %s, %s\n",
 	    n > 1 ? moves[m[n-2]] : "-",
 	    n > 0 ? moves[m[n-1]] : "-");
-	uint32_t allowed = allowednextmoveH48(m, n, bound);
+	uint32_t allowed = allowednextmove_h48(m, n, bound);
 	printf("0x%05X\n", allowed);
 }

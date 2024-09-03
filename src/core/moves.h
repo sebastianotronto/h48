@@ -1,13 +1,7 @@
-/* probably these can be placed in constants file */
-#define NORMAL 0x00
-#define INVERSE 0x01
-#define INVERSEBRANCH 0x03
-#define NORMALBRANCH 0x02
-#define ALLMOVES 0x3FFFF
-#define NOHALFTURNS 0x2DB6D
+#define _move(M, c) compose(c, _move_cube_ ## M)
+#define _premove(M, c) compose(_move_cube_ ## M, c)
 
 _static_inline bool allowednextmove(uint8_t *, uint8_t);
-_static uint32_t allowednextmoveH48(uint8_t *, uint8_t, uint32_t);
 
 _static_inline uint8_t inverse_trans(uint8_t);
 _static_inline uint8_t movebase(uint8_t);
@@ -17,7 +11,10 @@ _static_inline uint32_t disable_moves(uint32_t, uint8_t);
 _static cube_t move(cube_t, uint8_t);
 _static cube_t premove(cube_t, uint8_t);
 _static uint8_t inverse_move(uint8_t);
-_static uint8_t* invertpremoves(uint8_t *, uint8_t);
+_static void invertmoves(uint8_t *, uint8_t, uint8_t *);
+
+_static cube_t applymoves(cube_t, const char *);
+_static cube_t frommoves(const char *);
 
 _static bool
 allowednextmove(uint8_t *moves, uint8_t n)
@@ -48,34 +45,6 @@ _static_inline uint32_t
 disable_moves(uint32_t current_result, uint8_t base_index)
 {
 	return current_result & ~(7 << base_index);
-}
-
-_static uint32_t
-allowednextmoveH48(uint8_t *moves, uint8_t n, uint32_t h48branch)
-{
-	uint32_t result = ALLMOVES;
-	if (h48branch & NORMALBRANCH)
-		result &= NOHALFTURNS;
-	if (n < 1)
-		return result;
-
-	uint8_t base1 = movebase(moves[n-1]);
-	uint8_t axis1 = moveaxis(moves[n-1]);
-
-	result = disable_moves(result, base1 * 3);
-	if (base1 % 2)
-		result = disable_moves(result, (base1 - 1) * 3);
-
-	if (n == 1)
-		return result;
-	
-	uint8_t base2 = movebase(moves[n-2]);
-	uint8_t axis2 = moveaxis(moves[n-2]);
-
-	if(axis1 == axis2)
-		result = disable_moves(result, base2 * 3);
-
-	return result;
 }
 
 _static_inline uint8_t
@@ -194,17 +163,46 @@ inverse_move(uint8_t m)
 	return m - 2 * (m % 3) + 2;	
 }
 
-_static uint8_t*
-invertpremoves(uint8_t *moves, uint8_t nmoves)
+_static void
+invertmoves(uint8_t *moves, uint8_t nmoves, uint8_t *ret)
 {
 	uint8_t i;
-	uint8_t *ret = malloc(nmoves * sizeof(uint8_t));
 
 	for (i = 0; i < nmoves; i++)
-		ret[i] = inverse_move(moves[i]);
+		ret[i] = inverse_move(moves[nmoves - i - 1]);
+}
 
-	// invert elements in the array
-	for (i = 0; i < nmoves / 2; i++)
-		_swap(ret[i], ret[nmoves - i - 1]);
-	return ret;
+_static cube_t
+applymoves(cube_t cube, const char *buf)
+{
+	uint8_t r, m;
+	const char *b;
+
+	DBG_ASSERT(isconsistent(cube), zero,
+	    "move error: inconsistent cube\n");
+
+	for (b = buf; *b != '\0'; b++) {
+		while (*b == ' ' || *b == '\t' || *b == '\n')
+			b++;
+		if (*b == '\0')
+			goto applymoves_finish;
+		if ((r = readmove(*b)) == _error)
+			goto applymoves_error;
+		if ((m = readmodifier(*(b+1))) != 0)
+			b++;
+		cube = move(cube, r + m);
+	}
+
+applymoves_finish:
+	return cube;
+
+applymoves_error:
+	LOG("applymoves error\n");
+	return zero;
+}
+
+_static cube_t
+frommoves(const char *buf)
+{
+	return applymoves(solved, buf);
 }

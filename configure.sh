@@ -16,15 +16,18 @@ detectsan() {
 TYPE=${TYPE-"$detected"}
 
 STD="-std=c99"
-WFLAGS="-pedantic -Wall -Wextra -Wno-unused-parameter -Wno-unused-function"
+WFLAGS="-pedantic -Wall -Wextra"
+# -Wstringop-overflow seems to be causing problems when combined with -O3
+# Someone else complained here: https://access.redhat.com/solutions/6755371
+WNOFLAGS="-Wno-unused-parameter -Wno-unused-function -Wno-stringop-overflow"
 [ "$TYPE" = "AVX2" ] && AVX="-mavx2"
 [ -n "$(detectsan address)" ] && ADDR="-fsanitize=address"
 [ -n "$(detectsan undefined)" ] && UNDEF="-fsanitize=undefined"
 SAN="$ADDR $UNDEF"
 LIBS="-lpthread"
 
-CFLAGS="$STD $LIBS $WFLAGS $AVX -O3"
-DBGFLAGS="$STD $LIBS $WFLAGS $SAN $AVX -g3 -DDEBUG"
+CFLAGS="$STD $LIBS $WFLAGS $WNOFLAGS $AVX -O3"
+DBGFLAGS="$STD $LIBS $WFLAGS $WNOFLAGS $SAN $AVX -g3 -DDEBUG"
 
 echo "Cube type: CUBE_$TYPE"
 echo "Compiler: ${CC:-cc}"

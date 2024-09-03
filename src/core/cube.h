@@ -1,24 +1,11 @@
-#define _move(M, c) compose(c, _move_cube_ ## M)
-#define _premove(M, c) compose(_move_cube_ ## M, c)
-
 _static cube_t cubefromarray(uint8_t [static 8], uint8_t [static 12]);
 _static cube_t solvedcube(void);
 _static bool isconsistent(cube_t);
 _static bool issolvable(cube_t);
 _static bool issolved(cube_t);
 _static bool iserror(cube_t);
-_static cube_t applymoves(cube_t, const char *);
-_static cube_t applytrans(cube_t, const char *);
-_static cube_t frommoves(const char *);
 _static void getcube_fix(int64_t *, int64_t *, int64_t *, int64_t *);
 _static cube_t getcube(int64_t, int64_t, int64_t, int64_t);
-
-_static cube_t transform_edges(cube_t, uint8_t);
-_static cube_t transform_corners(cube_t, uint8_t);
-_static cube_t transform(cube_t, uint8_t);
-
-/* declared in moves.h */
-_static cube_t move(cube_t, uint8_t);
 
 _static cube_t
 cubefromarray(uint8_t c[static 8], uint8_t e[static 12])
@@ -149,41 +136,6 @@ iserror(cube_t cube)
 	return equal(cube, zero);
 }
 
-_static cube_t
-applymoves(cube_t cube, const char *buf)
-{
-	uint8_t r, m;
-	const char *b;
-
-	DBG_ASSERT(isconsistent(cube), zero,
-	    "move error: inconsistent cube\n");
-
-	for (b = buf; *b != '\0'; b++) {
-		while (*b == ' ' || *b == '\t' || *b == '\n')
-			b++;
-		if (*b == '\0')
-			goto applymoves_finish;
-		if ((r = readmove(*b)) == _error)
-			goto applymoves_error;
-		if ((m = readmodifier(*(b+1))) != 0)
-			b++;
-		cube = move(cube, r + m);
-	}
-
-applymoves_finish:
-	return cube;
-
-applymoves_error:
-	LOG("applymoves error\n");
-	return zero;
-}
-
-_static cube_t
-frommoves(const char *buf)
-{
-	return applymoves(solved, buf);
-}
-
 _static void
 getcube_fix(int64_t *ep, int64_t *eo, int64_t *cp, int64_t *co)
 {
@@ -227,21 +179,3 @@ getcube(int64_t ep, int64_t eo, int64_t cp, int64_t co)
 
 	return cubefromarray(carr, earr);
 }
-
-_static cube_t
-applytrans(cube_t cube, const char *buf)
-{
-	uint8_t t;
-
-	DBG_ASSERT(isconsistent(cube), zero,
-	    "transformation error: inconsistent cube\n");
-
-	t = readtrans(buf);
-
-	return transform(cube, t);
-}
-
-/*
-TODO transform is now relegated to a separated file because it is too long.
-It would be nice to make it shorter without loosing performance.
-*/

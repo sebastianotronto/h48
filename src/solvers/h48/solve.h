@@ -26,6 +26,8 @@ typedef struct {
 	char *s;
 } dfsarg_solveh48stats_t;
 
+_static uint32_t allowednextmove_h48(uint8_t *, uint8_t, uint32_t);
+
 _static void solve_h48_appendsolution(dfsarg_solveh48_t *);
 _static_inline bool solve_h48_stop(dfsarg_solveh48_t *);
 _static int64_t solve_h48_dfs(dfsarg_solveh48_t *);
@@ -34,10 +36,39 @@ _static int64_t solve_h48(cube_t, int8_t, int8_t, int8_t, uint8_t, uint8_t, cons
 _static int64_t solve_h48stats_dfs(dfsarg_solveh48stats_t *);
 _static int64_t solve_h48stats(cube_t, int8_t, const void *, char [static 12]);
 
+_static uint32_t
+allowednextmove_h48(uint8_t *moves, uint8_t n, uint32_t h48branch)
+{
+	uint32_t result = _mm_allmoves;
+	if (h48branch & _mm_normalbranch)
+		result &= _mm_nohalfturns;
+	if (n < 1)
+		return result;
+
+	uint8_t base1 = movebase(moves[n-1]);
+	uint8_t axis1 = moveaxis(moves[n-1]);
+
+	result = disable_moves(result, base1 * 3);
+	if (base1 % 2)
+		result = disable_moves(result, (base1 - 1) * 3);
+
+	if (n == 1)
+		return result;
+
+	uint8_t base2 = movebase(moves[n-2]);
+	uint8_t axis2 = moveaxis(moves[n-2]);
+
+	if(axis1 == axis2)
+		result = disable_moves(result, base2 * 3);
+
+	return result;
+}
+
 _static void
 solve_h48_appendsolution(dfsarg_solveh48_t *arg)
 {
 	int strl;
+	uint8_t invertedpremoves[MAXLEN];
 	char *solution = *arg->nextsol; 
 
 	strl = writemoves(arg->moves, arg->nmoves, *arg->nextsol);
@@ -47,9 +78,8 @@ solve_h48_appendsolution(dfsarg_solveh48_t *arg)
 		**arg->nextsol = ' ';
 		(*arg->nextsol)++;
 
-		uint8_t* invertedpremoves = invertpremoves(arg->premoves, arg->npremoves);
+		invertmoves(arg->premoves, arg->npremoves, invertedpremoves);
 		strl = writemoves(invertedpremoves, arg->npremoves, *arg->nextsol);
-		free(invertedpremoves);
 		*arg->nextsol += strl;
 	}
 	LOG("Solution found: %s\n", solution);
@@ -65,7 +95,7 @@ solve_h48_stop(dfsarg_solveh48_t *arg)
 	uint32_t data, data_inv;
 	int8_t bound;
 
-	arg->nissbranch = NORMAL;
+	arg->nissbranch = _mm_normal;
 	bound = get_h48_cdata(arg->cube, arg->cocsepdata, &data);
 	if (bound + arg->nmoves + arg->npremoves > arg->depth)
 		return true;
@@ -79,13 +109,13 @@ solve_h48_stop(dfsarg_solveh48_t *arg)
 	if (bound + arg->nmoves + arg->npremoves > arg->depth)
 		return true;
 	if (bound + arg->nmoves + arg->npremoves == arg->depth)
-		arg->nissbranch = INVERSEBRANCH;
+		arg->nissbranch = _mm_inversebranch;
 
 	bound = get_h48_bound(arg->inverse, data_inv, arg->h, arg->k, arg->h48data);
 	if (bound + arg->nmoves + arg->npremoves > arg->depth)
 		return true;
 	if (bound + arg->nmoves + arg->npremoves == arg->depth)
-		arg->nissbranch = NORMALBRANCH;
+		arg->nissbranch = _mm_normalbranch;
 
 	return false;
 }
@@ -114,8 +144,8 @@ solve_h48_dfs(dfsarg_solveh48_t *arg)
 	nextarg = *arg;
 	ret = 0;
 	uint32_t allowed;
-	if(arg->nissbranch & INVERSE) {
-		allowed = allowednextmoveH48(arg->premoves, arg->npremoves, arg->nissbranch);
+	if(arg->nissbranch & _mm_inverse) {
+		allowed = allowednextmove_h48(arg->premoves, arg->npremoves, arg->nissbranch);
 		for (m = 0; m < 18; m++) {
 			if(allowed & (1 << m)) {
 				nextarg.npremoves = arg->npremoves + 1;
@@ -126,7 +156,7 @@ solve_h48_dfs(dfsarg_solveh48_t *arg)
 			}
 		}
 	} else {
-		allowed = allowednextmoveH48(arg->moves, arg->nmoves, arg->nissbranch);
+		allowed = allowednextmove_h48(arg->moves, arg->nmoves, arg->nissbranch);
 		for (m = 0; m < 18; m++) {
 			if (allowed & (1 << m)) {
 				nextarg.nmoves = arg->nmoves + 1;
