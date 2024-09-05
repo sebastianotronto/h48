@@ -111,6 +111,7 @@ move(cube_t c, uint8_t m)
 	}
 }
 
+/* Applies the INVERSE of m BEFORE the scramble corresponding to c */
 STATIC cube_t
 premove(cube_t c, uint8_t m)
 {
