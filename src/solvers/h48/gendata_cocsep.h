@@ -1,5 +1,5 @@
 #define COCSEP_CLASSES        ((size_t)3393)
-#define COCSEP_TABLESIZE      ((size_t)_3p7 << (size_t)7)
+#define COCSEP_TABLESIZE      ((size_t)POW_3_7 << (size_t)7)
 #define COCSEP_VISITEDSIZE    ((COCSEP_TABLESIZE + (size_t)7) / (size_t)8)
 #define COCSEP_FULLSIZE       ((size_t)4 * (COCSEP_TABLESIZE + (size_t)12))
 
@@ -20,13 +20,13 @@ typedef struct {
 	cube_t *rep;
 } cocsep_dfs_arg_t;
 
-_static_inline bool get_visited(const uint8_t *, int64_t);
-_static_inline void set_visited(uint8_t *, int64_t);
+STATIC_INLINE bool get_visited(const uint8_t *, int64_t);
+STATIC_INLINE void set_visited(uint8_t *, int64_t);
 
-_static size_t gendata_cocsep(void *, uint64_t *, cube_t *);
-_static uint32_t gendata_cocsep_dfs(cocsep_dfs_arg_t *);
+STATIC size_t gendata_cocsep(void *, uint64_t *, cube_t *);
+STATIC uint32_t gendata_cocsep_dfs(cocsep_dfs_arg_t *);
 
-_static_inline int8_t get_h48_cdata(cube_t, uint32_t *, uint32_t *);
+STATIC_INLINE int8_t get_h48_cdata(cube_t, uint32_t *, uint32_t *);
 
 /*
 Each element of the cocsep table is a uint32_t used as follows:
@@ -39,7 +39,7 @@ After the data as described above, more auxiliary information is appended:
   - One uint32_t for each "line" of the pruning table, representing the number
     of positions having that pruning value.
 */
-_static size_t
+STATIC size_t
 gendata_cocsep(void *buf, uint64_t *selfsim, cube_t *rep)
 {
 	uint32_t *buf32, *info, cc;
@@ -91,7 +91,7 @@ gendata_cocsep_return_size:
 	return COCSEP_FULLSIZE;
 }
 
-_static uint32_t
+STATIC uint32_t
 gendata_cocsep_dfs(cocsep_dfs_arg_t *arg)
 {
 	uint8_t m;
@@ -145,19 +145,19 @@ gendata_cocsep_dfs(cocsep_dfs_arg_t *arg)
 	return cc;
 }
 
-_static_inline bool
+STATIC_INLINE bool
 get_visited(const uint8_t *a, int64_t i)
 {
 	return a[VISITED_IND(i)] & VISITED_MASK(i);
 }
 
-_static_inline void
+STATIC_INLINE void
 set_visited(uint8_t *a, int64_t i)
 {
 	a[VISITED_IND(i)] |= VISITED_MASK(i);
 }
 
-_static_inline int8_t
+STATIC_INLINE int8_t
 get_h48_cdata(cube_t cube, uint32_t *cocsepdata, uint32_t *cdata)
 {
 	int64_t coord;

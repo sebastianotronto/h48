@@ -15,15 +15,15 @@ typedef struct {
 	uint64_t val;
 } kvpair_t;
 
-_static void h48map_create(h48map_t *, uint64_t, uint64_t);
-_static void h48map_clear(h48map_t *);
-_static void h48map_destroy(h48map_t *);
-_static uint64_t h48map_lookup(h48map_t *, uint64_t);
-_static void h48map_insertmin(h48map_t *, uint64_t, uint64_t);
-_static uint64_t h48map_value(h48map_t *, uint64_t);
-_static kvpair_t h48map_nextkvpair(h48map_t *, uint64_t *);
+STATIC void h48map_create(h48map_t *, uint64_t, uint64_t);
+STATIC void h48map_clear(h48map_t *);
+STATIC void h48map_destroy(h48map_t *);
+STATIC uint64_t h48map_lookup(h48map_t *, uint64_t);
+STATIC void h48map_insertmin(h48map_t *, uint64_t, uint64_t);
+STATIC uint64_t h48map_value(h48map_t *, uint64_t);
+STATIC kvpair_t h48map_nextkvpair(h48map_t *, uint64_t *);
 
-_static void
+STATIC void
 h48map_create(h48map_t *map, uint64_t capacity, uint64_t randomizer)
 {
 	map->capacity = capacity;
@@ -33,20 +33,20 @@ h48map_create(h48map_t *map, uint64_t capacity, uint64_t randomizer)
 	h48map_clear(map);
 }
 
-_static void
+STATIC void
 h48map_clear(h48map_t *map)
 {
 	memset(map->table, 0xFF, map->capacity * sizeof(uint64_t));
 	map->n = 0;
 }
 
-_static void
+STATIC void
 h48map_destroy(h48map_t *map)
 {
 	free(map->table);
 }
 
-_static_inline uint64_t
+STATIC_INLINE uint64_t
 h48map_lookup(h48map_t *map, uint64_t x)
 {
 	uint64_t hash, i;
@@ -60,7 +60,7 @@ h48map_lookup(h48map_t *map, uint64_t x)
 	return i;
 }
 
-_static_inline void
+STATIC_INLINE void
 h48map_insertmin(h48map_t *map, uint64_t key, uint64_t val)
 {
 	uint64_t i, oldval, min;
@@ -73,13 +73,13 @@ h48map_insertmin(h48map_t *map, uint64_t key, uint64_t val)
 	map->table[i] = (key & MAP_KEYMASK) | (min << MAP_KEYSHIFT);
 }
 
-_static_inline uint64_t
+STATIC_INLINE uint64_t
 h48map_value(h48map_t *map, uint64_t key)
 {
 	return map->table[h48map_lookup(map, key)] >> MAP_KEYSHIFT;
 }
 
-_static kvpair_t
+STATIC kvpair_t
 h48map_nextkvpair(h48map_t *map, uint64_t *p)
 {
 	kvpair_t kv;

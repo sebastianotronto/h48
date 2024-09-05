@@ -1,7 +1,7 @@
-_static uint8_t readtrans(const char *);
-_static void writetrans(uint8_t, char *);
+STATIC uint8_t readtrans(const char *);
+STATIC void writetrans(uint8_t, char *);
 
-_static uint8_t
+STATIC uint8_t
 readtrans(const char *buf)
 {
 	uint8_t t;
@@ -11,10 +11,10 @@ readtrans(const char *buf)
 			return t;
 
 	LOG("readtrans error\n");
-	return _error;
+	return UINT8_ERROR;
 }
 
-_static void
+STATIC void
 writetrans(uint8_t t, char *buf)
 {
 	if (t >= 48)

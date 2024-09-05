@@ -10,8 +10,8 @@
 
 #include "nissy.h"
 
-_static int parse_h48_options(const char *, uint8_t *, uint8_t *, uint8_t *);
-_static int64_t write_result(cube_t, char [static 22]);
+STATIC int parse_h48_options(const char *, uint8_t *, uint8_t *, uint8_t *);
+STATIC int64_t write_result(cube_t, char [static 22]);
 
 /* TODO: add option to get DR, maybe C-only, E-only, eo... */
 #define GETCUBE_OPTIONS(S, F) { .option = S, .fix = F }
@@ -23,7 +23,7 @@ struct {
 	GETCUBE_OPTIONS(NULL, NULL)
 };
 
-_static int
+STATIC int
 parse_h48_options(const char *buf, uint8_t *h, uint8_t *k, uint8_t *maxdepth)
 {
 	bool h_valid, k_valid, maxdepth_valid;
@@ -61,7 +61,7 @@ parse_h48_options_error:
 	return -1;
 }
 
-_static int64_t
+STATIC int64_t
 write_result(cube_t cube, char result[static 22])
 {
 	if (!isconsistent(cube)) {

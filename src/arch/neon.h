@@ -4,8 +4,8 @@
 #define _ep_neon vcombine_u8(vdupq_n_u8(0x0F), vdupq_n_u8(0x0F))
 #define _eo_neon vcombine_u8(vdupq_n_u8(0x10), vdupq_n_u8(0x10))
 
-_static_inline uint8x16_t compose_edges_slim(uint8x16_t, uint8x16_t);
-_static_inline uint8x16_t compose_corners_slim(uint8x16_t, uint8x16_t);
+STATIC_INLINE uint8x16_t compose_edges_slim(uint8x16_t, uint8x16_t);
+STATIC_INLINE uint8x16_t compose_corners_slim(uint8x16_t, uint8x16_t);
 
 // static cube
 #define static_cube(c_ufr, c_ubl, c_dfl, c_dbr, c_ufl, c_ubr, c_dfr, c_dbl, \
@@ -26,7 +26,7 @@ _static_inline uint8x16_t compose_corners_slim(uint8x16_t, uint8x16_t);
 #define solved static_cube(	\
 	0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
 
-_static void
+STATIC void
 pieces(cube_t *cube, uint8_t c[static 8], uint8_t e[static 12])
 {
 	// First 8 bytes of the corner vector are copied from the c array
@@ -39,7 +39,7 @@ pieces(cube_t *cube, uint8_t c[static 8], uint8_t e[static 12])
 	vst1_lane_u32((uint32_t *)(e + 8), vreinterpret_u32_u8(vget_high_u8(cube->edge)), 0);
 }
 
-_static_inline bool
+STATIC_INLINE bool
 equal(cube_t c1, cube_t c2)
 {
 	uint8x16_t cmp_corner, cmp_edge;
@@ -62,7 +62,7 @@ equal(cube_t c1, cube_t c2)
 	return vgetq_lane_u64(cmp_result, 0) == ~0ULL && vgetq_lane_u64(cmp_result, 1) == ~0ULL;
 }
 
-_static_inline cube_t
+STATIC_INLINE cube_t
 invertco(cube_t c)
 {
 	cube_t ret;
@@ -80,7 +80,7 @@ invertco(cube_t c)
 	return ret;
 }
 
-_static_inline cube_t
+STATIC_INLINE cube_t
 compose_edges(cube_t c1, cube_t c2)
 {
 	cube_t ret = {0};
@@ -88,7 +88,7 @@ compose_edges(cube_t c1, cube_t c2)
 	return ret;
 }
 
-_static_inline cube_t 
+STATIC_INLINE cube_t
 compose_corners(cube_t c1, cube_t c2)
 {
 	cube_t ret = {0};
@@ -96,12 +96,12 @@ compose_corners(cube_t c1, cube_t c2)
 	return ret;
 }
 
-_static_inline uint8x16_t 
+STATIC_INLINE uint8x16_t
 compose_edges_slim(uint8x16_t edge1, uint8x16_t edge2)
 {
 	// Masks
-	uint8x16_t p_bits = vdupq_n_u8(_pbits);
-	uint8x16_t eo_bit = vdupq_n_u8(_eobit);
+	uint8x16_t p_bits = vdupq_n_u8(PBITS);
+	uint8x16_t eo_bit = vdupq_n_u8(EOBIT);
 
 	// Find the index and permutation
 	uint8x16_t p = vandq_u8(edge2, p_bits);
@@ -120,14 +120,14 @@ compose_edges_slim(uint8x16_t edge1, uint8x16_t edge2)
 	return ret;
 }
 
-_static_inline uint8x16_t 
+STATIC_INLINE uint8x16_t
 compose_corners_slim(uint8x16_t corner1, uint8x16_t corner2)
 {
 	// Masks
-	uint8x16_t p_bits = vdupq_n_u8(_pbits);
-	uint8x16_t cobits = vdupq_n_u8(_cobits);
-	uint8x16_t cobits2 = vdupq_n_u8(_cobits2);
-	uint8x16_t twist_cw = vdupq_n_u8(_ctwist_cw);
+	uint8x16_t p_bits = vdupq_n_u8(PBITS);
+	uint8x16_t cobits = vdupq_n_u8(COBITS);
+	uint8x16_t cobits2 = vdupq_n_u8(COBITS_2);
+	uint8x16_t twist_cw = vdupq_n_u8(CTWIST_CW);
 
 	// Find the index and permutation
 	uint8x16_t p = vandq_u8(corner2, p_bits);
@@ -148,7 +148,7 @@ compose_corners_slim(uint8x16_t corner1, uint8x16_t corner2)
 	return ret;
 }
 
-_static_inline cube_t 
+STATIC_INLINE cube_t
 compose(cube_t c1, cube_t c2)
 {
 	cube_t ret = {0};
@@ -159,7 +159,7 @@ compose(cube_t c1, cube_t c2)
 	return ret;
 }
 
-_static_inline cube_t 
+STATIC_INLINE cube_t
 inverse(cube_t cube)
 {
 	uint8_t i, piece, orien;
@@ -180,16 +180,16 @@ inverse(cube_t cube)
 	for (i = 0; i < 12; i++)
 	{
 		piece = edges[i];
-		orien = piece & _eobit;
-		edge_result[piece & _pbits] = i | orien;
+		orien = piece & EOBIT;
+		edge_result[piece & PBITS] = i | orien;
 	}
 
 	// Process the corners
 	for (i = 0; i < 8; i++)
 	{
 		piece = corners[i];
-		orien = ((piece << 1) | (piece >> 1)) & _cobits2;
-		corner_result[piece & _pbits] = i | orien;
+		orien = ((piece << 1) | (piece >> 1)) & COBITS_2;
+		corner_result[piece & PBITS] = i | orien;
 	}
 
 	// Copy the results back to the NEON vectors
@@ -199,7 +199,7 @@ inverse(cube_t cube)
 	return ret;
 }
 
-_static_inline int64_t 
+STATIC_INLINE int64_t
 coord_co(cube_t c)
 {
 	// Temp array to store the NEON vector
@@ -210,12 +210,12 @@ coord_co(cube_t c)
 	int64_t ret;
 
 	for (ret = 0, i = 0, p = 1; i < 7; i++, p *= 3)
-		ret += p * (mem[i] >> _coshift);
+		ret += p * (mem[i] >> COSHIFT);
 
 	return ret;
 }
 
-_static_inline int64_t
+STATIC_INLINE int64_t
 coord_csep(cube_t c)
 {
 	// Temp array to store the NEON vector
@@ -225,19 +225,19 @@ coord_csep(cube_t c)
 	int64_t ret = 0;
 	int i, p;
 	for (ret = 0, i = 0, p = 1; i < 7; i++, p *= 2)
-		ret += p * ((mem[i] & _csepbit) >> 2);
+		ret += p * ((mem[i] & CSEPBIT) >> 2);
 
 	return ret;
 	return 0;
 }
 
-_static_inline int64_t
+STATIC_INLINE int64_t
 coord_cocsep(cube_t c)
 {
 	return (coord_co(c) << 7) + coord_csep(c);
 }
 
-_static_inline int64_t 
+STATIC_INLINE int64_t
 coord_eo(cube_t c)
 {
 	int64_t ret = 0;
@@ -249,13 +249,13 @@ coord_eo(cube_t c)
 
 	for (int i = 1; i < 12; i++, p *= 2)
 	{
-		ret += p * (mem[i] >> _eoshift);
+		ret += p * (mem[i] >> EOSHIFT);
 	}
 
 	return ret;
 }
 
-_static_inline int64_t 
+STATIC_INLINE int64_t
 coord_esep(cube_t c)
 {
 	int64_t i, j, jj, k, l, ret1, ret2, bit1, bit2, is1;
@@ -266,8 +266,8 @@ coord_esep(cube_t c)
 
 	for (i = 0, j = 0, k = 4, l = 4, ret1 = 0, ret2 = 0; i < 12; i++)
 	{
-		bit1 = (mem[i] & _esepbit1) >> 2;
-		bit2 = (mem[i] & _esepbit2) >> 3;
+		bit1 = (mem[i] & ESEPBIT_1) >> 2;
+		bit2 = (mem[i] & ESEPBIT_2) >> 3;
 		is1 = (1 - bit2) * bit1;
 
 		ret1 += bit2 * binomial[11 - i][k];
@@ -282,19 +282,19 @@ coord_esep(cube_t c)
 	return ret1 * 70 + ret2;
 }
 
-_static_inline void
+STATIC_INLINE void
 copy_corners(cube_t *dst, cube_t src)
 {
 	dst->corner = src.corner;
 }
 
-_static_inline void
+STATIC_INLINE void
 copy_edges(cube_t *dst, cube_t src)
 {
 	dst->edge = src.edge;
 }
 
-_static_inline void
+STATIC_INLINE void
 set_eo(cube_t *cube, int64_t eo)
 {
 	// Temp array to store the NEON vector
@@ -306,16 +306,16 @@ set_eo(cube_t *cube, int64_t eo)
 	{
 		flip = eo % 2;
 		sum += flip;
-		mem[i] = (mem[i] & ~_eobit) | (_eobit * flip);
+		mem[i] = (mem[i] & ~EOBIT) | (EOBIT * flip);
 	}
-	mem[0] = (mem[0] & ~_eobit) | (_eobit * (sum % 2));
+	mem[0] = (mem[0] & ~EOBIT) | (EOBIT * (sum % 2));
 
 	// Copy the results back to the NEON vector
 	cube->edge = vld1q_u8(mem);
 	return;
 }
 
-_static_inline cube_t
+STATIC_INLINE cube_t
 invcoord_esep(int64_t esep)
 {
 	cube_t ret;

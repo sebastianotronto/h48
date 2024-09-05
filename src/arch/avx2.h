@@ -16,7 +16,7 @@
 #define solved static_cube( \
     0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
 
-_static void
+STATIC void
 pieces(cube_t *cube, uint8_t c[static 8], uint8_t e[static 12])
 {
 	uint8_t aux[32];
@@ -26,7 +26,7 @@ pieces(cube_t *cube, uint8_t c[static 8], uint8_t e[static 12])
 	memcpy(e, aux+16, 12);
 }
 
-_static_inline bool
+STATIC_INLINE bool
 equal(cube_t c1, cube_t c2)
 {
 	int32_t mask;
@@ -38,7 +38,7 @@ equal(cube_t c1, cube_t c2)
 	return mask == ~0;
 }
 
-_static_inline cube_t
+STATIC_INLINE cube_t
 invertco(cube_t c)
 {
         cube_t co, shleft, shright, summed, newco, cleanco, ret;
@@ -54,7 +54,7 @@ invertco(cube_t c)
         return ret;
 }
 
-_static_inline cube_t
+STATIC_INLINE cube_t
 compose_epcpeo(cube_t c1, cube_t c2)
 {
 	cube_t b, s, eo2;
@@ -74,13 +74,13 @@ compose_epcpeo(cube_t c1, cube_t c2)
 	return s;
 }
 
-_static_inline cube_t
+STATIC_INLINE cube_t
 compose_edges(cube_t c1, cube_t c2)
 {
 	return compose_epcpeo(c1, c2);
 }
 
-_static_inline cube_t
+STATIC_INLINE cube_t
 compose_corners(cube_t c1, cube_t c2)
 {
 	/*
@@ -91,7 +91,7 @@ compose_corners(cube_t c1, cube_t c2)
 	return compose(c1, c2);
 }
 
-_static_inline cube_t
+STATIC_INLINE cube_t
 compose(cube_t c1, cube_t c2)
 {
 	cube_t s, co1, co2, aux, auy1, auy2, auz1, auz2;
@@ -114,7 +114,7 @@ compose(cube_t c1, cube_t c2)
 	return s;
 }
 
-_static_inline cube_t
+STATIC_INLINE cube_t
 cleanaftershuffle(cube_t c)
 {
 	__m256i b;
@@ -127,7 +127,7 @@ cleanaftershuffle(cube_t c)
 	return _mm256_andnot_si256(b, c);
 }
 
-_static_inline cube_t
+STATIC_INLINE cube_t
 inverse(cube_t c)
 {
 	/* Method taken from Andrew Skalski's vcube[1]. The addition sequence
@@ -166,7 +166,7 @@ inverse(cube_t c)
 	return invertco(ret);
 }
 
-_static_inline int64_t
+STATIC_INLINE int64_t
 coord_co(cube_t c)
 {
 	cube_t co;
@@ -182,7 +182,7 @@ coord_co(cube_t c)
 	return ret;
 }
 
-_static_inline int64_t
+STATIC_INLINE int64_t
 coord_csep(cube_t c)
 {
 	cube_t cp, shifted;
@@ -195,13 +195,13 @@ coord_csep(cube_t c)
 	return mask & 0x7F;
 }
 
-_static_inline int64_t
+STATIC_INLINE int64_t
 coord_cocsep(cube_t c)
 {
 	return (coord_co(c) << 7) + coord_csep(c);
 }
 
-_static_inline int64_t
+STATIC_INLINE int64_t
 coord_eo(cube_t c)
 {
 	cube_t eo, shifted;
@@ -214,7 +214,7 @@ coord_eo(cube_t c)
 	return mask >> 17;
 }
 
-_static_inline int64_t
+STATIC_INLINE int64_t
 coord_esep(cube_t c)
 {
 	cube_t ep;
@@ -229,8 +229,8 @@ coord_esep(cube_t c)
 	for (i = 0, j = 0; i < 12; i++, mem[i/8 + 2] >>= 8) {
 		e = mem[i/8 + 2];
 
-		bit1 = (e & _esepbit1) >> 2;
-		bit2 = (e & _esepbit2) >> 3;
+		bit1 = (e & ESEPBIT_1) >> 2;
+		bit2 = (e & ESEPBIT_2) >> 3;
 		is1 = (1 - bit2) * bit1;
 
 		ret1 += bit2 * binomial[11-i][k];
@@ -245,19 +245,19 @@ coord_esep(cube_t c)
 	return ret1 * 70 + ret2;
 }
 
-_static_inline void
+STATIC_INLINE void
 copy_corners(cube_t *dest, cube_t src)
 {
 	*dest = _mm256_blend_epi32(*dest, src, 0x0F);
 }
 
-_static_inline void
+STATIC_INLINE void
 copy_edges(cube_t *dest, cube_t src)
 {
 	*dest = _mm256_blend_epi32(*dest, src, 0xF0);
 }
 
-_static_inline void
+STATIC_INLINE void
 set_eo(cube_t *cube, int64_t eo)
 {
 	int64_t eo12, eotop, eobot;
@@ -282,7 +282,7 @@ set_eo(cube_t *cube, int64_t eo)
 	*cube = _mm256_or_si256(*cube, veo);
 }
 
-_static_inline cube_t
+STATIC_INLINE cube_t
 invcoord_esep(int64_t esep)
 {
 	cube_t eee, ret;

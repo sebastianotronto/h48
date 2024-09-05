@@ -3,22 +3,22 @@
 #define _max(x, y) ((x) > (y) ? (x) : (y))
 #define _div_round_up(n, d) (((n) + (d) - 1) / (d))
 
-_static int64_t factorial(int64_t);
-_static bool isperm(uint8_t *, int64_t);
-_static int64_t permtoindex(uint8_t *, int64_t);
-_static void indextoperm(int64_t, int64_t, uint8_t *);
-_static int permsign(uint8_t *, int64_t);
-_static int64_t digitstosumzero(uint8_t *, uint8_t, uint8_t);
-_static void sumzerotodigits(int64_t, uint8_t, uint8_t, uint8_t *);
+STATIC int64_t factorial(int64_t);
+STATIC bool isperm(uint8_t *, int64_t);
+STATIC int64_t permtoindex(uint8_t *, int64_t);
+STATIC void indextoperm(int64_t, int64_t, uint8_t *);
+STATIC int permsign(uint8_t *, int64_t);
+STATIC int64_t digitstosumzero(uint8_t *, uint8_t, uint8_t);
+STATIC void sumzerotodigits(int64_t, uint8_t, uint8_t, uint8_t *);
 
-_static int64_t
+STATIC int64_t
 factorial(int64_t n)
 {
 	int64_t i, ret;
 
-	if (n > _max_factorial) {
+	if (n > FACTORIAL_MAX) {
 		LOG("Error: won't compute factorial for n=%" PRId64 " because"
-		    " it is larger than %" PRId64 "\n", n, _max_factorial);
+		    " it is larger than %" PRId64 "\n", n, FACTORIAL_MAX);
 		return -1;
 	}
 
@@ -31,15 +31,15 @@ factorial(int64_t n)
 	return ret;
 }
 
-_static bool
+STATIC bool
 isperm(uint8_t *a, int64_t n)
 {
 	int64_t i;
-	bool aux[_max_factorial+1];
+	bool aux[FACTORIAL_MAX+1];
 
-	if (n > _max_factorial) {
+	if (n > FACTORIAL_MAX) {
 		LOG("Error: won't compute 'isperm()' for n=%" PRId64 " because"
-		    " it is larger than %" PRId64 "\n", n, _max_factorial);
+		    " it is larger than %" PRId64 "\n", n, FACTORIAL_MAX);
 		return false;
 	}
 
@@ -59,15 +59,15 @@ isperm(uint8_t *a, int64_t n)
 	return true;
 }
 
-_static int64_t
+STATIC int64_t
 permtoindex(uint8_t *a, int64_t n)
 {
 	int64_t i, j, c, ret;
 
-	if (n > _max_factorial) {
+	if (n > FACTORIAL_MAX) {
 		LOG("Error: won't compute 'permtoindex()' for n=%" PRId64
 		    " because it is larger than %" PRId64 "\n",
-		    n, _max_factorial);
+		    n, FACTORIAL_MAX);
 		return -1;
 	}
 
@@ -83,16 +83,16 @@ permtoindex(uint8_t *a, int64_t n)
 	return ret;
 }
 
-_static void
+STATIC void
 indextoperm(int64_t p, int64_t n, uint8_t *r)
 {
 	int64_t i, j, c;
-	uint8_t a[_max_factorial+1];
+	uint8_t a[FACTORIAL_MAX+1];
 
-	if (n > _max_factorial) {
+	if (n > FACTORIAL_MAX) {
 		LOG("Error: won't compute 'permtoindex()' for n=%" PRId64
 		    " because it is larger than %" PRId64 "\n",
-		    n, _max_factorial);
+		    n, FACTORIAL_MAX);
 		goto indextoperm_error;
 	}
 
@@ -115,10 +115,10 @@ indextoperm(int64_t p, int64_t n, uint8_t *r)
 	return;
 
 indextoperm_error:
-	memset(r, _error, n);
+	memset(r, UINT8_ERROR, n);
 }
 
-_static int
+STATIC int
 permsign(uint8_t *a, int64_t n)
 {
 	int i, j;
@@ -131,7 +131,7 @@ permsign(uint8_t *a, int64_t n)
 	return ret % 2;
 }
 
-_static int64_t
+STATIC int64_t
 digitstosumzero(uint8_t *a, uint8_t n, uint8_t b)
 {
 	int64_t ret, p;
@@ -161,7 +161,7 @@ digitstosumzero(uint8_t *a, uint8_t n, uint8_t b)
 	return ret;
 }
 
-_static void
+STATIC void
 sumzerotodigits(int64_t d, uint8_t n, uint8_t b, uint8_t *a)
 {
 	uint8_t sum;
@@ -182,5 +182,5 @@ sumzerotodigits(int64_t d, uint8_t n, uint8_t b, uint8_t *a)
 	return;
 
 digitstosumzero_error:
-	memset(a, _error, n);
+	memset(a, UINT8_ERROR, n);
 }

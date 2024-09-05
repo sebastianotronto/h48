@@ -1,15 +1,15 @@
-#define H48_ESIZE(h) ((_12c4 * _8c4) << (int64_t)(h))
+#define H48_ESIZE(h) ((COMB_12_4 * COMB_8_4) << (int64_t)(h))
 
 #define COCLASS_MASK (UINT32_C(0xFFFF) << UINT32_C(16))
 #define COCLASS(x)   (((x) & COCLASS_MASK) >> UINT32_C(16))
 #define TTREP_MASK   (UINT32_C(0xFF) << UINT32_C(8))
 #define TTREP(x)     (((x) & TTREP_MASK) >> UINT32_C(8))
 
-_static_inline int64_t coord_h48(cube_t, const uint32_t *, uint8_t);
-_static_inline int64_t coord_h48_edges(cube_t, int64_t, uint8_t, uint8_t);
-_static_inline cube_t invcoord_h48(int64_t, const cube_t *, uint8_t);
+STATIC_INLINE int64_t coord_h48(cube_t, const uint32_t *, uint8_t);
+STATIC_INLINE int64_t coord_h48_edges(cube_t, int64_t, uint8_t, uint8_t);
+STATIC_INLINE cube_t invcoord_h48(int64_t, const cube_t *, uint8_t);
 
-_static_inline int64_t
+STATIC_INLINE int64_t
 coord_h48(cube_t c, const uint32_t *cocsepdata, uint8_t h)
 {
 	int64_t cocsep, coclass;
@@ -26,7 +26,7 @@ coord_h48(cube_t c, const uint32_t *cocsepdata, uint8_t h)
 	return coord_h48_edges(c, coclass, ttrep, h);
 }
 
-_static_inline int64_t
+STATIC_INLINE int64_t
 coord_h48_edges(cube_t c, int64_t coclass, uint8_t ttrep, uint8_t h)
 {
 	cube_t d;
@@ -45,7 +45,7 @@ This function does not necessarily return a cube whose coordinate is
 the given value, because it works up to symmetry. This means that the
 returned cube is a transformed cube of one that gives the correct value.
 */
-_static_inline cube_t
+STATIC_INLINE cube_t
 invcoord_h48(int64_t i, const cube_t *crep, uint8_t h)
 {
 	cube_t ret;

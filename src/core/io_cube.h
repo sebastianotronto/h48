@@ -1,23 +1,23 @@
-_static uint8_t readco(const char *);
-_static uint8_t readcp(const char *);
-_static uint8_t readeo(const char *);
-_static uint8_t readep(const char *);
-_static cube_t readcube_B32(const char *);
-_static cube_t readcube_H48(const char *);
-_static uint8_t readpiece_LST(const char **);
-_static cube_t readcube_LST(const char *);
+STATIC uint8_t readco(const char *);
+STATIC uint8_t readcp(const char *);
+STATIC uint8_t readeo(const char *);
+STATIC uint8_t readep(const char *);
+STATIC cube_t readcube_B32(const char *);
+STATIC cube_t readcube_H48(const char *);
+STATIC uint8_t readpiece_LST(const char **);
+STATIC cube_t readcube_LST(const char *);
 
-_static int writepiece_LST(uint8_t, char *);
-_static void writecube_B32(cube_t, char *);
-_static void writecube_H48(cube_t, char *);
-_static void writecube_LST(cube_t, char *);
+STATIC int writepiece_LST(uint8_t, char *);
+STATIC void writecube_B32(cube_t, char *);
+STATIC void writecube_H48(cube_t, char *);
+STATIC void writecube_LST(cube_t, char *);
 
-_static uint8_t b32toedge(char);
-_static uint8_t b32tocorner(char);
-_static char edgetob32(uint8_t);
-_static char cornertob32(uint8_t);
+STATIC uint8_t b32toedge(char);
+STATIC uint8_t b32tocorner(char);
+STATIC char edgetob32(uint8_t);
+STATIC char cornertob32(uint8_t);
 
-_static struct {
+STATIC struct {
 	const char *name;
 	cube_t (*read)(const char *);
 	void (*write)(cube_t, char *);
@@ -72,21 +72,21 @@ writecube_error:
 	buf[len+1] = '\0';
 }
 
-_static uint8_t
+STATIC uint8_t
 readco(const char *str)
 {
 	if (*str == '0')
 		return 0;
 	if (*str == '1')
-		return _ctwist_cw;
+		return CTWIST_CW;
 	if (*str == '2')
-		return _ctwist_ccw;
+		return CTWIST_CCW;
 
 	LOG("Error reading CO\n");
-	return _error;
+	return UINT8_ERROR;
 }
 
-_static uint8_t
+STATIC uint8_t
 readcp(const char *str)
 {
 	uint8_t c;
@@ -97,22 +97,22 @@ readcp(const char *str)
 			return c;
 
 	LOG("Error reading CP\n");
-	return _error;
+	return UINT8_ERROR;
 }
 
-_static uint8_t
+STATIC uint8_t
 readeo(const char *str)
 {
 	if (*str == '0')
 		return 0;
 	if (*str == '1')
-		return _eflip;
+		return EFLIP;
 
 	LOG("Error reading EO\n");
-	return _error;
+	return UINT8_ERROR;
 }
 
-_static uint8_t
+STATIC uint8_t
 readep(const char *str)
 {
 	uint8_t e;
@@ -122,10 +122,10 @@ readep(const char *str)
 			return e;
 
 	LOG("Error reading EP\n");
-	return _error;
+	return UINT8_ERROR;
 }
 
-_static cube_t
+STATIC cube_t
 readcube_B32(const char *buf)
 {
 	int i;
@@ -146,7 +146,7 @@ readcube_B32(const char *buf)
 	return cubefromarray(c, e);
 }
 
-_static cube_t
+STATIC cube_t
 readcube_H48(const char *buf)
 {
 	int i;
@@ -158,10 +158,10 @@ readcube_H48(const char *buf)
 	for (i = 0; i < 12; i++) {
 		while (*b == ' ' || *b == '\t' || *b == '\n')
 			b++;
-		if ((piece = readep(b)) == _error)
+		if ((piece = readep(b)) == UINT8_ERROR)
 			return zero;
 		b += 2;
-		if ((orient = readeo(b)) == _error)
+		if ((orient = readeo(b)) == UINT8_ERROR)
 			return zero;
 		b++;
 		e[i] = piece | orient;
@@ -169,10 +169,10 @@ readcube_H48(const char *buf)
 	for (i = 0; i < 8; i++) {
 		while (*b == ' ' || *b == '\t' || *b == '\n')
 			b++;
-		if ((piece = readcp(b)) == _error)
+		if ((piece = readcp(b)) == UINT8_ERROR)
 			return zero;
 		b += 3;
-		if ((orient = readco(b)) == _error)
+		if ((orient = readco(b)) == UINT8_ERROR)
 			return zero;
 		b++;
 		c[i] = piece | orient;
@@ -181,7 +181,7 @@ readcube_H48(const char *buf)
 	return cubefromarray(c, e);
 }
 
-_static uint8_t
+STATIC uint8_t
 readpiece_LST(const char **b)
 {
 	uint8_t ret;
@@ -195,10 +195,10 @@ readpiece_LST(const char **b)
 		ret = ret * 10 + (**b) - '0';
 	}
 
-	return read ? ret : _error;
+	return read ? ret : UINT8_ERROR;
 }
 
-_static cube_t
+STATIC cube_t
 readcube_LST(const char *buf)
 {
 	int i;
@@ -213,7 +213,7 @@ readcube_LST(const char *buf)
 	return cubefromarray(c, e);
 }
 
-_static int
+STATIC int
 writepiece_LST(uint8_t piece, char *buf)
 {
 	char digits[3];
@@ -237,7 +237,7 @@ writepiece_LST(uint8_t piece, char *buf)
 	return len+2;
 }
 
-_static void
+STATIC void
 writecube_B32(cube_t cube, char *buf)
 {
 	int i;
@@ -256,7 +256,7 @@ writecube_B32(cube_t cube, char *buf)
 	buf[21] = '\0';
 }
 
-_static void
+STATIC void
 writecube_H48(cube_t cube, char *buf)
 {
 	uint8_t piece, perm, orient, corner[8], edge[12];
@@ -266,8 +266,8 @@ writecube_H48(cube_t cube, char *buf)
 
 	for (i = 0; i < 12; i++) {
 		piece = edge[i];
-		perm = piece & _pbits;
-		orient = (piece & _eobit) >> _eoshift;
+		perm = piece & PBITS;
+		orient = (piece & EOBIT) >> EOSHIFT;
 		buf[4*i    ] = edgestr[perm][0];
 		buf[4*i + 1] = edgestr[perm][1];
 		buf[4*i + 2] = orient + '0';
@@ -275,8 +275,8 @@ writecube_H48(cube_t cube, char *buf)
 	}
 	for (i = 0; i < 8; i++) {
 		piece = corner[i];
-		perm = piece & _pbits;
-		orient = (piece & _cobits) >> _coshift;
+		perm = piece & PBITS;
+		orient = (piece & COBITS) >> COSHIFT;
 		buf[48 + 5*i    ] = cornerstr[perm][0];
 		buf[48 + 5*i + 1] = cornerstr[perm][1];
 		buf[48 + 5*i + 2] = cornerstr[perm][2];
@@ -287,7 +287,7 @@ writecube_H48(cube_t cube, char *buf)
 	buf[48+39] = '\0';
 }
 
-_static void
+STATIC void
 writecube_LST(cube_t cube, char *buf)
 {
 	int i;
@@ -310,7 +310,7 @@ writecube_LST(cube_t cube, char *buf)
 	*(buf+ptr-2) = 0;
 }
 
-_static uint8_t
+STATIC uint8_t
 b32toedge(char c)
 {
 	if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'f')))
@@ -319,7 +319,7 @@ b32toedge(char c)
 	return c <= 'Z' ? (uint8_t)(c - 'A') : (uint8_t)(c - 'a') + 26;
 }
 
-_static uint8_t
+STATIC uint8_t
 b32tocorner(char c) {
 	uint8_t val;
 
@@ -331,13 +331,13 @@ b32tocorner(char c) {
 	return (val & 7) | ((val & 24) << 2);
 }
 
-_static char
+STATIC char
 edgetob32(uint8_t edge)
 {
 	return edge < 26 ? 'A' + (char)edge : 'a' + (char)(edge - 26);
 }
 
-_static char
+STATIC char
 cornertob32(uint8_t corner)
 {
 	uint8_t val;

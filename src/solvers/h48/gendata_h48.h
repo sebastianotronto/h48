@@ -1,4 +1,4 @@
-#define H48_COORDMAX_NOEO    ((int64_t)(COCSEP_CLASSES * _12c4 * _8c4))
+#define H48_COORDMAX_NOEO    ((int64_t)(COCSEP_CLASSES * COMB_12_4 * COMB_8_4))
 #define H48_COORDMAX(h)      ((int64_t)(H48_COORDMAX_NOEO << (int64_t)(h)))
 #define H48_DIV(k)           ((size_t)8 / (size_t)(k))
 #define H48_TABLESIZE(h, k)  _div_round_up((size_t)H48_COORDMAX((h)), H48_DIV(k))
@@ -6,7 +6,7 @@
 #define H48_COEFF(k)         (UINT32_C(32) / (uint32_t)(k))
 #define H48_INDEX(i, k)      ((uint32_t)(i) / H48_COEFF(k))
 #define H48_SHIFT(i, k)      ((uint32_t)(k) * ((uint32_t)(i) % H48_COEFF(k)))
-#define H48_MASK(i, k)       ((_bit_u32(k) - (uint32_t)(1)) << H48_SHIFT(i, k))
+#define H48_MASK(i, k)       ((UINT32_BIT(k) - (uint32_t)(1)) << H48_SHIFT(i, k))
 
 #define MAXLEN 20
 
@@ -74,21 +74,21 @@ typedef struct {
 	h48map_t *shortcubes;
 } h48k2_dfs_arg_t;
 
-_static_inline uint8_t get_esep_pval(const uint32_t *, int64_t, uint8_t);
-_static_inline void set_esep_pval(uint32_t *, int64_t, uint8_t, uint8_t);
+STATIC_INLINE uint8_t get_esep_pval(const uint32_t *, int64_t, uint8_t);
+STATIC_INLINE void set_esep_pval(uint32_t *, int64_t, uint8_t, uint8_t);
 
-_static uint64_t gen_h48short(gendata_h48short_arg_t *);
-_static size_t gendata_h48(gendata_h48_arg_t *);
-_static size_t gendata_h48h0k4(gendata_h48_arg_t *);
-_static int64_t gendata_h48h0k4_bfs(h48h0k4_bfs_arg_t *);
-_static int64_t gendata_h48h0k4_bfs_fromdone(h48h0k4_bfs_arg_t *);
-_static int64_t gendata_h48h0k4_bfs_fromnew(h48h0k4_bfs_arg_t *);
-_static size_t gendata_h48k2(gendata_h48_arg_t *);
-_static void gendata_h48k2_dfs(h48k2_dfs_arg_t *arg);
+STATIC uint64_t gen_h48short(gendata_h48short_arg_t *);
+STATIC size_t gendata_h48(gendata_h48_arg_t *);
+STATIC size_t gendata_h48h0k4(gendata_h48_arg_t *);
+STATIC int64_t gendata_h48h0k4_bfs(h48h0k4_bfs_arg_t *);
+STATIC int64_t gendata_h48h0k4_bfs_fromdone(h48h0k4_bfs_arg_t *);
+STATIC int64_t gendata_h48h0k4_bfs_fromnew(h48h0k4_bfs_arg_t *);
+STATIC size_t gendata_h48k2(gendata_h48_arg_t *);
+STATIC void gendata_h48k2_dfs(h48k2_dfs_arg_t *arg);
 
-_static_inline int8_t get_h48_bound(cube_t, uint32_t, uint8_t, uint8_t, uint32_t *);
+STATIC_INLINE int8_t get_h48_bound(cube_t, uint32_t, uint8_t, uint8_t, uint32_t *);
 
-_static uint64_t
+STATIC uint64_t
 gen_h48short(gendata_h48short_arg_t *arg)
 {
 	uint8_t i, m;
@@ -129,7 +129,7 @@ gen_h48short(gendata_h48short_arg_t *arg)
 }
 
 /* Generic function that dispatches to the data generators */
-_static size_t
+STATIC size_t
 gendata_h48(gendata_h48_arg_t *arg)
 {
 	static const size_t infosize = 88; /* TODO: change to e.g. 1024 */
@@ -164,7 +164,7 @@ gendata_h48(gendata_h48_arg_t *arg)
 TODO description
 generating fixed table with h=0, k=4
 */
-_static size_t
+STATIC size_t
 gendata_h48h0k4(gendata_h48_arg_t *arg)
 {
 	uint32_t j;
@@ -208,7 +208,7 @@ gendata_h48h0k4_return_size:
 	return H48_TABLESIZE(0, 4);
 }
 
-_static int64_t
+STATIC int64_t
 gendata_h48h0k4_bfs(h48h0k4_bfs_arg_t *arg)
 {
 	const uint8_t breakpoint = 10; /* Hand-picked optimal */
@@ -219,7 +219,7 @@ gendata_h48h0k4_bfs(h48h0k4_bfs_arg_t *arg)
 		return gendata_h48h0k4_bfs_fromnew(arg);
 }
 
-_static int64_t
+STATIC int64_t
 gendata_h48h0k4_bfs_fromdone(h48h0k4_bfs_arg_t *arg)
 {
 	uint8_t c, m, x;
@@ -249,7 +249,7 @@ gendata_h48h0k4_bfs_fromdone(h48h0k4_bfs_arg_t *arg)
 	return cc;
 }
 
-_static int64_t
+STATIC int64_t
 gendata_h48h0k4_bfs_fromnew(h48h0k4_bfs_arg_t *arg)
 {
 	uint8_t c, m, x;
@@ -281,7 +281,7 @@ gendata_h48h0k4_bfs_fromnew(h48h0k4_bfs_arg_t *arg)
 	return cc;
 }
 
-_static size_t
+STATIC size_t
 gendata_h48k2(gendata_h48_arg_t *arg)
 {
 	static const uint8_t shortdepth = 8;
@@ -363,7 +363,7 @@ gendata_h48k2_return_size:
 	return H48_TABLESIZE(arg->h, 2);
 }
 
-_static void
+STATIC void
 gendata_h48k2_dfs(h48k2_dfs_arg_t *arg)
 {
 	cube_t ccc;
@@ -406,20 +406,20 @@ gendata_h48k2_dfs(h48k2_dfs_arg_t *arg)
 	}
 }
 
-_static_inline uint8_t
+STATIC_INLINE uint8_t
 get_esep_pval(const uint32_t *buf32, int64_t i, uint8_t k)
 {
 	return (buf32[H48_INDEX(i, k)] & H48_MASK(i, k)) >> H48_SHIFT(i, k);
 }
 
-_static_inline void
+STATIC_INLINE void
 set_esep_pval(uint32_t *buf32, int64_t i, uint8_t k, uint8_t val)
 {
 	buf32[H48_INDEX(i, k)] = (buf32[H48_INDEX(i, k)] & (~H48_MASK(i, k)))
 	    | (val << H48_SHIFT(i, k));
 }
 
-_static_inline int8_t
+STATIC_INLINE int8_t
 get_h48_bound(cube_t cube, uint32_t cdata, uint8_t h, uint8_t k, uint32_t *h48data)
 {
 	int64_t coord;

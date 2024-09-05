@@ -1,346 +1,346 @@
-#define _trans_edges_rotation(T, c) \
-        compose_edges(compose_edges(_trans_cube_ ## T, c), \
-        _trans_cube_ ## T ## _inverse)
-#define _trans_edges_mirrored(T, c) _trans_edges_rotation(T, c)
+#define TRANS_EDGES_ROTATION(T, c) \
+        compose_edges(compose_edges(TRANS_CUBE_ ## T, c), \
+        TRANS_CUBE_ ## T ## _INVERSE)
+#define TRANS_EDGES_MIRRORED(T, c) TRANS_EDGES_ROTATION(T, c)
 
-#define _trans_corners_rotation(T, c) \
-        compose_corners(compose_corners(_trans_cube_ ## T, c), \
-        _trans_cube_ ## T ## _inverse)
-#define _trans_corners_mirrored(T, c) \
+#define TRANS_CORNERS_ROTATION(T, c) \
+        compose_corners(compose_corners(TRANS_CUBE_ ## T, c), \
+        TRANS_CUBE_ ## T ## _INVERSE)
+#define TRANS_CORNERS_MIRRORED(T, c) \
         invertco(compose_corners( \
-	compose_corners(_trans_cube_ ## T, c), _trans_cube_ ## T ## _inverse))
+	compose_corners(TRANS_CUBE_ ## T, c), TRANS_CUBE_ ## T ## _INVERSE))
 
-#define _trans_rotation(T, c) \
-        compose(compose(_trans_cube_ ## T, c), \
-        _trans_cube_ ## T ## _inverse)
-#define _trans_mirrored(T, c) \
-        invertco(compose(compose(_trans_cube_ ## T, c), \
-        _trans_cube_ ## T ## _inverse))
+#define TRANS_ROTATION(T, c) \
+        compose(compose(TRANS_CUBE_ ## T, c), \
+        TRANS_CUBE_ ## T ## _INVERSE)
+#define TRANS_MIRRORED(T, c) \
+        invertco(compose(compose(TRANS_CUBE_ ## T, c), \
+        TRANS_CUBE_ ## T ## _INVERSE))
 
-_static cube_t transform_edges(cube_t, uint8_t);
-_static cube_t transform_corners(cube_t, uint8_t);
-_static cube_t transform(cube_t, uint8_t);
-_static cube_t applytrans(cube_t, const char *);
+STATIC cube_t transform_edges(cube_t, uint8_t);
+STATIC cube_t transform_corners(cube_t, uint8_t);
+STATIC cube_t transform(cube_t, uint8_t);
+STATIC cube_t applytrans(cube_t, const char *);
 
-_static cube_t
+STATIC cube_t
 transform_edges(cube_t c, uint8_t t)
 {
 	switch (t) {
-	case _trans_UFr:
+	case TRANS_UFr:
 		return c;
-	case _trans_ULr:
-		return _trans_edges_rotation(ULr, c);
-	case _trans_UBr:
-		return _trans_edges_rotation(UBr, c);
-	case _trans_URr:
-		return _trans_edges_rotation(URr, c);
-	case _trans_DFr:
-		return _trans_edges_rotation(DFr, c);
-	case _trans_DLr:
-		return _trans_edges_rotation(DLr, c);
-	case _trans_DBr:
-		return _trans_edges_rotation(DBr, c);
-	case _trans_DRr:
-		return _trans_edges_rotation(DRr, c);
-	case _trans_RUr:
-		return _trans_edges_rotation(RUr, c);
-	case _trans_RFr:
-		return _trans_edges_rotation(RFr, c);
-	case _trans_RDr:
-		return _trans_edges_rotation(RDr, c);
-	case _trans_RBr:
-		return _trans_edges_rotation(RBr, c);
-	case _trans_LUr:
-		return _trans_edges_rotation(LUr, c);
-	case _trans_LFr:
-		return _trans_edges_rotation(LFr, c);
-	case _trans_LDr:
-		return _trans_edges_rotation(LDr, c);
-	case _trans_LBr:
-		return _trans_edges_rotation(LBr, c);
-	case _trans_FUr:
-		return _trans_edges_rotation(FUr, c);
-	case _trans_FRr:
-		return _trans_edges_rotation(FRr, c);
-	case _trans_FDr:
-		return _trans_edges_rotation(FDr, c);
-	case _trans_FLr:
-		return _trans_edges_rotation(FLr, c);
-	case _trans_BUr:
-		return _trans_edges_rotation(BUr, c);
-	case _trans_BRr:
-		return _trans_edges_rotation(BRr, c);
-	case _trans_BDr:
-		return _trans_edges_rotation(BDr, c);
-	case _trans_BLr:
-		return _trans_edges_rotation(BLr, c);
-	case _trans_UFm:
-		return _trans_edges_mirrored(UFm, c);
-	case _trans_ULm:
-		return _trans_edges_mirrored(ULm, c);
-	case _trans_UBm:
-		return _trans_edges_mirrored(UBm, c);
-	case _trans_URm:
-		return _trans_edges_mirrored(URm, c);
-	case _trans_DFm:
-		return _trans_edges_mirrored(DFm, c);
-	case _trans_DLm:
-		return _trans_edges_mirrored(DLm, c);
-	case _trans_DBm:
-		return _trans_edges_mirrored(DBm, c);
-	case _trans_DRm:
-		return _trans_edges_mirrored(DRm, c);
-	case _trans_RUm:
-		return _trans_edges_mirrored(RUm, c);
-	case _trans_RFm:
-		return _trans_edges_mirrored(RFm, c);
-	case _trans_RDm:
-		return _trans_edges_mirrored(RDm, c);
-	case _trans_RBm:
-		return _trans_edges_mirrored(RBm, c);
-	case _trans_LUm:
-		return _trans_edges_mirrored(LUm, c);
-	case _trans_LFm:
-		return _trans_edges_mirrored(LFm, c);
-	case _trans_LDm:
-		return _trans_edges_mirrored(LDm, c);
-	case _trans_LBm:
-		return _trans_edges_mirrored(LBm, c);
-	case _trans_FUm:
-		return _trans_edges_mirrored(FUm, c);
-	case _trans_FRm:
-		return _trans_edges_mirrored(FRm, c);
-	case _trans_FDm:
-		return _trans_edges_mirrored(FDm, c);
-	case _trans_FLm:
-		return _trans_edges_mirrored(FLm, c);
-	case _trans_BUm:
-		return _trans_edges_mirrored(BUm, c);
-	case _trans_BRm:
-		return _trans_edges_mirrored(BRm, c);
-	case _trans_BDm:
-		return _trans_edges_mirrored(BDm, c);
-	case _trans_BLm:
-		return _trans_edges_mirrored(BLm, c);
+	case TRANS_ULr:
+		return TRANS_EDGES_ROTATION(ULr, c);
+	case TRANS_UBr:
+		return TRANS_EDGES_ROTATION(UBr, c);
+	case TRANS_URr:
+		return TRANS_EDGES_ROTATION(URr, c);
+	case TRANS_DFr:
+		return TRANS_EDGES_ROTATION(DFr, c);
+	case TRANS_DLr:
+		return TRANS_EDGES_ROTATION(DLr, c);
+	case TRANS_DBr:
+		return TRANS_EDGES_ROTATION(DBr, c);
+	case TRANS_DRr:
+		return TRANS_EDGES_ROTATION(DRr, c);
+	case TRANS_RUr:
+		return TRANS_EDGES_ROTATION(RUr, c);
+	case TRANS_RFr:
+		return TRANS_EDGES_ROTATION(RFr, c);
+	case TRANS_RDr:
+		return TRANS_EDGES_ROTATION(RDr, c);
+	case TRANS_RBr:
+		return TRANS_EDGES_ROTATION(RBr, c);
+	case TRANS_LUr:
+		return TRANS_EDGES_ROTATION(LUr, c);
+	case TRANS_LFr:
+		return TRANS_EDGES_ROTATION(LFr, c);
+	case TRANS_LDr:
+		return TRANS_EDGES_ROTATION(LDr, c);
+	case TRANS_LBr:
+		return TRANS_EDGES_ROTATION(LBr, c);
+	case TRANS_FUr:
+		return TRANS_EDGES_ROTATION(FUr, c);
+	case TRANS_FRr:
+		return TRANS_EDGES_ROTATION(FRr, c);
+	case TRANS_FDr:
+		return TRANS_EDGES_ROTATION(FDr, c);
+	case TRANS_FLr:
+		return TRANS_EDGES_ROTATION(FLr, c);
+	case TRANS_BUr:
+		return TRANS_EDGES_ROTATION(BUr, c);
+	case TRANS_BRr:
+		return TRANS_EDGES_ROTATION(BRr, c);
+	case TRANS_BDr:
+		return TRANS_EDGES_ROTATION(BDr, c);
+	case TRANS_BLr:
+		return TRANS_EDGES_ROTATION(BLr, c);
+	case TRANS_UFm:
+		return TRANS_EDGES_MIRRORED(UFm, c);
+	case TRANS_ULm:
+		return TRANS_EDGES_MIRRORED(ULm, c);
+	case TRANS_UBm:
+		return TRANS_EDGES_MIRRORED(UBm, c);
+	case TRANS_URm:
+		return TRANS_EDGES_MIRRORED(URm, c);
+	case TRANS_DFm:
+		return TRANS_EDGES_MIRRORED(DFm, c);
+	case TRANS_DLm:
+		return TRANS_EDGES_MIRRORED(DLm, c);
+	case TRANS_DBm:
+		return TRANS_EDGES_MIRRORED(DBm, c);
+	case TRANS_DRm:
+		return TRANS_EDGES_MIRRORED(DRm, c);
+	case TRANS_RUm:
+		return TRANS_EDGES_MIRRORED(RUm, c);
+	case TRANS_RFm:
+		return TRANS_EDGES_MIRRORED(RFm, c);
+	case TRANS_RDm:
+		return TRANS_EDGES_MIRRORED(RDm, c);
+	case TRANS_RBm:
+		return TRANS_EDGES_MIRRORED(RBm, c);
+	case TRANS_LUm:
+		return TRANS_EDGES_MIRRORED(LUm, c);
+	case TRANS_LFm:
+		return TRANS_EDGES_MIRRORED(LFm, c);
+	case TRANS_LDm:
+		return TRANS_EDGES_MIRRORED(LDm, c);
+	case TRANS_LBm:
+		return TRANS_EDGES_MIRRORED(LBm, c);
+	case TRANS_FUm:
+		return TRANS_EDGES_MIRRORED(FUm, c);
+	case TRANS_FRm:
+		return TRANS_EDGES_MIRRORED(FRm, c);
+	case TRANS_FDm:
+		return TRANS_EDGES_MIRRORED(FDm, c);
+	case TRANS_FLm:
+		return TRANS_EDGES_MIRRORED(FLm, c);
+	case TRANS_BUm:
+		return TRANS_EDGES_MIRRORED(BUm, c);
+	case TRANS_BRm:
+		return TRANS_EDGES_MIRRORED(BRm, c);
+	case TRANS_BDm:
+		return TRANS_EDGES_MIRRORED(BDm, c);
+	case TRANS_BLm:
+		return TRANS_EDGES_MIRRORED(BLm, c);
 	default:
 		LOG("transform error, unknown transformation %" PRIu8 "\n", t);
 		return zero;
 	}
 }
 
-_static cube_t
+STATIC cube_t
 transform_corners(cube_t c, uint8_t t)
 {
 	switch (t) {
-	case _trans_UFr:
+	case TRANS_UFr:
 		return c;
-	case _trans_ULr:
-		return _trans_corners_rotation(ULr, c);
-	case _trans_UBr:
-		return _trans_corners_rotation(UBr, c);
-	case _trans_URr:
-		return _trans_corners_rotation(URr, c);
-	case _trans_DFr:
-		return _trans_corners_rotation(DFr, c);
-	case _trans_DLr:
-		return _trans_corners_rotation(DLr, c);
-	case _trans_DBr:
-		return _trans_corners_rotation(DBr, c);
-	case _trans_DRr:
-		return _trans_corners_rotation(DRr, c);
-	case _trans_RUr:
-		return _trans_corners_rotation(RUr, c);
-	case _trans_RFr:
-		return _trans_corners_rotation(RFr, c);
-	case _trans_RDr:
-		return _trans_corners_rotation(RDr, c);
-	case _trans_RBr:
-		return _trans_corners_rotation(RBr, c);
-	case _trans_LUr:
-		return _trans_corners_rotation(LUr, c);
-	case _trans_LFr:
-		return _trans_corners_rotation(LFr, c);
-	case _trans_LDr:
-		return _trans_corners_rotation(LDr, c);
-	case _trans_LBr:
-		return _trans_corners_rotation(LBr, c);
-	case _trans_FUr:
-		return _trans_corners_rotation(FUr, c);
-	case _trans_FRr:
-		return _trans_corners_rotation(FRr, c);
-	case _trans_FDr:
-		return _trans_corners_rotation(FDr, c);
-	case _trans_FLr:
-		return _trans_corners_rotation(FLr, c);
-	case _trans_BUr:
-		return _trans_corners_rotation(BUr, c);
-	case _trans_BRr:
-		return _trans_corners_rotation(BRr, c);
-	case _trans_BDr:
-		return _trans_corners_rotation(BDr, c);
-	case _trans_BLr:
-		return _trans_corners_rotation(BLr, c);
-	case _trans_UFm:
-		return _trans_corners_mirrored(UFm, c);
-	case _trans_ULm:
-		return _trans_corners_mirrored(ULm, c);
-	case _trans_UBm:
-		return _trans_corners_mirrored(UBm, c);
-	case _trans_URm:
-		return _trans_corners_mirrored(URm, c);
-	case _trans_DFm:
-		return _trans_corners_mirrored(DFm, c);
-	case _trans_DLm:
-		return _trans_corners_mirrored(DLm, c);
-	case _trans_DBm:
-		return _trans_corners_mirrored(DBm, c);
-	case _trans_DRm:
-		return _trans_corners_mirrored(DRm, c);
-	case _trans_RUm:
-		return _trans_corners_mirrored(RUm, c);
-	case _trans_RFm:
-		return _trans_corners_mirrored(RFm, c);
-	case _trans_RDm:
-		return _trans_corners_mirrored(RDm, c);
-	case _trans_RBm:
-		return _trans_corners_mirrored(RBm, c);
-	case _trans_LUm:
-		return _trans_corners_mirrored(LUm, c);
-	case _trans_LFm:
-		return _trans_corners_mirrored(LFm, c);
-	case _trans_LDm:
-		return _trans_corners_mirrored(LDm, c);
-	case _trans_LBm:
-		return _trans_corners_mirrored(LBm, c);
-	case _trans_FUm:
-		return _trans_corners_mirrored(FUm, c);
-	case _trans_FRm:
-		return _trans_corners_mirrored(FRm, c);
-	case _trans_FDm:
-		return _trans_corners_mirrored(FDm, c);
-	case _trans_FLm:
-		return _trans_corners_mirrored(FLm, c);
-	case _trans_BUm:
-		return _trans_corners_mirrored(BUm, c);
-	case _trans_BRm:
-		return _trans_corners_mirrored(BRm, c);
-	case _trans_BDm:
-		return _trans_corners_mirrored(BDm, c);
-	case _trans_BLm:
-		return _trans_corners_mirrored(BLm, c);
+	case TRANS_ULr:
+		return TRANS_CORNERS_ROTATION(ULr, c);
+	case TRANS_UBr:
+		return TRANS_CORNERS_ROTATION(UBr, c);
+	case TRANS_URr:
+		return TRANS_CORNERS_ROTATION(URr, c);
+	case TRANS_DFr:
+		return TRANS_CORNERS_ROTATION(DFr, c);
+	case TRANS_DLr:
+		return TRANS_CORNERS_ROTATION(DLr, c);
+	case TRANS_DBr:
+		return TRANS_CORNERS_ROTATION(DBr, c);
+	case TRANS_DRr:
+		return TRANS_CORNERS_ROTATION(DRr, c);
+	case TRANS_RUr:
+		return TRANS_CORNERS_ROTATION(RUr, c);
+	case TRANS_RFr:
+		return TRANS_CORNERS_ROTATION(RFr, c);
+	case TRANS_RDr:
+		return TRANS_CORNERS_ROTATION(RDr, c);
+	case TRANS_RBr:
+		return TRANS_CORNERS_ROTATION(RBr, c);
+	case TRANS_LUr:
+		return TRANS_CORNERS_ROTATION(LUr, c);
+	case TRANS_LFr:
+		return TRANS_CORNERS_ROTATION(LFr, c);
+	case TRANS_LDr:
+		return TRANS_CORNERS_ROTATION(LDr, c);
+	case TRANS_LBr:
+		return TRANS_CORNERS_ROTATION(LBr, c);
+	case TRANS_FUr:
+		return TRANS_CORNERS_ROTATION(FUr, c);
+	case TRANS_FRr:
+		return TRANS_CORNERS_ROTATION(FRr, c);
+	case TRANS_FDr:
+		return TRANS_CORNERS_ROTATION(FDr, c);
+	case TRANS_FLr:
+		return TRANS_CORNERS_ROTATION(FLr, c);
+	case TRANS_BUr:
+		return TRANS_CORNERS_ROTATION(BUr, c);
+	case TRANS_BRr:
+		return TRANS_CORNERS_ROTATION(BRr, c);
+	case TRANS_BDr:
+		return TRANS_CORNERS_ROTATION(BDr, c);
+	case TRANS_BLr:
+		return TRANS_CORNERS_ROTATION(BLr, c);
+	case TRANS_UFm:
+		return TRANS_CORNERS_MIRRORED(UFm, c);
+	case TRANS_ULm:
+		return TRANS_CORNERS_MIRRORED(ULm, c);
+	case TRANS_UBm:
+		return TRANS_CORNERS_MIRRORED(UBm, c);
+	case TRANS_URm:
+		return TRANS_CORNERS_MIRRORED(URm, c);
+	case TRANS_DFm:
+		return TRANS_CORNERS_MIRRORED(DFm, c);
+	case TRANS_DLm:
+		return TRANS_CORNERS_MIRRORED(DLm, c);
+	case TRANS_DBm:
+		return TRANS_CORNERS_MIRRORED(DBm, c);
+	case TRANS_DRm:
+		return TRANS_CORNERS_MIRRORED(DRm, c);
+	case TRANS_RUm:
+		return TRANS_CORNERS_MIRRORED(RUm, c);
+	case TRANS_RFm:
+		return TRANS_CORNERS_MIRRORED(RFm, c);
+	case TRANS_RDm:
+		return TRANS_CORNERS_MIRRORED(RDm, c);
+	case TRANS_RBm:
+		return TRANS_CORNERS_MIRRORED(RBm, c);
+	case TRANS_LUm:
+		return TRANS_CORNERS_MIRRORED(LUm, c);
+	case TRANS_LFm:
+		return TRANS_CORNERS_MIRRORED(LFm, c);
+	case TRANS_LDm:
+		return TRANS_CORNERS_MIRRORED(LDm, c);
+	case TRANS_LBm:
+		return TRANS_CORNERS_MIRRORED(LBm, c);
+	case TRANS_FUm:
+		return TRANS_CORNERS_MIRRORED(FUm, c);
+	case TRANS_FRm:
+		return TRANS_CORNERS_MIRRORED(FRm, c);
+	case TRANS_FDm:
+		return TRANS_CORNERS_MIRRORED(FDm, c);
+	case TRANS_FLm:
+		return TRANS_CORNERS_MIRRORED(FLm, c);
+	case TRANS_BUm:
+		return TRANS_CORNERS_MIRRORED(BUm, c);
+	case TRANS_BRm:
+		return TRANS_CORNERS_MIRRORED(BRm, c);
+	case TRANS_BDm:
+		return TRANS_CORNERS_MIRRORED(BDm, c);
+	case TRANS_BLm:
+		return TRANS_CORNERS_MIRRORED(BLm, c);
 	default:
 		LOG("transform error, unknown transformation %" PRIu8 "\n", t);
 		return zero;
 	}
 }
 
-_static cube_t
+STATIC cube_t
 transform(cube_t c, uint8_t t)
 {
 	switch (t) {
-	case _trans_UFr:
+	case TRANS_UFr:
 		return c;
-	case _trans_ULr:
-		return _trans_rotation(ULr, c);
-	case _trans_UBr:
-		return _trans_rotation(UBr, c);
-	case _trans_URr:
-		return _trans_rotation(URr, c);
-	case _trans_DFr:
-		return _trans_rotation(DFr, c);
-	case _trans_DLr:
-		return _trans_rotation(DLr, c);
-	case _trans_DBr:
-		return _trans_rotation(DBr, c);
-	case _trans_DRr:
-		return _trans_rotation(DRr, c);
-	case _trans_RUr:
-		return _trans_rotation(RUr, c);
-	case _trans_RFr:
-		return _trans_rotation(RFr, c);
-	case _trans_RDr:
-		return _trans_rotation(RDr, c);
-	case _trans_RBr:
-		return _trans_rotation(RBr, c);
-	case _trans_LUr:
-		return _trans_rotation(LUr, c);
-	case _trans_LFr:
-		return _trans_rotation(LFr, c);
-	case _trans_LDr:
-		return _trans_rotation(LDr, c);
-	case _trans_LBr:
-		return _trans_rotation(LBr, c);
-	case _trans_FUr:
-		return _trans_rotation(FUr, c);
-	case _trans_FRr:
-		return _trans_rotation(FRr, c);
-	case _trans_FDr:
-		return _trans_rotation(FDr, c);
-	case _trans_FLr:
-		return _trans_rotation(FLr, c);
-	case _trans_BUr:
-		return _trans_rotation(BUr, c);
-	case _trans_BRr:
-		return _trans_rotation(BRr, c);
-	case _trans_BDr:
-		return _trans_rotation(BDr, c);
-	case _trans_BLr:
-		return _trans_rotation(BLr, c);
-	case _trans_UFm:
-		return _trans_mirrored(UFm, c);
-	case _trans_ULm:
-		return _trans_mirrored(ULm, c);
-	case _trans_UBm:
-		return _trans_mirrored(UBm, c);
-	case _trans_URm:
-		return _trans_mirrored(URm, c);
-	case _trans_DFm:
-		return _trans_mirrored(DFm, c);
-	case _trans_DLm:
-		return _trans_mirrored(DLm, c);
-	case _trans_DBm:
-		return _trans_mirrored(DBm, c);
-	case _trans_DRm:
-		return _trans_mirrored(DRm, c);
-	case _trans_RUm:
-		return _trans_mirrored(RUm, c);
-	case _trans_RFm:
-		return _trans_mirrored(RFm, c);
-	case _trans_RDm:
-		return _trans_mirrored(RDm, c);
-	case _trans_RBm:
-		return _trans_mirrored(RBm, c);
-	case _trans_LUm:
-		return _trans_mirrored(LUm, c);
-	case _trans_LFm:
-		return _trans_mirrored(LFm, c);
-	case _trans_LDm:
-		return _trans_mirrored(LDm, c);
-	case _trans_LBm:
-		return _trans_mirrored(LBm, c);
-	case _trans_FUm:
-		return _trans_mirrored(FUm, c);
-	case _trans_FRm:
-		return _trans_mirrored(FRm, c);
-	case _trans_FDm:
-		return _trans_mirrored(FDm, c);
-	case _trans_FLm:
-		return _trans_mirrored(FLm, c);
-	case _trans_BUm:
-		return _trans_mirrored(BUm, c);
-	case _trans_BRm:
-		return _trans_mirrored(BRm, c);
-	case _trans_BDm:
-		return _trans_mirrored(BDm, c);
-	case _trans_BLm:
-		return _trans_mirrored(BLm, c);
+	case TRANS_ULr:
+		return TRANS_ROTATION(ULr, c);
+	case TRANS_UBr:
+		return TRANS_ROTATION(UBr, c);
+	case TRANS_URr:
+		return TRANS_ROTATION(URr, c);
+	case TRANS_DFr:
+		return TRANS_ROTATION(DFr, c);
+	case TRANS_DLr:
+		return TRANS_ROTATION(DLr, c);
+	case TRANS_DBr:
+		return TRANS_ROTATION(DBr, c);
+	case TRANS_DRr:
+		return TRANS_ROTATION(DRr, c);
+	case TRANS_RUr:
+		return TRANS_ROTATION(RUr, c);
+	case TRANS_RFr:
+		return TRANS_ROTATION(RFr, c);
+	case TRANS_RDr:
+		return TRANS_ROTATION(RDr, c);
+	case TRANS_RBr:
+		return TRANS_ROTATION(RBr, c);
+	case TRANS_LUr:
+		return TRANS_ROTATION(LUr, c);
+	case TRANS_LFr:
+		return TRANS_ROTATION(LFr, c);
+	case TRANS_LDr:
+		return TRANS_ROTATION(LDr, c);
+	case TRANS_LBr:
+		return TRANS_ROTATION(LBr, c);
+	case TRANS_FUr:
+		return TRANS_ROTATION(FUr, c);
+	case TRANS_FRr:
+		return TRANS_ROTATION(FRr, c);
+	case TRANS_FDr:
+		return TRANS_ROTATION(FDr, c);
+	case TRANS_FLr:
+		return TRANS_ROTATION(FLr, c);
+	case TRANS_BUr:
+		return TRANS_ROTATION(BUr, c);
+	case TRANS_BRr:
+		return TRANS_ROTATION(BRr, c);
+	case TRANS_BDr:
+		return TRANS_ROTATION(BDr, c);
+	case TRANS_BLr:
+		return TRANS_ROTATION(BLr, c);
+	case TRANS_UFm:
+		return TRANS_MIRRORED(UFm, c);
+	case TRANS_ULm:
+		return TRANS_MIRRORED(ULm, c);
+	case TRANS_UBm:
+		return TRANS_MIRRORED(UBm, c);
+	case TRANS_URm:
+		return TRANS_MIRRORED(URm, c);
+	case TRANS_DFm:
+		return TRANS_MIRRORED(DFm, c);
+	case TRANS_DLm:
+		return TRANS_MIRRORED(DLm, c);
+	case TRANS_DBm:
+		return TRANS_MIRRORED(DBm, c);
+	case TRANS_DRm:
+		return TRANS_MIRRORED(DRm, c);
+	case TRANS_RUm:
+		return TRANS_MIRRORED(RUm, c);
+	case TRANS_RFm:
+		return TRANS_MIRRORED(RFm, c);
+	case TRANS_RDm:
+		return TRANS_MIRRORED(RDm, c);
+	case TRANS_RBm:
+		return TRANS_MIRRORED(RBm, c);
+	case TRANS_LUm:
+		return TRANS_MIRRORED(LUm, c);
+	case TRANS_LFm:
+		return TRANS_MIRRORED(LFm, c);
+	case TRANS_LDm:
+		return TRANS_MIRRORED(LDm, c);
+	case TRANS_LBm:
+		return TRANS_MIRRORED(LBm, c);
+	case TRANS_FUm:
+		return TRANS_MIRRORED(FUm, c);
+	case TRANS_FRm:
+		return TRANS_MIRRORED(FRm, c);
+	case TRANS_FDm:
+		return TRANS_MIRRORED(FDm, c);
+	case TRANS_FLm:
+		return TRANS_MIRRORED(FLm, c);
+	case TRANS_BUm:
+		return TRANS_MIRRORED(BUm, c);
+	case TRANS_BRm:
+		return TRANS_MIRRORED(BRm, c);
+	case TRANS_BDm:
+		return TRANS_MIRRORED(BDm, c);
+	case TRANS_BLm:
+		return TRANS_MIRRORED(BLm, c);
 	default:
 		LOG("transform error, unknown transformation %" PRIu8 "\n", t);
 		return zero;
 	}
 }
 
-_static cube_t
+STATIC cube_t
 applytrans(cube_t cube, const char *buf)
 {
 	uint8_t t;

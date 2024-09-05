@@ -1,132 +1,111 @@
-/* TODO: remove these macros, if the below works */
-
-#define _trans_edges_rotation(T, c) \
-        compose_edges(compose_edges(_trans_cube_ ## T, c), \
-        _trans_cube_ ## T ## _inverse)
-#define _trans_edges_mirrored(T, c) _trans_edges_rotation(T, c)
-
-#define _trans_corners_rotation(T, c) \
-        compose_corners(compose_corners(_trans_cube_ ## T, c), \
-        _trans_cube_ ## T ## _inverse)
-#define _trans_corners_mirrored(T, c) \
-        invertco(compose_corners( \
-	compose_corners(_trans_cube_ ## T, c), _trans_cube_ ## T ## _inverse))
-
-#define _trans_rotation(T, c) \
-        compose(compose(_trans_cube_ ## T, c), \
-        _trans_cube_ ## T ## _inverse)
-#define _trans_mirrored(T, c) \
-        invertco(compose(compose(_trans_cube_ ## T, c), \
-        _trans_cube_ ## T ## _inverse))
-
-_static cube_t transform_edges(cube_t, uint8_t);
-_static cube_t transform_corners(cube_t, uint8_t);
-_static cube_t transform(cube_t, uint8_t);
-_static cube_t applytrans(cube_t, const char *);
+STATIC cube_t transform_edges(cube_t, uint8_t);
+STATIC cube_t transform_corners(cube_t, uint8_t);
+STATIC cube_t transform(cube_t, uint8_t);
+STATIC cube_t applytrans(cube_t, const char *);
 
 static cube_t cube_trans_table[48] = {
-	[_trans_UFr] = _trans_cube_UFr,
-	[_trans_UFm] = _trans_cube_UFm,
-	[_trans_ULr] = _trans_cube_URr,
-	[_trans_ULm] = _trans_cube_ULm,
-	[_trans_UBr] = _trans_cube_UBr,
-	[_trans_UBm] = _trans_cube_UBm,
-	[_trans_URr] = _trans_cube_ULr,
-	[_trans_URm] = _trans_cube_URm,
-	[_trans_DFr] = _trans_cube_DFr,
-	[_trans_DFm] = _trans_cube_DFm,
-	[_trans_DLr] = _trans_cube_DLr,
-	[_trans_DLm] = _trans_cube_DRm,
-	[_trans_DBr] = _trans_cube_DBr,
-	[_trans_DBm] = _trans_cube_DBm,
-	[_trans_DRr] = _trans_cube_DRr,
-	[_trans_DRm] = _trans_cube_DLm,
-	[_trans_RUr] = _trans_cube_FRr,
-	[_trans_RUm] = _trans_cube_FLm,
-	[_trans_RFr] = _trans_cube_LFr,
-	[_trans_RFm] = _trans_cube_RFm,
-	[_trans_RDr] = _trans_cube_BLr,
-	[_trans_RDm] = _trans_cube_BRm,
-	[_trans_RBr] = _trans_cube_RBr,
-	[_trans_RBm] = _trans_cube_LBm,
-	[_trans_LUr] = _trans_cube_FLr,
-	[_trans_LUm] = _trans_cube_FRm,
-	[_trans_LFr] = _trans_cube_RFr,
-	[_trans_LFm] = _trans_cube_LFm,
-	[_trans_LDr] = _trans_cube_BRr,
-	[_trans_LDm] = _trans_cube_BLm,
-	[_trans_LBr] = _trans_cube_LBr,
-	[_trans_LBm] = _trans_cube_RBm,
-	[_trans_FUr] = _trans_cube_FUr,
-	[_trans_FUm] = _trans_cube_FUm,
-	[_trans_FRr] = _trans_cube_RUr,
-	[_trans_FRm] = _trans_cube_LUm,
-	[_trans_FDr] = _trans_cube_BUr,
-	[_trans_FDm] = _trans_cube_BUm,
-	[_trans_FLr] = _trans_cube_LUr,
-	[_trans_FLm] = _trans_cube_RUm,
-	[_trans_BUr] = _trans_cube_FDr,
-	[_trans_BUm] = _trans_cube_FDm,
-	[_trans_BRr] = _trans_cube_LDr,
-	[_trans_BRm] = _trans_cube_RDm,
-	[_trans_BDr] = _trans_cube_BDr,
-	[_trans_BDm] = _trans_cube_BDm,
-	[_trans_BLr] = _trans_cube_RDr,
-	[_trans_BLm] = _trans_cube_LDm,
+	[TRANS_UFr] = TRANS_CUBE_UFr,
+	[TRANS_UFm] = TRANS_CUBE_UFm,
+	[TRANS_ULr] = TRANS_CUBE_URr,
+	[TRANS_ULm] = TRANS_CUBE_ULm,
+	[TRANS_UBr] = TRANS_CUBE_UBr,
+	[TRANS_UBm] = TRANS_CUBE_UBm,
+	[TRANS_URr] = TRANS_CUBE_ULr,
+	[TRANS_URm] = TRANS_CUBE_URm,
+	[TRANS_DFr] = TRANS_CUBE_DFr,
+	[TRANS_DFm] = TRANS_CUBE_DFm,
+	[TRANS_DLr] = TRANS_CUBE_DLr,
+	[TRANS_DLm] = TRANS_CUBE_DRm,
+	[TRANS_DBr] = TRANS_CUBE_DBr,
+	[TRANS_DBm] = TRANS_CUBE_DBm,
+	[TRANS_DRr] = TRANS_CUBE_DRr,
+	[TRANS_DRm] = TRANS_CUBE_DLm,
+	[TRANS_RUr] = TRANS_CUBE_FRr,
+	[TRANS_RUm] = TRANS_CUBE_FLm,
+	[TRANS_RFr] = TRANS_CUBE_LFr,
+	[TRANS_RFm] = TRANS_CUBE_RFm,
+	[TRANS_RDr] = TRANS_CUBE_BLr,
+	[TRANS_RDm] = TRANS_CUBE_BRm,
+	[TRANS_RBr] = TRANS_CUBE_RBr,
+	[TRANS_RBm] = TRANS_CUBE_LBm,
+	[TRANS_LUr] = TRANS_CUBE_FLr,
+	[TRANS_LUm] = TRANS_CUBE_FRm,
+	[TRANS_LFr] = TRANS_CUBE_RFr,
+	[TRANS_LFm] = TRANS_CUBE_LFm,
+	[TRANS_LDr] = TRANS_CUBE_BRr,
+	[TRANS_LDm] = TRANS_CUBE_BLm,
+	[TRANS_LBr] = TRANS_CUBE_LBr,
+	[TRANS_LBm] = TRANS_CUBE_RBm,
+	[TRANS_FUr] = TRANS_CUBE_FUr,
+	[TRANS_FUm] = TRANS_CUBE_FUm,
+	[TRANS_FRr] = TRANS_CUBE_RUr,
+	[TRANS_FRm] = TRANS_CUBE_LUm,
+	[TRANS_FDr] = TRANS_CUBE_BUr,
+	[TRANS_FDm] = TRANS_CUBE_BUm,
+	[TRANS_FLr] = TRANS_CUBE_LUr,
+	[TRANS_FLm] = TRANS_CUBE_RUm,
+	[TRANS_BUr] = TRANS_CUBE_FDr,
+	[TRANS_BUm] = TRANS_CUBE_FDm,
+	[TRANS_BRr] = TRANS_CUBE_LDr,
+	[TRANS_BRm] = TRANS_CUBE_RDm,
+	[TRANS_BDr] = TRANS_CUBE_BDr,
+	[TRANS_BDm] = TRANS_CUBE_BDm,
+	[TRANS_BLr] = TRANS_CUBE_RDr,
+	[TRANS_BLm] = TRANS_CUBE_LDm,
 };
 
 static cube_t cube_trans_table_inverse[48] = {
-	[_trans_UFr] = _trans_cube_UFr_inverse,
-	[_trans_UFm] = _trans_cube_UFm_inverse,
-	[_trans_ULr] = _trans_cube_URr_inverse,
-	[_trans_ULm] = _trans_cube_ULm_inverse,
-	[_trans_UBr] = _trans_cube_UBr_inverse,
-	[_trans_UBm] = _trans_cube_UBm_inverse,
-	[_trans_URr] = _trans_cube_ULr_inverse,
-	[_trans_URm] = _trans_cube_URm_inverse,
-	[_trans_DFr] = _trans_cube_DFr_inverse,
-	[_trans_DFm] = _trans_cube_DFm_inverse,
-	[_trans_DLr] = _trans_cube_DLr_inverse,
-	[_trans_DLm] = _trans_cube_DRm_inverse,
-	[_trans_DBr] = _trans_cube_DBr_inverse,
-	[_trans_DBm] = _trans_cube_DBm_inverse,
-	[_trans_DRr] = _trans_cube_DRr_inverse,
-	[_trans_DRm] = _trans_cube_DLm_inverse,
-	[_trans_RUr] = _trans_cube_FRr_inverse,
-	[_trans_RUm] = _trans_cube_FLm_inverse,
-	[_trans_RFr] = _trans_cube_LFr_inverse,
-	[_trans_RFm] = _trans_cube_RFm_inverse,
-	[_trans_RDr] = _trans_cube_BLr_inverse,
-	[_trans_RDm] = _trans_cube_BRm_inverse,
-	[_trans_RBr] = _trans_cube_RBr_inverse,
-	[_trans_RBm] = _trans_cube_LBm_inverse,
-	[_trans_LUr] = _trans_cube_FLr_inverse,
-	[_trans_LUm] = _trans_cube_FRm_inverse,
-	[_trans_LFr] = _trans_cube_RFr_inverse,
-	[_trans_LFm] = _trans_cube_LFm_inverse,
-	[_trans_LDr] = _trans_cube_BRr_inverse,
-	[_trans_LDm] = _trans_cube_BLm_inverse,
-	[_trans_LBr] = _trans_cube_LBr_inverse,
-	[_trans_LBm] = _trans_cube_RBm_inverse,
-	[_trans_FUr] = _trans_cube_FUr_inverse,
-	[_trans_FUm] = _trans_cube_FUm_inverse,
-	[_trans_FRr] = _trans_cube_RUr_inverse,
-	[_trans_FRm] = _trans_cube_LUm_inverse,
-	[_trans_FDr] = _trans_cube_BUr_inverse,
-	[_trans_FDm] = _trans_cube_BUm_inverse,
-	[_trans_FLr] = _trans_cube_LUr_inverse,
-	[_trans_FLm] = _trans_cube_RUm_inverse,
-	[_trans_BUr] = _trans_cube_FDr_inverse,
-	[_trans_BUm] = _trans_cube_FDm_inverse,
-	[_trans_BRr] = _trans_cube_LDr_inverse,
-	[_trans_BRm] = _trans_cube_RDm_inverse,
-	[_trans_BDr] = _trans_cube_BDr_inverse,
-	[_trans_BDm] = _trans_cube_BDm_inverse,
-	[_trans_BLr] = _trans_cube_RDr_inverse,
-	[_trans_BLm] = _trans_cube_LDm_inverse,
+	[TRANS_UFr] = TRANS_CUBE_UFr_inverse,
+	[TRANS_UFm] = TRANS_CUBE_UFm_inverse,
+	[TRANS_ULr] = TRANS_CUBE_URr_inverse,
+	[TRANS_ULm] = TRANS_CUBE_ULm_inverse,
+	[TRANS_UBr] = TRANS_CUBE_UBr_inverse,
+	[TRANS_UBm] = TRANS_CUBE_UBm_inverse,
+	[TRANS_URr] = TRANS_CUBE_ULr_inverse,
+	[TRANS_URm] = TRANS_CUBE_URm_inverse,
+	[TRANS_DFr] = TRANS_CUBE_DFr_inverse,
+	[TRANS_DFm] = TRANS_CUBE_DFm_inverse,
+	[TRANS_DLr] = TRANS_CUBE_DLr_inverse,
+	[TRANS_DLm] = TRANS_CUBE_DRm_inverse,
+	[TRANS_DBr] = TRANS_CUBE_DBr_inverse,
+	[TRANS_DBm] = TRANS_CUBE_DBm_inverse,
+	[TRANS_DRr] = TRANS_CUBE_DRr_inverse,
+	[TRANS_DRm] = TRANS_CUBE_DLm_inverse,
+	[TRANS_RUr] = TRANS_CUBE_FRr_inverse,
+	[TRANS_RUm] = TRANS_CUBE_FLm_inverse,
+	[TRANS_RFr] = TRANS_CUBE_LFr_inverse,
+	[TRANS_RFm] = TRANS_CUBE_RFm_inverse,
+	[TRANS_RDr] = TRANS_CUBE_BLr_inverse,
+	[TRANS_RDm] = TRANS_CUBE_BRm_inverse,
+	[TRANS_RBr] = TRANS_CUBE_RBr_inverse,
+	[TRANS_RBm] = TRANS_CUBE_LBm_inverse,
+	[TRANS_LUr] = TRANS_CUBE_FLr_inverse,
+	[TRANS_LUm] = TRANS_CUBE_FRm_inverse,
+	[TRANS_LFr] = TRANS_CUBE_RFr_inverse,
+	[TRANS_LFm] = TRANS_CUBE_LFm_inverse,
+	[TRANS_LDr] = TRANS_CUBE_BRr_inverse,
+	[TRANS_LDm] = TRANS_CUBE_BLm_inverse,
+	[TRANS_LBr] = TRANS_CUBE_LBr_inverse,
+	[TRANS_LBm] = TRANS_CUBE_RBm_inverse,
+	[TRANS_FUr] = TRANS_CUBE_FUr_inverse,
+	[TRANS_FUm] = TRANS_CUBE_FUm_inverse,
+	[TRANS_FRr] = TRANS_CUBE_RUr_inverse,
+	[TRANS_FRm] = TRANS_CUBE_LUm_inverse,
+	[TRANS_FDr] = TRANS_CUBE_BUr_inverse,
+	[TRANS_FDm] = TRANS_CUBE_BUm_inverse,
+	[TRANS_FLr] = TRANS_CUBE_LUr_inverse,
+	[TRANS_FLm] = TRANS_CUBE_RUm_inverse,
+	[TRANS_BUr] = TRANS_CUBE_FDr_inverse,
+	[TRANS_BUm] = TRANS_CUBE_FDm_inverse,
+	[TRANS_BRr] = TRANS_CUBE_LDr_inverse,
+	[TRANS_BRm] = TRANS_CUBE_RDm_inverse,
+	[TRANS_BDr] = TRANS_CUBE_BDr_inverse,
+	[TRANS_BDm] = TRANS_CUBE_BDm_inverse,
+	[TRANS_BLr] = TRANS_CUBE_RDr_inverse,
+	[TRANS_BLm] = TRANS_CUBE_LDm_inverse,
 };
 
-_static cube_t
+STATIC cube_t
 transform_edges(cube_t c, uint8_t t)
 {
 	cube_t ret, trans_cube, trans_inv;
@@ -144,7 +123,7 @@ transform_edges(cube_t c, uint8_t t)
 	return ret;
 }
 
-_static cube_t
+STATIC cube_t
 transform_corners(cube_t c, uint8_t t)
 {
 	cube_t ret, trans_cube, trans_inv;
@@ -162,7 +141,7 @@ transform_corners(cube_t c, uint8_t t)
 	return t < 24 ? ret : invertco(ret);
 }
 
-_static cube_t
+STATIC cube_t
 transform(cube_t c, uint8_t t)
 {
 	cube_t ret, trans_cube, trans_inv;
@@ -180,7 +159,7 @@ transform(cube_t c, uint8_t t)
 	return t < 24 ? ret : invertco(ret);
 }
 
-_static cube_t
+STATIC cube_t
 applytrans(cube_t cube, const char *buf)
 {
 	uint8_t t;

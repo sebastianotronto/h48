@@ -9,14 +9,14 @@ typedef struct {
 	uint8_t (*estimate)(cube_t);
 } dfsarg_generic_t;
 
-_static void solve_generic_appendsolution(dfsarg_generic_t *);
-_static int solve_generic_dfs(dfsarg_generic_t *);
-_static int64_t solve_generic(cube_t, const char *, int8_t, int8_t, int64_t,
+STATIC void solve_generic_appendsolution(dfsarg_generic_t *);
+STATIC int solve_generic_dfs(dfsarg_generic_t *);
+STATIC int64_t solve_generic(cube_t, const char *, int8_t, int8_t, int64_t,
     int8_t, char *, uint8_t (*)(cube_t));
-_static uint8_t estimate_simple(cube_t);
-_static int64_t solve_simple(cube_t, int8_t, int8_t, int64_t, int8_t, char *);
+STATIC uint8_t estimate_simple(cube_t);
+STATIC int64_t solve_simple(cube_t, int8_t, int8_t, int64_t, int8_t, char *);
 
-_static void
+STATIC void
 solve_generic_appendsolution(dfsarg_generic_t *arg)
 {
 	int strl;
@@ -29,7 +29,7 @@ solve_generic_appendsolution(dfsarg_generic_t *arg)
 	(*arg->nsols)++;
 }
 
-_static int
+STATIC int
 solve_generic_dfs(dfsarg_generic_t *arg)
 {
 	dfsarg_generic_t nextarg;
@@ -64,7 +64,7 @@ solve_generic_dfs(dfsarg_generic_t *arg)
 	return ret;
 }
 
-_static int64_t
+STATIC int64_t
 solve_generic(
 	cube_t cube,
 	const char *nisstype,
@@ -128,13 +128,13 @@ solve_generic(
 	return ret;
 }
 
-_static uint8_t
+STATIC uint8_t
 estimate_simple(cube_t cube)
 {
 	return issolved(cube) ? 0 : 1;
 }
 
-_static int64_t
+STATIC int64_t
 solve_simple(
 	cube_t cube,
 	int8_t minmoves,

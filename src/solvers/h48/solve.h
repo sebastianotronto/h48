@@ -26,22 +26,22 @@ typedef struct {
 	char *s;
 } dfsarg_solveh48stats_t;
 
-_static uint32_t allowednextmove_h48(uint8_t *, uint8_t, uint32_t);
+STATIC uint32_t allowednextmove_h48(uint8_t *, uint8_t, uint32_t);
 
-_static void solve_h48_appendsolution(dfsarg_solveh48_t *);
-_static_inline bool solve_h48_stop(dfsarg_solveh48_t *);
-_static int64_t solve_h48_dfs(dfsarg_solveh48_t *);
-_static int64_t solve_h48(cube_t, int8_t, int8_t, int8_t, uint8_t, uint8_t, const void *, char *);
+STATIC void solve_h48_appendsolution(dfsarg_solveh48_t *);
+STATIC_INLINE bool solve_h48_stop(dfsarg_solveh48_t *);
+STATIC int64_t solve_h48_dfs(dfsarg_solveh48_t *);
+STATIC int64_t solve_h48(cube_t, int8_t, int8_t, int8_t, uint8_t, uint8_t, const void *, char *);
 
-_static int64_t solve_h48stats_dfs(dfsarg_solveh48stats_t *);
-_static int64_t solve_h48stats(cube_t, int8_t, const void *, char [static 12]);
+STATIC int64_t solve_h48stats_dfs(dfsarg_solveh48stats_t *);
+STATIC int64_t solve_h48stats(cube_t, int8_t, const void *, char [static 12]);
 
-_static uint32_t
+STATIC uint32_t
 allowednextmove_h48(uint8_t *moves, uint8_t n, uint32_t h48branch)
 {
-	uint32_t result = _mm_allmoves;
-	if (h48branch & _mm_normalbranch)
-		result &= _mm_nohalfturns;
+	uint32_t result = MM_ALLMOVES;
+	if (h48branch & MM_NORMALBRANCH)
+		result &= MM_NOHALFTURNS;
 	if (n < 1)
 		return result;
 
@@ -64,7 +64,7 @@ allowednextmove_h48(uint8_t *moves, uint8_t n, uint32_t h48branch)
 	return result;
 }
 
-_static void
+STATIC void
 solve_h48_appendsolution(dfsarg_solveh48_t *arg)
 {
 	int strl;
@@ -89,13 +89,13 @@ solve_h48_appendsolution(dfsarg_solveh48_t *arg)
 	(*arg->nsols)++;
 }
 
-_static_inline bool
+STATIC_INLINE bool
 solve_h48_stop(dfsarg_solveh48_t *arg)
 {
 	uint32_t data, data_inv;
 	int8_t bound;
 
-	arg->nissbranch = _mm_normal;
+	arg->nissbranch = MM_NORMAL;
 	bound = get_h48_cdata(arg->cube, arg->cocsepdata, &data);
 	if (bound + arg->nmoves + arg->npremoves > arg->depth)
 		return true;
@@ -109,18 +109,18 @@ solve_h48_stop(dfsarg_solveh48_t *arg)
 	if (bound + arg->nmoves + arg->npremoves > arg->depth)
 		return true;
 	if (bound + arg->nmoves + arg->npremoves == arg->depth)
-		arg->nissbranch = _mm_inversebranch;
+		arg->nissbranch = MM_INVERSEBRANCH;
 
 	bound = get_h48_bound(arg->inverse, data_inv, arg->h, arg->k, arg->h48data);
 	if (bound + arg->nmoves + arg->npremoves > arg->depth)
 		return true;
 	if (bound + arg->nmoves + arg->npremoves == arg->depth)
-		arg->nissbranch = _mm_normalbranch;
+		arg->nissbranch = MM_NORMALBRANCH;
 
 	return false;
 }
 
-_static int64_t
+STATIC int64_t
 solve_h48_dfs(dfsarg_solveh48_t *arg)
 {
 	dfsarg_solveh48_t nextarg;
@@ -144,7 +144,7 @@ solve_h48_dfs(dfsarg_solveh48_t *arg)
 	nextarg = *arg;
 	ret = 0;
 	uint32_t allowed;
-	if(arg->nissbranch & _mm_inverse) {
+	if(arg->nissbranch & MM_INVERSE) {
 		allowed = allowednextmove_h48(arg->premoves, arg->npremoves, arg->nissbranch);
 		for (m = 0; m < 18; m++) {
 			if(allowed & (1 << m)) {
@@ -171,7 +171,7 @@ solve_h48_dfs(dfsarg_solveh48_t *arg)
 	return ret;
 }
 
-_static int64_t
+STATIC int64_t
 solve_h48(
 	cube_t cube,
 	int8_t minmoves,
@@ -219,7 +219,7 @@ each of the 12 h48 coordinates, one for each value of h from 0 to 11.
 The solutions array is filled with the length of the solutions. The
 solution array is therefore not a printable string.
 */
-_static int64_t
+STATIC int64_t
 solve_h48stats_dfs(dfsarg_solveh48stats_t *arg)
 {
 	const int64_t limit = 11;
@@ -268,7 +268,7 @@ solve_h48stats_dfs(dfsarg_solveh48stats_t *arg)
 	return 0;
 }
 
-_static int64_t
+STATIC int64_t
 solve_h48stats(
 	cube_t cube,
 	int8_t maxmoves,

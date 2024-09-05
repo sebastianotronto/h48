@@ -1,29 +1,29 @@
-_static uint8_t readmove(char);
-_static uint8_t readmodifier(char);
-_static int writemoves(uint8_t *, int, char *);
+STATIC uint8_t readmove(char);
+STATIC uint8_t readmodifier(char);
+STATIC int writemoves(uint8_t *, int, char *);
 
-_static uint8_t
+STATIC uint8_t
 readmove(char c)
 {
 	switch (c) {
 	case 'U':
-		return _move_U;
+		return MOVE_U;
 	case 'D':
-		return _move_D;
+		return MOVE_D;
 	case 'R':
-		return _move_R;
+		return MOVE_R;
 	case 'L':
-		return _move_L;
+		return MOVE_L;
 	case 'F':
-		return _move_F;
+		return MOVE_F;
 	case 'B':
-		return _move_B;
+		return MOVE_B;
 	default:
-		return _error;
+		return UINT8_ERROR;
 	}
 }
 
-_static uint8_t
+STATIC uint8_t
 readmodifier(char c)
 {
 	switch (c) {
@@ -38,7 +38,7 @@ readmodifier(char c)
 	}
 }
 
-_static int
+STATIC int
 writemoves(uint8_t *m, int n, char *buf)
 {
 	int i;

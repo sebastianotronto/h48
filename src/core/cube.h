@@ -1,13 +1,13 @@
-_static cube_t cubefromarray(uint8_t [static 8], uint8_t [static 12]);
-_static cube_t solvedcube(void);
-_static bool isconsistent(cube_t);
-_static bool issolvable(cube_t);
-_static bool issolved(cube_t);
-_static bool iserror(cube_t);
-_static void getcube_fix(int64_t *, int64_t *, int64_t *, int64_t *);
-_static cube_t getcube(int64_t, int64_t, int64_t, int64_t);
+STATIC cube_t cubefromarray(uint8_t [static 8], uint8_t [static 12]);
+STATIC cube_t solvedcube(void);
+STATIC bool isconsistent(cube_t);
+STATIC bool issolvable(cube_t);
+STATIC bool issolved(cube_t);
+STATIC bool iserror(cube_t);
+STATIC void getcube_fix(int64_t *, int64_t *, int64_t *, int64_t *);
+STATIC cube_t getcube(int64_t, int64_t, int64_t, int64_t);
 
-_static cube_t
+STATIC cube_t
 cubefromarray(uint8_t c[static 8], uint8_t e[static 12])
 {
 	return static_cube(
@@ -16,13 +16,13 @@ cubefromarray(uint8_t c[static 8], uint8_t e[static 12])
 	    e[8], e[9], e[10], e[11]);
 }
 
-_static cube_t
+STATIC cube_t
 solvedcube(void)
 {
 	return solved;
 }
 
-_static bool
+STATIC bool
 isconsistent(cube_t cube)
 {
 	uint8_t i, p, e, piece, corner[8], edge[12];
@@ -34,11 +34,11 @@ isconsistent(cube_t cube)
 		found[i] = false;
 	for (i = 0; i < 12; i++) {
 		piece = edge[i];
-		p = piece & _pbits;
-		e = piece & _eobit;
+		p = piece & PBITS;
+		e = piece & EOBIT;
 		if (p >= 12)
 			goto inconsistent_ep;
-		if (e != 0 && e != _eobit)
+		if (e != 0 && e != EOBIT)
 			goto inconsistent_eo;
 		found[p] = true;
 	}
@@ -50,11 +50,11 @@ isconsistent(cube_t cube)
 		found[i] = false;
 	for (i = 0; i < 8; i++) {
 		piece = corner[i];
-		p = piece & _pbits;
-		e = piece & _cobits;
+		p = piece & PBITS;
+		e = piece & COBITS;
 		if (p >= 8)
 			goto inconsistent_cp;
-		if (e != 0 && e != _ctwist_cw && e != _ctwist_ccw)
+		if (e != 0 && e != CTWIST_CW && e != CTWIST_CCW)
 			goto inconsistent_co;
 		found[p] = true;
 	}
@@ -78,7 +78,7 @@ inconsistent_co:
 	return false;
 }
 
-_static bool
+STATIC bool
 issolvable(cube_t cube)
 {
 	uint8_t i, eo, co, piece, edge[12], corner[8], ep[12], cp[8];
@@ -88,9 +88,9 @@ issolvable(cube_t cube)
 
 	pieces(&cube, corner, edge);
 	for (i = 0; i < 12; i++)
-		ep[i] = edge[i] & _pbits;
+		ep[i] = edge[i] & PBITS;
 	for (i = 0; i < 8; i++)
-		cp[i] = corner[i] & _pbits;
+		cp[i] = corner[i] & PBITS;
 
 	if (permsign(ep, 12) != permsign(cp, 8))
 		goto issolvable_parity;
@@ -98,7 +98,7 @@ issolvable(cube_t cube)
 	eo = 0;
 	for (i = 0; i < 12; i++) {
 		piece = edge[i];
-		eo += (piece & _eobit) >> _eoshift;
+		eo += (piece & EOBIT) >> EOSHIFT;
 	}
 	if (eo % 2 != 0)
 		goto issolvable_eo;
@@ -106,7 +106,7 @@ issolvable(cube_t cube)
 	co = 0;
 	for (i = 0; i < 8; i++) {
 		piece = corner[i];
-		co += (piece & _cobits) >> _coshift;
+		co += (piece & COBITS) >> COSHIFT;
 	}
 	if (co % 3 != 0)
 		goto issolvable_co;
@@ -136,15 +136,15 @@ iserror(cube_t cube)
 	return equal(cube, zero);
 }
 
-_static void
+STATIC void
 getcube_fix(int64_t *ep, int64_t *eo, int64_t *cp, int64_t *co)
 {
 	uint8_t e[12], c[8], coarr[8];
 
-        *ep = (*ep % _12f + _12f) % _12f;
-	*eo = (*eo % _2p11 + _2p11) % _2p11;
-	*cp = (*cp % _8f + _8f) % _8f;
-	*co = (*cp % _3p7 + _3p7) % _3p7;
+        *ep = (*ep % FACT_12 + FACT_12) % FACT_12;
+	*eo = (*eo % POW_2_11 + POW_2_11) % POW_2_11;
+	*cp = (*cp % FACT_8 + FACT_8) % FACT_8;
+	*co = (*cp % POW_3_7 + POW_3_7) % POW_3_7;
 
 	indextoperm(*ep, 12, e);
 	indextoperm(*cp, 8, c);
@@ -158,24 +158,24 @@ getcube_fix(int64_t *ep, int64_t *eo, int64_t *cp, int64_t *co)
 	}
 }
 
-_static cube_t
+STATIC cube_t
 getcube(int64_t ep, int64_t eo, int64_t cp, int64_t co)
 {
 	uint8_t i, earr[12], carr[8], eoarr[12], coarr[8];
 
 	sumzerotodigits(eo, 12, 2, eoarr);
-	DBG_ASSERT(eoarr[0] != _error, zero, "Error making EO");
+	DBG_ASSERT(eoarr[0] != UINT8_ERROR, zero, "Error making EO");
 	indextoperm(ep, 12, earr);
-	DBG_ASSERT(earr[0] != _error, zero, "Error making EP");
+	DBG_ASSERT(earr[0] != UINT8_ERROR, zero, "Error making EP");
 	for (i = 0; i < 12; i++)
-		earr[i] |= eoarr[i] << _eoshift;
+		earr[i] |= eoarr[i] << EOSHIFT;
 
 	sumzerotodigits(co, 8, 3, coarr);
-	DBG_ASSERT(coarr[0] != _error, zero, "Error making CO");
+	DBG_ASSERT(coarr[0] != UINT8_ERROR, zero, "Error making CO");
 	indextoperm(cp, 8, carr);
-	DBG_ASSERT(carr[0] != _error, zero, "Error making CP");
+	DBG_ASSERT(carr[0] != UINT8_ERROR, zero, "Error making CP");
 	for (i = 0; i < 8; i++)
-		carr[i] |= coarr[i] << _coshift;
+		carr[i] |= coarr[i] << COSHIFT;
 
 	return cubefromarray(carr, earr);
 }
