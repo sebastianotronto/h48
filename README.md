@@ -33,7 +33,7 @@ incomplete.  To compile correctly on these processors (e.g. Mac M1/M2/M3)
 you need to manually disable optimizations:
 
 ```
-$ TYPE="" ./configure.sh    # Can be combined with CC=...
+$ ARCH="PORTABLE" ./configure.sh    # Can be combined with CC=...
 ```
 
 Once the configuration is done, you can build with make

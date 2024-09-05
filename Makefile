@@ -3,19 +3,19 @@ include config.mk
 all: cube.o debugcube.o
 
 cube.s: clean
-	${CC} -D${CUBETYPE} ${CFLAGS} -c -S -o cube.s src/nissy.c
+	${CC} -D${ARCH} ${CFLAGS} -c -S -o cube.s src/nissy.c
 
 cube.o: clean
-	${CC} -D${CUBETYPE} ${CFLAGS} -c -o cube.o src/nissy.c
+	${CC} -D${ARCH} ${CFLAGS} -c -o cube.o src/nissy.c
 
 debugcube.o: clean
-	${CC} -D${CUBETYPE} ${DBGFLAGS} -c -o debugcube.o src/nissy.c
+	${CC} -D${ARCH} ${DBGFLAGS} -c -o debugcube.o src/nissy.c
 
 clean:
 	rm -rf *.o run
 
 test: debugcube.o
-	CC="${CC} -D${CUBETYPE} ${DBGFLAGS}" ./test/test.sh
+	CC="${CC} -D${ARCH} ${DBGFLAGS}" ./test/test.sh
 
 tool: cube.o
 	mkdir -p tools/results

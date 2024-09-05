@@ -12,15 +12,25 @@ detectsan() {
 
 [ -n "$(detectarch __AVX2__)" ] && detected="AVX2"
 [ -n "$(detectarch __ARM_NEON)" ] && detected="NEON"
+[ -z "$detected" ] && detected="PORTABLE"
 
-TYPE=${TYPE-"$detected"}
+ARCH=${ARCH-"$detected"}
+
+case "$ARCH" in
+AVX2|NEON|PORTABLE)
+	;;
+*)
+	echo "Error: architecture $ARCH not supported"
+	exit 1
+	;;
+esac
 
 STD="-std=c99"
 WFLAGS="-pedantic -Wall -Wextra"
 # -Wstringop-overflow seems to be causing problems when combined with -O3
 # Someone else complained here: https://access.redhat.com/solutions/6755371
 WNOFLAGS="-Wno-unused-parameter -Wno-unused-function -Wno-stringop-overflow"
-[ "$TYPE" = "AVX2" ] && AVX="-mavx2"
+[ "$ARCH" = "AVX2" ] && AVX="-mavx2"
 [ -n "$(detectsan address)" ] && ADDR="-fsanitize=address"
 [ -n "$(detectsan undefined)" ] && UNDEF="-fsanitize=undefined"
 SAN="$ADDR $UNDEF"
@@ -29,11 +39,11 @@ LIBS="-lpthread"
 CFLAGS="$STD $LIBS $WFLAGS $WNOFLAGS $AVX -O3"
 DBGFLAGS="$STD $LIBS $WFLAGS $WNOFLAGS $SAN $AVX -g3 -DDEBUG"
 
-echo "Cube type: CUBE_$TYPE"
+echo "Selected architecture: $ARCH"
 echo "Compiler: ${CC:-cc}"
 
 {
-echo "CUBETYPE = CUBE_$TYPE";
+echo "ARCH = $ARCH";
 echo "";
 echo "CFLAGS = $CFLAGS";
 echo "DBGFLAGS = $DBGFLAGS";
