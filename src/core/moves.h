@@ -13,8 +13,26 @@ STATIC cube_t premove(cube_t, uint8_t);
 STATIC uint8_t inverse_move(uint8_t);
 STATIC void invertmoves(uint8_t *, uint8_t, uint8_t *);
 
+STATIC int readmoves(const char *, int, uint8_t *);
 STATIC cube_t applymoves(cube_t, const char *);
 STATIC cube_t frommoves(const char *);
+
+#define FOREACH_READMOVE(ARG_BUF, ARG_MOVE, ARG_C, ARG_MAX, \
+	LABEL_ERROR, ARG_ACTION) \
+	const char *VAR_B; \
+	uint8_t VAR_MOVE_NOMOD, VAR_MOD; \
+	for (VAR_B = ARG_BUF, ARG_C = 0; *VAR_B != '\0'; VAR_B++, ARG_C++) { \
+		while (*VAR_B == ' ' || *VAR_B == '\t' || *VAR_B == '\n') \
+			VAR_B++; \
+		if (*VAR_B == '\0' || ARG_C == ARG_MAX) \
+			break; \
+		if ((VAR_MOVE_NOMOD = readmove(*VAR_B)) == UINT8_ERROR) \
+			goto LABEL_ERROR; \
+		if ((VAR_MOD = readmodifier(*(VAR_B+1))) != 0) \
+			VAR_B++; \
+		ARG_MOVE = VAR_MOVE_NOMOD + VAR_MOD; \
+		ARG_ACTION \
+	}
 
 STATIC bool
 allowednextmove(uint8_t *moves, uint8_t n)
@@ -173,28 +191,36 @@ invertmoves(uint8_t *moves, uint8_t nmoves, uint8_t *ret)
 		ret[i] = inverse_move(moves[nmoves - i - 1]);
 }
 
+STATIC int
+readmoves(const char *buf, int max, uint8_t *ret)
+{
+	uint8_t m;
+	int c;
+
+	FOREACH_READMOVE(buf, m, c, max, readmoves_error,
+		ret[c] = m;
+	)
+
+	return c;
+
+readmoves_error:
+	LOG("readmoves error\n");
+	return -1;
+}
+
 STATIC cube_t
 applymoves(cube_t cube, const char *buf)
 {
-	uint8_t r, m;
-	const char *b;
+	int c;
+	uint8_t m;
 
 	DBG_ASSERT(isconsistent(cube), ZERO_CUBE,
 	    "move error: inconsistent cube\n");
 
-	for (b = buf; *b != '\0'; b++) {
-		while (*b == ' ' || *b == '\t' || *b == '\n')
-			b++;
-		if (*b == '\0')
-			goto applymoves_finish;
-		if ((r = readmove(*b)) == UINT8_ERROR)
-			goto applymoves_error;
-		if ((m = readmodifier(*(b+1))) != 0)
-			b++;
-		cube = move(cube, r + m);
-	}
+	FOREACH_READMOVE(buf, m, c, -1, applymoves_error,
+		cube = move(cube, m);
+	)
 
-applymoves_finish:
 	return cube;
 
 applymoves_error:
