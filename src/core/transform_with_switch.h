@@ -124,7 +124,7 @@ transform_edges(cube_t c, uint8_t t)
 		return TRANS_EDGES_MIRRORED(BLm, c);
 	default:
 		LOG("transform error, unknown transformation %" PRIu8 "\n", t);
-		return zero;
+		return ZERO_CUBE;
 	}
 }
 
@@ -230,7 +230,7 @@ transform_corners(cube_t c, uint8_t t)
 		return TRANS_CORNERS_MIRRORED(BLm, c);
 	default:
 		LOG("transform error, unknown transformation %" PRIu8 "\n", t);
-		return zero;
+		return ZERO_CUBE;
 	}
 }
 
@@ -336,7 +336,7 @@ transform(cube_t c, uint8_t t)
 		return TRANS_MIRRORED(BLm, c);
 	default:
 		LOG("transform error, unknown transformation %" PRIu8 "\n", t);
-		return zero;
+		return ZERO_CUBE;
 	}
 }
 
@@ -345,7 +345,7 @@ applytrans(cube_t cube, const char *buf)
 {
 	uint8_t t;
 
-	DBG_ASSERT(isconsistent(cube), zero,
+	DBG_ASSERT(isconsistent(cube), ZERO_CUBE,
 	    "transformation error: inconsistent cube\n");
 
 	t = readtrans(buf);

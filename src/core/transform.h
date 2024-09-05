@@ -110,7 +110,7 @@ transform_edges(cube_t c, uint8_t t)
 {
 	cube_t ret, trans_cube, trans_inv;
 
-	DBG_ASSERT(t < 48, zero,
+	DBG_ASSERT(t < 48, ZERO_CUBE,
 	    "transform: invalid transformation %" PRIu8
 	    ", must be between 0 and 47\n", t);
 
@@ -128,7 +128,7 @@ transform_corners(cube_t c, uint8_t t)
 {
 	cube_t ret, trans_cube, trans_inv;
 
-	DBG_ASSERT(t < 48, zero,
+	DBG_ASSERT(t < 48, ZERO_CUBE,
 	    "transform: invalid transformation %" PRIu8
 	    ", must be between 0 and 47\n", t);
 
@@ -146,7 +146,7 @@ transform(cube_t c, uint8_t t)
 {
 	cube_t ret, trans_cube, trans_inv;
 
-	DBG_ASSERT(t < 48, zero,
+	DBG_ASSERT(t < 48, ZERO_CUBE,
 	    "transform: invalid transformation %" PRIu8
 	    ", must be between 0 and 47\n", t);
 
@@ -164,7 +164,7 @@ applytrans(cube_t cube, const char *buf)
 {
 	uint8_t t;
 
-	DBG_ASSERT(isconsistent(cube), zero,
+	DBG_ASSERT(isconsistent(cube), ZERO_CUBE,
 	    "transformation error: inconsistent cube\n");
 
 	t = readtrans(buf);

@@ -1,7 +1,7 @@
 #define H48_COORDMAX_NOEO    ((int64_t)(COCSEP_CLASSES * COMB_12_4 * COMB_8_4))
 #define H48_COORDMAX(h)      ((int64_t)(H48_COORDMAX_NOEO << (int64_t)(h)))
 #define H48_DIV(k)           ((size_t)8 / (size_t)(k))
-#define H48_TABLESIZE(h, k)  _div_round_up((size_t)H48_COORDMAX((h)), H48_DIV(k))
+#define H48_TABLESIZE(h, k)  DIV_ROUND_UP((size_t)H48_COORDMAX((h)), H48_DIV(k))
 
 #define H48_COEFF(k)         (UINT32_C(32) / (uint32_t)(k))
 #define H48_INDEX(i, k)      ((uint32_t)(i) / H48_COEFF(k))
@@ -97,7 +97,7 @@ gen_h48short(gendata_h48short_arg_t *arg)
 	kvpair_t kv;
 	cube_t cube, d;
 
-	cube = solvedcube();
+	cube = SOLVED_CUBE;
 	coord = coord_h48(cube, arg->cocsepdata, 11);
 	h48map_insertmin(arg->map, coord, 0);
 	oldn = 0;
@@ -175,7 +175,7 @@ gendata_h48h0k4(gendata_h48_arg_t *arg)
 		goto gendata_h48h0k4_return_size;
 
 	esep_max = (int64_t)H48_COORDMAX(0);
-	sc = coord_h48(solved, arg->cocsepdata, 0);
+	sc = coord_h48(SOLVED_CUBE, arg->cocsepdata, 0);
 	set_esep_pval(arg->h48data, sc, 4, 0);
 	arg->info[1] = 1;
 	bfsarg = (h48h0k4_bfs_arg_t) {
@@ -331,7 +331,7 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 		.base = base[arg->h],
 		.depth = shortdepth,
 		.shortdepth = shortdepth,
-		.maxdepth = _min(arg->maxdepth, base[arg->h]+2),
+		.maxdepth = MIN(arg->maxdepth, base[arg->h]+2),
 		.cocsepdata = arg->cocsepdata,
 		.h48data = arg->h48data,
 		.selfsim = arg->selfsim,
@@ -381,7 +381,7 @@ gendata_h48k2_dfs(h48k2_dfs_arg_t *arg)
 		oldval = get_esep_pval(arg->h48data, coord, arg->k);
 		newval = arg->depth >= arg->base ? arg->depth - arg->base : 0;
 		set_esep_pval(
-		    arg->h48data, coord, arg->k, _min(oldval, newval));
+		    arg->h48data, coord, arg->k, MIN(oldval, newval));
 	)
 
 	fullcoord = coord_h48(arg->cube, arg->cocsepdata, 11); /* Necessary? */

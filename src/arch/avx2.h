@@ -1,19 +1,19 @@
-#define _co2_avx2 _mm256_set_epi64x(0, 0, 0, INT64_C(0x6060606060606060))
-#define _cocw_avx2 _mm256_set_epi64x(0, 0, 0, INT64_C(0x2020202020202020))
-#define _cp_avx2 _mm256_set_epi64x(0, 0, 0, INT64_C(0x0707070707070707))
-#define _ep_avx2 \
+#define CO2_AVX2 _mm256_set_epi64x(0, 0, 0, INT64_C(0x6060606060606060))
+#define COCW_AVX2 _mm256_set_epi64x(0, 0, 0, INT64_C(0x2020202020202020))
+#define CP_AVX2 _mm256_set_epi64x(0, 0, 0, INT64_C(0x0707070707070707))
+#define EP_AVX2 \
     _mm256_set_epi64x(INT64_C(0x0F0F0F0F), INT64_C(0x0F0F0F0F0F0F0F0F), 0, 0)
-#define _eo_avx2 \
+#define EO_AVX2 \
     _mm256_set_epi64x(INT64_C(0x10101010), INT64_C(0x1010101010101010), 0, 0)
 
-#define static_cube(c_ufr, c_ubl, c_dfl, c_dbr, c_ufl, c_ubr, c_dfr, c_dbl, \
+#define STATIC_CUBE(c_ufr, c_ubl, c_dfl, c_dbr, c_ufl, c_ubr, c_dfr, c_dbl, \
     e_uf, e_ub, e_db, e_df, e_ur, e_ul, e_dl, e_dr, e_fr, e_fl, e_bl, e_br) \
     _mm256_set_epi8(0, 0, 0, 0, e_br, e_bl, e_fl, e_fr, \
         e_dr, e_dl, e_ul, e_ur, e_df, e_db, e_ub, e_uf, \
         0, 0, 0, 0, 0, 0, 0, 0, \
         c_dbl, c_dfr, c_ubr, c_ufl, c_dbr, c_dfl, c_ubl, c_ufr)
-#define zero _mm256_set_epi64x(0, 0, 0, 0)
-#define solved static_cube( \
+#define ZERO_CUBE _mm256_set_epi64x(0, 0, 0, 0)
+#define SOLVED_CUBE STATIC_CUBE( \
     0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
 
 STATIC void
@@ -43,11 +43,11 @@ invertco(cube_t c)
 {
         cube_t co, shleft, shright, summed, newco, cleanco, ret;
 
-        co = _mm256_and_si256(c, _co2_avx2);
+        co = _mm256_and_si256(c, CO2_AVX2);
         shleft = _mm256_slli_epi32(co, 1);
         shright = _mm256_srli_epi32(co, 1);
         summed = _mm256_or_si256(shleft, shright);
-        newco = _mm256_and_si256(summed, _co2_avx2);
+        newco = _mm256_and_si256(summed, CO2_AVX2);
         cleanco = _mm256_xor_si256(c, co);
         ret = _mm256_or_si256(cleanco, newco);
 
@@ -68,7 +68,7 @@ compose_epcpeo(cube_t c1, cube_t c2)
 	s = _mm256_andnot_si256(b, s);
 
 	/* Change EO */
-	eo2 = _mm256_and_si256(c2, _eo_avx2);
+	eo2 = _mm256_and_si256(c2, EO_AVX2);
 	s = _mm256_xor_si256(s, eo2);
 
 	return s;
@@ -99,16 +99,16 @@ compose(cube_t c1, cube_t c2)
 	s = compose_epcpeo(c1, c2);
 
 	/* Change CO */
-	co1 = _mm256_and_si256(s, _co2_avx2);
-	co2 = _mm256_and_si256(c2, _co2_avx2);
+	co1 = _mm256_and_si256(s, CO2_AVX2);
+	co2 = _mm256_and_si256(c2, CO2_AVX2);
 	aux = _mm256_add_epi8(co1, co2);
-	auy1 = _mm256_add_epi8(aux, _cocw_avx2);
+	auy1 = _mm256_add_epi8(aux, COCW_AVX2);
 	auy2 = _mm256_srli_epi32(auy1, 2);
 	auz1 = _mm256_add_epi8(aux, auy2);
-	auz2 = _mm256_and_si256(auz1, _co2_avx2);
+	auz2 = _mm256_and_si256(auz1, CO2_AVX2);
 
 	/* Put together */
-	s = _mm256_andnot_si256(_co2_avx2, s);
+	s = _mm256_andnot_si256(CO2_AVX2, s);
 	s = _mm256_or_si256(s, auz2);
 
 	return s;
@@ -157,9 +157,9 @@ inverse(cube_t c)
 	vi = _mm256_shuffle_epi8(vi, vi);
 	vi = _mm256_shuffle_epi8(vi, c);
 
-	vo = _mm256_and_si256(c, _mm256_or_si256(_eo_avx2, _co2_avx2));
+	vo = _mm256_and_si256(c, _mm256_or_si256(EO_AVX2, CO2_AVX2));
 	vo = _mm256_shuffle_epi8(vo, vi);
-	vp = _mm256_andnot_si256(_mm256_or_si256(_eo_avx2, _co2_avx2), vi);
+	vp = _mm256_andnot_si256(_mm256_or_si256(EO_AVX2, CO2_AVX2), vi);
 	ret = _mm256_or_si256(vp, vo);
 	ret = cleanaftershuffle(ret);
 	
@@ -172,7 +172,7 @@ coord_co(cube_t c)
 	cube_t co;
 	int64_t mem[4], ret, i, p;
 
-	co = _mm256_and_si256(c, _co2_avx2);
+	co = _mm256_and_si256(c, CO2_AVX2);
 	_mm256_storeu_si256((__m256i *)mem, co);
 
 	mem[0] >>= 5;
@@ -188,7 +188,7 @@ coord_csep(cube_t c)
 	cube_t cp, shifted;
 	int64_t mask;
 
-	cp = _mm256_and_si256(c, _cp_avx2);
+	cp = _mm256_and_si256(c, CP_AVX2);
 	shifted = _mm256_slli_epi32(cp, 5);
 	mask = _mm256_movemask_epi8(shifted);
 
@@ -207,7 +207,7 @@ coord_eo(cube_t c)
 	cube_t eo, shifted;
 	int64_t mask;
 
-	eo = _mm256_and_si256(c, _eo_avx2);
+	eo = _mm256_and_si256(c, EO_AVX2);
 	shifted = _mm256_slli_epi32(eo, 3);
 	mask = _mm256_movemask_epi8(shifted);
 
@@ -220,7 +220,7 @@ coord_esep(cube_t c)
 	cube_t ep;
 	int64_t e, mem[4], i, j, jj, k, l, ret1, ret2, bit1, bit2, is1;
 
-	ep = _mm256_and_si256(c, _ep_avx2);
+	ep = _mm256_and_si256(c, EP_AVX2);
 	_mm256_storeu_si256((__m256i *)mem, ep);
 
 	mem[3] <<= 8;
@@ -278,7 +278,7 @@ set_eo(cube_t *cube, int64_t eo)
 		(eo12 & 1) << 4;
 	veo = _mm256_set_epi64x(eotop, eobot, 0, 0);
 
-	*cube = _mm256_andnot_si256(_eo_avx2, *cube);
+	*cube = _mm256_andnot_si256(EO_AVX2, *cube);
 	*cube = _mm256_or_si256(*cube, veo);
 }
 
@@ -290,7 +290,7 @@ invcoord_esep(int64_t esep)
 
 	invcoord_esep_array(esep % 70, esep / 70, mem+16);
 
-	ret = solved;
+	ret = SOLVED_CUBE;
 	eee = _mm256_loadu_si256((__m256i_u *)&mem);
 	copy_edges(&ret, eee);
 

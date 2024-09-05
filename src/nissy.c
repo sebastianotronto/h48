@@ -65,7 +65,7 @@ STATIC int64_t
 write_result(cube_t cube, char result[static 22])
 {
 	if (!isconsistent(cube)) {
-		writecube("B32", zero, result);
+		writecube("B32", ZERO_CUBE, result);
 		return 2;
 	}
 
@@ -142,7 +142,7 @@ nissy_frommoves(
 {
 	cube_t res;
 
-	res = applymoves(solved, moves);
+	res = applymoves(SOLVED_CUBE, moves);
 
 	return write_result(res, result);
 }

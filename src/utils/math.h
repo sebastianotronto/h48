@@ -1,7 +1,7 @@
-#define _swap(x, y) do { x ^= y; y ^= x; x ^= y; } while (0)
-#define _min(x, y) ((x) < (y) ? (x) : (y))
-#define _max(x, y) ((x) > (y) ? (x) : (y))
-#define _div_round_up(n, d) (((n) + (d) - 1) / (d))
+#define SWAP(x, y) do { x ^= y; y ^= x; x ^= y; } while (0)
+#define MIN(x, y) ((x) < (y) ? (x) : (y))
+#define MAX(x, y) ((x) > (y) ? (x) : (y))
+#define DIV_ROUND_UP(n, d) (((n) + (d) - 1) / (d))
 
 STATIC int64_t factorial(int64_t);
 STATIC bool isperm(uint8_t *, int64_t);

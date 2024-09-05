@@ -1,5 +1,5 @@
-#define _move(M, c) compose(c, MOVE_CUBE_ ## M)
-#define _premove(M, c) compose(MOVE_CUBE_ ## M, c)
+#define MOVE(M, c) compose(c, MOVE_CUBE_ ## M)
+#define PREMOVE(M, c) compose(MOVE_CUBE_ ## M, c)
 
 STATIC_INLINE bool allowednextmove(uint8_t *, uint8_t);
 
@@ -70,44 +70,44 @@ move(cube_t c, uint8_t m)
 {
 	switch (m) {
 	case MOVE_U:
-		return _move(U, c);
+		return MOVE(U, c);
 	case MOVE_U2:
-		return _move(U2, c);
+		return MOVE(U2, c);
 	case MOVE_U3:
-		return _move(U3, c);
+		return MOVE(U3, c);
 	case MOVE_D:
-		return _move(D, c);
+		return MOVE(D, c);
 	case MOVE_D2:
-		return _move(D2, c);
+		return MOVE(D2, c);
 	case MOVE_D3:
-		return _move(D3, c);
+		return MOVE(D3, c);
 	case MOVE_R:
-		return _move(R, c);
+		return MOVE(R, c);
 	case MOVE_R2:
-		return _move(R2, c);
+		return MOVE(R2, c);
 	case MOVE_R3:
-		return _move(R3, c);
+		return MOVE(R3, c);
 	case MOVE_L:
-		return _move(L, c);
+		return MOVE(L, c);
 	case MOVE_L2:
-		return _move(L2, c);
+		return MOVE(L2, c);
 	case MOVE_L3:
-		return _move(L3, c);
+		return MOVE(L3, c);
 	case MOVE_F:
-		return _move(F, c);
+		return MOVE(F, c);
 	case MOVE_F2:
-		return _move(F2, c);
+		return MOVE(F2, c);
 	case MOVE_F3:
-		return _move(F3, c);
+		return MOVE(F3, c);
 	case MOVE_B:
-		return _move(B, c);
+		return MOVE(B, c);
 	case MOVE_B2:
-		return _move(B2, c);
+		return MOVE(B2, c);
 	case MOVE_B3:
-		return _move(B3, c);
+		return MOVE(B3, c);
 	default:
 		LOG("move error, unknown move\n");
-		return zero;
+		return ZERO_CUBE;
 	}
 }
 
@@ -116,44 +116,44 @@ premove(cube_t c, uint8_t m)
 {
 	switch (m) {
 	case MOVE_U:
-		return _premove(U3, c);
+		return PREMOVE(U3, c);
 	case MOVE_U2:
-		return _premove(U2, c);
+		return PREMOVE(U2, c);
 	case MOVE_U3:
-		return _premove(U, c);
+		return PREMOVE(U, c);
 	case MOVE_D:
-		return _premove(D3, c);
+		return PREMOVE(D3, c);
 	case MOVE_D2:
-		return _premove(D2, c);
+		return PREMOVE(D2, c);
 	case MOVE_D3:
-		return _premove(D, c);
+		return PREMOVE(D, c);
 	case MOVE_R:
-		return _premove(R3, c);
+		return PREMOVE(R3, c);
 	case MOVE_R2:
-		return _premove(R2, c);
+		return PREMOVE(R2, c);
 	case MOVE_R3:
-		return _premove(R, c);
+		return PREMOVE(R, c);
 	case MOVE_L:
-		return _premove(L3, c);
+		return PREMOVE(L3, c);
 	case MOVE_L2:
-		return _premove(L2, c);
+		return PREMOVE(L2, c);
 	case MOVE_L3:
-		return _premove(L, c);
+		return PREMOVE(L, c);
 	case MOVE_F:
-		return _premove(F3, c);
+		return PREMOVE(F3, c);
 	case MOVE_F2:
-		return _premove(F2, c);
+		return PREMOVE(F2, c);
 	case MOVE_F3:
-		return _premove(F, c);
+		return PREMOVE(F, c);
 	case MOVE_B:
-		return _premove(B3, c);
+		return PREMOVE(B3, c);
 	case MOVE_B2:
-		return _premove(B2, c);
+		return PREMOVE(B2, c);
 	case MOVE_B3:
-		return _premove(B, c);
+		return PREMOVE(B, c);
 	default:
 		LOG("move error, unknown move\n");
-		return zero;
+		return ZERO_CUBE;
 	}
 }
 
@@ -178,7 +178,7 @@ applymoves(cube_t cube, const char *buf)
 	uint8_t r, m;
 	const char *b;
 
-	DBG_ASSERT(isconsistent(cube), zero,
+	DBG_ASSERT(isconsistent(cube), ZERO_CUBE,
 	    "move error: inconsistent cube\n");
 
 	for (b = buf; *b != '\0'; b++) {
@@ -198,11 +198,11 @@ applymoves_finish:
 
 applymoves_error:
 	LOG("applymoves error\n");
-	return zero;
+	return ZERO_CUBE;
 }
 
 STATIC cube_t
 frommoves(const char *buf)
 {
-	return applymoves(solved, buf);
+	return applymoves(SOLVED_CUBE, buf);
 }

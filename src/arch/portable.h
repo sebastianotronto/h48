@@ -1,12 +1,12 @@
-#define static_cube(c_ufr, c_ubl, c_dfl, c_dbr, c_ufl, c_ubr, c_dfr, c_dbl, \
+#define STATIC_CUBE(c_ufr, c_ubl, c_dfl, c_dbr, c_ufl, c_ubr, c_dfr, c_dbl, \
     e_uf, e_ub, e_db, e_df, e_ur, e_ul, e_dl, e_dr, e_fr, e_fl, e_bl, e_br) \
     ((cube_t) { \
         .corner = { c_ufr, c_ubl, c_dfl, c_dbr, c_ufl, c_ubr, c_dfr, c_dbl }, \
         .edge = { e_uf, e_ub, e_db, e_df, e_ur, e_ul, \
                   e_dl, e_dr, e_fr, e_fl, e_bl, e_br } })
-#define zero static_cube( \
+#define ZERO_CUBE STATIC_CUBE( \
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-#define solved static_cube( \
+#define SOLVED_CUBE STATIC_CUBE( \
     0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
 
 STATIC void
@@ -80,7 +80,7 @@ compose_corners_inplace(cube_t c1, cube_t c2, cube_t *ret)
 STATIC_INLINE cube_t
 compose_edges(cube_t c1, cube_t c2)
 {
-	cube_t ret = zero;
+	cube_t ret = ZERO_CUBE;
 
 	compose_edges_inplace(c1, c2, &ret);
 
@@ -90,7 +90,7 @@ compose_edges(cube_t c1, cube_t c2)
 STATIC_INLINE cube_t
 compose_corners(cube_t c1, cube_t c2)
 {
-	cube_t ret = zero;
+	cube_t ret = ZERO_CUBE;
 
 	compose_corners_inplace(c1, c2, &ret);
 
@@ -100,7 +100,7 @@ compose_corners(cube_t c1, cube_t c2)
 STATIC_INLINE cube_t
 compose(cube_t c1, cube_t c2)
 {
-	cube_t ret = zero;
+	cube_t ret = ZERO_CUBE;
 
 	compose_edges_inplace(c1, c2, &ret);
 	compose_corners_inplace(c1, c2, &ret);
@@ -244,7 +244,7 @@ invcoord_esep(int64_t esep)
 {
 	cube_t ret;
 
-	ret = solved;
+	ret = SOLVED_CUBE;
 	invcoord_esep_array(esep % 70, esep / 70, ret.edge);
 
 	return ret;

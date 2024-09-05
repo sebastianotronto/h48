@@ -1,21 +1,21 @@
-#define _co2_neon vdupq_n_u8(0x60)
-#define _cocw_neon vdupq_n_u8(0x20)
-#define _cp_neon vdupq_n_u8(0x07)
-#define _ep_neon vcombine_u8(vdupq_n_u8(0x0F), vdupq_n_u8(0x0F))
-#define _eo_neon vcombine_u8(vdupq_n_u8(0x10), vdupq_n_u8(0x10))
+#define CO2_NEON vdupq_n_u8(0x60)
+#define COCW_NEON vdupq_n_u8(0x20)
+#define CP_NEON vdupq_n_u8(0x07)
+#define EP_NEON vcombine_u8(vdupq_n_u8(0x0F), vdupq_n_u8(0x0F))
+#define EO_NEON vcombine_u8(vdupq_n_u8(0x10), vdupq_n_u8(0x10))
 
 STATIC_INLINE uint8x16_t compose_edges_slim(uint8x16_t, uint8x16_t);
 STATIC_INLINE uint8x16_t compose_corners_slim(uint8x16_t, uint8x16_t);
 
 // static cube
-#define static_cube(c_ufr, c_ubl, c_dfl, c_dbr, c_ufl, c_ubr, c_dfr, c_dbl, \
+#define STATIC_CUBE(c_ufr, c_ubl, c_dfl, c_dbr, c_ufl, c_ubr, c_dfr, c_dbl, \
 					e_uf, e_ub, e_db, e_df, e_ur, e_ul, e_dl, e_dr, e_fr, e_fl, e_bl, e_br) \
 	((cube_t){ \
 		.corner = {c_ufr, c_ubl, c_dfl, c_dbr, c_ufl, c_ubr, c_dfr, c_dbl, 0, 0, 0, 0, 0, 0, 0, 0}, \
 		.edge = {e_uf, e_ub, e_db, e_df, e_ur, e_ul, e_dl, e_dr, e_fr, e_fl, e_bl, e_br, 0, 0, 0, 0}})
 
 // zero cube
-#define zero \
+#define ZERO_CUBE \
 	(cube_t) \
 	{ \
 		.corner = vdupq_n_u8(0), \
@@ -23,7 +23,7 @@ STATIC_INLINE uint8x16_t compose_corners_slim(uint8x16_t, uint8x16_t);
 	}
 
 // solved cube
-#define solved static_cube(	\
+#define SOLVED_CUBE STATIC_CUBE(	\
 	0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
 
 STATIC void
@@ -68,11 +68,11 @@ invertco(cube_t c)
 	cube_t ret;
 	uint8x16_t co, shleft, shright, summed, newco, cleanco;
 
-	co = vandq_u8(c.corner, _co2_neon);
+	co = vandq_u8(c.corner, CO2_NEON);
 	shleft = vshlq_n_u8(co, 1);
 	shright = vshrq_n_u8(co, 1);
 	summed = vorrq_u8(shleft, shright);
-	newco = vandq_u8(summed, _co2_neon);
+	newco = vandq_u8(summed, CO2_NEON);
 	cleanco = veorq_u8(c.corner, co);
 	ret.corner = vorrq_u8(cleanco, newco);
 	ret.edge = c.edge;
@@ -323,7 +323,7 @@ invcoord_esep(int64_t esep)
 
 	invcoord_esep_array(esep % 70, esep / 70, mem);
 
-	ret = solved;
+	ret = SOLVED_CUBE;
 	ret.edge = vld1q_u8(mem);
 
 	return ret;

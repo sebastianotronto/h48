@@ -1,5 +1,5 @@
+STATIC cube_t solvecube(void);
 STATIC cube_t cubefromarray(uint8_t [static 8], uint8_t [static 12]);
-STATIC cube_t solvedcube(void);
 STATIC bool isconsistent(cube_t);
 STATIC bool issolvable(cube_t);
 STATIC bool issolved(cube_t);
@@ -7,19 +7,20 @@ STATIC bool iserror(cube_t);
 STATIC void getcube_fix(int64_t *, int64_t *, int64_t *, int64_t *);
 STATIC cube_t getcube(int64_t, int64_t, int64_t, int64_t);
 
-STATIC cube_t
-cubefromarray(uint8_t c[static 8], uint8_t e[static 12])
-{
-	return static_cube(
-	    c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7],
-	    e[0], e[1], e[2], e[3], e[4], e[5], e[6], e[7],
-	    e[8], e[9], e[10], e[11]);
-}
-
+/* This is used only in tests, use SOLVED_CUBE directly everywhere else */
 STATIC cube_t
 solvedcube(void)
 {
-	return solved;
+	return SOLVED_CUBE;
+}
+
+STATIC cube_t
+cubefromarray(uint8_t c[static 8], uint8_t e[static 12])
+{
+	return STATIC_CUBE(
+	    c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7],
+	    e[0], e[1], e[2], e[3], e[4], e[5], e[6], e[7],
+	    e[8], e[9], e[10], e[11]);
 }
 
 STATIC bool
@@ -127,13 +128,13 @@ issolvable_co:
 bool
 issolved(cube_t cube)
 {
-	return equal(cube, solved);
+	return equal(cube, SOLVED_CUBE);
 }
 
 bool
 iserror(cube_t cube)
 {
-	return equal(cube, zero);
+	return equal(cube, ZERO_CUBE);
 }
 
 STATIC void
@@ -149,11 +150,11 @@ getcube_fix(int64_t *ep, int64_t *eo, int64_t *cp, int64_t *co)
 	indextoperm(*ep, 12, e);
 	indextoperm(*cp, 8, c);
 	if (permsign(e, 12) != permsign(c, 8)) {
-		_swap(c[0], c[1]);
+		SWAP(c[0], c[1]);
 		*cp = permtoindex(c, 8);
 
 		sumzerotodigits(*co, 8, 3, coarr);
-		_swap(coarr[0], coarr[1]);
+		SWAP(coarr[0], coarr[1]);
 		*co = digitstosumzero(coarr, 8, 3);
 	}
 }
@@ -164,16 +165,16 @@ getcube(int64_t ep, int64_t eo, int64_t cp, int64_t co)
 	uint8_t i, earr[12], carr[8], eoarr[12], coarr[8];
 
 	sumzerotodigits(eo, 12, 2, eoarr);
-	DBG_ASSERT(eoarr[0] != UINT8_ERROR, zero, "Error making EO");
+	DBG_ASSERT(eoarr[0] != UINT8_ERROR, ZERO_CUBE, "Error making EO");
 	indextoperm(ep, 12, earr);
-	DBG_ASSERT(earr[0] != UINT8_ERROR, zero, "Error making EP");
+	DBG_ASSERT(earr[0] != UINT8_ERROR, ZERO_CUBE, "Error making EP");
 	for (i = 0; i < 12; i++)
 		earr[i] |= eoarr[i] << EOSHIFT;
 
 	sumzerotodigits(co, 8, 3, coarr);
-	DBG_ASSERT(coarr[0] != UINT8_ERROR, zero, "Error making CO");
+	DBG_ASSERT(coarr[0] != UINT8_ERROR, ZERO_CUBE, "Error making CO");
 	indextoperm(cp, 8, carr);
-	DBG_ASSERT(carr[0] != UINT8_ERROR, zero, "Error making CP");
+	DBG_ASSERT(carr[0] != UINT8_ERROR, ZERO_CUBE, "Error making CP");
 	for (i = 0; i < 8; i++)
 		carr[i] |= coarr[i] << COSHIFT;
 

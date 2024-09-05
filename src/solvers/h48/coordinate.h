@@ -51,7 +51,7 @@ invcoord_h48(int64_t i, const cube_t *crep, uint8_t h)
 	cube_t ret;
 	int64_t hh, coclass, ee, esep, eo;
 
-	DBG_ASSERT(h <= 11, zero,
+	DBG_ASSERT(h <= 11, ZERO_CUBE,
 	    "invcoord_h48: h must be between 0 and 11\n");
 
 	hh = (int64_t)h;

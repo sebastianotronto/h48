@@ -39,7 +39,7 @@ readcube(const char *format, const char *buf)
 			return ioformat[i].read(buf);
 
 	LOG("Cannot read cube in the given format\n");
-	return zero;
+	return ZERO_CUBE;
 }
 
 void
@@ -133,13 +133,13 @@ readcube_B32(const char *buf)
 
 	for (i = 0; i < 8; i++) {
 		c[i] = b32tocorner(buf[i]);
-		DBG_ASSERT(c[i] < 255, zero,
+		DBG_ASSERT(c[i] < 255, ZERO_CUBE,
 		    "Error reading B32 corner %d (char %d)\n", i, i);
 	}
 
 	for (i = 0; i < 12; i++) {
 		e[i] = b32toedge(buf[i+9]);
-		DBG_ASSERT(e[i] < 255, zero,
+		DBG_ASSERT(e[i] < 255, ZERO_CUBE,
 		    "Error reading B32 edge %d (char %d)\n", i, i+9);
 	}
 
@@ -159,10 +159,10 @@ readcube_H48(const char *buf)
 		while (*b == ' ' || *b == '\t' || *b == '\n')
 			b++;
 		if ((piece = readep(b)) == UINT8_ERROR)
-			return zero;
+			return ZERO_CUBE;
 		b += 2;
 		if ((orient = readeo(b)) == UINT8_ERROR)
-			return zero;
+			return ZERO_CUBE;
 		b++;
 		e[i] = piece | orient;
 	}
@@ -170,10 +170,10 @@ readcube_H48(const char *buf)
 		while (*b == ' ' || *b == '\t' || *b == '\n')
 			b++;
 		if ((piece = readcp(b)) == UINT8_ERROR)
-			return zero;
+			return ZERO_CUBE;
 		b += 3;
 		if ((orient = readco(b)) == UINT8_ERROR)
-			return zero;
+			return ZERO_CUBE;
 		b++;
 		c[i] = piece | orient;
 	}

@@ -67,7 +67,7 @@ h48map_insertmin(h48map_t *map, uint64_t key, uint64_t val)
 
 	i = h48map_lookup(map, key);
 	oldval = map->table[i] >> MAP_KEYSHIFT;
-	min = _min(val, oldval);
+	min = MIN(val, oldval);
 
 	map->n += map->table[i] == MAP_UNSET;
 	map->table[i] = (key & MAP_KEYMASK) | (min << MAP_KEYSHIFT);

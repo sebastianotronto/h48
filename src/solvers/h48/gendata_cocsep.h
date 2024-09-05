@@ -57,7 +57,7 @@ gendata_cocsep(void *buf, uint64_t *selfsim, cube_t *rep)
 		memset(selfsim, 0, sizeof(uint64_t) * COCSEP_CLASSES);
 
 	arg = (cocsep_dfs_arg_t) {
-		.cube = solved,
+		.cube = SOLVED_CUBE,
 		.n = &n,
 		.buf32 = buf32,
 		.visited = visited,
