@@ -15,18 +15,18 @@ TODO: This loop over similar h48 coordinates can be improved by only
 transforming edges, but we need to compose transformations (i.e. conjugate
 _t by _ttrep).
 */
-#define _foreach_h48sim(_cube, _cocsepdata, _selfsim, _h, _action) \
-	int64_t _cocsep = coord_cocsep(_cube); \
-	uint8_t _ttrep = TTREP(_cocsepdata[_cocsep]); \
-	uint8_t _inverse_ttrep = inverse_trans(_ttrep); \
-	int64_t _coclass = COCLASS(_cocsepdata[_cocsep]); \
-	cube_t _rep = transform(_cube, _ttrep); \
-	uint64_t _sim = _selfsim[_coclass]; \
-	for (uint8_t _t = 0; _t < 48 && _sim; _t++, _sim >>= 1) { \
-		if (!(_sim & 1)) continue; \
-		_cube = transform(_rep, _t); \
-		_cube = transform(_cube, _inverse_ttrep); \
-		_action \
+#define FOREACH_H48SIM(ARG_CUBE, ARG_COCSEPDATA, ARG_SELFSIM, ARG_ACTION) \
+	int64_t VAR_COCSEP = coord_cocsep(ARG_CUBE); \
+	uint8_t VAR_TTREP = TTREP(ARG_COCSEPDATA[VAR_COCSEP]); \
+	uint8_t VAR_INVERSE_TTREP = inverse_trans(VAR_TTREP); \
+	int64_t VAR_COCLASS = COCLASS(ARG_COCSEPDATA[VAR_COCSEP]); \
+	cube_t VAR_REP = transform(ARG_CUBE, VAR_TTREP); \
+	uint64_t VAR_S = ARG_SELFSIM[VAR_COCLASS]; \
+	for (uint8_t VAR_T = 0; VAR_T < 48 && VAR_S; VAR_T++, VAR_S >>= 1) { \
+		if (!(VAR_S & 1)) continue; \
+		ARG_CUBE = transform(VAR_REP, VAR_T); \
+		ARG_CUBE = transform(ARG_CUBE, VAR_INVERSE_TTREP); \
+		ARG_ACTION \
 	}
 
 typedef struct {
@@ -115,8 +115,7 @@ gen_h48short(gendata_h48short_arg_t *arg)
 			cube = invcoord_h48(kv.key, arg->crep, 11);
 			for (m = 0; m < 18; m++) {
 				d = move(cube, m);
-				_foreach_h48sim(
-					d, arg->cocsepdata, arg->selfsim, 11,
+				FOREACH_H48SIM(d, arg->cocsepdata, arg->selfsim,
 					coord = coord_h48(d, arg->cocsepdata, 11);
 					h48map_insertmin(arg->map, coord, i+1);
 				)
@@ -237,7 +236,7 @@ gendata_h48h0k4_bfs_fromdone(h48h0k4_bfs_arg_t *arg)
 			j = coord_h48(moved, arg->cocsepdata, 0);
 			if (get_esep_pval(arg->buf32, j, 4) <= arg->depth)
 				continue;
-			_foreach_h48sim(moved, arg->cocsepdata, arg->selfsim, 0,
+			FOREACH_H48SIM(moved, arg->cocsepdata, arg->selfsim,
 				k = coord_h48(moved, arg->cocsepdata, 0);
 				x = get_esep_pval(arg->buf32, k, 4);
 				set_esep_pval(arg->buf32, k, 4, arg->depth);
@@ -268,7 +267,7 @@ gendata_h48h0k4_bfs_fromnew(h48h0k4_bfs_arg_t *arg)
 			x = get_esep_pval(arg->buf32, j, 4);
 			if (x >= arg->depth)
 				continue;
-			_foreach_h48sim(cube, arg->cocsepdata, arg->selfsim, 0,
+			FOREACH_H48SIM(cube, arg->cocsepdata, arg->selfsim,
 				j = coord_h48(cube, arg->cocsepdata, 0);
 				x = get_esep_pval(arg->buf32, j, 4);
 				set_esep_pval(arg->buf32, j, 4, arg->depth);
@@ -375,7 +374,7 @@ gendata_h48k2_dfs(h48k2_dfs_arg_t *arg)
 	uint8_t m;
 
 	ccc = arg->cube;
-	_foreach_h48sim(ccc, arg->cocsepdata, arg->selfsim, 11,
+	FOREACH_H48SIM(ccc, arg->cocsepdata, arg->selfsim,
 		fullcoord = coord_h48(ccc, arg->cocsepdata, 11);
 		coord = fullcoord >> (int64_t)(11 - arg->h);
 		oldval = get_esep_pval(arg->h48data, coord, arg->k);
