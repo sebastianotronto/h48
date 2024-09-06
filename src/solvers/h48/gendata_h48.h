@@ -345,7 +345,7 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 	) {
 		dfsarg.cube = invcoord_h48(kv.key, arg->crep, 11);
 		gendata_h48k2_dfs(&dfsarg);
-		if (++i % UINT64_C(1000000) == 0)
+		if (++ii % UINT64_C(1000000) == 0)
 			LOG("Processed %" PRIu64 " short cubes\n", ii);
 	}
 
