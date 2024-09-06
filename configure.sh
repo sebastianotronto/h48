@@ -27,9 +27,8 @@ esac
 
 STD="-std=c99"
 WFLAGS="-pedantic -Wall -Wextra"
-# -Wstringop-overflow seems to be causing problems when combined with -O3
-# Someone else complained here: https://access.redhat.com/solutions/6755371
-WNOFLAGS="-Wno-unused-parameter -Wno-unused-function -Wno-stringop-overflow"
+WNOFLAGS="-Wno-unused-parameter -Wno-unused-function -Wno-unknown-pragmas"
+
 [ "$ARCH" = "AVX2" ] && AVX="-mavx2"
 [ -n "$(detectsan address)" ] && ADDR="-fsanitize=address"
 [ -n "$(detectsan undefined)" ] && UNDEF="-fsanitize=undefined"

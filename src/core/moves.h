@@ -182,6 +182,30 @@ inverse_move(uint8_t m)
 	return m - 2 * (m % 3) + 2;	
 }
 
+/*
+GCC has issues when -Wstringop-overflow is used together with O3. It produces
+warnings like the following:
+
+In function 'invertmoves',
+    inlined from 'solve_h48_appendsolution' at src/solvers/h48/solve.h:81:3,
+    inlined from 'solve_h48_dfs.isra' at src/solvers/h48/solve.h:139:3:
+warning: writing 32 bytes into a region of size 0 [-Wstringop-overflow=]
+  197 |                 ret[i] = inverse_move(moves[nmoves - i - 1]);
+      |                 ~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+In function 'solve_h48_dfs.isra':
+note: at offset 192 into destination object 'invertedpremoves' of size 20
+   71 |         uint8_t invertedpremoves[MAXLEN];
+
+Clang does not give any warning.
+Someone else complained here: https://access.redhat.com/solutions/6755371
+
+To solve this issue temporarily, we use a lower optimization setting for
+this function only.
+
+TODO check if the issue is resolved
+*/
+#pragma GCC push_options
+#pragma GCC optimize ("O2")
 STATIC void
 invertmoves(uint8_t *moves, uint8_t nmoves, uint8_t *ret)
 {
@@ -190,6 +214,7 @@ invertmoves(uint8_t *moves, uint8_t nmoves, uint8_t *ret)
 	for (i = 0; i < nmoves; i++)
 		ret[i] = inverse_move(moves[nmoves - i - 1]);
 }
+#pragma GCC pop_options
 
 STATIC int
 readmoves(const char *buf, int max, uint8_t *ret)
