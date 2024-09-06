@@ -1,4 +1,4 @@
-#if defined(CUBE_AVX2)
+#if defined(AVX2)
 
 #include <immintrin.h>
 
@@ -9,7 +9,7 @@ typedef __m256i cube_t;
 #include "avx2.h"
 #endif
 
-#elif defined(CUBE_NEON)
+#elif defined(NEON)
 
 #include <stdlib.h>
 #include <arm_neon.h>
