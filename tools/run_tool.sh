@@ -20,4 +20,5 @@ for t in tools/*; do
 	break
 done
 
-rm -rf $BIN $CUBEOBJ
+# $BIN is kept so it can be run manually for profiling
+rm -rf $CUBEOBJ

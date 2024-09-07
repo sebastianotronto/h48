@@ -60,13 +60,10 @@ typedef struct {
 
 typedef struct {
 	cube_t cube;
-	uint8_t moves[MAXLEN];
 	uint8_t h;
 	uint8_t k;
 	uint8_t base;
-	uint8_t depth;
 	uint8_t shortdepth;
-	uint8_t maxdepth;
 	uint32_t *cocsepdata;
 	uint32_t *h48data;
 	uint64_t *selfsim;
@@ -84,6 +81,8 @@ STATIC int64_t gendata_h48h0k4_bfs(h48h0k4_bfs_arg_t *);
 STATIC int64_t gendata_h48h0k4_bfs_fromdone(h48h0k4_bfs_arg_t *);
 STATIC int64_t gendata_h48h0k4_bfs_fromnew(h48h0k4_bfs_arg_t *);
 STATIC size_t gendata_h48k2(gendata_h48_arg_t *);
+STATIC_INLINE void gendata_h48k2_mark(cube_t, int8_t, h48k2_dfs_arg_t *);
+STATIC_INLINE bool gendata_h48k2_dfs_stop(cube_t, uint8_t, h48k2_dfs_arg_t *);
 STATIC void gendata_h48k2_dfs(h48k2_dfs_arg_t *arg);
 
 STATIC_INLINE int8_t get_h48_bound(cube_t, uint32_t, uint8_t, uint8_t, uint32_t *);
@@ -328,9 +327,7 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 		.h = arg->h,
 		.k = arg->k,
 		.base = base[arg->h],
-		.depth = shortdepth,
 		.shortdepth = shortdepth,
-		.maxdepth = MIN(arg->maxdepth, base[arg->h]+2),
 		.cocsepdata = arg->cocsepdata,
 		.h48data = arg->h48data,
 		.selfsim = arg->selfsim,
@@ -345,7 +342,7 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 	) {
 		dfsarg.cube = invcoord_h48(kv.key, arg->crep, 11);
 		gendata_h48k2_dfs(&dfsarg);
-		if (++i % UINT64_C(1000000) == 0)
+		if (++ii % UINT64_C(1000000) == 0)
 			LOG("Processed %" PRIu64 " short cubes\n", ii);
 	}
 
@@ -365,43 +362,98 @@ gendata_h48k2_return_size:
 STATIC void
 gendata_h48k2_dfs(h48k2_dfs_arg_t *arg)
 {
-	cube_t ccc;
-	bool toodeep, backtracked;
-	uint8_t nmoves, oldval, newval;
-	uint64_t mval;
-	int64_t coord, fullcoord;
-	h48k2_dfs_arg_t nextarg;
-	uint8_t m;
+	int8_t d;
+	uint8_t m[4];
+	cube_t cube[4];
 
-	ccc = arg->cube;
-	FOREACH_H48SIM(ccc, arg->cocsepdata, arg->selfsim,
-		fullcoord = coord_h48(ccc, arg->cocsepdata, 11);
+	d = (int8_t)arg->shortdepth - (int8_t)arg->base;
+
+	/* Depth d+0 (shortcubes) */
+	gendata_h48k2_mark(arg->cube, d, arg);
+
+	/* Depth d+1 */
+	for (m[0] = 0; m[0] < 18; m[0]++) {
+		cube[0] = move(arg->cube, m[0]);
+		if (gendata_h48k2_dfs_stop(cube[0], d+1, arg))
+			continue;
+		gendata_h48k2_mark(cube[0], d+1, arg);
+
+		/* Depth d+2 */
+		for (m[1] = 0; m[1] < 18; m[1]++) {
+			if (m[0] / 3 == m[1] / 3) {
+				m[1] += 2;
+				continue;
+			}
+			cube[1] = move(cube[0], m[1]);
+			if (gendata_h48k2_dfs_stop(cube[1], d+2, arg))
+				continue;
+			gendata_h48k2_mark(cube[1], d+2, arg);
+			if (d >= 0)
+				continue;
+
+			/* Depth d+3 */
+			for (m[2] = 0; m[2] < 18; m[2]++) {
+				if (!allowednextmove(m, 3)) {
+					m[2] += 2;
+					continue;
+				}
+				cube[2] = move(cube[1], m[2]);
+				if (gendata_h48k2_dfs_stop(cube[2], d+3, arg))
+					continue;
+				gendata_h48k2_mark(cube[2], d+3, arg);
+				if (d >= -1)
+					continue;
+
+				/* Depth d+4 */
+				for (m[3] = 0; m[3] < 18; m[3]++) {
+					if (!allowednextmove(m, 4)) {
+						m[3] += 2;
+						continue;
+					}
+					cube[3] = move(cube[2], m[3]);
+					gendata_h48k2_mark(cube[3], d+4, arg);
+				}
+			}
+		}
+	}
+}
+
+STATIC_INLINE void
+gendata_h48k2_mark(cube_t cube, int8_t depth, h48k2_dfs_arg_t *arg)
+{
+	uint8_t oldval, newval;
+	int64_t coord, fullcoord;
+
+	FOREACH_H48SIM(cube, arg->cocsepdata, arg->selfsim,
+		fullcoord = coord_h48(cube, arg->cocsepdata, 11);
 		coord = fullcoord >> (int64_t)(11 - arg->h);
 		oldval = get_esep_pval(arg->h48data, coord, arg->k);
-		newval = arg->depth >= arg->base ? arg->depth - arg->base : 0;
+		newval = (uint8_t)MAX(depth, 0);
 		set_esep_pval(
 		    arg->h48data, coord, arg->k, MIN(oldval, newval));
 	)
+}
 
-	fullcoord = coord_h48(arg->cube, arg->cocsepdata, 11); /* Necessary? */
-	mval = h48map_value(arg->shortcubes, fullcoord);
-	backtracked = mval <= arg->shortdepth && arg->depth != arg->shortdepth;
-	toodeep = arg->depth >= arg->maxdepth;
-	if (backtracked || toodeep)
-		return;
+STATIC_INLINE bool
+gendata_h48k2_dfs_stop(cube_t cube, uint8_t depth, h48k2_dfs_arg_t *arg)
+{
+	uint64_t val;
+	int64_t coord;
+	uint8_t oldval;
 
-	/* TODO: avoid copy, change arg and undo changes after recursion */
-	nextarg = *arg;
-	nextarg.depth++;
-	nmoves = nextarg.depth - arg->shortdepth;
-	for (m = 0; m < 18; m++) {
-		nextarg.moves[nmoves - 1] = m;
-		if (!allowednextmove(nextarg.moves, nmoves)) {
-			m += 2;
-			continue;
-		}
-		nextarg.cube = move(arg->cube, m);
-		gendata_h48k2_dfs(&nextarg);
+	if (arg->h == 0 || arg->h == 11) {
+		/* We are in the "real coordinate" case, we can stop
+		   if this coordinate has already been visited */
+		coord = coord_h48(cube, arg->cocsepdata, arg->h);
+		oldval = get_esep_pval(arg->h48data, coord, arg->k);
+		return oldval <= depth;
+	} else {
+		/* With 0 < k < 11 we do not have a "real coordinate".
+		   The best we can do is checking if we backtracked to
+		   one of the "short cubes". */
+		coord = coord_h48(cube, arg->cocsepdata, 11);
+		val = h48map_value(arg->shortcubes, coord);
+		return val <= arg->shortdepth;
 	}
 }
 
