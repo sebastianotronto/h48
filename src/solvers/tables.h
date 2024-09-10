@@ -2,7 +2,8 @@
 #define INFOSIZE                 512
 #define INFO_OFFSET_SOLVER       0
 #define INFO_SOLVER_STRLEN       20
-#define INFO_OFFSET_INFOSIZE     INFO_SOLVER_STRLEN
+#define INFO_OFFSET_TYPE         INFO_SOLVER_STRLEN
+#define INFO_OFFSET_INFOSIZE     (INFO_OFFSET_TYPE + sizeof(uint64_t))
 #define INFO_OFFSET_FULLSIZE     (INFO_OFFSET_INFOSIZE + sizeof(uint64_t))
 #define INFO_OFFSET_HASH         (INFO_OFFSET_FULLSIZE + sizeof(uint64_t))
 #define INFO_OFFSET_ENTRIES      (INFO_OFFSET_HASH + sizeof(uint64_t))
@@ -13,8 +14,12 @@
 #define INFO_OFFSET_DISTRIBUTION (INFO_OFFSET_NEXT + sizeof(uint64_t))
 #define INFO_DISTRIBUTION_LEN    21
 
+const uint64_t TABLETYPE_PRUNING = 0;
+const uint64_t TABLETYPE_SPECIAL = 1;
+
 typedef struct {
 	char solver[INFO_SOLVER_STRLEN];
+	uint64_t type;
 	uint64_t infosize;
 	uint64_t fullsize;
 	uint64_t hash;
@@ -44,6 +49,7 @@ readtableinfo(const void *buf, tableinfo_t *info)
 
 	memcpy(info->solver, OFFSET(buf, INFO_OFFSET_SOLVER),
 	    INFO_SOLVER_STRLEN);
+	info->type = *(const uint64_t *)OFFSET(buf, INFO_OFFSET_TYPE);
 	info->infosize = *(const uint64_t *)OFFSET(buf, INFO_OFFSET_INFOSIZE);
 	info->fullsize = *(const uint64_t *)OFFSET(buf, INFO_OFFSET_FULLSIZE);
 	info->hash = *(const uint64_t *)OFFSET(buf, INFO_OFFSET_HASH);
@@ -81,6 +87,7 @@ writetableinfo(const tableinfo_t *info, void *buf)
 		if (*OFFSET(buf, i) == 0)
 			*OFFSET(buf, i) = 0;
 
+	*(uint64_t *)OFFSET(buf, INFO_OFFSET_TYPE) = info->type;
 	*(uint64_t *)OFFSET(buf, INFO_OFFSET_INFOSIZE) = info->infosize;
 	*(uint64_t *)OFFSET(buf, INFO_OFFSET_FULLSIZE) = info->fullsize;
 	*(uint64_t *)OFFSET(buf, INFO_OFFSET_HASH) = info->hash;

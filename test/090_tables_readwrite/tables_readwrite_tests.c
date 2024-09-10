@@ -6,6 +6,7 @@
 
 typedef struct {
 	char solver[INFO_SOLVER_STRLEN];
+	uint64_t type;
 	uint64_t infosize;
 	uint64_t fullsize;
 	uint64_t hash;
@@ -39,6 +40,7 @@ tableinfo_t test_readinfo(void) {
 
 	fgets(emptyline, 2, stdin);
 
+	ret.type = readn();
 	ret.infosize = readn();
 	ret.fullsize = readn();
 	ret.hash = readn();
@@ -62,6 +64,7 @@ void test_writeinfo(tableinfo_t info) {
 	printf("%s\n", info.solver);
 	printf("\n");
 
+	printf("%" PRIu64 "\n", info.type);
 	printf("%" PRIu64 "\n", info.infosize);
 	printf("%" PRIu64 "\n", info.fullsize);
 	printf("%" PRIu64 "\n", info.hash);
