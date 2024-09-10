@@ -1,7 +1,8 @@
 #include "../test.h"
 
 #define COCSEP_CLASSES 3393
-#define MAXPOS 200
+#define INFOSIZE       512
+#define MAXPOS         200
 
 typedef struct {
 	uint64_t n;
@@ -51,7 +52,7 @@ uint64_t readl(void) {
 }
 
 void run(void) {
-	uint32_t cocsepdata[300000];
+	char buf[2000000];
 	h48map_t map;
 	uint64_t i, j, capacity, randomizer, selfsim[COCSEP_CLASSES];
 	kvpair_t kv, b[MAXPOS];
@@ -61,13 +62,13 @@ void run(void) {
 	capacity = readl();
 	randomizer = readl();
 	arg.maxdepth = readl();
-	arg.cocsepdata = cocsepdata;
 	arg.crep = crep;
 	arg.selfsim = selfsim;
 	arg.map = &map;
 
 	h48map_create(&map, capacity, randomizer);
-	gendata_cocsep(cocsepdata, selfsim, crep);
+	gendata_cocsep(buf, selfsim, crep);
+	arg.cocsepdata = (uint32_t *)((char *)buf + INFOSIZE);
 	gen_h48short(&arg);
 
 	i = 0;

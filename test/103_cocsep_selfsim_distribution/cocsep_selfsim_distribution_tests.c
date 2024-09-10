@@ -17,7 +17,7 @@ int bcount(uint64_t x) {
 }
 
 void run(void) {
-	uint32_t buf[300000];
+	char buf[2000000];
 	int size[65], tot, j;
 	int64_t i;
 	uint64_t selfsim[COCSEP_CLASSES], sim;

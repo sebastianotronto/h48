@@ -1,6 +1,7 @@
 #include "../test.h"
 
 #define COCSEP_CLASSES 3393
+#define INFOSIZE       512
 
 size_t gendata_cocsep(void *, uint64_t *, cube_t *);
 int64_t coord_h48(cube_t, const uint32_t *, uint8_t);
@@ -12,12 +13,14 @@ void run(void) {
 	int i;
 	bool found;
 	uint8_t h, t;
-	uint32_t cocsepdata[300000];
+	char buf[2000000];
+	uint32_t *cocsepdata;
 	uint64_t selfsim[COCSEP_CLASSES];
 	int64_t c, cc;
 	cube_t cube, invc, rep[COCSEP_CLASSES];
 
-	gendata_cocsep(cocsepdata, selfsim, rep);
+	gendata_cocsep(buf, selfsim, rep);
+	cocsepdata = (uint32_t *)((char *)buf + INFOSIZE);
 
 	i = 1;
 	h = 11;

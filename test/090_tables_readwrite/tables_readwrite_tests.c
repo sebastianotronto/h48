@@ -1,7 +1,7 @@
 #include "../test.h"
 
 #define INFOSIZE                 512
-#define INFO_SOLVER_STRLEN       20
+#define INFO_SOLVER_STRLEN       100
 #define INFO_DISTRIBUTION_LEN    21
 
 typedef struct {
@@ -11,6 +11,7 @@ typedef struct {
 	uint64_t fullsize;
 	uint64_t hash;
 	uint64_t entries;
+	uint64_t classes;
 	uint8_t bits;
 	uint8_t base;
 	uint8_t maxvalue;
@@ -45,6 +46,7 @@ tableinfo_t test_readinfo(void) {
 	ret.fullsize = readn();
 	ret.hash = readn();
 	ret.entries = readn();
+	ret.classes = readn();
 	ret.bits = (uint8_t)readn();
 	ret.base = (uint8_t)readn();
 	ret.maxvalue = (uint8_t)readn();
@@ -69,6 +71,7 @@ void test_writeinfo(tableinfo_t info) {
 	printf("%" PRIu64 "\n", info.fullsize);
 	printf("%" PRIu64 "\n", info.hash);
 	printf("%" PRIu64 "\n", info.entries);
+	printf("%" PRIu64 "\n", info.classes);
 	printf("%" PRIu8 "\n", info.bits);
 	printf("%" PRIu8 "\n", info.base);
 	printf("%" PRIu8 "\n", info.maxvalue);

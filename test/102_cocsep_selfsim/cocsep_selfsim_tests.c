@@ -8,25 +8,28 @@
 #include "../test.h"
 
 #define COCSEP_CLASSES 3393
+#define INFOSIZE       512
 
 size_t gendata_cocsep(void *, uint64_t *, cube_t *);
 int64_t coord_cocsep(cube_t);
 
 void run(void) {
 	char str[STRLENMAX];
-	uint32_t buf[300000], data;
+	char buf[2000000];
+	uint32_t *cocsepdata, data;
 	int64_t coord, coclass;
 	uint64_t selfsim[COCSEP_CLASSES], sim, t;
 	cube_t cube, rep[COCSEP_CLASSES];
 
 	gendata_cocsep(buf, selfsim, rep);
+	cocsepdata = (uint32_t *)((char *)buf + INFOSIZE);
 
 	/* All cases in the same test so we do not generate data many times */
 
 	while (fgets(str, STRLENMAX, stdin) != NULL) {
 		cube = readcube("H48", str);
 		coord = coord_cocsep(cube);
-		data = buf[coord];
+		data = cocsepdata[coord];
 		coclass = (data & (0xFFFU << 16)) >> 16;
 		sim = selfsim[coclass];
 		for (t = 0; t < 48 && sim; t++, sim >>= 1) {

@@ -1,5 +1,5 @@
 #define H48_COORDMAX_NOEO    ((int64_t)(COCSEP_CLASSES * COMB_12_4 * COMB_8_4))
-#define H48_COORDMAX(h)      ((int64_t)(H48_COORDMAX_NOEO << (int64_t)(h)))
+#define H48_COORDMAX(h)      (H48_COORDMAX_NOEO << (int64_t)(h))
 #define H48_DIV(k)           ((size_t)8 / (size_t)(k))
 #define H48_TABLESIZE(h, k)  DIV_ROUND_UP((size_t)H48_COORDMAX((h)), H48_DIV(k))
 
@@ -33,10 +33,10 @@ typedef struct {
 	uint8_t h;
 	uint8_t k;
 	uint8_t maxdepth;
+	tableinfo_t info;
 	void *buf;
-	uint32_t *info;
+	void *h48buf;
 	uint32_t *cocsepdata;
-	uint32_t *h48data;
 	uint64_t selfsim[COCSEP_CLASSES];
 	cube_t crep[COCSEP_CLASSES];
 } gendata_h48_arg_t;
@@ -65,7 +65,7 @@ typedef struct {
 	uint8_t base;
 	uint8_t shortdepth;
 	uint32_t *cocsepdata;
-	uint32_t *h48data;
+	uint32_t *buf32;
 	uint64_t *selfsim;
 	cube_t *crep;
 	h48map_t *shortcubes;
@@ -130,32 +130,45 @@ gen_h48short(gendata_h48short_arg_t *arg)
 STATIC size_t
 gendata_h48(gendata_h48_arg_t *arg)
 {
-	static const size_t infosize = 88; /* TODO: change to e.g. 1024 */
-
+	void *cocsepdata_offset;
 	size_t cocsepsize, h48size;
+	tableinfo_t cocsepinfo;
 
-	/* TODO: move info at the start */
-	arg->cocsepdata = (uint32_t *)arg->buf;
-	cocsepsize = gendata_cocsep(
-	    (void *)arg->cocsepdata, arg->selfsim, arg->crep);
-	arg->h48data = arg->cocsepdata + (cocsepsize / sizeof(uint32_t));
-	arg->info = arg->h48data + 1 +
-	    (H48_TABLESIZE(arg->h, arg->k) / sizeof(uint32_t));
+	cocsepsize = gendata_cocsep(arg->buf, arg->selfsim, arg->crep);
 
-	if (arg->buf != NULL)
-		memset(arg->h48data, 0xFF, H48_TABLESIZE(arg->h, arg->k));
+	cocsepdata_offset = (char *)arg->buf + INFOSIZE;
+	arg->cocsepdata = (uint32_t *)cocsepdata_offset;
+	arg->h48buf = (char *)arg->buf + cocsepsize;
 
 	if (arg->h == 0 && arg->k == 4) {
 		h48size = gendata_h48h0k4(arg);
 	} else if (arg->k == 2) {
 		h48size = gendata_h48k2(arg);
 	} else {
-		h48size = 0;
 		LOG("Cannot generate data for h = %" PRIu8 " and k = %" PRIu8
 		    " (not implemented yet)\n", arg->h, arg->k);
+		goto gendata_h48_error;
 	}
 
-	return infosize + cocsepsize + h48size;
+	if (arg->buf == 0)
+		goto gendata_h48_return_size;
+
+	if (!readtableinfo(arg->buf, &cocsepinfo)) {
+		LOG("gendata_h48: could not read info for cocsep table\n");
+		goto gendata_h48_error;
+	}
+	cocsepinfo.next = cocsepsize;
+	if (!writetableinfo(&cocsepinfo, arg->buf)) {
+		LOG("gendata_h48: could not write info for cocsep table"
+		    " with updated 'next' value\n");
+		goto gendata_h48_error;
+	}
+
+gendata_h48_return_size:
+	return cocsepsize + h48size;
+
+gendata_h48_error:
+	return 0;
 }
 
 /*
@@ -165,20 +178,36 @@ generating fixed table with h=0, k=4
 STATIC size_t
 gendata_h48h0k4(gendata_h48_arg_t *arg)
 {
-	uint32_t j;
+	uint32_t j, *buf32;
 	h48h0k4_bfs_arg_t bfsarg;
 	int64_t sc, cc, esep_max;
 
 	if (arg->buf == NULL)
 		goto gendata_h48h0k4_return_size;
 
+	arg->info = (tableinfo_t) {
+		.solver = "h48 solver h = 0, k = 4",
+		.type = TABLETYPE_PRUNING,
+		.infosize = INFOSIZE,
+		.fullsize = H48_TABLESIZE(0, 4) + INFOSIZE,
+		.hash = 0, /* TODO */
+		.entries = H48_COORDMAX(0),
+		.classes = 0,
+		.bits = 4,
+		.base = 0,
+		.next = 0,
+	};
+
+	buf32 = (uint32_t *)((char *)arg->h48buf + INFOSIZE);
+	memset(buf32, 0xFF, H48_TABLESIZE(0, 4));
+
 	esep_max = (int64_t)H48_COORDMAX(0);
 	sc = coord_h48(SOLVED_CUBE, arg->cocsepdata, 0);
-	set_esep_pval(arg->h48data, sc, 4, 0);
-	arg->info[1] = 1;
+	set_esep_pval(buf32, sc, 4, 0);
+	arg->info.distribution[0] = 1;
 	bfsarg = (h48h0k4_bfs_arg_t) {
 		.cocsepdata = arg->cocsepdata,
-		.buf32 = arg->h48data,
+		.buf32 = buf32,
 		.selfsim = arg->selfsim,
 		.crep = arg->crep
 	};
@@ -190,20 +219,22 @@ gendata_h48h0k4(gendata_h48_arg_t *arg)
 		LOG("esep: generating depth %" PRIu8 "\n", bfsarg.depth);
 		cc = gendata_h48h0k4_bfs(&bfsarg);
 		bfsarg.done += cc;
-		arg->info[bfsarg.depth+1] = cc;
+		arg->info.distribution[bfsarg.depth] = cc;
 		LOG("found %" PRId64 "\n", cc);
 	}
 
-	arg->info[0] = bfsarg.depth-1;
+	arg->info.maxvalue = bfsarg.depth-1;
 
 	LOG("h48 pruning table computed\n");
-	LOG("Maximum pruning value: %" PRIu32 "\n", arg->info[0]);
+	LOG("Maximum pruning value: %" PRIu32 "\n", arg->info.maxvalue);
 	LOG("Pruning value distribution:\n");
-	for (j = 0; j <= arg->info[0]; j++)
-		LOG("%" PRIu8 ":\t%" PRIu32 "\n", j, arg->info[j+1]);
+	for (j = 0; j <= arg->info.maxvalue; j++)
+		LOG("%" PRIu8 ":\t%" PRIu32 "\n", j, arg->info.distribution[j]);
+
+	writetableinfo(&arg->info, arg->h48buf);
 
 gendata_h48h0k4_return_size:
-	return H48_TABLESIZE(0, 4);
+	return H48_TABLESIZE(0, 4) + INFOSIZE;
 }
 
 STATIC int64_t
@@ -226,6 +257,7 @@ gendata_h48h0k4_bfs_fromdone(h48h0k4_bfs_arg_t *arg)
 	cube_t cube, moved;
 
 	for (i = 0, cc = 0; i < (int64_t)H48_COORDMAX(0); i++) {
+//LOG("getting esep val for %" PRId64 "\n", i);
 		c = get_esep_pval(arg->buf32, i, 4);
 		if (c != arg->depth - 1)
 			continue;
@@ -300,7 +332,8 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 		[11] = 10
 	};
 
-	uint8_t t;
+	uint8_t t, selectedbase;
+	uint32_t *buf32;
 	int64_t j;
 	uint64_t nshort, i, ii;
 	h48map_t shortcubes;
@@ -310,6 +343,10 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 
 	if (arg->buf == NULL)
 		goto gendata_h48k2_return_size;
+
+	buf32 = (uint32_t *)((char *)arg->h48buf + INFOSIZE);
+	if (arg->buf != NULL)
+		memset(buf32, 0xFF, H48_TABLESIZE(arg->h, arg->k));
 
 	LOG("Computing depth <=%" PRIu8 "\n", shortdepth)
 	h48map_create(&shortcubes, capacity, randomizer);
@@ -323,13 +360,29 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 	nshort = gen_h48short(&shortarg);
 	LOG("Cubes in <= %" PRIu8 " moves: %" PRIu64 "\n", shortdepth, nshort);
 
+	selectedbase = base[arg->h];
+	arg->info = (tableinfo_t) {
+		.solver = "h48 solver h =  , k = 4",
+		.type = TABLETYPE_PRUNING,
+		.infosize = INFOSIZE,
+		.fullsize = H48_TABLESIZE(arg->h, 2) + INFOSIZE,
+		.hash = 0, /* TODO */
+		.entries = H48_COORDMAX(arg->h),
+		.bits = 2,
+		.base = selectedbase,
+		.next = 0,
+	};
+	arg->info.solver[15] = (arg->h % 10) + '0';
+	if (arg->h >= 10)
+		arg->info.solver[14] = (arg->h / 10) + '0';
+
 	dfsarg = (h48k2_dfs_arg_t){
 		.h = arg->h,
 		.k = arg->k,
-		.base = base[arg->h],
+		.base = selectedbase,
 		.shortdepth = shortdepth,
 		.cocsepdata = arg->cocsepdata,
-		.h48data = arg->h48data,
+		.buf32 = buf32,
 		.selfsim = arg->selfsim,
 		.crep = arg->crep,
 		.shortcubes = &shortcubes
@@ -348,15 +401,16 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 
 	h48map_destroy(&shortcubes);
 
-	memset(arg->info, 0, 5 * sizeof(arg->info[0]));
-	arg->info[0] = base[arg->k];
+	arg->info.base = selectedbase;
 	for (j = 0; j < H48_COORDMAX(arg->h); j++) {
-		t = get_esep_pval(arg->h48data, j, 2);
-		arg->info[1 + t]++;
+		t = get_esep_pval(buf32, j, 2);
+		arg->info.distribution[t]++;
 	}
 
+	writetableinfo(&arg->info, arg->h48buf);
+
 gendata_h48k2_return_size:
-	return H48_TABLESIZE(arg->h, 2);
+	return H48_TABLESIZE(arg->h, 2) + INFOSIZE;
 }
 
 STATIC void
@@ -427,10 +481,9 @@ gendata_h48k2_mark(cube_t cube, int8_t depth, h48k2_dfs_arg_t *arg)
 	FOREACH_H48SIM(cube, arg->cocsepdata, arg->selfsim,
 		fullcoord = coord_h48(cube, arg->cocsepdata, 11);
 		coord = fullcoord >> (int64_t)(11 - arg->h);
-		oldval = get_esep_pval(arg->h48data, coord, arg->k);
+		oldval = get_esep_pval(arg->buf32, coord, arg->k);
 		newval = (uint8_t)MAX(depth, 0);
-		set_esep_pval(
-		    arg->h48data, coord, arg->k, MIN(oldval, newval));
+		set_esep_pval(arg->buf32, coord, arg->k, MIN(oldval, newval));
 	)
 }
 
@@ -445,7 +498,7 @@ gendata_h48k2_dfs_stop(cube_t cube, uint8_t depth, h48k2_dfs_arg_t *arg)
 		/* We are in the "real coordinate" case, we can stop
 		   if this coordinate has already been visited */
 		coord = coord_h48(cube, arg->cocsepdata, arg->h);
-		oldval = get_esep_pval(arg->h48data, coord, arg->k);
+		oldval = get_esep_pval(arg->buf32, coord, arg->k);
 		return oldval <= depth;
 	} else {
 		/* With 0 < k < 11 we do not have a "real coordinate".

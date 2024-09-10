@@ -1,18 +1,21 @@
 #define OFFSET(B, K)             (((uint8_t *)B) + K)
+
 #define INFOSIZE                 512
+#define INFO_SOLVER_STRLEN       100
+#define INFO_DISTRIBUTION_LEN    21
+
 #define INFO_OFFSET_SOLVER       0
-#define INFO_SOLVER_STRLEN       20
 #define INFO_OFFSET_TYPE         INFO_SOLVER_STRLEN
 #define INFO_OFFSET_INFOSIZE     (INFO_OFFSET_TYPE + sizeof(uint64_t))
 #define INFO_OFFSET_FULLSIZE     (INFO_OFFSET_INFOSIZE + sizeof(uint64_t))
 #define INFO_OFFSET_HASH         (INFO_OFFSET_FULLSIZE + sizeof(uint64_t))
 #define INFO_OFFSET_ENTRIES      (INFO_OFFSET_HASH + sizeof(uint64_t))
-#define INFO_OFFSET_BITS         (INFO_OFFSET_ENTRIES + sizeof(uint64_t))
+#define INFO_OFFSET_CLASSES      (INFO_OFFSET_ENTRIES + sizeof(uint64_t))
+#define INFO_OFFSET_BITS         (INFO_OFFSET_CLASSES + sizeof(uint64_t))
 #define INFO_OFFSET_BASE         (INFO_OFFSET_BITS + sizeof(uint8_t))
 #define INFO_OFFSET_MAXVALUE     (INFO_OFFSET_BASE + sizeof(uint8_t))
 #define INFO_OFFSET_NEXT         (INFO_OFFSET_MAXVALUE + sizeof(uint8_t))
 #define INFO_OFFSET_DISTRIBUTION (INFO_OFFSET_NEXT + sizeof(uint64_t))
-#define INFO_DISTRIBUTION_LEN    21
 
 const uint64_t TABLETYPE_PRUNING = 0;
 const uint64_t TABLETYPE_SPECIAL = 1;
@@ -24,6 +27,7 @@ typedef struct {
 	uint64_t fullsize;
 	uint64_t hash;
 	uint64_t entries;
+	uint64_t classes; /* Used only by cocsepdata, for now */
 	uint8_t bits;
 	uint8_t base;
 	uint8_t maxvalue;
@@ -38,7 +42,7 @@ STATIC bool
 readtableinfo(const void *buf, tableinfo_t *info)
 {
 	if (buf == NULL) {
-		LOG("Error reading table: buffer in NULL\n");
+		LOG("Error reading table: buffer is NULL\n");
 		return false;
 	}
 
@@ -54,6 +58,7 @@ readtableinfo(const void *buf, tableinfo_t *info)
 	info->fullsize = *(const uint64_t *)OFFSET(buf, INFO_OFFSET_FULLSIZE);
 	info->hash = *(const uint64_t *)OFFSET(buf, INFO_OFFSET_HASH);
 	info->entries = *(const uint64_t *)OFFSET(buf, INFO_OFFSET_ENTRIES);
+	info->classes = *(const uint64_t *)OFFSET(buf, INFO_OFFSET_CLASSES);
 	info->bits = *OFFSET(buf, INFO_OFFSET_BITS);
 	info->base = *OFFSET(buf, INFO_OFFSET_BASE);
 	info->maxvalue = *OFFSET(buf, INFO_OFFSET_MAXVALUE);
@@ -70,7 +75,7 @@ writetableinfo(const tableinfo_t *info, void *buf)
 	int i;
 
 	if (buf == NULL) {
-		LOG("Error reading table: buffer in NULL\n");
+		LOG("Error writing table: buffer is NULL\n");
 		return false;
 	}
 
@@ -92,6 +97,7 @@ writetableinfo(const tableinfo_t *info, void *buf)
 	*(uint64_t *)OFFSET(buf, INFO_OFFSET_FULLSIZE) = info->fullsize;
 	*(uint64_t *)OFFSET(buf, INFO_OFFSET_HASH) = info->hash;
 	*(uint64_t *)OFFSET(buf, INFO_OFFSET_ENTRIES) = info->entries;
+	*(uint64_t *)OFFSET(buf, INFO_OFFSET_CLASSES) = info->classes;
 	*OFFSET(buf, INFO_OFFSET_BITS) = info->bits;
 	*OFFSET(buf, INFO_OFFSET_BASE) = info->base;
 	*OFFSET(buf, INFO_OFFSET_MAXVALUE) = info->maxvalue;

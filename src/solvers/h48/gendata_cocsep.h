@@ -1,7 +1,7 @@
 #define COCSEP_CLASSES        ((size_t)3393)
 #define COCSEP_TABLESIZE      ((size_t)POW_3_7 << (size_t)7)
-#define COCSEP_VISITEDSIZE    ((COCSEP_TABLESIZE + (size_t)7) / (size_t)8)
-#define COCSEP_FULLSIZE       ((size_t)4 * (COCSEP_TABLESIZE + (size_t)12))
+#define COCSEP_VISITEDSIZE    DIV_ROUND_UP(COCSEP_TABLESIZE, (size_t)8)
+#define COCSEP_FULLSIZE       (INFOSIZE + (size_t)4 * COCSEP_TABLESIZE)
 
 #define VISITED_IND(i)        ((uint32_t)(i) / UINT32_C(8))
 #define VISITED_MASK(i)       (UINT32_C(1) << ((uint32_t)(i) % UINT32_C(8)))
@@ -42,20 +42,33 @@ After the data as described above, more auxiliary information is appended:
 STATIC size_t
 gendata_cocsep(void *buf, uint64_t *selfsim, cube_t *rep)
 {
-	uint32_t *buf32, *info, cc;
+	uint32_t *buf32, cc;
 	uint16_t n;
 	uint8_t i, j, visited[COCSEP_VISITEDSIZE];
+	tableinfo_t info;
 	cocsep_dfs_arg_t arg;
 
 	if (buf == NULL)
 		goto gendata_cocsep_return_size;
 
-	buf32 = (uint32_t *)buf;
-	info = buf32 + COCSEP_TABLESIZE;
-	memset(buf32, 0xFF, sizeof(uint32_t) * COCSEP_TABLESIZE);
+	memset(buf, 0xFF, COCSEP_FULLSIZE);
+	buf32 = (uint32_t *)((char *)buf + INFOSIZE);
 	if (selfsim != NULL)
 		memset(selfsim, 0, sizeof(uint64_t) * COCSEP_CLASSES);
 
+	info = (tableinfo_t) {
+		.solver = "cocsep data for h48",
+		.type = TABLETYPE_SPECIAL,
+		.infosize = INFOSIZE,
+		.fullsize = COCSEP_FULLSIZE,
+		.hash = 0, /* TODO */
+		.entries = COCSEP_TABLESIZE,
+		.classes = COCSEP_CLASSES,
+		.bits = 32,
+		.base = 0,
+		.maxvalue = 9,
+		.next = 0
+	};
 	arg = (cocsep_dfs_arg_t) {
 		.cube = SOLVED_CUBE,
 		.n = &n,
@@ -70,22 +83,21 @@ gendata_cocsep(void *buf, uint64_t *selfsim, cube_t *rep)
 		arg.depth = 0;
 		arg.maxdepth = i;
 		cc = gendata_cocsep_dfs(&arg);
-		info[i+2] = cc;
+		info.distribution[i] = cc;
 		LOG("found %" PRIu32 "\n", cc);
 	}
 
-	info[0] = (uint32_t)n;
-	info[1] = 9; /* Known max pruning value */
+	writetableinfo(&info, buf);
+
 	DBG_ASSERT(n == COCSEP_CLASSES, 0,
 	    "cocsep: computed %" PRIu16 " symmetry classes, "
 	    "expected %zu\n", n, COCSEP_CLASSES);
 
 	LOG("cocsep data computed\n");
-	LOG("Symmetry classes: %" PRIu32 "\n", info[0]);
-	LOG("Maximum pruning value: %" PRIu32 "\n", info[1]);
+	LOG("Symmetry classes: %" PRIu32 "\n", COCSEP_CLASSES);
 	LOG("Pruning value distribution:\n");
 	for (j = 0; j < 10; j++)
-		LOG("%" PRIu8 ":\t%" PRIu32 "\n", j, info[j+2]);
+		LOG("%" PRIu8 ":\t%" PRIu32 "\n", j, info.distribution[j]);
 
 gendata_cocsep_return_size:
 	return COCSEP_FULLSIZE;
