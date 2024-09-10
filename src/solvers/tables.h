@@ -9,7 +9,8 @@
 #define INFO_OFFSET_BITS         (INFO_OFFSET_ENTRIES + sizeof(uint64_t))
 #define INFO_OFFSET_BASE         (INFO_OFFSET_BITS + sizeof(uint8_t))
 #define INFO_OFFSET_MAXVALUE     (INFO_OFFSET_BASE + sizeof(uint8_t))
-#define INFO_OFFSET_DISTRIBUTION (INFO_OFFSET_MAXVALUE + sizeof(uint8_t))
+#define INFO_OFFSET_NEXT         (INFO_OFFSET_MAXVALUE + sizeof(uint8_t))
+#define INFO_OFFSET_DISTRIBUTION (INFO_OFFSET_NEXT + sizeof(uint64_t))
 #define INFO_DISTRIBUTION_LEN    21
 
 typedef struct {
@@ -21,6 +22,7 @@ typedef struct {
 	uint8_t bits;
 	uint8_t base;
 	uint8_t maxvalue;
+	uint64_t next;
 	uint64_t distribution[INFO_DISTRIBUTION_LEN];
 } tableinfo_t;
 
@@ -49,6 +51,7 @@ readtableinfo(const void *buf, tableinfo_t *info)
 	info->bits = *OFFSET(buf, INFO_OFFSET_BITS);
 	info->base = *OFFSET(buf, INFO_OFFSET_BASE);
 	info->maxvalue = *OFFSET(buf, INFO_OFFSET_MAXVALUE);
+	info->next = *(const uint64_t* )OFFSET(buf, INFO_OFFSET_NEXT);
 	memcpy(info->distribution, OFFSET(buf, INFO_OFFSET_DISTRIBUTION),
 	    INFO_DISTRIBUTION_LEN * sizeof(uint64_t));
 
@@ -85,6 +88,7 @@ writetableinfo(const tableinfo_t *info, void *buf)
 	*OFFSET(buf, INFO_OFFSET_BITS) = info->bits;
 	*OFFSET(buf, INFO_OFFSET_BASE) = info->base;
 	*OFFSET(buf, INFO_OFFSET_MAXVALUE) = info->maxvalue;
+	*(uint64_t *)OFFSET(buf, INFO_OFFSET_NEXT) = info->next;
 
 	memcpy(OFFSET(buf, INFO_OFFSET_DISTRIBUTION), info->distribution,
 	    INFO_DISTRIBUTION_LEN * sizeof(uint64_t));

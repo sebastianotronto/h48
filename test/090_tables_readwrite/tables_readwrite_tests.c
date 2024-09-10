@@ -13,6 +13,7 @@ typedef struct {
 	uint8_t bits;
 	uint8_t base;
 	uint8_t maxvalue;
+	uint64_t next;
 	uint64_t distribution[INFO_DISTRIBUTION_LEN];
 } tableinfo_t;
 
@@ -45,6 +46,7 @@ tableinfo_t test_readinfo(void) {
 	ret.bits = (uint8_t)readn();
 	ret.base = (uint8_t)readn();
 	ret.maxvalue = (uint8_t)readn();
+	ret.next = readn();
 
 	fgets(emptyline, 2, stdin);
 
@@ -67,6 +69,7 @@ void test_writeinfo(tableinfo_t info) {
 	printf("%" PRIu8 "\n", info.bits);
 	printf("%" PRIu8 "\n", info.base);
 	printf("%" PRIu8 "\n", info.maxvalue);
+	printf("%" PRIu64 "\n", info.next);
 	printf("\n");
 
 	for (i = 0; i < INFO_DISTRIBUTION_LEN; i++)
