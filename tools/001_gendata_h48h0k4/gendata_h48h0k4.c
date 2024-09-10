@@ -36,6 +36,9 @@ void run(void) {
 	if (s == -1) {
 		printf("Error generating table\n");
 	} else {
+		printf("Table is probably ok\n");
+/*
+TODO: adapt to new tables
 		printf("Succesfully generated %" PRId64 " bytes. Table:\n", s);
 		h48info = (uint32_t *)buf + 1 + (ETABLESIZE(HVALUE) + COCSEPSIZE) / 4;
 		for (i = 0; i < MAXDEPTH+1 && h48info[i+1]; i++) {
@@ -46,6 +49,7 @@ void run(void) {
 				    expected[i]);
 			printf("\n");
 		}
+*/
 	}
 }
 

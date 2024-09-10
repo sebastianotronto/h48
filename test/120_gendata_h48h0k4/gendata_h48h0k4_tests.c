@@ -50,11 +50,7 @@ void run(void) {
 	arg.k = 4;
 
 	sz = gendata_h48(&arg); /* With buf = NULL returns data size */
-	arg.buf = malloc(sz+23);
-/*
-TODO: the +23 is a workaround for a bug that I don't understand and seems
-to happen only with gcc.  Hopefully this gets fixed when switching to 8-bit.
-*/
+	arg.buf = malloc(sz);
 
 	result = gendata_h48(&arg);
 

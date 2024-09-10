@@ -1,4 +1,4 @@
-#define UINT32_BIT(i) (UINT32_C(1) << (uint32_t)(i))
+#define UINT8_BIT(i) (UINT8_C(1) << (uint8_t)(i))
 
 #define FACTORIAL_MAX INT64_C(12)
 

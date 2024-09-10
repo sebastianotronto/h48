@@ -3,10 +3,10 @@
 #define H48_DIV(k)           ((size_t)8 / (size_t)(k))
 #define H48_TABLESIZE(h, k)  DIV_ROUND_UP((size_t)H48_COORDMAX((h)), H48_DIV(k))
 
-#define H48_COEFF(k)         (UINT32_C(32) / (uint32_t)(k))
-#define H48_INDEX(i, k)      ((uint32_t)(i) / H48_COEFF(k))
-#define H48_SHIFT(i, k)      ((uint32_t)(k) * ((uint32_t)(i) % H48_COEFF(k)))
-#define H48_MASK(i, k)       ((UINT32_BIT(k) - (uint32_t)(1)) << H48_SHIFT(i, k))
+#define H48_COEFF(k)         (INT64_C(8) / (int64_t)(k))
+#define H48_INDEX(i, k)      ((i) / H48_COEFF(k))
+#define H48_SHIFT(i, k)      ((uint8_t)(k) * (uint8_t)((i) % H48_COEFF(k)))
+#define H48_MASK(i, k)       ((UINT8_BIT(k) - UINT8_C(1)) << H48_SHIFT(i, k))
 
 #define MAXLEN 20
 
@@ -52,7 +52,7 @@ typedef struct {
 typedef struct {
 	uint8_t depth;
 	uint32_t *cocsepdata;
-	uint32_t *buf32;
+	uint8_t *table;
 	uint64_t *selfsim;
 	int64_t done;
 	cube_t *crep;
@@ -65,14 +65,15 @@ typedef struct {
 	uint8_t base;
 	uint8_t shortdepth;
 	uint32_t *cocsepdata;
-	uint32_t *buf32;
+	uint8_t *table;
 	uint64_t *selfsim;
 	cube_t *crep;
 	h48map_t *shortcubes;
 } h48k2_dfs_arg_t;
 
-STATIC_INLINE uint8_t get_esep_pval(const uint32_t *, int64_t, uint8_t);
-STATIC_INLINE void set_esep_pval(uint32_t *, int64_t, uint8_t, uint8_t);
+STATIC_INLINE uint8_t get_h48_pval(const uint8_t *, int64_t, uint8_t);
+STATIC_INLINE void set_h48_pval(uint8_t *, int64_t, uint8_t, uint8_t);
+STATIC_INLINE uint8_t get_h48_bound(cube_t, uint32_t, uint8_t, uint8_t, uint8_t *);
 
 STATIC uint64_t gen_h48short(gendata_h48short_arg_t *);
 STATIC size_t gendata_h48(gendata_h48_arg_t *);
@@ -84,8 +85,6 @@ STATIC size_t gendata_h48k2(gendata_h48_arg_t *);
 STATIC_INLINE void gendata_h48k2_mark(cube_t, int8_t, h48k2_dfs_arg_t *);
 STATIC_INLINE bool gendata_h48k2_dfs_stop(cube_t, uint8_t, h48k2_dfs_arg_t *);
 STATIC void gendata_h48k2_dfs(h48k2_dfs_arg_t *arg);
-
-STATIC_INLINE int8_t get_h48_bound(cube_t, uint32_t, uint8_t, uint8_t, uint32_t *);
 
 STATIC uint64_t
 gen_h48short(gendata_h48short_arg_t *arg)
@@ -178,9 +177,10 @@ generating fixed table with h=0, k=4
 STATIC size_t
 gendata_h48h0k4(gendata_h48_arg_t *arg)
 {
-	uint32_t j, *buf32;
+	uint32_t j;
+	uint8_t *table;
 	h48h0k4_bfs_arg_t bfsarg;
-	int64_t sc, cc, esep_max;
+	int64_t sc, cc, h48max;
 
 	if (arg->buf == NULL)
 		goto gendata_h48h0k4_return_size;
@@ -198,25 +198,25 @@ gendata_h48h0k4(gendata_h48_arg_t *arg)
 		.next = 0,
 	};
 
-	buf32 = (uint32_t *)((char *)arg->h48buf + INFOSIZE);
-	memset(buf32, 0xFF, H48_TABLESIZE(0, 4));
+	table = (uint8_t *)arg->h48buf + INFOSIZE;
+	memset(table, 0xFF, H48_TABLESIZE(0, 4));
 
-	esep_max = (int64_t)H48_COORDMAX(0);
+	h48max = (int64_t)H48_COORDMAX(0);
 	sc = coord_h48(SOLVED_CUBE, arg->cocsepdata, 0);
-	set_esep_pval(buf32, sc, 4, 0);
+	set_h48_pval(table, sc, 4, 0);
 	arg->info.distribution[0] = 1;
 	bfsarg = (h48h0k4_bfs_arg_t) {
 		.cocsepdata = arg->cocsepdata,
-		.buf32 = buf32,
+		.table = table,
 		.selfsim = arg->selfsim,
 		.crep = arg->crep
 	};
 	for (
 		bfsarg.done = 1, bfsarg.depth = 1, cc = 0;
-		bfsarg.done < esep_max && bfsarg.depth <= arg->maxdepth;
+		bfsarg.done < h48max && bfsarg.depth <= arg->maxdepth;
 		bfsarg.depth++
 	) {
-		LOG("esep: generating depth %" PRIu8 "\n", bfsarg.depth);
+		LOG("h48: generating depth %" PRIu8 "\n", bfsarg.depth);
 		cc = gendata_h48h0k4_bfs(&bfsarg);
 		bfsarg.done += cc;
 		arg->info.distribution[bfsarg.depth] = cc;
@@ -257,20 +257,19 @@ gendata_h48h0k4_bfs_fromdone(h48h0k4_bfs_arg_t *arg)
 	cube_t cube, moved;
 
 	for (i = 0, cc = 0; i < (int64_t)H48_COORDMAX(0); i++) {
-//LOG("getting esep val for %" PRId64 "\n", i);
-		c = get_esep_pval(arg->buf32, i, 4);
+		c = get_h48_pval(arg->table, i, 4);
 		if (c != arg->depth - 1)
 			continue;
 		cube = invcoord_h48(i, arg->crep, 0);
 		for (m = 0; m < 18; m++) {
 			moved = move(cube, m);
 			j = coord_h48(moved, arg->cocsepdata, 0);
-			if (get_esep_pval(arg->buf32, j, 4) <= arg->depth)
+			if (get_h48_pval(arg->table, j, 4) <= arg->depth)
 				continue;
 			FOREACH_H48SIM(moved, arg->cocsepdata, arg->selfsim,
 				k = coord_h48(moved, arg->cocsepdata, 0);
-				x = get_esep_pval(arg->buf32, k, 4);
-				set_esep_pval(arg->buf32, k, 4, arg->depth);
+				x = get_h48_pval(arg->table, k, 4);
+				set_h48_pval(arg->table, k, 4, arg->depth);
 				cc += x != arg->depth;
 			)
 		}
@@ -288,20 +287,20 @@ gendata_h48h0k4_bfs_fromnew(h48h0k4_bfs_arg_t *arg)
 	cube_t cube, moved;
 
 	for (i = 0, cc = 0; i < (int64_t)H48_COORDMAX(0); i++) {
-		c = get_esep_pval(arg->buf32, i, 4);
+		c = get_h48_pval(arg->table, i, 4);
 		if (c != 0xF)
 			continue;
 		cube = invcoord_h48(i, arg->crep, 0);
 		for (m = 0; m < 18; m++) {
 			moved = move(cube, m);
 			j = coord_h48(moved, arg->cocsepdata, 0);
-			x = get_esep_pval(arg->buf32, j, 4);
+			x = get_h48_pval(arg->table, j, 4);
 			if (x >= arg->depth)
 				continue;
 			FOREACH_H48SIM(cube, arg->cocsepdata, arg->selfsim,
 				j = coord_h48(cube, arg->cocsepdata, 0);
-				x = get_esep_pval(arg->buf32, j, 4);
-				set_esep_pval(arg->buf32, j, 4, arg->depth);
+				x = get_h48_pval(arg->table, j, 4);
+				set_h48_pval(arg->table, j, 4, arg->depth);
 				cc += x == 0xF;
 			)
 			break; /* Enough to find one, skip the rest */
@@ -332,8 +331,7 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 		[11] = 10
 	};
 
-	uint8_t t, selectedbase;
-	uint32_t *buf32;
+	uint8_t t, selectedbase, *table;
 	int64_t j;
 	uint64_t nshort, i, ii;
 	h48map_t shortcubes;
@@ -344,9 +342,9 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 	if (arg->buf == NULL)
 		goto gendata_h48k2_return_size;
 
-	buf32 = (uint32_t *)((char *)arg->h48buf + INFOSIZE);
+	table = (uint8_t *)arg->h48buf + INFOSIZE;
 	if (arg->buf != NULL)
-		memset(buf32, 0xFF, H48_TABLESIZE(arg->h, arg->k));
+		memset(table, 0xFF, H48_TABLESIZE(arg->h, arg->k));
 
 	LOG("Computing depth <=%" PRIu8 "\n", shortdepth)
 	h48map_create(&shortcubes, capacity, randomizer);
@@ -382,7 +380,7 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 		.base = selectedbase,
 		.shortdepth = shortdepth,
 		.cocsepdata = arg->cocsepdata,
-		.buf32 = buf32,
+		.table = table,
 		.selfsim = arg->selfsim,
 		.crep = arg->crep,
 		.shortcubes = &shortcubes
@@ -403,7 +401,7 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 
 	arg->info.base = selectedbase;
 	for (j = 0; j < H48_COORDMAX(arg->h); j++) {
-		t = get_esep_pval(buf32, j, 2);
+		t = get_h48_pval(table, j, 2);
 		arg->info.distribution[t]++;
 	}
 
@@ -481,9 +479,9 @@ gendata_h48k2_mark(cube_t cube, int8_t depth, h48k2_dfs_arg_t *arg)
 	FOREACH_H48SIM(cube, arg->cocsepdata, arg->selfsim,
 		fullcoord = coord_h48(cube, arg->cocsepdata, 11);
 		coord = fullcoord >> (int64_t)(11 - arg->h);
-		oldval = get_esep_pval(arg->buf32, coord, arg->k);
+		oldval = get_h48_pval(arg->table, coord, arg->k);
 		newval = (uint8_t)MAX(depth, 0);
-		set_esep_pval(arg->buf32, coord, arg->k, MIN(oldval, newval));
+		set_h48_pval(arg->table, coord, arg->k, MIN(oldval, newval));
 	)
 }
 
@@ -498,7 +496,7 @@ gendata_h48k2_dfs_stop(cube_t cube, uint8_t depth, h48k2_dfs_arg_t *arg)
 		/* We are in the "real coordinate" case, we can stop
 		   if this coordinate has already been visited */
 		coord = coord_h48(cube, arg->cocsepdata, arg->h);
-		oldval = get_esep_pval(arg->buf32, coord, arg->k);
+		oldval = get_h48_pval(arg->table, coord, arg->k);
 		return oldval <= depth;
 	} else {
 		/* With 0 < k < 11 we do not have a "real coordinate".
@@ -511,23 +509,23 @@ gendata_h48k2_dfs_stop(cube_t cube, uint8_t depth, h48k2_dfs_arg_t *arg)
 }
 
 STATIC_INLINE uint8_t
-get_esep_pval(const uint32_t *buf32, int64_t i, uint8_t k)
+get_h48_pval(const uint8_t *table, int64_t i, uint8_t k)
 {
-	return (buf32[H48_INDEX(i, k)] & H48_MASK(i, k)) >> H48_SHIFT(i, k);
+	return (table[H48_INDEX(i, k)] & H48_MASK(i, k)) >> H48_SHIFT(i, k);
 }
 
 STATIC_INLINE void
-set_esep_pval(uint32_t *buf32, int64_t i, uint8_t k, uint8_t val)
+set_h48_pval(uint8_t *table, int64_t i, uint8_t k, uint8_t val)
 {
-	buf32[H48_INDEX(i, k)] = (buf32[H48_INDEX(i, k)] & (~H48_MASK(i, k)))
+	table[H48_INDEX(i, k)] = (table[H48_INDEX(i, k)] & (~H48_MASK(i, k)))
 	    | (val << H48_SHIFT(i, k));
 }
 
-STATIC_INLINE int8_t
-get_h48_bound(cube_t cube, uint32_t cdata, uint8_t h, uint8_t k, uint32_t *h48data)
+STATIC_INLINE uint8_t
+get_h48_bound(cube_t cube, uint32_t cdata, uint8_t h, uint8_t k, uint8_t *table)
 {
 	int64_t coord;
 
 	coord = coord_h48_edges(cube, COCLASS(cdata), TTREP(cdata), h);
-	return get_esep_pval(h48data, coord, k);
+	return get_h48_pval(table, coord, k);
 }
