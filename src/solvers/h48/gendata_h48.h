@@ -71,10 +71,6 @@ typedef struct {
 	h48map_t *shortcubes;
 } h48k2_dfs_arg_t;
 
-STATIC_INLINE uint8_t get_h48_pval(const uint8_t *, int64_t, uint8_t);
-STATIC_INLINE void set_h48_pval(uint8_t *, int64_t, uint8_t, uint8_t);
-STATIC_INLINE uint8_t get_h48_bound(cube_t, uint32_t, uint8_t, uint8_t, uint8_t *);
-
 STATIC uint64_t gen_h48short(gendata_h48short_arg_t *);
 STATIC size_t gendata_h48(gendata_h48_arg_t *);
 STATIC size_t gendata_h48h0k4(gendata_h48_arg_t *);
@@ -85,6 +81,13 @@ STATIC size_t gendata_h48k2(gendata_h48_arg_t *);
 STATIC_INLINE void gendata_h48k2_mark(cube_t, int8_t, h48k2_dfs_arg_t *);
 STATIC_INLINE bool gendata_h48k2_dfs_stop(cube_t, uint8_t, h48k2_dfs_arg_t *);
 STATIC void gendata_h48k2_dfs(h48k2_dfs_arg_t *arg);
+
+STATIC uint32_t *get_cocsepdata_ptr(const void *);
+STATIC uint8_t *get_h48data_ptr(const void *);
+
+STATIC_INLINE uint8_t get_h48_pval(const uint8_t *, int64_t, uint8_t);
+STATIC_INLINE void set_h48_pval(uint8_t *, int64_t, uint8_t, uint8_t);
+STATIC_INLINE uint8_t get_h48_bound(cube_t, uint32_t, uint8_t, uint8_t, uint8_t *);
 
 STATIC uint64_t
 gen_h48short(gendata_h48short_arg_t *arg)
@@ -528,4 +531,16 @@ get_h48_bound(cube_t cube, uint32_t cdata, uint8_t h, uint8_t k, uint8_t *table)
 
 	coord = coord_h48_edges(cube, COCLASS(cdata), TTREP(cdata), h);
 	return get_h48_pval(table, coord, k);
+}
+
+STATIC uint32_t *
+get_cocsepdata_ptr(const void *data)
+{
+	return (uint32_t *)((char *)data + INFOSIZE);
+}
+
+STATIC uint8_t *
+get_h48data_ptr(const void *data)
+{
+	return (uint8_t *)data + COCSEP_FULLSIZE + INFOSIZE;
 }

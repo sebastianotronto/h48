@@ -192,8 +192,8 @@ solve_h48(
 		.maxsolutions = maxsolutions,
 		.h = h,
 		.k = k,
-		.cocsepdata = (uint32_t *)((char *)data + INFOSIZE),
-		.h48data = (uint8_t *)data + COCSEP_FULLSIZE,
+		.cocsepdata = get_cocsepdata_ptr(data),
+		.h48data = get_h48data_ptr(data),
 		.nextsol = &solutions
 	};
 
@@ -276,15 +276,12 @@ solve_h48stats(
 )
 {
 	int i;
-	size_t cocsepsize;
 	dfsarg_solveh48stats_t arg;
-
-	cocsepsize = gendata_cocsep(NULL, NULL, NULL);
 
 	arg = (dfsarg_solveh48stats_t) {
 		.cube = cube,
-		.cocsepdata = (uint32_t *)((char *)data + INFOSIZE),
-		.h48data = (uint8_t *)data + cocsepsize,
+		.cocsepdata = get_cocsepdata_ptr(data),
+		.h48data = get_h48data_ptr(data),
 		.s = solutions
 	};
 
