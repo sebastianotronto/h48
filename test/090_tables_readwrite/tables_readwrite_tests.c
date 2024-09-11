@@ -12,6 +12,7 @@ typedef struct {
 	uint64_t hash;
 	uint64_t entries;
 	uint64_t classes;
+	uint8_t h48h;
 	uint8_t bits;
 	uint8_t base;
 	uint8_t maxvalue;
@@ -47,6 +48,7 @@ tableinfo_t test_readinfo(void) {
 	ret.hash = readn();
 	ret.entries = readn();
 	ret.classes = readn();
+	ret.h48h = (uint8_t)readn();
 	ret.bits = (uint8_t)readn();
 	ret.base = (uint8_t)readn();
 	ret.maxvalue = (uint8_t)readn();
@@ -72,6 +74,7 @@ void test_writeinfo(tableinfo_t info) {
 	printf("%" PRIu64 "\n", info.hash);
 	printf("%" PRIu64 "\n", info.entries);
 	printf("%" PRIu64 "\n", info.classes);
+	printf("%" PRIu8 "\n", info.h48h);
 	printf("%" PRIu8 "\n", info.bits);
 	printf("%" PRIu8 "\n", info.base);
 	printf("%" PRIu8 "\n", info.maxvalue);

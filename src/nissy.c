@@ -334,7 +334,7 @@ nissy_solve(
 			ret = -1;
 		} else {
 			ret = solve_h48(c, minmoves, maxmoves, maxsolutions,
-			    h, k, data, solutions);
+			    data, solutions);
 		}
 	} else if (!strcmp(solver, "h48stats")) {
 		ret = solve_h48stats(c, maxmoves, data, solutions);

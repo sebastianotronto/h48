@@ -152,13 +152,14 @@ gendata_h48(gendata_h48_arg_t *arg)
 		goto gendata_h48_error;
 	}
 
-	if (arg->buf == 0)
+	if (arg->buf == NULL)
 		goto gendata_h48_return_size;
 
 	if (!readtableinfo(arg->buf, &cocsepinfo)) {
 		LOG("gendata_h48: could not read info for cocsep table\n");
 		goto gendata_h48_error;
 	}
+
 	cocsepinfo.next = cocsepsize;
 	if (!writetableinfo(&cocsepinfo, arg->buf)) {
 		LOG("gendata_h48: could not write info for cocsep table"

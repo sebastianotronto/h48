@@ -31,7 +31,7 @@ STATIC uint32_t allowednextmove_h48(uint8_t *, uint8_t, uint32_t);
 STATIC void solve_h48_appendsolution(dfsarg_solveh48_t *);
 STATIC_INLINE bool solve_h48_stop(dfsarg_solveh48_t *);
 STATIC int64_t solve_h48_dfs(dfsarg_solveh48_t *);
-STATIC int64_t solve_h48(cube_t, int8_t, int8_t, int8_t, uint8_t, uint8_t, const void *, char *);
+STATIC int64_t solve_h48(cube_t, int8_t, int8_t, int8_t, const void *, char *);
 
 STATIC int64_t solve_h48stats_dfs(dfsarg_solveh48stats_t *);
 STATIC int64_t solve_h48stats(cube_t, int8_t, const void *, char [static 12]);
@@ -176,22 +176,26 @@ solve_h48(
 	int8_t minmoves,
 	int8_t maxmoves,
 	int8_t maxsolutions,
-	uint8_t h,
-	uint8_t k,
 	const void *data,
 	char *solutions
 )
 {
 	int64_t nsols;
 	dfsarg_solveh48_t arg;
+	tableinfo_t info;
+
+	if(!readtableinfo_n(data, 2, &info)) {
+		LOG("solve_h48: error reading table\n");
+		return 0;
+	}
 
 	arg = (dfsarg_solveh48_t) {
 		.cube = cube,
 		.inverse = inverse(cube),
 		.nsols = &nsols,
 		.maxsolutions = maxsolutions,
-		.h = h,
-		.k = k,
+		.h = info.h48h,
+		.k = info.bits,
 		.cocsepdata = get_cocsepdata_ptr(data),
 		.h48data = get_h48data_ptr(data),
 		.nextsol = &solutions
