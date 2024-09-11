@@ -18,6 +18,16 @@ log_stderr(const char *str, ...)
 	va_end(args);
 }
 
+static void
+write_stdout(const char *str, ...)
+{
+	va_list args;
+
+	va_start(args, str);
+	vfprintf(stdout, str, args);
+	va_end(args);
+}
+
 static double
 timerun(void (*run)(void), char *name)
 {

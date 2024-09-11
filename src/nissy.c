@@ -196,6 +196,53 @@ nissy_datasize(
 }
 
 int64_t
+nissy_datainfo(
+	const void *table,
+	void (*write)(const char *, ...)
+)
+{
+	uint8_t i;
+	tableinfo_t info;
+
+	readtableinfo(table, &info);
+
+	write("\n---------\n\n");
+	write("Table information for '%s'\n", info.solver);
+	write("\n");
+	write("Size:      %" PRIu64 " bytes\n", info.fullsize);
+	write("Entries:   %" PRIu64 " (%" PRIu8 " bits per entry)",
+	    info.entries, info.bits);
+	write("\n");
+
+	switch (info.type) {
+	case TABLETYPE_PRUNING:
+		write("\n");
+		if (info.base != 0)
+			write(" (base value = %" PRIu8 ")", info.base);
+		write(":\nValue\tPositions\n");
+		for (i = 0; i <= info.maxvalue; i++) {
+			write("%" PRIu8 "\t%" PRIu64 "\n",
+			    i, info.distribution[i]);
+		}
+		break;
+	case TABLETYPE_SPECIAL:
+		write("This is an ad-hoc table\n");
+		break;
+	default:
+		LOG("datainfo: unknown table type\n");
+		return 1;
+	}
+
+	if (info.next != 0) {
+		return nissy_datainfo((char *)table + info.next, write);
+	}
+
+	write("\n---------\n");
+
+	return 0;
+}
+
+int64_t
 nissy_gendata(
 	const char *solver,
 	const char *options,

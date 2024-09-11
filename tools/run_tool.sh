@@ -16,7 +16,7 @@ for t in tools/*; do
 	fi
 	toolname="$(basename "$t" .c)"
 	$CC -o $BIN $t/*.c $CUBEOBJ || exit 1;
-	$BIN | tee "tools/results/$toolname-$d.txt"
+	$BIN | tee "tools/results/$toolname-$d.txt" "tools/results/last.out"
 	break
 done
 

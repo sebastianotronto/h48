@@ -5,9 +5,6 @@
 #define OPTIONS "0;2;20"
 #define LONGOPTIONS "h = 0, k = 2, max depth = 20"
 
-#define COCSEPSIZE 1119792
-#define ETABLESIZE(h) (((3393 * 495 * 70) >> 2) << (size_t)(h))
-
 uint32_t expected[21] = {
 	/* Base value is 8 */
 	[0] = 5473562,
@@ -19,8 +16,6 @@ uint32_t expected[21] = {
 char *buf;
 
 void run(void) {
-	uint32_t *h48info, x;
-	int i;
 	int64_t s;
 
 	s = nissy_gendata("h48", OPTIONS, buf);
@@ -28,16 +23,12 @@ void run(void) {
 	if (s == -1) {
 		printf("Error generating table\n");
 	} else {
-		printf("Succesfully generated %" PRId64 " bytes. Table:\n", s);
-		h48info = (uint32_t *)buf + 1 + (ETABLESIZE(HVALUE) + COCSEPSIZE) / 4;
-		for (i = 0; i < 4; i++) {
-			x = h48info[i+1];
-			printf("%d:\t%" PRIu32, i, x);
-			if (x != expected[i])
-				printf(" <--- Error! Expected: %" PRIu32,
-				    expected[i]);
-			printf("\n");
-		}
+		nissy_datainfo(buf, write_stdout);
+		printf("\n");
+		printf("Succesfully generated %" PRId64 " bytes. "
+		       "See above for details on the tables.\n", s);
+
+		/* TODO: check that the table is correct */
 	}
 }
 

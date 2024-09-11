@@ -4,6 +4,9 @@
 #define INFO_SOLVER_STRLEN       100
 #define INFO_DISTRIBUTION_LEN    21
 
+#define TABLETYPE_PRUNING        0
+#define TABLETYPE_SPECIAL        1
+
 #define INFO_OFFSET_SOLVER       0
 #define INFO_OFFSET_TYPE         INFO_SOLVER_STRLEN
 #define INFO_OFFSET_INFOSIZE     (INFO_OFFSET_TYPE + sizeof(uint64_t))
@@ -16,9 +19,6 @@
 #define INFO_OFFSET_MAXVALUE     (INFO_OFFSET_BASE + sizeof(uint8_t))
 #define INFO_OFFSET_NEXT         (INFO_OFFSET_MAXVALUE + sizeof(uint8_t))
 #define INFO_OFFSET_DISTRIBUTION (INFO_OFFSET_NEXT + sizeof(uint64_t))
-
-const uint64_t TABLETYPE_PRUNING = 0;
-const uint64_t TABLETYPE_SPECIAL = 1;
 
 typedef struct {
 	char solver[INFO_SOLVER_STRLEN];

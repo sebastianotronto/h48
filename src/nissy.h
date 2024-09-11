@@ -86,6 +86,12 @@ int64_t nissy_gendata(
 	void *generated_data
 );
 
+/* Print information on a data table via the provided callback writer */
+int64_t nissy_datainfo(
+	const void *table,
+	void (*write)(const char *, ...)
+);
+
 /* Returns the number of solutions found, or -1 in case of error */
 int64_t nissy_solve(
 	const char cube[static 22],

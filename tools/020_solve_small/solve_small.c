@@ -20,20 +20,22 @@ void run(void) {
 
 	printf("Solved the following scrambles:\n\n");
 	for (i = 0; scrambles[i] != NULL; i++) {
-		printf("%s\n", scrambles[i]);
+		printf("%d. %s\n", i+1, scrambles[i]);
 		fprintf(stderr, "Solving scramble %s\n", scrambles[i]);
 		if (nissy_frommoves(scrambles[i], cube) == -1) {
-			fprintf(stderr, "Invalid scramble, "
-			    "continuing with next scramble\n");
+			fprintf(stderr, "Invalid scramble\n");
+			printf("Invalid\n");
 			continue;
 		}
 		n = nissy_solve(
 		    cube, "h48", options, "", 0, 20, 1, -1, buf, sol);
-		if (n == 0)
-			fprintf(stderr, "No solution found, "
-			    "continuing with next scramble\n");
+		if (n == 0) {
+			printf("No solution\n");
+			fprintf(stderr, "No solution found\n");
+		} else {
+			printf("Solutions:\n%s\n", sol);
+		}
 	}
-	printf("\n");
 }
 
 int main(void) {
