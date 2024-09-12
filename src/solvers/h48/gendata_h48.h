@@ -197,8 +197,10 @@ gendata_h48h0k4(gendata_h48_arg_t *arg)
 		.hash = 0, /* TODO */
 		.entries = H48_COORDMAX(0),
 		.classes = 0,
+		.h48h = 0,
 		.bits = 4,
 		.base = 0,
+		.maxvalue = 0,
 		.next = 0,
 	};
 
@@ -364,14 +366,17 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 
 	selectedbase = base[arg->h];
 	arg->info = (tableinfo_t) {
-		.solver = "h48 solver h =  , k = 4",
+		.solver = "h48 solver h =  , k = 2",
 		.type = TABLETYPE_PRUNING,
 		.infosize = INFOSIZE,
 		.fullsize = H48_TABLESIZE(arg->h, 2) + INFOSIZE,
 		.hash = 0, /* TODO */
 		.entries = H48_COORDMAX(arg->h),
+		.classes = 0,
+		.h48h = arg->h,
 		.bits = 2,
 		.base = selectedbase,
+		.maxvalue = 3,
 		.next = 0,
 	};
 	arg->info.solver[15] = (arg->h % 10) + '0';

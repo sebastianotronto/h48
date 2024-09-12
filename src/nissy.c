@@ -217,13 +217,10 @@ nissy_datainfo(
 	switch (info.type) {
 	case TABLETYPE_PRUNING:
 		write("\n");
-		write("Table distribution");
-		if (info.base != 0)
-			write(" (base value = %" PRIu8 ")", info.base);
-		write(":\nValue\tPositions\n");
+		write("Table distribution:\nValue\tPositions\n");
 		for (i = 0; i <= info.maxvalue; i++) {
 			write("%" PRIu8 "\t%" PRIu64 "\n",
-			    i, info.distribution[i]);
+			    i + info.base, info.distribution[i]);
 		}
 		break;
 	case TABLETYPE_SPECIAL:
