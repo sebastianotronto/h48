@@ -217,6 +217,7 @@ nissy_datainfo(
 	switch (info.type) {
 	case TABLETYPE_PRUNING:
 		write("\n");
+		write("Table distribution");
 		if (info.base != 0)
 			write(" (base value = %" PRIu8 ")", info.base);
 		write(":\nValue\tPositions\n");
