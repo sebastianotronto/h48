@@ -3,7 +3,6 @@
 #include "../tool.h"
 
 #define MAXMOVES 20
-#define NTHREADS 32
 #define NCUBES_PER_THREAD 10000
 #define LOG_EVERY (NCUBES_PER_THREAD / 10)
 
@@ -57,10 +56,10 @@ run_thread(void *arg)
 void run(void) {
 	int64_t i, j, k, tot;
 	double avg;
-	pthread_t thread[NTHREADS];
-	thread_arg_t arg[NTHREADS];
+	pthread_t thread[THREADS];
+	thread_arg_t arg[THREADS];
 
-	for (i = 0; i < NTHREADS; i++) {
+	for (i = 0; i < THREADS; i++) {
 		arg[i] = (thread_arg_t) {
 			.thread_id = i,
 			.n = NCUBES_PER_THREAD,
@@ -69,18 +68,18 @@ void run(void) {
 		pthread_create(&thread[i], NULL, run_thread, &arg[i]);
 	}
 
-	for (i = 0; i < NTHREADS; i++)
+	for (i = 0; i < THREADS; i++)
 		pthread_join(thread[i], NULL);
 
 	for (j = 0; j < 12; j++) {
 		printf("Data for h=%" PRId64 "\n", j);
 		for (k = 0, avg = 0.0; k <= 16; k++) {
-			for (i = 0, tot = 0; i < NTHREADS; i++)
+			for (i = 0, tot = 0; i < THREADS; i++)
 				tot += arg[i].v[j][k];
 			printf("%" PRId64 "\t%" PRId64 "\n", k, tot);
 			avg += tot * k;
 		}
-		avg /= (double)(NCUBES_PER_THREAD * NTHREADS);
+		avg /= (double)(NCUBES_PER_THREAD * THREADS);
 		printf("Average: %.4lf\n", avg);
 		printf("\n");
 	}
