@@ -9,6 +9,7 @@
 #define H48_MASK(i, k)       ((UINT8_BIT(k) - UINT8_C(1)) << H48_SHIFT(i, k))
 
 #define MAXLEN 20
+#define CHUNKS COCSEP_CLASSES /* Must be a divisor of H48_COORDMAX_NOEO */
 
 /*
 TODO: This loop over similar h48 coordinates can be improved by only
@@ -69,6 +70,10 @@ typedef struct {
 	uint64_t *selfsim;
 	cube_t *crep;
 	h48map_t *shortcubes;
+	pthread_mutex_t *shortcubes_mutex;
+	pthread_mutex_t *table_mutex[CHUNKS];
+	uint64_t *next;
+	uint64_t *count;
 } h48k2_dfs_arg_t;
 
 STATIC uint64_t gen_h48short(gendata_h48short_arg_t *);
@@ -78,6 +83,7 @@ STATIC int64_t gendata_h48h0k4_bfs(h48h0k4_bfs_arg_t *);
 STATIC int64_t gendata_h48h0k4_bfs_fromdone(h48h0k4_bfs_arg_t *);
 STATIC int64_t gendata_h48h0k4_bfs_fromnew(h48h0k4_bfs_arg_t *);
 STATIC size_t gendata_h48k2(gendata_h48_arg_t *);
+STATIC void * gendata_h48k2_runthread(void *);
 STATIC_INLINE void gendata_h48k2_mark(cube_t, int8_t, h48k2_dfs_arg_t *);
 STATIC_INLINE bool gendata_h48k2_dfs_stop(cube_t, uint8_t, h48k2_dfs_arg_t *);
 STATIC void gendata_h48k2_dfs(h48k2_dfs_arg_t *arg);
@@ -339,11 +345,12 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 
 	uint8_t t, selectedbase, *table;
 	int64_t j;
-	uint64_t nshort, i, ii;
+	uint64_t nshort, i, ii, inext, count;
 	h48map_t shortcubes;
-	kvpair_t kv;
 	gendata_h48short_arg_t shortarg;
-	h48k2_dfs_arg_t dfsarg;
+	h48k2_dfs_arg_t dfsarg[THREADS];
+	pthread_t thread[THREADS];
+	pthread_mutex_t shortcubes_mutex, table_mutex[CHUNKS];
 
 	if (arg->buf == NULL)
 		goto gendata_h48k2_return_size;
@@ -383,32 +390,37 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 	if (arg->h >= 10)
 		arg->info.solver[14] = (arg->h / 10) + '0';
 
-	dfsarg = (h48k2_dfs_arg_t){
-		.h = arg->h,
-		.k = arg->k,
-		.base = selectedbase,
-		.shortdepth = shortdepth,
-		.cocsepdata = arg->cocsepdata,
-		.table = table,
-		.selfsim = arg->selfsim,
-		.crep = arg->crep,
-		.shortcubes = &shortcubes
-	};
+	inext = count = 0;
+	pthread_mutex_init(&shortcubes_mutex, NULL);
+	for (i = 0; i < CHUNKS; i++)
+		pthread_mutex_init(&table_mutex[i], NULL);
+	for (i = 0; i < THREADS; i++) {
+		dfsarg[i] = (h48k2_dfs_arg_t){
+			.h = arg->h,
+			.k = arg->k,
+			.base = selectedbase,
+			.shortdepth = shortdepth,
+			.cocsepdata = arg->cocsepdata,
+			.table = table,
+			.selfsim = arg->selfsim,
+			.crep = arg->crep,
+			.shortcubes = &shortcubes,
+			.shortcubes_mutex = &shortcubes_mutex,
+			.next = &inext,
+			.count = &count,
+		};
+		for (ii = 0; ii < CHUNKS; ii++)
+			dfsarg[i].table_mutex[ii] = &table_mutex[ii];
 
-	i = ii = 0;
-	for (kv = h48map_nextkvpair(&shortcubes, &i);
-	     i != shortcubes.capacity;
-	     kv = h48map_nextkvpair(&shortcubes, &i)
-	) {
-		dfsarg.cube = invcoord_h48(kv.key, arg->crep, 11);
-		gendata_h48k2_dfs(&dfsarg);
-		if (++ii % UINT64_C(1000000) == 0)
-			LOG("Processed %" PRIu64 " short cubes\n", ii);
+		pthread_create(
+		    &thread[i], NULL, gendata_h48k2_runthread, &dfsarg[i]);
 	}
+
+	for (i = 0; i < THREADS; i++)
+		pthread_join(thread[i], NULL);
 
 	h48map_destroy(&shortcubes);
 
-	arg->info.base = selectedbase;
 	for (j = 0; j < H48_COORDMAX(arg->h); j++) {
 		t = get_h48_pval(table, j, 2);
 		arg->info.distribution[t]++;
@@ -418,6 +430,36 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 
 gendata_h48k2_return_size:
 	return H48_TABLESIZE(arg->h, 2) + INFOSIZE;
+}
+
+STATIC void *
+gendata_h48k2_runthread(void *arg)
+{
+	kvpair_t kv;
+	h48k2_dfs_arg_t *dfsarg;
+
+	dfsarg = (h48k2_dfs_arg_t *)arg;
+
+	while (true) {
+		pthread_mutex_lock(dfsarg->shortcubes_mutex);
+
+		kv = h48map_nextkvpair(dfsarg->shortcubes, dfsarg->next);
+		if (*dfsarg->next == dfsarg->shortcubes->capacity) {
+			pthread_mutex_unlock(dfsarg->shortcubes_mutex);
+			break;
+		}
+		dfsarg->cube = invcoord_h48(kv.key, dfsarg->crep, 11);
+		(*dfsarg->count)++;
+		if (*dfsarg->count % UINT64_C(1000000) == 0)
+			LOG("Processing %" PRIu64 "th short cube\n",
+			    *dfsarg->count);
+
+		pthread_mutex_unlock(dfsarg->shortcubes_mutex);
+
+		gendata_h48k2_dfs(dfsarg);
+	}
+
+	return NULL;
 }
 
 STATIC void
@@ -488,9 +530,11 @@ gendata_h48k2_mark(cube_t cube, int8_t depth, h48k2_dfs_arg_t *arg)
 	FOREACH_H48SIM(cube, arg->cocsepdata, arg->selfsim,
 		fullcoord = coord_h48(cube, arg->cocsepdata, 11);
 		coord = fullcoord >> (int64_t)(11 - arg->h);
+		pthread_mutex_lock(arg->table_mutex[coord % CHUNKS]);
 		oldval = get_h48_pval(arg->table, coord, arg->k);
 		newval = (uint8_t)MAX(depth, 0);
 		set_h48_pval(arg->table, coord, arg->k, MIN(oldval, newval));
+		pthread_mutex_unlock(arg->table_mutex[coord % CHUNKS]);
 	)
 }
 

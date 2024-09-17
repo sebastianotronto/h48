@@ -13,6 +13,7 @@ typedef struct {
 	uint64_t hash;
 	uint64_t entries;
 	uint64_t classes; /* Used only by cocsepdata, for now */
+	uint8_t h48h;
 	uint8_t bits;
 	uint8_t base;
 	uint8_t maxvalue;

@@ -1,4 +1,5 @@
 #include <inttypes.h>
+#include <pthread.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <string.h>

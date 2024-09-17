@@ -88,10 +88,6 @@ h48map_nextkvpair(h48map_t *map, uint64_t *p)
 	kv.key = MAP_KEYMASK;
 	kv.val = MAP_UNSET_VAL;
 
-	DBG_ASSERT(*p < map->capacity, kv,
-	    "Error looping over map: given index %" PRIu64 " is out of "
-	    "range [0,%" PRIu64 "]", *p, map->capacity);
-
 	for ( ; *p < map->capacity; (*p)++) {
 		if (map->table[*p] != MAP_UNSET) {
 			pair = map->table[(*p)++];
