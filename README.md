@@ -25,15 +25,8 @@ $ ./configure.sh
 These settings can be overridden, for example:
 
 ```
-$ CC=clang ./configure.sh     # Force use of clang instead of default cc
-```
-
-The support for ARM-specific optimizations (NEON instructions) is
-incomplete.  To compile correctly on these processors (e.g. Mac M1/M2/M3)
-you need to manually disable optimizations:
-
-```
-$ ARCH="PORTABLE" ./configure.sh    # Can be combined with CC=...
+$ CC=clang ./configure.sh           # Force use of clang instead of default cc
+$ THREADS=3 CC=gcc ./configure.sh   # Use 3 threads and compile with gcc
 ```
 
 Once the configuration is done, you can build with make
