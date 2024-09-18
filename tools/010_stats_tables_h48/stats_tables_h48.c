@@ -73,7 +73,7 @@ void run(void) {
 
 	for (j = 0; j < 12; j++) {
 		printf("Data for h=%" PRId64 "\n", j);
-		for (k = 0, avg = 0.0; k <= 16; k++) {
+		for (k = 0, avg = 0.0; k < 16; k++) {
 			for (i = 0, tot = 0; i < THREADS; i++)
 				tot += arg[i].v[j][k];
 			printf("%" PRId64 "\t%" PRId64 "\n", k, tot);
