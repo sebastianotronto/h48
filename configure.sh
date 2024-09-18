@@ -21,7 +21,7 @@ detectarch() {
 }
 
 validatecc() {
-	if ! (which "$CC" >/dev/null 2>&1) ; then
+	if ! (command -v "$CC" >/dev/null 2>&1) ; then
 		echo "Error: compiler '$CC' not found"
 		exit 1
 	fi
