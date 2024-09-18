@@ -344,7 +344,7 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 
 	uint8_t t, selectedbase, *table;
 	int64_t j;
-	uint64_t nshort, i, ii, inext, count;
+	uint64_t i, ii, inext, count;
 	h48map_t shortcubes;
 	gendata_h48short_arg_t shortarg;
 	h48k2_dfs_arg_t dfsarg[THREADS];
@@ -367,8 +367,7 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 		.selfsim = arg->selfsim,
 		.map = &shortcubes
 	};
-	nshort = gendata_h48short(&shortarg);
-	LOG("Cubes in <= %" PRIu8 " moves: %" PRIu64 "\n", shortdepth, nshort);
+	gendata_h48short(&shortarg);
 
 	selectedbase = base[arg->h];
 	arg->info = (tableinfo_t) {
@@ -434,6 +433,7 @@ gendata_h48k2_return_size:
 STATIC void *
 gendata_h48k2_runthread(void *arg)
 {
+	uint64_t count, c;
 	kvpair_t kv;
 	h48k2_dfs_arg_t *dfsarg;
 
@@ -447,15 +447,21 @@ gendata_h48k2_runthread(void *arg)
 			pthread_mutex_unlock(dfsarg->shortcubes_mutex);
 			break;
 		}
-		(*dfsarg->count)++;
-		if (*dfsarg->count % UINT64_C(1000000) == 0)
-			LOG("Processing %" PRIu64 "th short cube\n",
-			    *dfsarg->count);
-
+		count = ++(*dfsarg->count);
 		pthread_mutex_unlock(dfsarg->shortcubes_mutex);
 
-		dfsarg->cube = invcoord_h48(kv.key, dfsarg->crep, 11);
-		gendata_h48k2_dfs(dfsarg);
+		if (count % UINT64_C(1000000) == 0)
+			LOG("Processing %" PRIu64 "th short cube\n", count);
+
+		if (kv.val < dfsarg->shortdepth) {
+			c = kv.key >> (int64_t)(11 - dfsarg->h);
+			pthread_mutex_lock(dfsarg->table_mutex[c % CHUNKS]);
+			set_h48_pval(dfsarg->table, c, dfsarg->k, 0);
+			pthread_mutex_unlock(dfsarg->table_mutex[c % CHUNKS]);
+		} else {
+			dfsarg->cube = invcoord_h48(kv.key, dfsarg->crep, 11);
+			gendata_h48k2_dfs(dfsarg);
+		}
 	}
 
 	return NULL;
