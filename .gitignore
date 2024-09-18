@@ -1,6 +1,7 @@
 config.mk
 gen
 debuggen
+flamegraph.html
 perf.data
 perf.data.old
 run
