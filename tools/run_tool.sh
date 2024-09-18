@@ -11,14 +11,14 @@ BIN="tools/run"
 d="$(date +'%Y-%m-%d-%H-%M-%S')"
 
 for t in tools/*; do
-	if [ ! -d "$t" ] || [ -z "$(echo "$t" | grep "$TOOL")" ]; then
+	if [ ! -d "$t" ] || ! (echo "$t" | grep -q "$TOOL"); then
 		continue
 	fi
 	toolname="$(basename "$t" .c)"
-	$CC -o $BIN $t/*.c $CUBEOBJ || exit 1;
+	$CC -o $BIN "$t"/*.c "$CUBEOBJ" || exit 1;
 	$BIN | tee "tools/results/$toolname-$d.txt" "tools/results/last.out"
 	break
 done
 
 # $BIN is kept so it can be run manually for profiling
-rm -rf $CUBEOBJ
+rm -rf "$CUBEOBJ"

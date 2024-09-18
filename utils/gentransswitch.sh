@@ -2,8 +2,8 @@
 
 printf '\tswitch (t) {\n'
 for f in cubes/transform_??_???.txt; do
-	t="$(echo $f | sed 's/.*_// ; s/\.txt//')"
-	mirror_or_rotation="$(echo $t | grep m)"
+	t="$(echo "$f" | sed 's/.*_// ; s/\.txt//')"
+	mirror_or_rotation="$(echo "$t" | grep m)"
 	if [ -z "$mirror_or_rotation" ]; then
 		m="rotation"
 	else

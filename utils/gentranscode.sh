@@ -10,7 +10,7 @@ sedsrc() { sed '3s/$/ };/ ; 3q'; }
 
 gen() {
 	for f in cubes/transform_??_???.txt; do
-		trans="$(echo $f | sed 's/.*_// ; s/\.txt//')"
+		trans="$(echo "$f" | sed 's/.*_// ; s/\.txt//')"
 		printf '#define _trans_cube_%s fastcube( \\\n    ' "$trans"
 		./h48_to_lst <"$f"
 		printf ')\n'

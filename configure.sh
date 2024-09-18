@@ -5,7 +5,7 @@ greparch() {
 }
 
 grepsan() {
-	$CC -fsanitize=$1 -dM -E -x c - </dev/null 2>/dev/null | grep "SANITIZE"
+	$CC -fsanitize="$1" -dM -E -x c - </dev/null 2>/dev/null | grep "SANITIZE"
 }
 
 detectthreads() {

@@ -8,19 +8,19 @@ TESTERR="test/last.err"
 CUBEOBJ="debugcube.o"
 
 for t in test/*; do
-	if [ -n "$re" ] && [ -z "$(echo "$t" | grep "$re")" ]; then
+	if [ -n "$re" ] && !(echo "$t" | grep -q "$re"); then
 		continue
 	fi
 	
 	# Verify if $t is a directory and if its name starts with three digits
-	if [ -d "$t" ] && echo "$(basename "$t")" | grep -Eq '^[0-9]{3}'; then
-		$CC -o $TESTBIN $t/*.c $CUBEOBJ || exit 1
-		for cin in $t/*.in; do
+	if [ -d "$t" ] && basename "$t" | grep -Eq '^[0-9]{3}'; then
+		$CC -o $TESTBIN "$t"/*.c $CUBEOBJ || exit 1
+		for cin in "$t"/*.in; do
 			c=$(echo "$cin" | sed 's/\.in//')
-			cout=$c.out
-			printf "$c: "
+			cout="$c.out"
+			printf "%s: " "$c"
 			$TESTBIN < "$cin" > $TESTOUT 2> $TESTERR
-			if diff $cout $TESTOUT; then
+			if diff "$cout" "$TESTOUT"; then
 				printf "OK\n"
 			else
 				printf "Test failed! stderr:\n"
