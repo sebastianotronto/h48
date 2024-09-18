@@ -9,7 +9,7 @@
 #define H48_MASK(i, k)       ((UINT8_BIT(k) - UINT8_C(1)) << H48_SHIFT(i, k))
 
 #define MAXLEN 20
-#define CHUNKS COCSEP_CLASSES /* Must be a divisor of H48_COORDMAX_NOEO */
+#define CHUNKS COCSEP_CLASSES
 
 /*
 TODO: This loop over similar h48 coordinates can be improved by only
@@ -55,7 +55,6 @@ typedef struct {
 	uint32_t *cocsepdata;
 	uint8_t *table;
 	uint64_t *selfsim;
-	int64_t done;
 	cube_t *crep;
 } h48h0k4_bfs_arg_t;
 
@@ -190,7 +189,7 @@ gendata_h48h0k4(gendata_h48_arg_t *arg)
 	uint32_t j;
 	uint8_t *table;
 	h48h0k4_bfs_arg_t bfsarg;
-	int64_t sc, cc, h48max;
+	int64_t sc, cc, done, h48max;
 
 	if (arg->buf == NULL)
 		goto gendata_h48h0k4_return_size;
@@ -224,13 +223,13 @@ gendata_h48h0k4(gendata_h48_arg_t *arg)
 		.crep = arg->crep
 	};
 	for (
-		bfsarg.done = 1, bfsarg.depth = 1, cc = 0;
-		bfsarg.done < h48max && bfsarg.depth <= arg->maxdepth;
+		done = 1, bfsarg.depth = 1, cc = 0;
+		done < h48max && bfsarg.depth <= arg->maxdepth;
 		bfsarg.depth++
 	) {
 		LOG("h48: generating depth %" PRIu8 "\n", bfsarg.depth);
 		cc = gendata_h48h0k4_bfs(&bfsarg);
-		bfsarg.done += cc;
+		done += cc;
 		arg->info.distribution[bfsarg.depth] = cc;
 		LOG("found %" PRId64 "\n", cc);
 	}
