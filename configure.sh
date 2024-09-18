@@ -1,5 +1,40 @@
 #!/bin/sh
 
+# The following environment variables can be used to configure the build:
+#
+# CC="compiler"
+# Specify the compiler to use.
+# By default, cc will be used.
+# The string "compiler" must be the name of an executable in $PATH.
+#
+# ARCH="architecture"
+# You can use this variable to build for a different architecture, for example
+# if you want to cross-compile or to use the portable version.
+# By default, the build script will detect which architecture it is running on.
+# The string "architecture" must be one of "AVX2", "NEON" or "PORTABLE".
+#
+# THREADS=n
+# Choose how many threads to use for multi-threaded oerations.
+# By default, 16 threads will be used (TODO: in the future this will be
+# determined base on the system).
+# The number n must be between 1 and 128.
+#
+# SANITIZE="option1,option2,..."
+# Add the options "-fsanitize=option1", "-fsanitize=option2", ... to the
+# compilation command when compiling in debug mode.
+# By default, "-fsanitize=address" and "-fsanitize=undefined" will be used,
+# if available. If this variable is set, the default is overridden.
+# No check is performed on the given sanitizers, make sure that the ones you
+# choose are available on your system and compatible with each other.
+#
+# Examples
+#
+# 1. Build using clang and 8 threads
+#    CC=clang THREADS=8 ./configure.sh && make
+#
+# 2. Build using thread and undefined behavior sanitizers when in debug mode
+#    SANITIZE="thread,undefined" ./configures && make
+
 greparch() {
 	$CC -march=native -dM -E - </dev/null 2>/dev/null | grep "$1"
 }
@@ -53,23 +88,33 @@ validatecc
 validatethreads
 validatearch
 
-STD="-std=c99"
+STD="-std=c11"
 WFLAGS="-pedantic -Wall -Wextra"
 WNOFLAGS="-Wno-unused-parameter -Wno-unused-function -Wno-unknown-pragmas"
 
 [ "$ARCH" = "AVX2" ] && AVX="-mavx2"
-[ -n "$(grepsan address)" ] && ADDR="-fsanitize=address"
-[ -n "$(grepsan undefined)" ] && UNDEF="-fsanitize=undefined"
-SAN="$ADDR $UNDEF"
+
+if [ -n "$SANITIZE" ]; then
+	# Use the user-specified comma-separated sanitizers
+	for san in $(echo "$SANITIZE" | tr ',' '\n'); do
+		SAN="$SAN -fsanitize=$san"
+	done
+else
+	# No sanitizer specified, use "address" and "undefined" if present
+	[ -n "$(grepsan address)" ] && ADDR="-fsanitize=address"
+	[ -n "$(grepsan undefined)" ] && UNDEF="-fsanitize=undefined"
+	SAN="$ADDR $UNDEF"
+fi
 LIBS="-lpthread"
 
 CFLAGS="$STD $LIBS $WFLAGS $WNOFLAGS $AVX -O3"
 DBGFLAGS="$STD $LIBS $WFLAGS $WNOFLAGS $SAN $AVX -g3 -DDEBUG"
 MACROS="-DTHREADS=$THREADS -D$ARCH"
 
+echo "Compiler: $CC"
 echo "Selected architecture: $ARCH"
 echo "Number of threads: $THREADS"
-echo "Compiler: $CC"
+echo "Sanitizer options (debug build only): $SAN"
 
 {
 echo "ARCH = $ARCH";

@@ -14,9 +14,8 @@ In the future this project may evolve as a new "back-end" for the classic
 
 ## Building
 
-First run the configuration script to detect the system
-configuration. This is going to select a C compiler and
-architecture-specific optimizations.
+First run the configuration script to detect the system configuration.
+This is going to select a C compiler and architecture-specific optimizations.
 
 ```
 $ ./configure.sh
@@ -25,9 +24,10 @@ $ ./configure.sh
 These settings can be overridden, for example:
 
 ```
-$ CC=clang ./configure.sh           # Force use of clang instead of default cc
 $ THREADS=3 CC=gcc ./configure.sh   # Use 3 threads and compile with gcc
 ```
+
+All the configuration-time options are described in the `configure.sh` script.
 
 Once the configuration is done, you can build with make
 
