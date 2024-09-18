@@ -448,7 +448,6 @@ gendata_h48k2_runthread(void *arg)
 			pthread_mutex_unlock(dfsarg->shortcubes_mutex);
 			break;
 		}
-		dfsarg->cube = invcoord_h48(kv.key, dfsarg->crep, 11);
 		(*dfsarg->count)++;
 		if (*dfsarg->count % UINT64_C(1000000) == 0)
 			LOG("Processing %" PRIu64 "th short cube\n",
@@ -456,6 +455,7 @@ gendata_h48k2_runthread(void *arg)
 
 		pthread_mutex_unlock(dfsarg->shortcubes_mutex);
 
+		dfsarg->cube = invcoord_h48(kv.key, dfsarg->crep, 11);
 		gendata_h48k2_dfs(dfsarg);
 	}
 
