@@ -76,7 +76,7 @@ typedef struct {
 	uint64_t *count;
 } h48k2_dfs_arg_t;
 
-STATIC uint64_t gen_h48short(gendata_h48short_arg_t *);
+STATIC uint64_t gendata_h48short(gendata_h48short_arg_t *);
 STATIC size_t gendata_h48(gendata_h48_arg_t *);
 STATIC size_t gendata_h48h0k4(gendata_h48_arg_t *);
 STATIC int64_t gendata_h48h0k4_bfs(h48h0k4_bfs_arg_t *);
@@ -96,7 +96,7 @@ STATIC_INLINE void set_h48_pval(uint8_t *, int64_t, uint8_t, uint8_t);
 STATIC_INLINE uint8_t get_h48_bound(cube_t, uint32_t, uint8_t, uint8_t, uint8_t *);
 
 STATIC uint64_t
-gen_h48short(gendata_h48short_arg_t *arg)
+gendata_h48short(gendata_h48short_arg_t *arg)
 {
 	uint8_t i, m;
 	int64_t coord;
@@ -368,7 +368,7 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 		.selfsim = arg->selfsim,
 		.map = &shortcubes
 	};
-	nshort = gen_h48short(&shortarg);
+	nshort = gendata_h48short(&shortarg);
 	LOG("Cubes in <= %" PRIu8 " moves: %" PRIu64 "\n", shortdepth, nshort);
 
 	selectedbase = base[arg->h];
