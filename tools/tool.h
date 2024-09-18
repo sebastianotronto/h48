@@ -129,7 +129,7 @@ getdata(
 		case -2:
 			goto getdata_error;
 		default:
-			writetable(filename, size, *buf);
+			writetable(*buf, size, filename);
 			break;
 		}
 	} else {
