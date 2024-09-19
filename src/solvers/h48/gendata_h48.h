@@ -657,77 +657,14 @@ gendata_h48k2_dfs_stop(cube_t cube, int8_t depth, h48k2_dfs_arg_t *arg)
 STATIC size_t
 gendata_h48k2_realcoord(gendata_h48_arg_t *arg)
 {
-#if 1
+	/* TODO */
 	return gendata_h48k2(arg);
-#else
-	uint8_t t, selectedbase, *table;
-	uint64_t i, ii, count;
-	int64_t j;
-	h48k2_dfs_arg_t dfsarg[THREADS];
-	pthread_t thread[THREADS];
-	pthread_mutex_t count_mutex, table_mutex[CHUNKS];
-
-	if (arg->buf == NULL)
-		goto gendata_h48k2_realcoord_return_size;
-
-	table = (uint8_t *)arg->h48buf + INFOSIZE;
-	if (arg->buf != NULL)
-		memset(table, 0xFF, H48_TABLESIZE(arg->h, arg->k));
-
-	selectedbase = arg->base < 20 ? arg->base : (arg->h == 0 ? 8 : 10);
-	arg->info = makeinfo_h48k2(arg, selectedbase);
-
-	count = 0;
-	for (i = 0; i < CHUNKS; i++)
-		pthread_mutex_init(&table_mutex[i], NULL);
-
-/* TODO
-	for (i = 0; i < THREADS; i++) {
-		dfsarg[i] = (h48k2_dfs_arg_t){
-			.h = arg->h,
-			.k = arg->k,
-			.base = selectedbase,
-			.cocsepdata = arg->cocsepdata,
-			.table = table,
-			.selfsim = arg->selfsim,
-			.crep = arg->crep,
-			.shortcubes_mutex = &count_mutex,
-			.count = &count,
-		};
-		for (ii = 0; ii < CHUNKS; ii++)
-			dfsarg[i].table_mutex[ii] = &table_mutex[ii];
-
-		pthread_create(&thread[i], NULL,
-		    gendata_h48k2_realcoord_runthread, &dfsarg[i]);
-	}
-
-	for (i = 0; i < THREADS; i++)
-		pthread_join(thread[i], NULL);
-*/
-
-	/* TODO: inline into mark */
-	for (j = 0; j < H48_COORDMAX(arg->h); j++) {
-		t = get_h48_pval(table, j, 2);
-		arg->info.distribution[t]++;
-	}
-
-	writetableinfo(&arg->info, arg->h48buf);
-
-gendata_h48k2_realcoord_return_size:
-	return H48_TABLESIZE(arg->h, 2) + INFOSIZE;
-#endif
 }
 
 STATIC void *
 gendata_h48k2_realcoord_runthread(void *arg)
 {
-/* TODO
-	uint64_t count, coord, mutex;
-	h48k2_dfs_arg_t *dfsarg;
-
-	dfsarg = (h48k2_dfs_arg_t *)arg;
-
-*/
+	/* TODO */
 	return NULL;
 }
 
