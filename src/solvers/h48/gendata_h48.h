@@ -555,8 +555,8 @@ gendata_h48k2_dfs(h48k2_dfs_arg_t *arg)
 	gendata_h48_mark(&markarg);
 
 	/* Depth d+1 */
-	markarg.depth = d+1;
 	for (m[0] = 0; m[0] < 18; m[0]++) {
+		markarg.depth = d+1;
 		cube[0] = move(arg->cube, m[0]);
 		if (gendata_h48k2_dfs_stop(cube[0], d+1, arg))
 			continue;
@@ -564,8 +564,8 @@ gendata_h48k2_dfs(h48k2_dfs_arg_t *arg)
 		gendata_h48_mark(&markarg);
 
 		/* Depth d+2 */
-		markarg.depth = d+2;
 		for (m[1] = 0; m[1] < 18; m[1]++) {
+			markarg.depth = d+2;
 			if (m[0] / 3 == m[1] / 3) {
 				m[1] += 2;
 				continue;
@@ -579,8 +579,8 @@ gendata_h48k2_dfs(h48k2_dfs_arg_t *arg)
 				continue;
 
 			/* Depth d+3 */
-			markarg.depth = d+3;
 			for (m[2] = 0; m[2] < 18; m[2]++) {
+				markarg.depth = d+3;
 				if (!allowednextmove(m, 3)) {
 					m[2] += 2;
 					continue;
@@ -594,8 +594,8 @@ gendata_h48k2_dfs(h48k2_dfs_arg_t *arg)
 					continue;
 
 				/* Depth d+4 */
-				markarg.depth = d+4;
 				for (m[3] = 0; m[3] < 18; m[3]++) {
+					markarg.depth = d+4;
 					if (!allowednextmove(m, 4)) {
 						m[3] += 2;
 						continue;
