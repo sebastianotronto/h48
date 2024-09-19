@@ -433,7 +433,7 @@ gendata_h48k2_return_size:
 STATIC void *
 gendata_h48k2_runthread(void *arg)
 {
-	uint64_t count, c;
+	uint64_t count, coord, mutex;
 	kvpair_t kv;
 	h48k2_dfs_arg_t *dfsarg;
 
@@ -454,10 +454,11 @@ gendata_h48k2_runthread(void *arg)
 			LOG("Processing %" PRIu64 "th short cube\n", count);
 
 		if (kv.val < dfsarg->shortdepth) {
-			c = kv.key >> (int64_t)(11 - dfsarg->h);
-			pthread_mutex_lock(dfsarg->table_mutex[c % CHUNKS]);
-			set_h48_pval(dfsarg->table, c, dfsarg->k, 0);
-			pthread_mutex_unlock(dfsarg->table_mutex[c % CHUNKS]);
+			coord = kv.key >> (int64_t)(11 - dfsarg->h);
+			mutex = H48_INDEX(coord, dfsarg->k) % CHUNKS;
+			pthread_mutex_lock(dfsarg->table_mutex[mutex]);
+			set_h48_pval(dfsarg->table, coord, dfsarg->k, 0);
+			pthread_mutex_unlock(dfsarg->table_mutex[mutex]);
 		} else {
 			dfsarg->cube = invcoord_h48(kv.key, dfsarg->crep, 11);
 			gendata_h48k2_dfs(dfsarg);
@@ -530,16 +531,17 @@ STATIC_INLINE void
 gendata_h48k2_mark(cube_t cube, int8_t depth, h48k2_dfs_arg_t *arg)
 {
 	uint8_t oldval, newval;
-	int64_t coord, fullcoord;
+	int64_t coord, fullcoord, mutex;
 
 	FOREACH_H48SIM(cube, arg->cocsepdata, arg->selfsim,
 		fullcoord = coord_h48(cube, arg->cocsepdata, 11);
 		coord = fullcoord >> (int64_t)(11 - arg->h);
-		pthread_mutex_lock(arg->table_mutex[coord % CHUNKS]);
+		mutex = H48_INDEX(coord, arg->k) % CHUNKS;
+		pthread_mutex_lock(arg->table_mutex[mutex]);
 		oldval = get_h48_pval(arg->table, coord, arg->k);
 		newval = (uint8_t)MAX(depth, 0);
 		set_h48_pval(arg->table, coord, arg->k, MIN(oldval, newval));
-		pthread_mutex_unlock(arg->table_mutex[coord % CHUNKS]);
+		pthread_mutex_unlock(arg->table_mutex[mutex]);
 	)
 }
 
