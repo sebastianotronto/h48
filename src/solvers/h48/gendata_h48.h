@@ -84,7 +84,7 @@ STATIC int64_t gendata_h48h0k4_bfs_fromnew(h48h0k4_bfs_arg_t *);
 STATIC size_t gendata_h48k2(gendata_h48_arg_t *);
 STATIC void * gendata_h48k2_runthread(void *);
 STATIC_INLINE void gendata_h48k2_mark(cube_t, int8_t, h48k2_dfs_arg_t *);
-STATIC_INLINE bool gendata_h48k2_dfs_stop(cube_t, uint8_t, h48k2_dfs_arg_t *);
+STATIC_INLINE bool gendata_h48k2_dfs_stop(cube_t, int8_t, h48k2_dfs_arg_t *);
 STATIC void gendata_h48k2_dfs(h48k2_dfs_arg_t *arg);
 
 STATIC uint32_t *get_cocsepdata_ptr(const void *);
@@ -546,11 +546,11 @@ gendata_h48k2_mark(cube_t cube, int8_t depth, h48k2_dfs_arg_t *arg)
 }
 
 STATIC_INLINE bool
-gendata_h48k2_dfs_stop(cube_t cube, uint8_t depth, h48k2_dfs_arg_t *arg)
+gendata_h48k2_dfs_stop(cube_t cube, int8_t depth, h48k2_dfs_arg_t *arg)
 {
 	uint64_t val;
 	int64_t coord;
-	uint8_t oldval;
+	int8_t oldval;
 
 	if (arg->h == 0 || arg->h == 11) {
 		/* We are in the "real coordinate" case, we can stop
