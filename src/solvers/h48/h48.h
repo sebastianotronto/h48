@@ -3,3 +3,4 @@
 #include "gendata_cocsep.h"
 #include "gendata_h48.h"
 #include "solve.h"
+#include "thread.h"

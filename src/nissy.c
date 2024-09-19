@@ -332,8 +332,9 @@ nissy_solve(
 			LOG("gendata: could not parse options\n");
 			ret = -1;
 		} else {
-			ret = solve_h48(c, minmoves, maxmoves, maxsolutions,
-			    data, solutions);
+			ret = THREADS > 1 ?
+			    solve_h48_parent(c, minmoves, maxmoves, maxsolutions, data, solutions) :
+			    solve_h48(c, minmoves, maxmoves, maxsolutions, data, solutions);
 		}
 	} else if (!strcmp(solver, "h48stats")) {
 		ret = solve_h48stats(c, maxmoves, data, solutions);

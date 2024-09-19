@@ -1,13 +1,17 @@
+.DS_Store
 config.mk
 gen
 debuggen
+utils/.DS_Store
 perf.data
 perf.data.old
 run
 tables/*
 test/*/runtest
+test/.DS_Store
 test/run
 test/run.DSYM
+tools/.DS_Store
 run.DSYM
 test/last.*
 tools/results
