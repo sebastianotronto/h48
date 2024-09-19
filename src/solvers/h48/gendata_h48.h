@@ -33,6 +33,7 @@ _t by _ttrep).
 typedef struct {
 	uint8_t h;
 	uint8_t k;
+	uint8_t base;
 	uint8_t maxdepth;
 	tableinfo_t info;
 	void *buf;
@@ -56,6 +57,12 @@ typedef struct {
 	uint8_t *table;
 	uint64_t *selfsim;
 	cube_t *crep;
+	uint64_t start;
+	uint64_t end;
+	uint64_t count;
+	uint64_t *distribution;
+	pthread_mutex_t *distribution_mutex;
+	pthread_mutex_t *table_mutex[CHUNKS];
 } h48h0k4_bfs_arg_t;
 
 typedef struct {
@@ -75,17 +82,30 @@ typedef struct {
 	uint64_t *count;
 } h48k2_dfs_arg_t;
 
+typedef struct {
+	cube_t cube;
+	int8_t depth;
+	uint8_t h;
+	uint8_t k;
+	uint32_t *cocsepdata;
+	uint64_t *selfsim;
+	uint8_t *table;
+	pthread_mutex_t **table_mutex;
+} gendata_h48_mark_t;
+
 STATIC uint64_t gendata_h48short(gendata_h48short_arg_t *);
 STATIC size_t gendata_h48(gendata_h48_arg_t *);
 STATIC size_t gendata_h48h0k4(gendata_h48_arg_t *);
-STATIC int64_t gendata_h48h0k4_bfs(h48h0k4_bfs_arg_t *);
-STATIC int64_t gendata_h48h0k4_bfs_fromdone(h48h0k4_bfs_arg_t *);
-STATIC int64_t gendata_h48h0k4_bfs_fromnew(h48h0k4_bfs_arg_t *);
+STATIC void gendata_h48h0k4_bfs_fromdone(h48h0k4_bfs_arg_t *);
+STATIC void gendata_h48h0k4_bfs_fromnew(h48h0k4_bfs_arg_t *);
 STATIC size_t gendata_h48k2(gendata_h48_arg_t *);
-STATIC void * gendata_h48k2_runthread(void *);
-STATIC_INLINE void gendata_h48k2_mark(cube_t, int8_t, h48k2_dfs_arg_t *);
-STATIC_INLINE bool gendata_h48k2_dfs_stop(cube_t, uint8_t, h48k2_dfs_arg_t *);
+STATIC void * gendata_h48h0k4_runthread(void *);
+STATIC_INLINE uint64_t gendata_h48_mark(gendata_h48_mark_t *);
+STATIC_INLINE bool gendata_h48k2_dfs_stop(cube_t, int8_t, h48k2_dfs_arg_t *);
+STATIC size_t gendata_h48k2_realcoord(gendata_h48_arg_t *);
 STATIC void gendata_h48k2_dfs(h48k2_dfs_arg_t *arg);
+STATIC void * gendata_h48k2_runthread(void *);
+STATIC tableinfo_t makeinfo_h48k2(gendata_h48_arg_t *, uint8_t);
 
 STATIC uint32_t *get_cocsepdata_ptr(const void *);
 STATIC uint8_t *get_h48data_ptr(const void *);
@@ -147,8 +167,12 @@ gendata_h48(gendata_h48_arg_t *arg)
 	arg->cocsepdata = (uint32_t *)cocsepdata_offset;
 	arg->h48buf = (char *)arg->buf + cocsepsize;
 
+	arg->base = 99; // TODO: set this somewhere else
+
 	if (arg->h == 0 && arg->k == 4) {
 		h48size = gendata_h48h0k4(arg);
+	} else if ((arg->h == 0 || arg->h == 11) && arg->k == 2) {
+		h48size = gendata_h48k2_realcoord(arg);
 	} else if (arg->k == 2) {
 		h48size = gendata_h48k2(arg);
 	} else {
@@ -179,17 +203,15 @@ gendata_h48_error:
 	return 0;
 }
 
-/*
-TODO description
-generating fixed table with h=0, k=4
-*/
 STATIC size_t
 gendata_h48h0k4(gendata_h48_arg_t *arg)
 {
-	uint32_t j;
 	uint8_t *table;
-	h48h0k4_bfs_arg_t bfsarg;
-	int64_t sc, cc, done, h48max;
+	int64_t sc, done, d, h48max;
+	uint64_t t, tt, isize, cc;
+	h48h0k4_bfs_arg_t bfsarg[THREADS];
+	pthread_t thread[THREADS];
+	pthread_mutex_t distribution_mutex, table_mutex[CHUNKS];
 
 	if (arg->buf == NULL)
 		goto gendata_h48h0k4_return_size;
@@ -216,109 +238,164 @@ gendata_h48h0k4(gendata_h48_arg_t *arg)
 	sc = coord_h48(SOLVED_CUBE, arg->cocsepdata, 0);
 	set_h48_pval(table, sc, 4, 0);
 	arg->info.distribution[0] = 1;
-	bfsarg = (h48h0k4_bfs_arg_t) {
-		.cocsepdata = arg->cocsepdata,
-		.table = table,
-		.selfsim = arg->selfsim,
-		.crep = arg->crep
-	};
-	for (
-		done = 1, bfsarg.depth = 1, cc = 0;
-		done < h48max && bfsarg.depth <= arg->maxdepth;
-		bfsarg.depth++
-	) {
-		LOG("h48: generating depth %" PRIu8 "\n", bfsarg.depth);
-		cc = gendata_h48h0k4_bfs(&bfsarg);
+
+	isize = h48max / THREADS;
+	isize = (isize / H48_COEFF(arg->k)) * H48_COEFF(arg->k);
+	pthread_mutex_init(&distribution_mutex, NULL);
+	for (t = 0; t < CHUNKS; t++)
+		pthread_mutex_init(&table_mutex[t], NULL);
+	for (t = 0; t < THREADS; t++) {
+		bfsarg[t] = (h48h0k4_bfs_arg_t) {
+			.cocsepdata = arg->cocsepdata,
+			.table = table,
+			.selfsim = arg->selfsim,
+			.crep = arg->crep,
+			.start = isize * t,
+			.end = t == THREADS-1 ? (uint64_t)h48max : isize * (t+1),
+			.distribution = arg->info.distribution,
+			.distribution_mutex = &distribution_mutex,
+		};
+		for (tt = 0; tt < CHUNKS; tt++)
+			bfsarg[t].table_mutex[tt] = &table_mutex[tt];
+	}
+	for (done = 1, d = 1; done < h48max && d <= arg->maxdepth; d++) {
+		LOG("h48: generating depth %" PRIu8 "\n", d);
+
+		for (t = 0; t < THREADS; t++) {
+			bfsarg[t].depth = d;
+			bfsarg[t].count = 0;
+			pthread_create(&thread[t], NULL,
+			    gendata_h48h0k4_runthread, &bfsarg[t]);
+		}
+
+		for (t = 0, cc = 0; t < THREADS; t++) {
+			pthread_join(thread[t], NULL);
+			cc += bfsarg[t].count;
+		}
+
 		done += cc;
-		arg->info.distribution[bfsarg.depth] = cc;
+		arg->info.distribution[d] = cc;
+
 		LOG("found %" PRId64 "\n", cc);
 	}
 
-	arg->info.maxvalue = bfsarg.depth-1;
-
-	LOG("h48 pruning table computed\n");
-	LOG("Maximum pruning value: %" PRIu32 "\n", arg->info.maxvalue);
-	LOG("Pruning value distribution:\n");
-	for (j = 0; j <= arg->info.maxvalue; j++)
-		LOG("%" PRIu8 ":\t%" PRIu32 "\n", j, arg->info.distribution[j]);
-
+	arg->info.maxvalue = d - 1;
 	writetableinfo(&arg->info, arg->h48buf);
 
 gendata_h48h0k4_return_size:
 	return H48_TABLESIZE(0, 4) + INFOSIZE;
 }
 
-STATIC int64_t
-gendata_h48h0k4_bfs(h48h0k4_bfs_arg_t *arg)
+STATIC void *
+gendata_h48h0k4_runthread(void *arg)
 {
-	const uint8_t breakpoint = 10; /* Hand-picked optimal */
+	static const uint8_t breakpoint = 10; /* Hand-picked optimal */
 
-	if (arg->depth < breakpoint)
-		return gendata_h48h0k4_bfs_fromdone(arg);
+	h48h0k4_bfs_arg_t *bfsarg;
+
+	bfsarg = (h48h0k4_bfs_arg_t *)arg;
+
+	if (bfsarg->depth < breakpoint)
+		gendata_h48h0k4_bfs_fromdone(bfsarg);
 	else
-		return gendata_h48h0k4_bfs_fromnew(arg);
+		gendata_h48h0k4_bfs_fromnew(bfsarg);
+
+	return NULL;
 }
 
-STATIC int64_t
+STATIC void
 gendata_h48h0k4_bfs_fromdone(h48h0k4_bfs_arg_t *arg)
 {
-	uint8_t c, m, x;
-	uint32_t cc;
-	int64_t i, j, k;
+	uint8_t c, m;
+	uint64_t i, d, mutex;
+	int64_t j;
 	cube_t cube, moved;
+	gendata_h48_mark_t markarg;
 
-	for (i = 0, cc = 0; i < (int64_t)H48_COORDMAX(0); i++) {
+	markarg = (gendata_h48_mark_t) {
+		.depth = arg->depth,
+		.h = 0,
+		.k = 4,
+		.cocsepdata = arg->cocsepdata,
+		.selfsim = arg->selfsim,
+		.table = arg->table,
+		.table_mutex = arg->table_mutex,
+	};
+
+	for (i = arg->start, d = 0; i < arg->end; i++) {
+		mutex = H48_INDEX(i, 4) % CHUNKS;
+		pthread_mutex_lock(arg->table_mutex[mutex]);
 		c = get_h48_pval(arg->table, i, 4);
+		pthread_mutex_unlock(arg->table_mutex[mutex]);
 		if (c != arg->depth - 1)
 			continue;
 		cube = invcoord_h48(i, arg->crep, 0);
 		for (m = 0; m < 18; m++) {
 			moved = move(cube, m);
 			j = coord_h48(moved, arg->cocsepdata, 0);
-			if (get_h48_pval(arg->table, j, 4) <= arg->depth)
+			mutex = H48_INDEX(j, 4) % CHUNKS;
+			pthread_mutex_lock(arg->table_mutex[mutex]);
+			c = get_h48_pval(arg->table, j, 4);
+			pthread_mutex_unlock(arg->table_mutex[mutex]);
+			if (c <= arg->depth)
 				continue;
-			FOREACH_H48SIM(moved, arg->cocsepdata, arg->selfsim,
-				k = coord_h48(moved, arg->cocsepdata, 0);
-				x = get_h48_pval(arg->table, k, 4);
-				set_h48_pval(arg->table, k, 4, arg->depth);
-				cc += x != arg->depth;
-			)
+			markarg.cube = moved;
+			d += gendata_h48_mark(&markarg);
 		}
 	}
 
-	return cc;
+	pthread_mutex_lock(arg->distribution_mutex);
+	arg->count += d;
+	arg->distribution[arg->depth] += d;
+	pthread_mutex_unlock(arg->distribution_mutex);
 }
 
-STATIC int64_t
+STATIC void
 gendata_h48h0k4_bfs_fromnew(h48h0k4_bfs_arg_t *arg)
 {
 	uint8_t c, m, x;
-	uint32_t cc;
-	int64_t i, j;
+	uint64_t i, d, mutex;
+	int64_t j;
 	cube_t cube, moved;
+	gendata_h48_mark_t markarg;
 
-	for (i = 0, cc = 0; i < (int64_t)H48_COORDMAX(0); i++) {
+	markarg = (gendata_h48_mark_t) {
+		.depth = arg->depth,
+		.h = 0,
+		.k = 4,
+		.cocsepdata = arg->cocsepdata,
+		.selfsim = arg->selfsim,
+		.table = arg->table,
+		.table_mutex = arg->table_mutex,
+	};
+
+	for (i = arg->start, d = 0; i < arg->end; i++) {
+		mutex = H48_INDEX(i, 4) % CHUNKS;
+		pthread_mutex_lock(arg->table_mutex[mutex]);
 		c = get_h48_pval(arg->table, i, 4);
+		pthread_mutex_unlock(arg->table_mutex[mutex]);
 		if (c != 0xF)
 			continue;
 		cube = invcoord_h48(i, arg->crep, 0);
 		for (m = 0; m < 18; m++) {
 			moved = move(cube, m);
 			j = coord_h48(moved, arg->cocsepdata, 0);
+			mutex = H48_INDEX(j, 4) % CHUNKS;
+			pthread_mutex_lock(arg->table_mutex[mutex]);
 			x = get_h48_pval(arg->table, j, 4);
+			pthread_mutex_unlock(arg->table_mutex[mutex]);
 			if (x >= arg->depth)
 				continue;
-			FOREACH_H48SIM(cube, arg->cocsepdata, arg->selfsim,
-				j = coord_h48(cube, arg->cocsepdata, 0);
-				x = get_h48_pval(arg->table, j, 4);
-				set_h48_pval(arg->table, j, 4, arg->depth);
-				cc += x == 0xF;
-			)
+			markarg.cube = cube;
+			d += gendata_h48_mark(&markarg);
 			break; /* Enough to find one, skip the rest */
 		}
 	}
 
-	return cc;
+	pthread_mutex_lock(arg->distribution_mutex);
+	arg->count += d;
+	arg->distribution[arg->depth] += d;
+	pthread_mutex_unlock(arg->distribution_mutex);
 }
 
 STATIC size_t
@@ -369,24 +446,8 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 	};
 	gendata_h48short(&shortarg);
 
-	selectedbase = base[arg->h];
-	arg->info = (tableinfo_t) {
-		.solver = "h48 solver h =  , k = 2",
-		.type = TABLETYPE_PRUNING,
-		.infosize = INFOSIZE,
-		.fullsize = H48_TABLESIZE(arg->h, 2) + INFOSIZE,
-		.hash = 0, /* TODO */
-		.entries = H48_COORDMAX(arg->h),
-		.classes = 0,
-		.h48h = arg->h,
-		.bits = 2,
-		.base = selectedbase,
-		.maxvalue = 3,
-		.next = 0,
-	};
-	arg->info.solver[15] = (arg->h % 10) + '0';
-	if (arg->h >= 10)
-		arg->info.solver[14] = (arg->h / 10) + '0';
+	selectedbase = arg->base < 20 ? arg->base : base[arg->h];
+	arg->info = makeinfo_h48k2(arg, selectedbase);
 
 	inext = count = 0;
 	pthread_mutex_init(&shortcubes_mutex, NULL);
@@ -419,6 +480,7 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 
 	h48map_destroy(&shortcubes);
 
+	/* TODO: inline into mark */
 	for (j = 0; j < H48_COORDMAX(arg->h); j++) {
 		t = get_h48_pval(table, j, 2);
 		arg->info.distribution[t]++;
@@ -474,20 +536,35 @@ gendata_h48k2_dfs(h48k2_dfs_arg_t *arg)
 	int8_t d;
 	uint8_t m[4];
 	cube_t cube[4];
+	gendata_h48_mark_t markarg;
+
+	markarg = (gendata_h48_mark_t) {
+		.h = arg->h,
+		.k = arg->k,
+		.cocsepdata = arg->cocsepdata,
+		.selfsim = arg->selfsim,
+		.table = arg->table,
+		.table_mutex = arg->table_mutex,
+	};
 
 	d = (int8_t)arg->shortdepth - (int8_t)arg->base;
 
 	/* Depth d+0 (shortcubes) */
-	gendata_h48k2_mark(arg->cube, d, arg);
+	markarg.depth = d;
+	markarg.cube = arg->cube;
+	gendata_h48_mark(&markarg);
 
 	/* Depth d+1 */
+	markarg.depth = d+1;
 	for (m[0] = 0; m[0] < 18; m[0]++) {
 		cube[0] = move(arg->cube, m[0]);
 		if (gendata_h48k2_dfs_stop(cube[0], d+1, arg))
 			continue;
-		gendata_h48k2_mark(cube[0], d+1, arg);
+		markarg.cube = cube[0];
+		gendata_h48_mark(&markarg);
 
 		/* Depth d+2 */
+		markarg.depth = d+2;
 		for (m[1] = 0; m[1] < 18; m[1]++) {
 			if (m[0] / 3 == m[1] / 3) {
 				m[1] += 2;
@@ -496,11 +573,13 @@ gendata_h48k2_dfs(h48k2_dfs_arg_t *arg)
 			cube[1] = move(cube[0], m[1]);
 			if (gendata_h48k2_dfs_stop(cube[1], d+2, arg))
 				continue;
-			gendata_h48k2_mark(cube[1], d+2, arg);
+			markarg.cube = cube[1];
+			gendata_h48_mark(&markarg);
 			if (d >= 0)
 				continue;
 
 			/* Depth d+3 */
+			markarg.depth = d+3;
 			for (m[2] = 0; m[2] < 18; m[2]++) {
 				if (!allowednextmove(m, 3)) {
 					m[2] += 2;
@@ -509,48 +588,55 @@ gendata_h48k2_dfs(h48k2_dfs_arg_t *arg)
 				cube[2] = move(cube[1], m[2]);
 				if (gendata_h48k2_dfs_stop(cube[2], d+3, arg))
 					continue;
-				gendata_h48k2_mark(cube[2], d+3, arg);
+				markarg.cube = cube[2];
+				gendata_h48_mark(&markarg);
 				if (d >= -1)
 					continue;
 
 				/* Depth d+4 */
+				markarg.depth = d+4;
 				for (m[3] = 0; m[3] < 18; m[3]++) {
 					if (!allowednextmove(m, 4)) {
 						m[3] += 2;
 						continue;
 					}
 					cube[3] = move(cube[2], m[3]);
-					gendata_h48k2_mark(cube[3], d+4, arg);
+					markarg.cube = cube[3];
+					gendata_h48_mark(&markarg);
 				}
 			}
 		}
 	}
 }
 
-STATIC_INLINE void
-gendata_h48k2_mark(cube_t cube, int8_t depth, h48k2_dfs_arg_t *arg)
+STATIC_INLINE uint64_t
+gendata_h48_mark(gendata_h48_mark_t *arg)
 {
 	uint8_t oldval, newval;
-	int64_t coord, fullcoord, mutex;
+	uint64_t d;
+	int64_t coord, mutex;
 
-	FOREACH_H48SIM(cube, arg->cocsepdata, arg->selfsim,
-		fullcoord = coord_h48(cube, arg->cocsepdata, 11);
-		coord = fullcoord >> (int64_t)(11 - arg->h);
+	d = 0;
+	FOREACH_H48SIM(arg->cube, arg->cocsepdata, arg->selfsim,
+		coord = coord_h48(arg->cube, arg->cocsepdata, arg->h);
 		mutex = H48_INDEX(coord, arg->k) % CHUNKS;
 		pthread_mutex_lock(arg->table_mutex[mutex]);
 		oldval = get_h48_pval(arg->table, coord, arg->k);
-		newval = (uint8_t)MAX(depth, 0);
+		newval = (uint8_t)MAX(arg->depth, 0);
+		d += newval < oldval;
 		set_h48_pval(arg->table, coord, arg->k, MIN(oldval, newval));
 		pthread_mutex_unlock(arg->table_mutex[mutex]);
 	)
+
+	return d;
 }
 
 STATIC_INLINE bool
-gendata_h48k2_dfs_stop(cube_t cube, uint8_t depth, h48k2_dfs_arg_t *arg)
+gendata_h48k2_dfs_stop(cube_t cube, int8_t depth, h48k2_dfs_arg_t *arg)
 {
 	uint64_t val;
 	int64_t coord;
-	uint8_t oldval;
+	int8_t oldval;
 
 	if (arg->h == 0 || arg->h == 11) {
 		/* We are in the "real coordinate" case, we can stop
@@ -566,6 +652,121 @@ gendata_h48k2_dfs_stop(cube_t cube, uint8_t depth, h48k2_dfs_arg_t *arg)
 		val = h48map_value(arg->shortcubes, coord);
 		return val <= arg->shortdepth;
 	}
+}
+
+STATIC size_t
+gendata_h48k2_realcoord(gendata_h48_arg_t *arg)
+{
+#if 1
+	return gendata_h48k2(arg);
+#else
+	uint8_t t, selectedbase, *table;
+	uint64_t i, ii, count;
+	int64_t j;
+	h48k2_dfs_arg_t dfsarg[THREADS];
+	pthread_t thread[THREADS];
+	pthread_mutex_t count_mutex, table_mutex[CHUNKS];
+
+	if (arg->buf == NULL)
+		goto gendata_h48k2_realcoord_return_size;
+
+	table = (uint8_t *)arg->h48buf + INFOSIZE;
+	if (arg->buf != NULL)
+		memset(table, 0xFF, H48_TABLESIZE(arg->h, arg->k));
+
+	selectedbase = arg->base < 20 ? arg->base : (arg->h == 0 ? 8 : 10);
+	arg->info = makeinfo_h48k2(arg, selectedbase);
+
+	count = 0;
+	for (i = 0; i < CHUNKS; i++)
+		pthread_mutex_init(&table_mutex[i], NULL);
+
+/* TODO
+	for (i = 0; i < THREADS; i++) {
+		dfsarg[i] = (h48k2_dfs_arg_t){
+			.h = arg->h,
+			.k = arg->k,
+			.base = selectedbase,
+			.cocsepdata = arg->cocsepdata,
+			.table = table,
+			.selfsim = arg->selfsim,
+			.crep = arg->crep,
+			.shortcubes_mutex = &count_mutex,
+			.count = &count,
+		};
+		for (ii = 0; ii < CHUNKS; ii++)
+			dfsarg[i].table_mutex[ii] = &table_mutex[ii];
+
+		pthread_create(&thread[i], NULL,
+		    gendata_h48k2_realcoord_runthread, &dfsarg[i]);
+	}
+
+	for (i = 0; i < THREADS; i++)
+		pthread_join(thread[i], NULL);
+*/
+
+	/* TODO: inline into mark */
+	for (j = 0; j < H48_COORDMAX(arg->h); j++) {
+		t = get_h48_pval(table, j, 2);
+		arg->info.distribution[t]++;
+	}
+
+	writetableinfo(&arg->info, arg->h48buf);
+
+gendata_h48k2_realcoord_return_size:
+	return H48_TABLESIZE(arg->h, 2) + INFOSIZE;
+#endif
+}
+
+STATIC void *
+gendata_h48k2_realcoord_runthread(void *arg)
+{
+/* TODO
+	uint64_t count, coord, mutex;
+	h48k2_dfs_arg_t *dfsarg;
+
+	dfsarg = (h48k2_dfs_arg_t *)arg;
+
+*/
+	return NULL;
+}
+
+STATIC tableinfo_t
+makeinfo_h48k2(gendata_h48_arg_t *arg, uint8_t base)
+{
+	tableinfo_t info;
+
+	info = (tableinfo_t) {
+		.solver = "h48 solver h =  , k = 2",
+		.type = TABLETYPE_PRUNING,
+		.infosize = INFOSIZE,
+		.fullsize = H48_TABLESIZE(arg->h, 2) + INFOSIZE,
+		.hash = 0, /* TODO */
+		.entries = H48_COORDMAX(arg->h),
+		.classes = 0,
+		.h48h = arg->h,
+		.bits = 2,
+		.base = base,
+		.maxvalue = 3,
+		.next = 0,
+	};
+	info.solver[15] = (arg->h % 10) + '0';
+	if (arg->h >= 10)
+		info.solver[14] = (arg->h / 10) + '0';
+
+	return info;
+}
+
+STATIC uint32_t *
+get_cocsepdata_ptr(const void *data)
+{
+	return (uint32_t *)((char *)data + INFOSIZE);
+}
+
+STATIC uint8_t *
+get_h48data_ptr(const void *data)
+{
+	return (uint8_t *)data + COCSEP_FULLSIZE + INFOSIZE;
 }
 
 STATIC_INLINE uint8_t
@@ -588,16 +789,4 @@ get_h48_bound(cube_t cube, uint32_t cdata, uint8_t h, uint8_t k, uint8_t *table)
 
 	coord = coord_h48_edges(cube, COCLASS(cdata), TTREP(cdata), h);
 	return get_h48_pval(table, coord, k);
-}
-
-STATIC uint32_t *
-get_cocsepdata_ptr(const void *data)
-{
-	return (uint32_t *)((char *)data + INFOSIZE);
-}
-
-STATIC uint8_t *
-get_h48data_ptr(const void *data)
-{
-	return (uint8_t *)data + COCSEP_FULLSIZE + INFOSIZE;
 }
