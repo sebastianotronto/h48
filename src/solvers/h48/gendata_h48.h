@@ -284,6 +284,19 @@ gendata_h48h0k4_return_size:
 	return H48_TABLESIZE(0, 4) + INFOSIZE;
 }
 
+/*
+TODO: the following function suffers from a big performance loss (about 40%)
+because of all the mutex locking. It is possible to reduce the first lock
+(at the beginning of the outermost for loop) by caching the next few items at
+once and then looping over the cached elements. But for the second one (inner
+loop) the access is non-sequential, so this cannot be done.
+
+However, in both cases in theory we do not care if we are reading the old
+value or the updated one. Depending on the compiler guarantees on concurrent
+memory access, we may be fine just removing the locks altogether.
+
+It is probably possible to solve part of this by using atomics.
+*/
 STATIC void *
 gendata_h48h0k4_runthread(void *arg)
 {
