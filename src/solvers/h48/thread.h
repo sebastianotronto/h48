@@ -5,32 +5,31 @@
 #include <stdlib.h>
 
 #define MAX_QUEUE_SIZE 500
-
 typedef struct
 {
 	dfsarg_solveh48_t *tasks[MAX_QUEUE_SIZE];
 	int front;
 	int rear;
 	int tasks_count;
+	int active;
 	pthread_mutex_t mutex;
 	pthread_cond_t cond;
-	atomic_int active_tasks;
-	pthread_mutex_t active_tasks_mutex;
-	pthread_cond_t active_tasks_cond;
+	pthread_cond_t active_cond;
+	bool terminate;
 } task_queue_t;
 
 STATIC void solve_h48_appendsolution_thread(dfsarg_solveh48_t *, task_queue_t *);
 STATIC void init_queue(task_queue_t *);
 STATIC void submit_task(task_queue_t *, dfsarg_solveh48_t *);
-STATIC void copy_queue(task_queue_t *, task_queue_t *, int);
-STATIC dfsarg_solveh48_t *get_task(task_queue_t *);
+STATIC void copy_queue(task_queue_t *, task_queue_t *, int, int64_t *);
 STATIC void *start_thread(void *);
 STATIC int64_t solve_h48_bfs(dfsarg_solveh48_t *, task_queue_t *);
 STATIC int64_t solve_h48_single(dfsarg_solveh48_t *, task_queue_t *);
 STATIC int64_t solve_h48_parent(cube_t, int8_t, int8_t, int8_t, const void *, char *);
 
 STATIC void
-solve_h48_appendsolution_thread(dfsarg_solveh48_t *arg, task_queue_t *tq){
+solve_h48_appendsolution_thread(dfsarg_solveh48_t *arg, task_queue_t *tq)
+{
 	pthread_mutex_lock(&tq->mutex);
 	int strl;
 	uint8_t invertedpremoves[MAXLEN];
@@ -62,8 +61,10 @@ init_queue(task_queue_t *queue)
 	queue->front = 0;
 	queue->rear = 0;
 	queue->tasks_count = 0;
+	queue->active = 0;
 	pthread_mutex_init(&queue->mutex, NULL);
 	pthread_cond_init(&queue->cond, NULL);
+	pthread_cond_init(&queue->active_cond, NULL);
 }
 
 STATIC void
@@ -73,14 +74,13 @@ submit_task(task_queue_t *queue, dfsarg_solveh48_t *task)
 	queue->tasks[queue->rear] = task;
 	queue->rear = (queue->rear + 1) % MAX_QUEUE_SIZE;
 	queue->tasks_count++;
-	pthread_cond_signal(&queue->cond);
+	pthread_cond_broadcast(&queue->cond);
 	pthread_mutex_unlock(&queue->mutex);
 }
 
 STATIC void
-copy_queue(task_queue_t *src, task_queue_t *dest, int depth)
+copy_queue(task_queue_t *src, task_queue_t *dest, int depth, int64_t *nsols)
 {
-	pthread_mutex_lock(&src->mutex);
 	pthread_mutex_lock(&dest->mutex);
 	for (int i = src->front; i != src->rear; i = (i + 1) % MAX_QUEUE_SIZE)
 	{
@@ -93,46 +93,42 @@ copy_queue(task_queue_t *src, task_queue_t *dest, int depth)
 	dest->front = src->front;
 	dest->rear = src->rear;
 	dest->tasks_count = src->tasks_count;
-	pthread_mutex_unlock(&src->mutex);
-	pthread_cond_signal(&dest->cond);
+	dest->active = src->active;
+	pthread_cond_broadcast(&dest->cond);
 	pthread_mutex_unlock(&dest->mutex);
 }
-STATIC dfsarg_solveh48_t *
-get_task(task_queue_t *queue)
-{
-	pthread_mutex_lock(&queue->mutex);
-	while (queue->tasks_count == 0)
-	{
-		pthread_cond_wait(&queue->cond, &queue->mutex);
-	}
-	dfsarg_solveh48_t *task = queue->tasks[queue->front];
-	queue->front = (queue->front + 1) % MAX_QUEUE_SIZE;
-	queue->tasks_count--;
-	pthread_mutex_unlock(&queue->mutex);
-	return task;
-}
+
 
 STATIC void *
 start_thread(void *arg)
 {
 	task_queue_t *queue = (task_queue_t *)arg;
-	while (true)
-	{
-		dfsarg_solveh48_t *task = get_task(queue);
-		if (task == NULL)
-		{
+	while (1) {
+		pthread_mutex_lock(&queue->mutex);
+		while (queue->tasks_count == 0 && !queue->terminate) {
+			pthread_cond_wait(&queue->cond, &queue->mutex);
+		}
+		if (queue->tasks_count == 0 && queue->terminate) {
+			pthread_mutex_unlock(&queue->mutex);
 			break;
 		}
-		solve_h48_single(task, queue);
-		free(task);
 
-		pthread_mutex_lock(&queue->active_tasks_mutex);
-		atomic_fetch_sub(&queue->active_tasks, 1);
-		if (atomic_load(&queue->active_tasks) == 0)
-		{
-			pthread_cond_signal(&queue->active_tasks_cond);
+		if (queue->tasks_count > 0) {
+			dfsarg_solveh48_t *task = queue->tasks[queue->front];
+			queue->front = (queue->front + 1) % MAX_QUEUE_SIZE;
+			queue->tasks_count--;
+			queue->active++;
+			pthread_mutex_unlock(&queue->mutex);
+			
+			solve_h48_single(task, queue);
+			
+			pthread_mutex_lock(&queue->mutex);
+			queue->active--;
+
+			if(queue->tasks_count == 0 && queue->active == 0)
+				pthread_cond_signal(&queue->active_cond);
 		}
-		pthread_mutex_unlock(&queue->active_tasks_mutex);
+		pthread_mutex_unlock(&queue->mutex);
 	}
 	return NULL;
 }
@@ -146,19 +142,16 @@ solve_h48_bfs(dfsarg_solveh48_t *arg_zero, task_queue_t *tq)
 	int depth = 0;
 	int nodes_at_current_depth = 1;
 	int nodes_at_next_depth = 0;
-
 	queue[rear++] = *arg_zero;
 
-	while (front < rear)
-	{
+	while (front < rear){
 		dfsarg_solveh48_t arg = queue[front++];
 		nodes_at_current_depth--;
 
 		if (*arg.nsols == arg.maxsolutions)
 			return 1;
 
-		if (issolved(arg.cube))
-		{
+		if (issolved(arg.cube)){
 			if (arg.nmoves + arg.npremoves != arg.depth)
 				continue;
 			solve_h48_appendsolution(&arg);
@@ -168,42 +161,32 @@ solve_h48_bfs(dfsarg_solveh48_t *arg_zero, task_queue_t *tq)
 		arg.nissbranch = MM_NORMAL;
 		uint32_t allowed = allowednextmove_h48(arg.moves, arg.nmoves, arg.nissbranch);
 
-		for (uint8_t m = 0; m < 18; m++)
-		{
-			if (allowed & (1 << m))
-			{
+		for (uint8_t m = 0; m < 18; m++){
+			if (allowed & (1 << m)){
 				nextarg = arg;
 				nextarg.nmoves = arg.nmoves + 1;
 				nextarg.moves[arg.nmoves] = m;
 				nextarg.cube = move(arg.cube, m);
 				nextarg.inverse = premove(arg.inverse, m);
 
-				if (nextarg.nmoves == 2)
-				{
+				if (nextarg.nmoves == 2){
 					dfsarg_solveh48_t *task = malloc(sizeof(dfsarg_solveh48_t));
 					*task = nextarg;
 					submit_task(tq, task);
-				}
-				else
-				{
+				} else {
 					queue[rear++] = nextarg;
 					nodes_at_next_depth++;
 				}
 			}
 		}
-
-		if (nodes_at_current_depth == 0)
-		{
+		if (nodes_at_current_depth == 0){
 			depth++;
 			nodes_at_current_depth = nodes_at_next_depth;
 			nodes_at_next_depth = 0;
 		}
-		if (depth == 2)
-		{
-			return 0;
-		}
+		if (depth == 2) return 0;
 	}
-	return 0;
+	return 1;
 }
 
 STATIC int64_t
@@ -219,8 +202,7 @@ solve_h48_single(dfsarg_solveh48_t *arg, task_queue_t *tq)
 	if (solve_h48_stop(arg))
 		return 0;
 
-	if (issolved(arg->cube))
-	{
+	if (issolved(arg->cube)){
 		if (arg->nmoves + arg->npremoves != arg->depth)
 			return 0;
 		solve_h48_appendsolution_thread(arg, tq);
@@ -230,13 +212,10 @@ solve_h48_single(dfsarg_solveh48_t *arg, task_queue_t *tq)
 	nextarg = *arg;
 	ret = 0;
 	uint32_t allowed;
-	if (arg->nissbranch & MM_INVERSE)
-	{
+	if (arg->nissbranch & MM_INVERSE){
 		allowed = allowednextmove_h48(arg->premoves, arg->npremoves, arg->nissbranch);
-		for (m = 0; m < 18; m++)
-		{
-			if (allowed & (1 << m))
-			{
+		for (m = 0; m < 18; m++){
+			if (allowed & (1 << m)){
 				nextarg.npremoves = arg->npremoves + 1;
 				nextarg.premoves[arg->npremoves] = m;
 				nextarg.inverse = move(arg->inverse, m);
@@ -244,14 +223,10 @@ solve_h48_single(dfsarg_solveh48_t *arg, task_queue_t *tq)
 				ret += solve_h48_single(&nextarg, tq);
 			}
 		}
-	}
-	else
-	{
+	} else {
 		allowed = allowednextmove_h48(arg->moves, arg->nmoves, arg->nissbranch);
-		for (m = 0; m < 18; m++)
-		{
-			if (allowed & (1 << m))
-			{
+		for (m = 0; m < 18; m++){
+			if (allowed & (1 << m)){
 				nextarg.nmoves = arg->nmoves + 1;
 				nextarg.moves[arg->nmoves] = m;
 				nextarg.cube = move(arg->cube, m);
@@ -303,12 +278,7 @@ solve_h48_parent(
 	task_queue_t nq;
 	init_queue(&nq);
 
-	atomic_store(&nq.active_tasks, 0);
-	pthread_mutex_init(&nq.active_tasks_mutex, NULL);
-	pthread_cond_init(&nq.active_tasks_cond, NULL);
-
-	for (int i = 0; i < THREADS; i++)
-	{
+	for (int i = 0; i < THREADS; i++){
 		pthread_create(&threads[i], NULL, &start_thread, &nq);
 	}
 
@@ -318,18 +288,22 @@ solve_h48_parent(
 		 p_depth++)
 	{
 		LOG("Found %" PRId64 " solutions, searching at depth %" PRId8 "\n", nsols, p_depth);
-		copy_queue(&q, &nq, p_depth);
-		pthread_mutex_lock(&nq.active_tasks_mutex);
-		while (nq.active_tasks > 0)
-		{
-			pthread_cond_wait(&nq.active_tasks_cond, &nq.active_tasks_mutex);
-		}
-		pthread_mutex_unlock(&nq.active_tasks_mutex);
-	}
-	for (int i = 0; i < THREADS; i++)
-	{
-		pthread_join(threads[i], NULL);
+		copy_queue(&q, &nq, p_depth, &nsols);
+		
+		pthread_mutex_lock(&nq.mutex);
+		while (nq.active > 0 || nq.tasks_count > 0)
+			pthread_cond_wait(&nq.active_cond, &nq.mutex);
+		pthread_mutex_unlock(&nq.mutex);
 	}
 
+	pthread_mutex_lock(&nq.mutex);
+	nq.terminate = true;
+	pthread_cond_broadcast(&nq.cond);
+	pthread_mutex_unlock(&nq.mutex);
+
+	for (int i = 0; i < THREADS; i++){
+		pthread_join(threads[i], NULL);
+	}
+	// fix memory release for multiple scrambles.
 	return nsols;
 }
