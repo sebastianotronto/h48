@@ -11,11 +11,11 @@ typedef struct
 	int front;
 	int rear;
 	int tasks_count;
-	int active;
+	atomic_int active;
 	pthread_mutex_t mutex;
 	pthread_cond_t cond;
 	pthread_cond_t active_cond;
-	bool terminate;
+	atomic_bool terminate;
 } task_queue_t;
 
 STATIC void solve_h48_appendsolution_thread(dfsarg_solveh48_t *, task_queue_t *);
@@ -62,6 +62,7 @@ init_queue(task_queue_t *queue)
 	queue->rear = 0;
 	queue->tasks_count = 0;
 	queue->active = 0;
+	queue->terminate = ATOMIC_VAR_INIT(false);
 	pthread_mutex_init(&queue->mutex, NULL);
 	pthread_cond_init(&queue->cond, NULL);
 	pthread_cond_init(&queue->active_cond, NULL);
@@ -93,7 +94,7 @@ copy_queue(task_queue_t *src, task_queue_t *dest, int depth, int64_t *nsols)
 	dest->front = src->front;
 	dest->rear = src->rear;
 	dest->tasks_count = src->tasks_count;
-	dest->active = src->active;
+	// atomic_init(&dest->active, &src->active);
 	pthread_cond_broadcast(&dest->cond);
 	pthread_mutex_unlock(&dest->mutex);
 }
@@ -121,14 +122,12 @@ start_thread(void *arg)
 			pthread_mutex_unlock(&queue->mutex);
 			
 			solve_h48_single(task, queue);
-			
-			pthread_mutex_lock(&queue->mutex);
-			queue->active--;
+
+			atomic_fetch_sub(&queue->active, 1);
 
 			if(queue->tasks_count == 0 && queue->active == 0)
 				pthread_cond_signal(&queue->active_cond);
 		}
-		pthread_mutex_unlock(&queue->mutex);
 	}
 	return NULL;
 }
@@ -247,7 +246,7 @@ solve_h48_parent(
 	const void *data,
 	char *solutions)
 {
-	int64_t nsols;
+	int64_t nsols = 0;
 	int p_depth = 0;
 	dfsarg_solveh48_t bfs_arg;
 	tableinfo_t info;
@@ -296,14 +295,11 @@ solve_h48_parent(
 		pthread_mutex_unlock(&nq.mutex);
 	}
 
-	pthread_mutex_lock(&nq.mutex);
-	nq.terminate = true;
+	atomic_store(&nq.terminate, true);
 	pthread_cond_broadcast(&nq.cond);
-	pthread_mutex_unlock(&nq.mutex);
 
 	for (int i = 0; i < THREADS; i++){
 		pthread_join(threads[i], NULL);
 	}
-	// fix memory release for multiple scrambles.
 	return nsols;
 }
