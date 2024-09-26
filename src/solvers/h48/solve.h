@@ -199,6 +199,7 @@ solve_h48(
 		arg.npremoves = 0;
 		solve_h48_dfs(&arg);
 	}
-
+	**arg.nextsol = '\0';
+	(*arg.nextsol)++;
 	return nsols;
 }

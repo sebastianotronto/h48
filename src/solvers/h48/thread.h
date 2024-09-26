@@ -4,7 +4,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define MAX_QUEUE_SIZE 500
+#define MAX_QUEUE_SIZE 244
+#define BFS_DEPTH 2
 typedef struct
 {
 	dfsarg_solveh48_t *tasks[MAX_QUEUE_SIZE];
@@ -31,7 +32,7 @@ STATIC void
 solve_h48_appendsolution_thread(dfsarg_solveh48_t *arg, task_queue_t *tq)
 {
 	pthread_mutex_lock(&tq->mutex);
-	int strl;
+	int strl = 0;
 	uint8_t invertedpremoves[MAXLEN];
 	char *solution = *arg->nextsol;
 
@@ -168,7 +169,7 @@ solve_h48_bfs(dfsarg_solveh48_t *arg_zero, task_queue_t *tq)
 				nextarg.cube = move(arg.cube, m);
 				nextarg.inverse = premove(arg.inverse, m);
 
-				if (nextarg.nmoves == 2){
+				if (nextarg.nmoves == BFS_DEPTH){
 					dfsarg_solveh48_t *task = malloc(sizeof(dfsarg_solveh48_t));
 					*task = nextarg;
 					submit_task(tq, task);
@@ -179,11 +180,11 @@ solve_h48_bfs(dfsarg_solveh48_t *arg_zero, task_queue_t *tq)
 			}
 		}
 		if (nodes_at_current_depth == 0){
-			depth++;
 			nodes_at_current_depth = nodes_at_next_depth;
 			nodes_at_next_depth = 0;
+			LOG("Found %" PRId64 " solutions, searching at depth %" PRId8 "\n", *nextarg.nsols, depth++);
 		}
-		if (depth == 2) return 0;
+		if (depth == BFS_DEPTH) return 0;
 	}
 	return 1;
 }
@@ -248,7 +249,7 @@ solve_h48_parent(
 {
 	int64_t nsols = 0;
 	int p_depth = 0;
-	dfsarg_solveh48_t bfs_arg;
+	dfsarg_solveh48_t arg;
 	tableinfo_t info;
 	pthread_t threads[THREADS];
 
@@ -258,7 +259,7 @@ solve_h48_parent(
 		return 0;
 	}
 
-	bfs_arg = (dfsarg_solveh48_t){
+	arg = (dfsarg_solveh48_t){
 		.cube = cube,
 		.inverse = inverse(cube),
 		.nsols = &nsols,
@@ -271,7 +272,7 @@ solve_h48_parent(
 
 	task_queue_t q;
 	init_queue(&q);
-	if (solve_h48_bfs(&bfs_arg, &q))
+	if (solve_h48_bfs(&arg, &q))
 		return nsols;
 
 	task_queue_t nq;
@@ -282,7 +283,7 @@ solve_h48_parent(
 	}
 
 	nsols = 0;
-	for (p_depth = minmoves > 2 ? minmoves : 2;
+	for (p_depth = minmoves > BFS_DEPTH ? minmoves : BFS_DEPTH;
 		 p_depth <= maxmoves && nsols < maxsolutions;
 		 p_depth++)
 	{
@@ -301,5 +302,7 @@ solve_h48_parent(
 	for (int i = 0; i < THREADS; i++){
 		pthread_join(threads[i], NULL);
 	}
+	**arg.nextsol = '\0';
+	(*arg.nextsol)++;
 	return nsols;
 }
