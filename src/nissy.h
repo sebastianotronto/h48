@@ -86,6 +86,12 @@ int64_t nissy_gendata(
 	void *generated_data
 );
 
+int64_t nissy_checkdata(
+	const char *solver,
+	const char *options,
+	const void *data
+);
+
 /* Print information on a data table via the provided callback writer */
 int64_t nissy_datainfo(
 	const void *table,

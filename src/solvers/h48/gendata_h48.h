@@ -104,13 +104,16 @@ STATIC size_t gendata_h48k2_realcoord(gendata_h48_arg_t *);
 STATIC void gendata_h48k2_dfs(h48k2_dfs_arg_t *arg);
 STATIC void * gendata_h48k2_runthread(void *);
 STATIC tableinfo_t makeinfo_h48k2(gendata_h48_arg_t *, uint8_t);
+STATIC void getdistribution_h48(
+    const uint8_t *, uint64_t [static 21], uint8_t, uint8_t);
 
 STATIC uint32_t *get_cocsepdata_ptr(const void *);
 STATIC uint8_t *get_h48data_ptr(const void *);
 
 STATIC_INLINE uint8_t get_h48_pval(const uint8_t *, int64_t, uint8_t);
 STATIC_INLINE void set_h48_pval(uint8_t *, int64_t, uint8_t, uint8_t);
-STATIC_INLINE uint8_t get_h48_bound(cube_t, uint32_t, uint8_t, uint8_t, uint8_t *);
+STATIC_INLINE uint8_t get_h48_bound(
+    cube_t, uint32_t, uint8_t, uint8_t, uint8_t *);
 
 STATIC uint64_t
 gendata_h48short(gendata_h48short_arg_t *arg)
@@ -660,6 +663,25 @@ makeinfo_h48k2(gendata_h48_arg_t *arg, uint8_t base)
 		info.solver[14] = (arg->h / 10) + '0';
 
 	return info;
+}
+
+STATIC void
+getdistribution_h48(
+	const uint8_t *table,
+	uint64_t distr[static 21],
+	uint8_t h,
+	uint8_t k
+) {
+	uint8_t val;
+	int64_t i, h48max;
+
+	memset(distr, 0, 21 * sizeof(uint64_t));
+
+	h48max = H48_COORDMAX(h);
+	for (i = 0; i < h48max; i++) {
+		val = get_h48_pval(table, i, k);
+		distr[val]++;
+	}
 }
 
 STATIC uint32_t *
