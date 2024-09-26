@@ -15,7 +15,7 @@ static void getfilename(const char *, const char *, char *);
 static void writetable(const char *, int64_t, const char *);
 static int64_t generatetable(const char *, const char *, char **);
 static int getdata(const char *, const char *, char **, const char *);
-static void gendata_run(const char *, const char *, uint64_t *);
+static void gendata_run(const char *, const char *, uint64_t [static 21]);
 
 static void
 log_stderr(const char *str, ...)
