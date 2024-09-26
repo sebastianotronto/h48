@@ -102,8 +102,11 @@ distribution_equal(
 		}
 	}
 
-	if (wrong > 0)
-		LOG("chekdata: %d wrong values\n", wrong);
+	if (wrong > 0) {
+		LOG("checkdata: %d wrong values\n", wrong);
+	} else {
+		LOG("checkdata: table is consistent with info\n");
+	}
 
 	return wrong > 0;
 }
