@@ -11,7 +11,7 @@
 
 #include "nissy.h"
 
-STATIC int parse_h48_options(const char *, uint8_t *, uint8_t *, uint8_t *);
+int parse_h48_options(const char *, uint8_t *, uint8_t *, uint8_t *);
 STATIC int64_t write_result(cube_t, char [static 22]);
 
 /* TODO: add option to get DR, maybe C-only, E-only, eo... */
@@ -24,7 +24,7 @@ struct {
 	GETCUBE_OPTIONS(NULL, NULL)
 };
 
-STATIC int
+int
 parse_h48_options(const char *buf, uint8_t *h, uint8_t *k, uint8_t *maxdepth)
 {
 	bool h_valid, k_valid, maxdepth_valid;

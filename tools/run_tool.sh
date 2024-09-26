@@ -5,7 +5,7 @@ if [ -z "$TOOL" ]; then
 	exit 1
 fi
 
-CC="$CC -D_POSIX_C_SOURCE=199309L"
+CC="$CC -D_POSIX_C_SOURCE=199309L" # For timer
 
 BIN="tools/run"
 d="$(date +'%Y-%m-%d-%H-%M-%S')"
@@ -16,7 +16,8 @@ for t in tools/*; do
 	fi
 	toolname="$(basename "$t" .c)"
 	$CC -o $BIN "$t"/*.c "$CUBEOBJ" || exit 1;
-	$BIN | tee "tools/results/$toolname-$d.txt" "tools/results/last.out"
+	$BIN $TOOLARGS \
+		| tee "tools/results/$toolname-$d.txt" "tools/results/last.out"
 	break
 done
 

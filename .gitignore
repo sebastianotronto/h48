@@ -10,6 +10,7 @@ test/*/runtest
 test/run
 test/run.DSYM
 run.DSYM
+run.core
 test/last.*
 tools/results
 .vscode
