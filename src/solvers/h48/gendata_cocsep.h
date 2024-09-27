@@ -25,6 +25,7 @@ STATIC_INLINE void set_visited(uint8_t *, int64_t);
 
 STATIC size_t gendata_cocsep(void *, uint64_t *, cube_t *);
 STATIC uint32_t gendata_cocsep_dfs(cocsep_dfs_arg_t *);
+STATIC void getdistribution_cocsep(const uint32_t *, uint64_t [static 21]);
 
 STATIC_INLINE int8_t get_h48_cdata(cube_t, uint32_t *, uint32_t *);
 
@@ -155,6 +156,17 @@ gendata_cocsep_dfs(cocsep_dfs_arg_t *arg)
 	}
 
 	return cc;
+}
+
+STATIC void
+getdistribution_cocsep(const uint32_t *table, uint64_t distr[static 21])
+{
+	size_t i;
+
+	memset(distr, 0, 21 * sizeof(uint64_t));
+
+	for (i = 0; i < COCSEP_TABLESIZE; i++)
+		distr[CBOUND(table[i])]++;
 }
 
 STATIC_INLINE bool

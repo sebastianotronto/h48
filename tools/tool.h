@@ -11,11 +11,12 @@
 static void log_stderr(const char *, ...);
 static void log_stdout(const char *, ...);
 static double timerun(void (*)(void), const char *);
+static void getfilename(const char *, const char *, char *);
 static void writetable(const char *, int64_t, const char *);
 static int64_t generatetable(const char *, const char *, char **);
 static int64_t derivetable(uint8_t, char **);
 static int getdata(const char *, const char *, char **, const char *);
-static void gendata_run(const char *, const char *, const char *, uint64_t[static 21]);
+static void gendata_run(const char *, const char *, uint64_t[static 21]);
 static void derivedata_run(uint8_t, const char *, uint64_t[static 21]);
 
 static void
@@ -70,6 +71,17 @@ timerun(void (*run)(void), const char *name)
 	fflush(stdout);
 
 	return tdiff;
+}
+
+static void
+getfilename(const char *solver, const char *options, char *filename)
+{
+	uint8_t h, k;
+
+	/* Only h48 supported for now */
+	parse_h48_options(options, &h, &k, NULL);
+
+	sprintf(filename, "tables/%sh%dk%d", solver, h, k);
 }
 
 static void
@@ -193,13 +205,12 @@ static void
 gendata_run(
 	const char *solver,
 	const char *options,
-	const char *filename, /* TODO: remove filename, use solver name */
 	uint64_t expected[static 21]
 ) {
 	int64_t size;
-	char *buf;
+	char *buf, filename[1024];
 
-	
+	getfilename(solver, options, filename);
 	size = generatetable(solver, options, &buf);
 	switch (size) {
 	case -1:

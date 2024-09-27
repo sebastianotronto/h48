@@ -24,6 +24,7 @@ typedef struct {
 typedef struct {
 	uint8_t h;
 	uint8_t k;
+	uint8_t base;
 	uint8_t maxdepth;
 	tableinfo_t info;
 	void *buf;
