@@ -103,7 +103,7 @@ STATIC_INLINE bool gendata_h48k2_dfs_stop(cube_t, int8_t, h48k2_dfs_arg_t *);
 STATIC size_t gendata_h48k2_realcoord(gendata_h48_arg_t *);
 STATIC void gendata_h48k2_dfs(h48k2_dfs_arg_t *arg);
 STATIC void * gendata_h48k2_runthread(void *);
-STATIC tableinfo_t makeinfo_h48k2(gendata_h48_arg_t *, uint8_t);
+STATIC tableinfo_t makeinfo_h48k2(gendata_h48_arg_t *);
 
 STATIC uint32_t *get_cocsepdata_ptr(const void *);
 STATIC uint8_t *get_h48data_ptr(const void *);
@@ -111,6 +111,8 @@ STATIC uint8_t *get_h48data_ptr(const void *);
 STATIC_INLINE uint8_t get_h48_pval(const uint8_t *, int64_t, uint8_t);
 STATIC_INLINE void set_h48_pval(uint8_t *, int64_t, uint8_t, uint8_t);
 STATIC_INLINE uint8_t get_h48_bound(cube_t, uint32_t, uint8_t, uint8_t, uint8_t *);
+
+size_t gendata_h48_derive(uint8_t, const void *, void *);
 
 STATIC uint64_t
 gendata_h48short(gendata_h48short_arg_t *arg)
@@ -387,7 +389,7 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 		[11] = 10
 	};
 
-	uint8_t t, selectedbase, *table;
+	uint8_t t, *table;
 	int64_t j;
 	uint64_t i, ii, inext, count;
 	h48map_t shortcubes;
@@ -414,8 +416,9 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 	};
 	gendata_h48short(&shortarg);
 
-	selectedbase = arg->base < 20 ? arg->base : base[arg->h];
-	arg->info = makeinfo_h48k2(arg, selectedbase);
+	if (arg->base >= 20)
+		arg->base = base[arg->h];
+	arg->info = makeinfo_h48k2(arg);
 
 	inext = count = 0;
 	pthread_mutex_init(&shortcubes_mutex, NULL);
@@ -425,7 +428,7 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 		dfsarg[i] = (h48k2_dfs_arg_t){
 			.h = arg->h,
 			.k = arg->k,
-			.base = selectedbase,
+			.base = arg->base,
 			.shortdepth = shortdepth,
 			.cocsepdata = arg->cocsepdata,
 			.table = table,
@@ -637,7 +640,7 @@ gendata_h48k2_realcoord_runthread(void *arg)
 }
 
 STATIC tableinfo_t
-makeinfo_h48k2(gendata_h48_arg_t *arg, uint8_t base)
+makeinfo_h48k2(gendata_h48_arg_t *arg)
 {
 	tableinfo_t info;
 
@@ -651,7 +654,7 @@ makeinfo_h48k2(gendata_h48_arg_t *arg, uint8_t base)
 		.classes = 0,
 		.h48h = arg->h,
 		.bits = 2,
-		.base = base,
+		.base = arg->base,
 		.maxvalue = 3,
 		.next = 0,
 	};
@@ -694,4 +697,82 @@ get_h48_bound(cube_t cube, uint32_t cdata, uint8_t h, uint8_t k, uint8_t *table)
 
 	coord = coord_h48_edges(cube, COCLASS(cdata), TTREP(cdata), h);
 	return get_h48_pval(table, coord, k);
+}
+
+size_t
+gendata_h48_derive(uint8_t h, const void *fulltable, void *buf)
+{
+	size_t cocsepsize, h48size;
+	uint8_t val_full, val_derive, val_new, *h48full, *h48derive;
+	int64_t i, j, h48max;
+	gendata_h48_arg_t arg;
+	tableinfo_t cocsepinfo, fulltableinfo;
+
+	/* Initializing values in case of error */
+	fulltableinfo.bits = 2;
+	fulltableinfo.base = 8;
+
+	readtableinfo_n(fulltable, 2, &fulltableinfo);
+	arg.h = h;
+	arg.k = fulltableinfo.bits;
+	arg.maxdepth = 20;
+	arg.buf = buf;
+	arg.cocsepdata = (uint32_t *)((char *)buf + INFOSIZE);
+	arg.base = fulltableinfo.base;
+	arg.info = makeinfo_h48k2(&arg);
+
+	/* Technically this step is redundant, except that we
+	   need selfsim and crep */
+	cocsepsize = gendata_cocsep(buf, arg.selfsim, arg.crep);
+	arg.h48buf = (char *)buf + cocsepsize;
+	h48size = H48_TABLESIZE(h, arg.k) + INFOSIZE;
+
+	if (buf == NULL)
+		goto gendata_h48_derive_return_size;
+
+	if (!readtableinfo(buf, &cocsepinfo)) {
+		LOG("gendata_h48: could not read info for cocsep table\n");
+		goto gendata_h48_derive_error;
+	}
+
+	cocsepinfo.next = cocsepsize;
+	if (!writetableinfo(&cocsepinfo, buf)) {
+		LOG("gendata_h48_derive: could not write info for cocsep table"
+		    " with updated 'next' value\n");
+		goto gendata_h48_derive_error;
+	}
+
+	h48full = (uint8_t *)fulltable + INFOSIZE;
+	h48derive = (uint8_t *)arg.h48buf + INFOSIZE;
+	memset(h48derive, 0xFF, H48_TABLESIZE(h, arg.k));
+	memset(arg.info.distribution, 0,
+	    INFO_DISTRIBUTION_LEN * sizeof(uint64_t));
+
+	h48max = H48_COORDMAX(11);
+	for (i = 0; i < h48max; i++) {
+		if (i % INT64_C(1000000000) == 0)
+			LOG("Processing %" PRId64 "th coordinate\n", i);
+		j = i >> (int64_t)(11-h);
+		val_full = get_h48_pval(h48full, i, arg.k);
+		val_derive = get_h48_pval(h48derive, j, arg.k);
+		val_new = MIN(val_full, val_derive);
+		set_h48_pval(h48derive, j, arg.k, val_new);
+	}
+
+	h48max = H48_COORDMAX(h);
+	for (i = 0; i < h48max; i++) {
+		val_derive = get_h48_pval(h48derive, i, arg.k);
+		arg.info.distribution[val_derive]++;
+	}
+
+	if (!writetableinfo(&arg.info, buf)) {
+		LOG("gendata_h48_derive: could not write info for table\n");
+		goto gendata_h48_derive_error;
+	}
+
+gendata_h48_derive_return_size:
+	return cocsepsize + h48size;
+
+gendata_h48_derive_error:
+	return 0;
 }
