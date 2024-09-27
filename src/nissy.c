@@ -333,9 +333,12 @@ nissy_checkdata(
 	char *buf;
 	tableinfo_t info;
 
-	for (buf = (char *)data; readtableinfo(buf, &info); buf += info.next)
+	for (buf = (char *)data; readtableinfo(buf, &info); buf += info.next) {
 		if (!checkdata(buf, &info))
 			return 1;
+		if (info.next == 0)
+			break;
+	}
 
 	return 0;
 }
