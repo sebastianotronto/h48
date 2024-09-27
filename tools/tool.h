@@ -130,7 +130,7 @@ derivetable(uint8_t h, char **buf)
 	int64_t size, gensize;
 	char *fulltable;
 
-	char options[20] = " ;2;20"; /* Fixed for k = 2 for now */
+	char options[20] = " ;2;20"; /* Only for k = 2 for now */
 	options[0] = (char)(h + '0'); /* h = 10 not supported for now */
 
 	/* Support only b8 for now */

@@ -13,8 +13,8 @@
 
 int parse_h48_options(const char *, uint8_t *, uint8_t *, uint8_t *);
 STATIC int64_t write_result(cube_t, char [static 22]);
-STATIC bool distribution_equal(
-    const uint64_t [static 21], const uint64_t [static 21], uint8_t);
+STATIC bool distribution_equal(const uint64_t [static INFO_DISTRIBUTION_LEN],
+    const uint64_t [static INFO_DISTRIBUTION_LEN], uint8_t);
 STATIC bool checkdata(const void *, const tableinfo_t *);
 
 /* TODO: add option to get DR, maybe C-only, E-only, eo... */
@@ -68,7 +68,7 @@ parse_h48_options_error:
 STATIC bool
 checkdata(const void *buf, const tableinfo_t *info)
 {
-	uint64_t distr[21];
+	uint64_t distr[INFO_DISTRIBUTION_LEN];
 
 	if (!strncmp(info->solver, "cocsep", 6)) {
 		getdistribution_cocsep(
@@ -86,8 +86,8 @@ checkdata(const void *buf, const tableinfo_t *info)
 
 STATIC bool
 distribution_equal(
-	const uint64_t expected[static 21],
-	const uint64_t actual[static 21],
+	const uint64_t expected[static INFO_DISTRIBUTION_LEN],
+	const uint64_t actual[static INFO_DISTRIBUTION_LEN],
 	uint8_t maxvalue
 )
 {

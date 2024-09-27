@@ -104,8 +104,8 @@ STATIC size_t gendata_h48k2_realcoord(gendata_h48_arg_t *);
 STATIC void gendata_h48k2_dfs(h48k2_dfs_arg_t *arg);
 STATIC void * gendata_h48k2_runthread(void *);
 STATIC tableinfo_t makeinfo_h48k2(gendata_h48_arg_t *);
-STATIC void getdistribution_h48(
-    const uint8_t *, uint64_t [static 21], uint8_t, uint8_t);
+STATIC void getdistribution_h48(const uint8_t *,
+    uint64_t [static INFO_DISTRIBUTION_LEN], uint8_t, uint8_t);
 
 STATIC uint32_t *get_cocsepdata_ptr(const void *);
 STATIC uint8_t *get_h48data_ptr(const void *);
@@ -671,14 +671,14 @@ makeinfo_h48k2(gendata_h48_arg_t *arg)
 STATIC void
 getdistribution_h48(
 	const uint8_t *table,
-	uint64_t distr[static 21],
+	uint64_t distr[static INFO_DISTRIBUTION_LEN],
 	uint8_t h,
 	uint8_t k
 ) {
 	uint8_t val;
 	int64_t i, h48max;
 
-	memset(distr, 0, 21 * sizeof(uint64_t));
+	memset(distr, 0, INFO_DISTRIBUTION_LEN * sizeof(uint64_t));
 
 	h48max = H48_COORDMAX(h);
 	for (i = 0; i < h48max; i++) {
@@ -725,12 +725,13 @@ size_t
 gendata_h48_derive(uint8_t h, const void *fulltable, void *buf)
 {
 	size_t cocsepsize, h48size;
-	uint8_t val_full, val_derive, val_new, *h48full, *h48derive;
+	uint8_t val_full, val_derive, *h48full, *h48derive;
 	int64_t i, j, h48max;
 	gendata_h48_arg_t arg;
 	tableinfo_t cocsepinfo, fulltableinfo;
 
 	/* Initializing values in case of error */
+	/* TODO cleanup this */
 	fulltableinfo.bits = 2;
 	fulltableinfo.base = 8;
 
@@ -777,15 +778,10 @@ gendata_h48_derive(uint8_t h, const void *fulltable, void *buf)
 		j = i >> (int64_t)(11-h);
 		val_full = get_h48_pval(h48full, i, arg.k);
 		val_derive = get_h48_pval(h48derive, j, arg.k);
-		val_new = MIN(val_full, val_derive);
-		set_h48_pval(h48derive, j, arg.k, val_new);
+		set_h48_pval(h48derive, j, arg.k, MIN(val_full, val_derive));
 	}
 
-	h48max = H48_COORDMAX(h);
-	for (i = 0; i < h48max; i++) {
-		val_derive = get_h48_pval(h48derive, i, arg.k);
-		arg.info.distribution[val_derive]++;
-	}
+	getdistribution_h48(h48derive, arg.info.distribution, h, arg.k);
 
 	if (!writetableinfo(&arg.info, buf)) {
 		LOG("gendata_h48_derive: could not write info for table\n");
