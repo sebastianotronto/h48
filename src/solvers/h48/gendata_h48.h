@@ -389,7 +389,7 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 		[8]  = 10,
 		[9]  = 10,
 		[10] = 10,
-		[11] = 8
+		[11] = 10
 	};
 
 	uint8_t t, *table;
