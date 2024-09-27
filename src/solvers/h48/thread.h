@@ -1,13 +1,8 @@
-#include <pthread.h>
 #include <stdatomic.h>
-#include <stdbool.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 #define MAX_QUEUE_SIZE 244
 #define BFS_DEPTH 2
-typedef struct
-{
+typedef struct {
 	dfsarg_solveh48_t *tasks[MAX_QUEUE_SIZE];
 	int front;
 	int rear;
@@ -95,11 +90,9 @@ copy_queue(task_queue_t *src, task_queue_t *dest, int depth, int64_t *nsols)
 	dest->front = src->front;
 	dest->rear = src->rear;
 	dest->tasks_count = src->tasks_count;
-	// atomic_init(&dest->active, &src->active);
 	pthread_cond_broadcast(&dest->cond);
 	pthread_mutex_unlock(&dest->mutex);
 }
-
 
 STATIC void *
 start_thread(void *arg)
@@ -253,8 +246,7 @@ solve_h48_parent(
 	tableinfo_t info;
 	pthread_t threads[THREADS];
 
-	if (!readtableinfo_n(data, 2, &info))
-	{
+	if (!readtableinfo_n(data, 2, &info)){
 		LOG("solve_h48: error reading table\n");
 		return 0;
 	}
