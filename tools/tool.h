@@ -14,10 +14,11 @@ static double timerun(void (*)(void), const char *);
 static void getfilename(const char *, const char *, char *);
 static void writetable(const char *, int64_t, const char *);
 static int64_t generatetable(const char *, const char *, char **);
-static int64_t derivetable(uint8_t, char **);
+static int64_t derivetable(const char *, const char *, const char *, char **);
 static int getdata(const char *, const char *, char **, const char *);
 static void gendata_run(const char *, const char *, uint64_t[static 21]);
-static void derivedata_run(uint8_t, const char *, uint64_t[static 21]);
+static void derivedata_run(
+    const char *, const char *, const char *, const char *);
 
 static void
 log_stderr(const char *str, ...)
@@ -125,27 +126,30 @@ generatetable(const char *solver, const char *options, char **buf)
 }
 
 static int64_t
-derivetable(uint8_t h, char **buf)
+derivetable(
+	const char *opts_large,
+	const char *opts_small,
+	const char *filename_large,
+	char **buf
+)
 {
+	uint8_t h;
 	int64_t size, gensize;
 	char *fulltable;
 
-	char options[20] = " ;2;20"; /* Only for k = 2 for now */
-	options[0] = (char)(h + '0'); /* h = 10 not supported for now */
-
-	/* Support only b8 for now */
-	if (getdata("h48", "11;2;20", &fulltable, "tables/h48h11k2_b8") != 0) {
+	if (getdata("h48", opts_large, &fulltable, filename_large) != 0) {
 		printf("Error reading full table.\n");
 		return -1;
 	}
 
-	size = nissy_datasize("h48", options);
+	size = nissy_datasize("h48", opts_small);
 	if (size == -1) {
 		printf("Error getting table size.\n");
 		free(fulltable);
 		return -1;
 	}
 
+	h = atoi(opts_small); /* TODO: use option parser */
 	*buf = malloc(size);
 	gensize = gendata_h48_derive(h, fulltable, *buf);
 
@@ -233,12 +237,17 @@ gendata_run_finish:
 }
 
 static void
-derivedata_run(uint8_t h, const char *filename, uint64_t expected[static 21])
+derivedata_run(
+	const char *opts_large,
+	const char *opts_small,
+	const char *filename_large,
+	const char *filename_small
+)
 {
 	int64_t size;
 	char *buf;
 
-	size = derivetable(h, &buf);
+	size = derivetable(opts_large, opts_small, filename_large, &buf);
 	switch (size) {
 	case -1:
 		return;
@@ -250,7 +259,7 @@ derivedata_run(uint8_t h, const char *filename, uint64_t expected[static 21])
 		printf("Succesfully generated %" PRId64 " bytes. "
 		       "See above for details on the tables.\n", size);
 
-		writetable(buf, size, filename);
+		writetable(buf, size, filename_small);
 		break;
 	}
 
