@@ -7,7 +7,7 @@ typedef struct {
 	int front;
 	int rear;
 	int tasks_count;
-	atomic_int active;
+	int active;
 	pthread_mutex_t mutex;
 	pthread_cond_t cond;
 	pthread_cond_t active_cond;
@@ -117,11 +117,13 @@ start_thread(void *arg)
 			
 			solve_h48_single(task, queue);
 
-			atomic_fetch_sub(&queue->active, 1);
+			pthread_mutex_lock(&queue->mutex);
+			queue->active--;
 
 			if(queue->tasks_count == 0 && queue->active == 0)
 				pthread_cond_signal(&queue->active_cond);
 		}
+		pthread_mutex_unlock(&queue->mutex);
 	}
 	return NULL;
 }
