@@ -3,7 +3,7 @@
 #define MAX_QUEUE_SIZE 244
 #define BFS_DEPTH 2
 typedef struct {
-	dfsarg_solveh48_t *tasks[MAX_QUEUE_SIZE];
+	dfsarg_solveh48_t tasks[MAX_QUEUE_SIZE];
 	int front;
 	int rear;
 	int tasks_count;
@@ -16,7 +16,7 @@ typedef struct {
 
 STATIC void solve_h48_appendsolution_thread(dfsarg_solveh48_t *, task_queue_t *);
 STATIC void init_queue(task_queue_t *);
-STATIC void submit_task(task_queue_t *, dfsarg_solveh48_t *);
+STATIC void submit_task(task_queue_t *, dfsarg_solveh48_t);
 STATIC void copy_queue(task_queue_t *, task_queue_t *, int, int64_t *);
 STATIC void *start_thread(void *);
 STATIC int64_t solve_h48_bfs(dfsarg_solveh48_t *, task_queue_t *);
@@ -65,7 +65,7 @@ init_queue(task_queue_t *queue)
 }
 
 STATIC void
-submit_task(task_queue_t *queue, dfsarg_solveh48_t *task)
+submit_task(task_queue_t *queue, dfsarg_solveh48_t task)
 {
 	pthread_mutex_lock(&queue->mutex);
 	queue->tasks[queue->rear] = task;
@@ -81,11 +81,8 @@ copy_queue(task_queue_t *src, task_queue_t *dest, int depth, int64_t *nsols)
 	pthread_mutex_lock(&dest->mutex);
 	for (int i = src->front; i != src->rear; i = (i + 1) % MAX_QUEUE_SIZE)
 	{
-		if (src->tasks[i] != NULL)
-		{
 			dest->tasks[i] = src->tasks[i];
-			dest->tasks[i]->depth = depth;
-		}
+			dest->tasks[i].depth = depth;
 	}
 	dest->front = src->front;
 	dest->rear = src->rear;
@@ -109,13 +106,13 @@ start_thread(void *arg)
 		}
 
 		if (queue->tasks_count > 0) {
-			dfsarg_solveh48_t *task = queue->tasks[queue->front];
+			dfsarg_solveh48_t task = queue->tasks[queue->front];
 			queue->front = (queue->front + 1) % MAX_QUEUE_SIZE;
 			queue->tasks_count--;
 			queue->active++;
 			pthread_mutex_unlock(&queue->mutex);
 			
-			solve_h48_single(task, queue);
+			solve_h48_single(&task, queue);
 
 			pthread_mutex_lock(&queue->mutex);
 			queue->active--;
@@ -138,6 +135,8 @@ solve_h48_bfs(dfsarg_solveh48_t *arg_zero, task_queue_t *tq)
 	int nodes_at_current_depth = 1;
 	int nodes_at_next_depth = 0;
 	queue[rear++] = *arg_zero;
+
+	dfsarg_solveh48_t task_pool[MAX_QUEUE_SIZE];
 
 	while (front < rear){
 		dfsarg_solveh48_t arg = queue[front++];
@@ -165,9 +164,9 @@ solve_h48_bfs(dfsarg_solveh48_t *arg_zero, task_queue_t *tq)
 				nextarg.inverse = premove(arg.inverse, m);
 
 				if (nextarg.nmoves == BFS_DEPTH){
-					dfsarg_solveh48_t *task = malloc(sizeof(dfsarg_solveh48_t));
+					dfsarg_solveh48_t *task = &task_pool[rear % MAX_QUEUE_SIZE];
 					*task = nextarg;
-					submit_task(tq, task);
+					submit_task(tq, *task);
 				} else {
 					queue[rear++] = nextarg;
 					nodes_at_next_depth++;
