@@ -1,7 +1,6 @@
-#include <stdatomic.h>
-
 #define MAX_QUEUE_SIZE 244
 #define BFS_DEPTH 2
+
 typedef struct {
 	dfsarg_solveh48_t tasks[MAX_QUEUE_SIZE];
 	int front;
@@ -17,11 +16,11 @@ typedef struct {
 STATIC void solve_h48_appendsolution_thread(dfsarg_solveh48_t *, task_queue_t *);
 STATIC void init_queue(task_queue_t *);
 STATIC void submit_task(task_queue_t *, dfsarg_solveh48_t);
-STATIC void copy_queue(task_queue_t *, task_queue_t *, int, int64_t *);
+STATIC void copy_queue(task_queue_t *, task_queue_t *, int, _Atomic int64_t *);
 STATIC void *start_thread(void *);
-STATIC int64_t solve_h48_bfs(dfsarg_solveh48_t *, task_queue_t *);
+STATIC int64_t solve_h48_bfs(dfsarg_solveh48_t *, task_queue_t *, int8_t);
 STATIC int64_t solve_h48_single(dfsarg_solveh48_t *, task_queue_t *);
-STATIC int64_t solve_h48_parent(cube_t, int8_t, int8_t, int8_t, const void *, char *);
+STATIC int64_t solve_h48_multithread(cube_t, int8_t, int8_t, int8_t, const void *, char *);
 
 STATIC void
 solve_h48_appendsolution_thread(dfsarg_solveh48_t *arg, task_queue_t *tq)
@@ -76,7 +75,7 @@ submit_task(task_queue_t *queue, dfsarg_solveh48_t task)
 }
 
 STATIC void
-copy_queue(task_queue_t *src, task_queue_t *dest, int depth, int64_t *nsols)
+copy_queue(task_queue_t *src, task_queue_t *dest, int depth, _Atomic int64_t *nsols)
 {
 	pthread_mutex_lock(&dest->mutex);
 	for (int i = src->front; i != src->rear; i = (i + 1) % MAX_QUEUE_SIZE)
@@ -126,7 +125,7 @@ start_thread(void *arg)
 }
 
 STATIC int64_t
-solve_h48_bfs(dfsarg_solveh48_t *arg_zero, task_queue_t *tq)
+solve_h48_bfs(dfsarg_solveh48_t *arg_zero, task_queue_t *tq, int8_t maxmoves)
 {
 	dfsarg_solveh48_t queue[MAX_QUEUE_SIZE];
 	int front = 0, rear = 0;
@@ -146,8 +145,7 @@ solve_h48_bfs(dfsarg_solveh48_t *arg_zero, task_queue_t *tq)
 			return 1;
 
 		if (issolved(arg.cube)){
-			if (arg.nmoves + arg.npremoves != arg.depth)
-				continue;
+			if (arg.nmoves + arg.npremoves >= arg.depth && arg.nmoves + arg.npremoves <= maxmoves)
 			solve_h48_appendsolution(&arg);
 			continue;
 		}
@@ -233,7 +231,7 @@ solve_h48_single(dfsarg_solveh48_t *arg, task_queue_t *tq)
 }
 
 STATIC int64_t
-solve_h48_parent(
+solve_h48_multithread(
 	cube_t cube,
 	int8_t minmoves,
 	int8_t maxmoves,
@@ -241,7 +239,7 @@ solve_h48_parent(
 	const void *data,
 	char *solutions)
 {
-	int64_t nsols = 0;
+	_Atomic int64_t nsols = 0;
 	int p_depth = 0;
 	dfsarg_solveh48_t arg;
 	tableinfo_t info;
@@ -256,6 +254,7 @@ solve_h48_parent(
 		.cube = cube,
 		.inverse = inverse(cube),
 		.nsols = &nsols,
+		.depth = minmoves,
 		.maxsolutions = maxsolutions,
 		.h = info.h48h,
 		.k = info.bits,
@@ -265,7 +264,7 @@ solve_h48_parent(
 
 	task_queue_t q;
 	init_queue(&q);
-	if (solve_h48_bfs(&arg, &q))
+	if (solve_h48_bfs(&arg, &q, maxmoves))
 		return nsols;
 
 	task_queue_t nq;

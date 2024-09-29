@@ -4,7 +4,7 @@ typedef struct {
 	int8_t nmoves;
 	int8_t depth;
 	uint8_t moves[MAXLEN];
-	int64_t *nsols;
+	_Atomic int64_t *nsols;
 	int64_t maxsolutions;
 	uint8_t h;
 	uint8_t k;
@@ -167,7 +167,7 @@ solve_h48(
 	char *solutions
 )
 {
-	int64_t nsols;
+	_Atomic int64_t nsols;
 	dfsarg_solveh48_t arg;
 	tableinfo_t info;
 

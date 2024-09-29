@@ -1,5 +1,3 @@
-#include <pthread.h>
-
 #include "../tool.h"
 
 const char *solver = "h48";
