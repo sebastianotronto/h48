@@ -6,24 +6,25 @@
 #define INFO_DISTRIBUTION_LEN 21
 
 typedef struct {
-	char solver[INFO_SOLVER_STRLEN];
+	uint64_t distribution[INFO_DISTRIBUTION_LEN];
 	uint64_t type;
 	uint64_t infosize;
 	uint64_t fullsize;
 	uint64_t hash;
 	uint64_t entries;
 	uint64_t classes; /* Used only by cocsepdata, for now */
+	uint64_t next;
+	char solver[INFO_SOLVER_STRLEN];
 	uint8_t h48h;
 	uint8_t bits;
 	uint8_t base;
 	uint8_t maxvalue;
-	uint64_t next;
-	uint64_t distribution[INFO_DISTRIBUTION_LEN];
 } tableinfo_t;
 
 typedef struct {
 	uint8_t h;
 	uint8_t k;
+	uint8_t base;
 	uint8_t maxdepth;
 	tableinfo_t info;
 	void *buf;

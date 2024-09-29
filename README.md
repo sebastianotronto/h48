@@ -61,7 +61,7 @@ The results of the last test case run is saved in test/last.out (standard
 output, the results compared with the .out files) and test/last.err
 (standard error).
 
-Tests are always run in "debug mode": this means that optimizations are
+Tests are always run in debug mode: this means that optimizations are
 disabled and some extra logging is enabled.
 
 See the test folder and test/test.sh for details.
@@ -70,7 +70,7 @@ See the test folder and test/test.sh for details.
 
 In the tools folder there are some small programs that test various
 functionality of the H48 library. They work similarly to test, but they
-are not run in debug mode.
+are not run in debug mode by default.
 
 To run a tool you must select it with the environment variable `TOOL`.
 For example the command:
@@ -79,13 +79,25 @@ For example the command:
 TOOL=stats make tool
 ```
 
-Will run the stats_tables_h48 tool. Like for tests, the value of the
-`TOOL` variable can be any regular expression matching the name of the
-tool. Unlike tests, one and only one tool will be selected for each run.
+Will run the stats_tables_h48 tool.
+
+To pass some arguments to a tool, use the `TOOLARGS` variable:
+
+```
+TOOL=gendata TOOLARGS="h48 0;2;20" make tool
+```
+
+Like for tests, the value of the `TOOL` variable can be any regular
+expression matching the name of the tool. Unlike tests, one and
+only one tool will be selected for each run.  The content of the
+`TOOLARGS` variable is used directly as command line arguments for
+the chosen tool.
 
 Each tool run is automatically timed, so these tools can be used as
 benchmark.  The output as well as the time of the run are saved to a
 file in the tools/results folder.
+
+To build and run a tool in debug mode, use `make debugtool`.
 
 ## Running commands manually
 

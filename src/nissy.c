@@ -12,8 +12,11 @@
 
 #include "nissy.h"
 
-STATIC int parse_h48_options(const char *, uint8_t *, uint8_t *, uint8_t *);
+int parse_h48_options(const char *, uint8_t *, uint8_t *, uint8_t *);
 STATIC int64_t write_result(cube_t, char [static 22]);
+STATIC bool distribution_equal(const uint64_t [static INFO_DISTRIBUTION_LEN],
+    const uint64_t [static INFO_DISTRIBUTION_LEN], uint8_t);
+STATIC bool checkdata(const void *, const tableinfo_t *);
 
 /* TODO: add option to get DR, maybe C-only, E-only, eo... */
 #define GETCUBE_OPTIONS(S, F) { .option = S, .fix = F }
@@ -25,7 +28,7 @@ struct {
 	GETCUBE_OPTIONS(NULL, NULL)
 };
 
-STATIC int
+int
 parse_h48_options(const char *buf, uint8_t *h, uint8_t *k, uint8_t *maxdepth)
 {
 	bool h_valid, k_valid, maxdepth_valid;
@@ -61,6 +64,52 @@ parse_h48_options_error:
 	LOG("Error parsing options: must be in \"h;k;maxdepth\" format "
 	    " (instead it was \"%s\")\n", buf);
 	return -1;
+}
+
+STATIC bool
+checkdata(const void *buf, const tableinfo_t *info)
+{
+	uint64_t distr[INFO_DISTRIBUTION_LEN];
+
+	if (!strncmp(info->solver, "cocsep", 6)) {
+		getdistribution_cocsep(
+		    (uint32_t *)((char *)buf + INFOSIZE), distr);
+	} else if (!strncmp(info->solver, "h48", 3)) {
+		getdistribution_h48((uint8_t *)buf + INFOSIZE, distr,
+		    info->h48h, info->bits);
+	} else {
+		LOG("checkdata: unknown solver %s\n", info->solver);
+		return false;
+	}
+
+	return distribution_equal(info->distribution, distr, info->maxvalue);
+}
+
+STATIC bool
+distribution_equal(
+	const uint64_t expected[static INFO_DISTRIBUTION_LEN],
+	const uint64_t actual[static INFO_DISTRIBUTION_LEN],
+	uint8_t maxvalue
+)
+{
+	int wrong;
+	uint8_t i;
+
+	for (i = 0, wrong = 0; i <= MAX(maxvalue, 20); i++) {
+		if (expected[i] != actual[i]) {
+			wrong++;
+			LOG("Value %" PRIu8 ": expected %" PRIu64 ", found %"
+			    PRIu64 "\n", i, expected[i], actual[i]);
+		}
+	}
+
+	if (wrong > 0) {
+		LOG("checkdata: %d wrong values\n", wrong);
+	} else {
+		LOG("checkdata: table is consistent with info\n");
+	}
+
+	return wrong > 0;
 }
 
 STATIC int64_t
@@ -273,6 +322,26 @@ nissy_gendata(
 	}
 
 	return ret;
+}
+
+int64_t
+nissy_checkdata(
+	const char *solver,
+	const char *options,
+	const void *data
+)
+{
+	char *buf;
+	tableinfo_t info;
+
+	for (buf = (char *)data; readtableinfo(buf, &info); buf += info.next) {
+		if (!checkdata(buf, &info))
+			return 1;
+		if (info.next == 0)
+			break;
+	}
+
+	return 0;
 }
 
 int64_t

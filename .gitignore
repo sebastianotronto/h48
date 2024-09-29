@@ -14,6 +14,7 @@ test/run
 test/run.DSYM
 tools/.DS_Store
 run.DSYM
+run.core
 test/last.*
 tools/results
 .vscode

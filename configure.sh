@@ -22,10 +22,10 @@
 # SANITIZE="option1,option2,..."
 # Add the options "-fsanitize=option1", "-fsanitize=option2", ... to the
 # compilation command when compiling in debug mode.
-# By default, "-fsanitize=address" and "-fsanitize=undefined" will be used,
-# if available. If this variable is set, the default is overridden.
-# No check is performed on the given sanitizers, make sure that the ones you
-# choose are available on your system and compatible with each other.
+# By default, "-fsanitize=address" and "-fsanitize=undefined" will be used.
+# If this variable is set, the default is overridden. No check is performed
+# on the availability of any sanitizer used, make sure the ones you use are
+# available on your system.
 #
 # Examples
 #
@@ -37,10 +37,6 @@
 
 greparch() {
 	$CC -march=native -dM -E - </dev/null 2>/dev/null | grep "$1"
-}
-
-grepsan() {
-	$CC -fsanitize="$1" -dM -E -x c - </dev/null 2>/dev/null | grep "SANITIZE"
 }
 
 detectthreads() {
@@ -100,10 +96,7 @@ if [ -n "$SANITIZE" ]; then
 		SAN="$SAN -fsanitize=$san"
 	done
 else
-	# No sanitizer specified, use "address" and "undefined" if present
-	[ -n "$(grepsan address)" ] && ADDR="-fsanitize=address"
-	[ -n "$(grepsan undefined)" ] && UNDEF="-fsanitize=undefined"
-	SAN="$ADDR $UNDEF"
+	SAN="-fsanitize=address -fsanitize=undefined"
 fi
 LIBS="-lpthread"
 

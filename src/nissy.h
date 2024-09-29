@@ -86,6 +86,19 @@ int64_t nissy_gendata(
 	void *generated_data
 );
 
+/* Temporarily added to test h48 intermediate tables */
+int64_t nissy_derivedata(
+	const char *options,
+	const void *fulltable,
+	void *generated_data
+);
+
+int64_t nissy_checkdata(
+	const char *solver,
+	const char *options,
+	const void *data
+);
+
 /* Print information on a data table via the provided callback writer */
 int64_t nissy_datainfo(
 	const void *table,
