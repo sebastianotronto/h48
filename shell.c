@@ -13,30 +13,30 @@
 #define SOLUTIONS_BUFFER_SIZE 500000 /* Should be enough */
 #define MAX_PATH_LENGTH 10000 /* Should be enough */
 
-#define _flag_cube         "-cube"
-#define _flag_perm         "-perm"
-#define _flag_command      "-command"
-#define _flag_str_cube     "-cubestr"
-#define _flag_format       "-format"
-#define _flag_format_in    "-fin"
-#define _flag_format_out   "-fout"
-#define _flag_moves        "-moves"
-#define _flag_trans        "-trans"
-#define _flag_solver       "-solver"
-#define _flag_options      "-options"
-#define _flag_nisstype     "-nisstype"
-#define _flag_minmoves     "-m"
-#define _flag_maxmoves     "-M"
-#define _flag_optimal      "-O"
-#define _flag_maxsolutions "-n"
+#define FLAG_CUBE         "-cube"
+#define FLAG_PERM         "-perm"
+#define FLAG_COMMAND      "-command"
+#define FLAG_STR_CUBE     "-cubestr"
+#define FLAG_FORMAT       "-format"
+#define FLAG_FORMAT_IN    "-fin"
+#define FLAG_FORMAT_OUT   "-fout"
+#define FLAG_MOVES        "-moves"
+#define FLAG_TRANS        "-trans"
+#define FLAG_SOLVER       "-solver"
+#define FLAG_OPTIONS      "-options"
+#define FLAG_NISSTYPE     "-nisstype"
+#define FLAG_MINMOVES     "-m"
+#define FLAG_MAXMOVES     "-M"
+#define FLAG_OPTIMAL      "-O"
+#define FLAG_MAXSOLUTIONS "-n"
 
-#define _info_cubeformat(cube) cube " must be given in B32 format."
-#define _info_movesformat "The accepted moves are U, D, R, L, F and B, " \
+#define INFO_CUBEFORMAT(cube) cube " must be given in B32 format."
+#define INFO_MOVESFORMAT "The accepted moves are U, D, R, L, F and B, " \
     "optionally followed by a 2, a ' or a 3."
-#define _info_transformat "The transformation must be given in the format " \
+#define INFO_TRANSFORMAT "The transformation must be given in the format " \
     "(rotation|mirrored) (2 letters), for exmple " \
     "'rotation UF' or 'mirrored BL'."
-#define _info_formats "The available formats are H48, B32 and SRC."
+#define INFO_FORMATS "The available formats are H48, B32 and SRC."
 
 typedef struct {
 	int command_index;
@@ -103,22 +103,22 @@ struct {
 	int nargs;
 	bool (*set)(int, char **, args_t *);
 } options[] = {
-	OPTION(_flag_cube, 1, set_cube),
-	OPTION(_flag_perm, 1, set_cube_perm),
-	OPTION(_flag_command, 1, set_str_command),
-	OPTION(_flag_str_cube, 1, set_str_cube),
-	OPTION(_flag_format, 1, set_str_format),
-	OPTION(_flag_format_in, 1, set_str_format_in),
-	OPTION(_flag_format_out, 1, set_str_format_out),
-	OPTION(_flag_moves, 1, set_str_moves),
-	OPTION(_flag_trans, 1, set_str_trans),
-	OPTION(_flag_solver, 1, set_str_solver),
-	OPTION(_flag_options, 1, set_str_options), /* TODO: remove, use only solver */
-	OPTION(_flag_nisstype, 1, set_str_nisstype), /* TODO: remove, use flags */
-	OPTION(_flag_minmoves, 1, set_minmoves),
-	OPTION(_flag_maxmoves, 1, set_maxmoves),
-	OPTION(_flag_optimal, 1, set_optimal),
-	OPTION(_flag_maxsolutions, 1, set_maxsolutions),
+	OPTION(FLAG_CUBE, 1, set_cube),
+	OPTION(FLAG_PERM, 1, set_cube_perm),
+	OPTION(FLAG_COMMAND, 1, set_str_command),
+	OPTION(FLAG_STR_CUBE, 1, set_str_cube),
+	OPTION(FLAG_FORMAT, 1, set_str_format),
+	OPTION(FLAG_FORMAT_IN, 1, set_str_format_in),
+	OPTION(FLAG_FORMAT_OUT, 1, set_str_format_out),
+	OPTION(FLAG_MOVES, 1, set_str_moves),
+	OPTION(FLAG_TRANS, 1, set_str_trans),
+	OPTION(FLAG_SOLVER, 1, set_str_solver),
+	OPTION(FLAG_OPTIONS, 1, set_str_options), /* TODO: remove, use only solver */
+	OPTION(FLAG_NISSTYPE, 1, set_str_nisstype), /* TODO: remove, use flags */
+	OPTION(FLAG_MINMOVES, 1, set_minmoves),
+	OPTION(FLAG_MAXMOVES, 1, set_maxmoves),
+	OPTION(FLAG_OPTIMAL, 1, set_optimal),
+	OPTION(FLAG_MAXSOLUTIONS, 1, set_maxsolutions),
 	OPTION(NULL, 0, NULL)
 };
  
@@ -132,46 +132,46 @@ struct {
 /* TODO: add synopsis and description here */
 	COMMAND(
 		"compose",
-		"compose " _flag_cube " CUBE " _flag_perm " PERM",
+		"compose " FLAG_CUBE " CUBE " FLAG_PERM " PERM",
 		"Apply on CUBE the permutation defined by PERM. "
-		_info_cubeformat("CUBE and PERM"),
+		INFO_CUBEFORMAT("CUBE and PERM"),
 		compose_exec
 	),
 	COMMAND(
 		"inverse",
-		"inverse " _flag_cube " CUBE ",
+		"inverse " FLAG_CUBE " CUBE ",
 		"Compute the inverse of the given CUBE. "
-		_info_cubeformat("CUBE"),
+		INFO_CUBEFORMAT("CUBE"),
 		inverse_exec
 	),
 	COMMAND(
 		"applymoves",
-		"applymoves " _flag_cube " CUBE " _flag_moves " MOVES",
+		"applymoves " FLAG_CUBE " CUBE " FLAG_MOVES " MOVES",
 		"Apply the given MOVES to the given CUBE. "
-		_info_cubeformat("CUBE") " " _info_movesformat,
+		INFO_CUBEFORMAT("CUBE") " " INFO_MOVESFORMAT,
 		applymoves_exec
 	),
 	COMMAND(
 		"applytrans",
-		"applytrans " _flag_cube " CUBE " _flag_trans " TRANS",
+		"applytrans " FLAG_CUBE " CUBE " FLAG_TRANS " TRANS",
 		"Apply the single transformation TRANS to the given CUBE. "
-		_info_cubeformat("CUBE") " " _info_transformat,
+		INFO_CUBEFORMAT("CUBE") " " INFO_TRANSFORMAT,
 		applytrans_exec
 	),
 	COMMAND(
 		"frommoves",
-		"frommoves " _flag_moves " MOVES",
+		"frommoves " FLAG_MOVES " MOVES",
 		"Return the cube obtained by applying the given MOVES "
-		"to a solved cube. " _info_movesformat,
+		"to a solved cube. " INFO_MOVESFORMAT,
 		frommoves_exec
 	),
 	COMMAND(
 		"convert",
-		"convert " _flag_str_cube " CUBESTR "
-		_flag_format_in " FORMAT_IN " _flag_format_out " FORMAT_OUT",
+		"convert " FLAG_STR_CUBE " CUBESTR "
+		FLAG_FORMAT_IN " FORMAT_IN " FLAG_FORMAT_OUT " FORMAT_OUT",
 		"Convert the cube described by CUBESTR from FORMAT_IN to "
 		"FORMAT_OUT."
-		_info_formats " "
+		INFO_FORMATS " "
 		"CUBESTR must be a valid cube in the FORMAT_IN format.",
 		convert_exec
 	),
@@ -183,31 +183,31 @@ struct {
 	),
 	COMMAND(
 		"datasize",
-		"datasize " _flag_solver " SOLVER " _flag_options " OPTIONS",
+		"datasize " FLAG_SOLVER " SOLVER " FLAG_OPTIONS " OPTIONS",
 		"Return the size in bytes of the data table used by "
 		"SOLVER when called with the given OPTIONS.",
 		datasize_exec
 	),
 	COMMAND(
 		"gendata",
-		"gendata " _flag_solver " SOLVER " _flag_options " OPTIONS",
+		"gendata " FLAG_SOLVER " SOLVER " FLAG_OPTIONS " OPTIONS",
 		"Generate the data table used by "
 		"SOLVER when called with the given OPTIONS.",
 		gendata_exec
 	),
 	COMMAND(
 		"solve",
-		"solve " _flag_solver " SOLVER " _flag_options " OPTIONS "
-		"[" _flag_minmoves " n] [" _flag_maxmoves " N] "
-		_flag_cube " CUBE",
+		"solve " FLAG_SOLVER " SOLVER " FLAG_OPTIONS " OPTIONS "
+		"[" FLAG_MINMOVES " n] [" FLAG_MAXMOVES " N] "
+		FLAG_CUBE " CUBE",
 		"Solve the given CUBE using SOLVER with the given OPTIONS, "
 		"using at least n and at most N moves. "
-		_info_cubeformat("CUBE"),
+		INFO_CUBEFORMAT("CUBE"),
 		solve_exec
 	),
 	COMMAND(
 		"help",
-		"help [" _flag_command " COMMAND]",
+		"help [" FLAG_COMMAND " COMMAND]",
 		"If no COMMAND is specified, prints some generic information "
 		"and the list of commands. Otherwise it prints detailed "
 		"information about the specified COMMAND.",
