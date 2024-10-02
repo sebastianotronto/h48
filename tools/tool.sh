@@ -15,11 +15,8 @@ for t in tools/*; do
 		continue
 	fi
 	toolname="$(basename "$t" .c)"
-	$CC -o $BIN "$t"/*.c "$CUBEOBJ" || exit 1;
+	$CC -o $BIN "$t"/*.c "$OBJ" || exit 1;
 	$BIN $TOOLARGS \
 		| tee "tools/results/$toolname-$d.txt" "tools/results/last.out"
 	break
 done
-
-# $BIN is kept so it can be run manually for profiling
-rm -rf "$CUBEOBJ"

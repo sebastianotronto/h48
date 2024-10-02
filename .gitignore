@@ -19,4 +19,5 @@ test/last.*
 tools/results
 .vscode
 *.o
+*.so
 *.s

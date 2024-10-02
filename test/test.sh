@@ -5,7 +5,6 @@ re="${TEST:-$@}"
 TESTBIN="test/run"
 TESTOUT="test/last.out"
 TESTERR="test/last.err"
-CUBEOBJ="debugcube.o"
 
 for t in test/*; do
 	if [ -n "$re" ] && !(echo "$t" | grep -q "$re"); then
@@ -14,7 +13,7 @@ for t in test/*; do
 	
 	# Verify if $t is a directory and if its name starts with three digits
 	if [ -d "$t" ] && basename "$t" | grep -Eq '^[0-9]{3}'; then
-		$CC -o $TESTBIN "$t"/*.c $CUBEOBJ || exit 1
+		$CC -o $TESTBIN "$t"/*.c $OBJ || exit 1
 		for cin in "$t"/*.in; do
 			c=$(echo "$cin" | sed 's/\.in//')
 			cout="$c.out"
@@ -32,4 +31,3 @@ for t in test/*; do
 done
 
 echo "All tests passed!"
-rm -rf $TESTBIN $TESTOUT $TESTERR $CUBEOBJ
