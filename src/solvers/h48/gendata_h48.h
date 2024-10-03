@@ -60,8 +60,6 @@ typedef struct {
 	uint64_t start;
 	uint64_t end;
 	uint64_t count;
-	uint64_t *distribution;
-	pthread_mutex_t *distribution_mutex;
 	pthread_mutex_t *table_mutex[CHUNKS];
 } h48h0k4_bfs_arg_t;
 
@@ -214,7 +212,7 @@ gendata_h48h0k4(gendata_h48_arg_t *arg)
 	uint64_t t, tt, isize, cc;
 	h48h0k4_bfs_arg_t bfsarg[THREADS];
 	pthread_t thread[THREADS];
-	pthread_mutex_t distribution_mutex, table_mutex[CHUNKS];
+	pthread_mutex_t table_mutex[CHUNKS];
 
 	if (arg->buf == NULL)
 		goto gendata_h48h0k4_return_size;
@@ -244,7 +242,6 @@ gendata_h48h0k4(gendata_h48_arg_t *arg)
 
 	isize = h48max / THREADS;
 	isize = (isize / H48_COEFF(arg->k)) * H48_COEFF(arg->k);
-	pthread_mutex_init(&distribution_mutex, NULL);
 	for (t = 0; t < CHUNKS; t++)
 		pthread_mutex_init(&table_mutex[t], NULL);
 	for (t = 0; t < THREADS; t++) {
@@ -255,8 +252,6 @@ gendata_h48h0k4(gendata_h48_arg_t *arg)
 			.crep = arg->crep,
 			.start = isize * t,
 			.end = t == THREADS-1 ? (uint64_t)h48max : isize * (t+1),
-			.distribution = arg->info.distribution,
-			.distribution_mutex = &distribution_mutex,
 		};
 		for (tt = 0; tt < CHUNKS; tt++)
 			bfsarg[t].table_mutex[tt] = &table_mutex[tt];
@@ -344,10 +339,7 @@ gendata_h48h0k4_runthread(void *arg)
 		}
 	}
 
-	pthread_mutex_lock(bfsarg->distribution_mutex);
 	bfsarg->count += d;
-	bfsarg->distribution[bfsarg->depth] += d;
-	pthread_mutex_unlock(bfsarg->distribution_mutex);
 
 	return NULL;
 }
