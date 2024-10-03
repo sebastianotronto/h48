@@ -258,8 +258,8 @@ solve_h48_multithread(
 		.maxsolutions = maxsolutions,
 		.h = info.h48h,
 		.k = info.bits,
-		.cocsepdata = get_cocsepdata_ptr(data),
-		.h48data = get_h48data_ptr(data),
+		.cocsepdata = get_cocsepdata_constptr(data),
+		.h48data = get_h48data_constptr(data),
 		.nextsol = &solutions};
 
 	task_queue_t q;

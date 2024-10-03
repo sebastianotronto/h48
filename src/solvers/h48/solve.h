@@ -8,8 +8,8 @@ typedef struct {
 	int64_t maxsolutions;
 	uint8_t h;
 	uint8_t k;
-	uint32_t *cocsepdata;
-	uint8_t *h48data;
+	const uint32_t *cocsepdata;
+	const uint8_t *h48data;
 	char **nextsol;
 	uint8_t nissbranch;
 	int8_t npremoves;
@@ -183,8 +183,8 @@ solve_h48(
 		.maxsolutions = maxsolutions,
 		.h = info.h48h,
 		.k = info.bits,
-		.cocsepdata = get_cocsepdata_ptr(data),
-		.h48data = get_h48data_ptr(data),
+		.cocsepdata = get_cocsepdata_constptr(data),
+		.h48data = get_h48data_constptr(data),
 		.nextsol = &solutions
 	};
 

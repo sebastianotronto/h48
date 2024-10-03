@@ -10,8 +10,8 @@ typedef struct {
 	int8_t nmoves;
 	int8_t depth;
 	uint8_t moves[MAXLEN];
-	uint32_t *cocsepdata;
-	uint8_t *h48data;
+	const uint32_t *cocsepdata;
+	const uint8_t *h48data;
 	char *s;
 } dfsarg_solveh48stats_t;
 
@@ -80,8 +80,8 @@ solve_h48stats(
 
 	arg = (dfsarg_solveh48stats_t) {
 		.cube = cube,
-		.cocsepdata = get_cocsepdata_ptr(data),
-		.h48data = get_h48data_ptr(data),
+		.cocsepdata = get_cocsepdata_constptr(data),
+		.h48data = get_h48data_constptr(data),
 		.s = solutions
 	};
 
