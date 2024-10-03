@@ -59,7 +59,6 @@ typedef struct {
 	cube_t *crep;
 	uint64_t start;
 	uint64_t end;
-	uint64_t count;
 	pthread_mutex_t *table_mutex[CHUNKS];
 } h48h0k4_bfs_arg_t;
 
@@ -96,7 +95,7 @@ STATIC size_t gendata_h48(gendata_h48_arg_t *);
 STATIC size_t gendata_h48h0k4(gendata_h48_arg_t *);
 STATIC size_t gendata_h48k2(gendata_h48_arg_t *);
 STATIC void * gendata_h48h0k4_runthread(void *);
-STATIC_INLINE uint64_t gendata_h48_mark(gendata_h48_mark_t *);
+STATIC_INLINE void gendata_h48_mark(gendata_h48_mark_t *);
 STATIC_INLINE bool gendata_h48k2_dfs_stop(cube_t, int8_t, h48k2_dfs_arg_t *);
 STATIC size_t gendata_h48k2_realcoord(gendata_h48_arg_t *);
 STATIC void gendata_h48k2_dfs(h48k2_dfs_arg_t *arg);
@@ -208,7 +207,8 @@ STATIC size_t
 gendata_h48h0k4(gendata_h48_arg_t *arg)
 {
 	_Atomic uint8_t *table;
-	int64_t sc, done, d, h48max;
+	uint8_t val;
+	int64_t i, sc, done, d, h48max;
 	uint64_t t, tt, isize, cc;
 	h48h0k4_bfs_arg_t bfsarg[THREADS];
 	pthread_t thread[THREADS];
@@ -261,14 +261,16 @@ gendata_h48h0k4(gendata_h48_arg_t *arg)
 
 		for (t = 0; t < THREADS; t++) {
 			bfsarg[t].depth = d;
-			bfsarg[t].count = 0;
 			pthread_create(&thread[t], NULL,
 			    gendata_h48h0k4_runthread, &bfsarg[t]);
 		}
 
-		for (t = 0, cc = 0; t < THREADS; t++) {
+		for (t = 0; t < THREADS; t++)
 			pthread_join(thread[t], NULL);
-			cc += bfsarg[t].count;
+
+		for (i = 0, cc = 0; i < h48max; i++) {
+			val = get_h48_pval((uint8_t *)table, i, 4);
+			cc += val == d;
 		}
 
 		done += cc;
@@ -290,7 +292,7 @@ gendata_h48h0k4_runthread(void *arg)
 	static const uint8_t breakpoint = 10; /* Hand-picked optimal */
 
 	uint8_t c, m;
-	uint64_t i, d;
+	uint64_t i;
 	int64_t j;
 	cube_t cube, moved;
 	gendata_h48_mark_t markarg;
@@ -312,7 +314,7 @@ gendata_h48h0k4_runthread(void *arg)
          * If depth < breakpoint, scan all neighbors of coordinates at depth-1.
          * Otherwise, scan all neighbors of unvisited coordinates.
 	 */
-	for (i = bfsarg->start, d = 0; i < bfsarg->end; i++) {
+	for (i = bfsarg->start; i < bfsarg->end; i++) {
 		c = get_h48_pval((uint8_t *)bfsarg->table, i, 4);
 
 		if ((bfsarg->depth < breakpoint && c != bfsarg->depth - 1) ||
@@ -328,18 +330,16 @@ gendata_h48h0k4_runthread(void *arg)
 				if (c <= bfsarg->depth)
 					continue;
 				markarg.cube = moved;
-				d += gendata_h48_mark(&markarg);
+				gendata_h48_mark(&markarg);
 			} else {
 				if (c >= bfsarg->depth)
 					continue;
 				markarg.cube = cube;
-				d += gendata_h48_mark(&markarg);
+				gendata_h48_mark(&markarg);
 				break; /* Enough to find one, skip the rest */
 			}
 		}
 	}
-
-	bfsarg->count += d;
 
 	return NULL;
 }
@@ -428,7 +428,6 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 
 	h48map_destroy(&shortcubes);
 
-	/* TODO: inline into mark */
 	for (j = 0; j < H48_COORDMAX(arg->h); j++) {
 		t = get_h48_pval((uint8_t *)table, j, 2);
 		arg->info.distribution[t]++;
@@ -557,26 +556,23 @@ gendata_h48k2_dfs(h48k2_dfs_arg_t *arg)
 	}
 }
 
-STATIC_INLINE uint64_t
+STATIC_INLINE void
 gendata_h48_mark(gendata_h48_mark_t *arg)
 {
 	uint8_t oldval, newval;
-	uint64_t d;
 	int64_t coord, mutex;
 
-	d = 0;
 	FOREACH_H48SIM(arg->cube, arg->cocsepdata, arg->selfsim,
 		coord = coord_h48(arg->cube, arg->cocsepdata, arg->h);
-		mutex = H48_INDEX(coord, arg->k) % CHUNKS;
-		pthread_mutex_lock(arg->table_mutex[mutex]);
 		oldval = get_h48_pval((uint8_t *)arg->table, coord, arg->k);
 		newval = (uint8_t)MAX(arg->depth, 0);
-		d += newval < oldval;
-		set_h48_pval(arg->table, coord, arg->k, MIN(oldval, newval));
-		pthread_mutex_unlock(arg->table_mutex[mutex]);
+		if (newval < oldval) {
+			mutex = H48_INDEX(coord, arg->k) % CHUNKS;
+			pthread_mutex_lock(arg->table_mutex[mutex]);
+			set_h48_pval(arg->table, coord, arg->k, newval);
+			pthread_mutex_unlock(arg->table_mutex[mutex]);
+		}
 	)
-
-	return d;
 }
 
 STATIC_INLINE bool
