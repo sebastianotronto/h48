@@ -1,5 +1,6 @@
 STATIC cube_t solvecube(void);
-STATIC cube_t cubefromarray(uint8_t [static 8], uint8_t [static 12]);
+STATIC_INLINE cube_t cubefromarray_ce(uint8_t [static 8], uint8_t [static 12]);
+STATIC_INLINE cube_t cubefromarray_single(uint8_t [static 20]);
 STATIC bool isconsistent(cube_t);
 STATIC bool issolvable(cube_t);
 STATIC bool issolved(cube_t);
@@ -14,13 +15,21 @@ solvedcube(void)
 	return SOLVED_CUBE;
 }
 
-STATIC cube_t
-cubefromarray(uint8_t c[static 8], uint8_t e[static 12])
+STATIC_INLINE cube_t
+cubefromarray_ce(uint8_t c[static 8], uint8_t e[static 12])
 {
-	return STATIC_CUBE(
+	return cubefrompieces(
 	    c[0], c[1], c[2], c[3], c[4], c[5], c[6], c[7],
 	    e[0], e[1], e[2], e[3], e[4], e[5], e[6], e[7],
 	    e[8], e[9], e[10], e[11]);
+}
+
+STATIC_INLINE cube_t
+cubefromarray_single(uint8_t p[static 20])
+{
+	return cubefrompieces(
+	    p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9], p[10],
+	    p[11], p[12], p[13], p[14], p[15], p[16], p[17], p[18], p[19]);
 }
 
 STATIC bool
@@ -178,5 +187,5 @@ getcube(int64_t ep, int64_t eo, int64_t cp, int64_t co)
 	for (i = 0; i < 8; i++)
 		carr[i] |= coarr[i] << COSHIFT;
 
-	return cubefromarray(carr, earr);
+	return cubefromarray_ce(carr, earr);
 }

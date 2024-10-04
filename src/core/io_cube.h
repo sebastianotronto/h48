@@ -143,7 +143,7 @@ readcube_B32(const char *buf)
 		    "Error reading B32 edge %d (char %d)\n", i, i+9);
 	}
 
-	return cubefromarray(c, e);
+	return cubefromarray_ce(c, e);
 }
 
 STATIC cube_t
@@ -178,7 +178,7 @@ readcube_H48(const char *buf)
 		c[i] = piece | orient;
 	}
 
-	return cubefromarray(c, e);
+	return cubefromarray_ce(c, e);
 }
 
 STATIC uint8_t
@@ -210,7 +210,7 @@ readcube_LST(const char *buf)
 	for (i = 0; i < 12; i++)
 		e[i] = readpiece_LST(&buf);
 
-	return cubefromarray(c, e);
+	return cubefromarray_ce(c, e);
 }
 
 STATIC int

@@ -6,7 +6,7 @@
 #include "moves.h"
 
 /* TODO: work in progress */
-#if 0
+#if 1
 #include "transform.h"
 #else
 #include "transform_with_switch.h"
