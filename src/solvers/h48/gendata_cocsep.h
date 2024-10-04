@@ -57,13 +57,11 @@ gendata_cocsep(void *buf, uint64_t *selfsim, cube_t *rep)
 		.rep = rep
 	};
 	for (i = 0, n = 0, cc = 0; i < 10; i++) {
-		LOG("cocsep: generating depth %" PRIu8 "\n", i);
 		memset(visited, 0, COCSEP_VISITEDSIZE);
 		arg.depth = 0;
 		arg.maxdepth = i;
 		cc = gendata_cocsep_dfs(&arg);
 		info.distribution[i] = cc;
-		LOG("found %" PRIu32 "\n", cc);
 	}
 
 	writetableinfo(&info, buf);
