@@ -39,14 +39,13 @@ void run(void) {
 }
 
 int main(void) {
-
 	srand(time(NULL));
 	nissy_setlogger(log_stderr);
 
 	if (getdata(solver, options, &buf, filename) != 0)
 		return 1;
 
-	timerun(run, "small solver benchmark");
+	timerun(run);
 
 	free(buf);
 	return 0;

@@ -32,7 +32,6 @@ gendata_run_finish:
 
 int main(int argc, char **argv) {
 	uint8_t h, k;
-	char description[256];
 
 	if (argc < 3) {
 		fprintf(stderr, "Error: not enough arguments. "
@@ -44,12 +43,10 @@ int main(int argc, char **argv) {
 	options = argv[2];
 	parse_h48_options(options, &h, &k, NULL);
 	expected = expected_h48[h][k];
-	sprintf(description, "benchmark gendata_h48 h = %" PRIu8
-	    ", k = %" PRIu8 "", h, k);
 
 	nissy_setlogger(log_stderr);
 
-	timerun(run, description);
+	timerun(run);
 
 	return 0;
 }

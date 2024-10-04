@@ -7,8 +7,6 @@ void run(void) {
 }
 
 int main(int argc, char **argv) {
-	char description[256];
-
 	if (argc < 5) {
 		fprintf(stderr,
 		    "Error: not enough arguments. Required:\n"
@@ -23,11 +21,10 @@ int main(int argc, char **argv) {
 	opts_small = argv[2];
 	filename_large = argv[3];
 	filename_small = argv[4];
-	sprintf(description, "deriving %s from %s\n", opts_small, opts_large);
 
 	nissy_setlogger(log_stderr);
 
-	timerun(run, description);
+	timerun(run);
 
 	return 0;
 }

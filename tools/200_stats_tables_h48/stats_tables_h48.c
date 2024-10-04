@@ -92,7 +92,7 @@ int main(void) {
 	if (getdata(solver, options, &buf, filename) != 0)
 		return 1;
 
-	timerun(run, "h48 table stats");
+	timerun(run);
 
 	free(buf);
 	return 0;

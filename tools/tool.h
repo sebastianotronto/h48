@@ -10,7 +10,7 @@
 
 static void log_stderr(const char *, ...);
 static void log_stdout(const char *, ...);
-static double timerun(void (*)(void), const char *);
+static double timerun(void (*)(void));
 static void getfilename(const char *, const char *, char *);
 static void writetable(const char *, int64_t, const char *);
 static int64_t generatetable(const char *, const char *, char **);
@@ -41,23 +41,18 @@ write_stdout(const char *str, ...)
 }
 
 static double
-timerun(void (*run)(void), const char *name)
+timerun(void (*run)(void))
 {
 	struct timespec start, end;
 	double tdiff, tdsec, tdnano;
 
-	printf("\n");
 	fflush(stdout);
 
 	if (run == NULL) {
-		printf("> %s: nothing to run!\n", name);
+		printf("nothing to run!\n");
 		fflush(stdout);
 		return -1.0;
 	}
-
-	printf("Running tool: %s\n", name);
-	printf("==========\n");
-	fflush(stdout);
 
 	clock_gettime(CLOCK_MONOTONIC, &start);
 	run();
@@ -67,7 +62,7 @@ timerun(void (*run)(void), const char *name)
 	tdnano = end.tv_nsec - start.tv_nsec;
 	tdiff = tdsec + 1e-9 * tdnano;
 
-	printf("==========\n");
+	printf("---------\n");
 	printf("\nTotal time: %.4fs\n", tdiff);
 	fflush(stdout);
 

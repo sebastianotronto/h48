@@ -31,8 +31,6 @@ run(void) {
 }
 
 int main(int argc, char **argv) {
-	char description[256];
-
 	if (argc < 4) {
 		fprintf(stderr, "Error: not enough arguments. "
 		    "A solver, its options and a file name must be given.\n");
@@ -42,11 +40,9 @@ int main(int argc, char **argv) {
 	solver = argv[1];
 	options = argv[2];
 	filename = argv[3];
-	sprintf(description, "checking data for solver %s"
-	    "with options %s from file %s", solver, options, filename);
 	nissy_setlogger(log_stderr);
 
-	timerun(run, description);
+	timerun(run);
 
 	return 0;
 }
