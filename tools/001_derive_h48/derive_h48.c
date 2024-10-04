@@ -1,3 +1,14 @@
+/*
+This tool is specific to the H48 solver. It can be used to derive small
+intermediate tables from larger tables, including the full h11 table.
+
+When using k=2, the base values for the tables may differ. If you want
+to change this value, for example for generating a table with base = 9
+from the h11 table with base = 10, you must re-generate the large table
+with the correct base value. The easiest way to do so is to manually
+edit the base value in the source code and recompile.
+*/
+
 #include "../tool.h"
 
 char *opts_large, *opts_small, *filename_large, *filename_small;
