@@ -1,162 +1,343 @@
+#define TRANS_EDGES_ROTATION(T, c) \
+        compose_edges(compose_edges(TRANS_CUBE_ ## T, c), \
+        TRANS_CUBE_ ## T ## _INVERSE)
+#define TRANS_EDGES_MIRRORED(T, c) TRANS_EDGES_ROTATION(T, c)
+
+#define TRANS_CORNERS_ROTATION(T, c) \
+        compose_corners(compose_corners(TRANS_CUBE_ ## T, c), \
+        TRANS_CUBE_ ## T ## _INVERSE)
+#define TRANS_CORNERS_MIRRORED(T, c) \
+        invertco(compose_corners( \
+	compose_corners(TRANS_CUBE_ ## T, c), TRANS_CUBE_ ## T ## _INVERSE))
+
+#define TRANS_ROTATION(T, c) \
+        compose(compose(TRANS_CUBE_ ## T, c), \
+        TRANS_CUBE_ ## T ## _INVERSE)
+#define TRANS_MIRRORED(T, c) \
+        invertco(compose(compose(TRANS_CUBE_ ## T, c), \
+        TRANS_CUBE_ ## T ## _INVERSE))
+
 STATIC cube_t transform_edges(cube_t, uint8_t);
 STATIC cube_t transform_corners(cube_t, uint8_t);
 STATIC cube_t transform(cube_t, uint8_t);
 STATIC cube_t applytrans(cube_t, const char *);
 
-static uint8_t cube_trans_table[48][20] = {
-	[TRANS_UFr] = { TRANS_CUBE_UFr },
-	[TRANS_UFm] = { TRANS_CUBE_UFm },
-	[TRANS_ULr] = { TRANS_CUBE_ULr },
-	[TRANS_ULm] = { TRANS_CUBE_ULm },
-	[TRANS_UBr] = { TRANS_CUBE_UBr },
-	[TRANS_UBm] = { TRANS_CUBE_UBm },
-	[TRANS_URr] = { TRANS_CUBE_URr },
-	[TRANS_URm] = { TRANS_CUBE_URm },
-	[TRANS_DFr] = { TRANS_CUBE_DFr },
-	[TRANS_DFm] = { TRANS_CUBE_DFm },
-	[TRANS_DLr] = { TRANS_CUBE_DLr },
-	[TRANS_DLm] = { TRANS_CUBE_DLm },
-	[TRANS_DBr] = { TRANS_CUBE_DBr },
-	[TRANS_DBm] = { TRANS_CUBE_DBm },
-	[TRANS_DRr] = { TRANS_CUBE_DRr },
-	[TRANS_DRm] = { TRANS_CUBE_DRm },
-	[TRANS_RUr] = { TRANS_CUBE_RUr },
-	[TRANS_RUm] = { TRANS_CUBE_RUm },
-	[TRANS_RFr] = { TRANS_CUBE_RFr },
-	[TRANS_RFm] = { TRANS_CUBE_RFm },
-	[TRANS_RDr] = { TRANS_CUBE_RDr },
-	[TRANS_RDm] = { TRANS_CUBE_RDm },
-	[TRANS_RBr] = { TRANS_CUBE_RBr },
-	[TRANS_RBm] = { TRANS_CUBE_RBm },
-	[TRANS_LUr] = { TRANS_CUBE_LUr },
-	[TRANS_LUm] = { TRANS_CUBE_LUm },
-	[TRANS_LFr] = { TRANS_CUBE_LFr },
-	[TRANS_LFm] = { TRANS_CUBE_LFm },
-	[TRANS_LDr] = { TRANS_CUBE_LDr },
-	[TRANS_LDm] = { TRANS_CUBE_LDm },
-	[TRANS_LBr] = { TRANS_CUBE_LBr },
-	[TRANS_LBm] = { TRANS_CUBE_LBm },
-	[TRANS_FUr] = { TRANS_CUBE_FUr },
-	[TRANS_FUm] = { TRANS_CUBE_FUm },
-	[TRANS_FRr] = { TRANS_CUBE_FRr },
-	[TRANS_FRm] = { TRANS_CUBE_FRm },
-	[TRANS_FDr] = { TRANS_CUBE_FDr },
-	[TRANS_FDm] = { TRANS_CUBE_FDm },
-	[TRANS_FLr] = { TRANS_CUBE_FLr },
-	[TRANS_FLm] = { TRANS_CUBE_FLm },
-	[TRANS_BUr] = { TRANS_CUBE_BUr },
-	[TRANS_BUm] = { TRANS_CUBE_BUm },
-	[TRANS_BRr] = { TRANS_CUBE_BRr },
-	[TRANS_BRm] = { TRANS_CUBE_BRm },
-	[TRANS_BDr] = { TRANS_CUBE_BDr },
-	[TRANS_BDm] = { TRANS_CUBE_BDm },
-	[TRANS_BLr] = { TRANS_CUBE_BLr },
-	[TRANS_BLm] = { TRANS_CUBE_BLm },
-};
-
-static uint8_t cube_trans_table_inverse[48][20] = {
-	[TRANS_UFr] = { TRANS_CUBE_UFr_INVERSE },
-	[TRANS_UFm] = { TRANS_CUBE_UFm_INVERSE },
-	[TRANS_ULr] = { TRANS_CUBE_ULr_INVERSE },
-	[TRANS_ULm] = { TRANS_CUBE_ULm_INVERSE },
-	[TRANS_UBr] = { TRANS_CUBE_UBr_INVERSE },
-	[TRANS_UBm] = { TRANS_CUBE_UBm_INVERSE },
-	[TRANS_URr] = { TRANS_CUBE_URr_INVERSE },
-	[TRANS_URm] = { TRANS_CUBE_URm_INVERSE },
-	[TRANS_DFr] = { TRANS_CUBE_DFr_INVERSE },
-	[TRANS_DFm] = { TRANS_CUBE_DFm_INVERSE },
-	[TRANS_DLr] = { TRANS_CUBE_DLr_INVERSE },
-	[TRANS_DLm] = { TRANS_CUBE_DLm_INVERSE },
-	[TRANS_DBr] = { TRANS_CUBE_DBr_INVERSE },
-	[TRANS_DBm] = { TRANS_CUBE_DBm_INVERSE },
-	[TRANS_DRr] = { TRANS_CUBE_DRr_INVERSE },
-	[TRANS_DRm] = { TRANS_CUBE_DRm_INVERSE },
-	[TRANS_RUr] = { TRANS_CUBE_RUr_INVERSE },
-	[TRANS_RUm] = { TRANS_CUBE_RUm_INVERSE },
-	[TRANS_RFr] = { TRANS_CUBE_RFr_INVERSE },
-	[TRANS_RFm] = { TRANS_CUBE_RFm_INVERSE },
-	[TRANS_RDr] = { TRANS_CUBE_RDr_INVERSE },
-	[TRANS_RDm] = { TRANS_CUBE_RDm_INVERSE },
-	[TRANS_RBr] = { TRANS_CUBE_RBr_INVERSE },
-	[TRANS_RBm] = { TRANS_CUBE_RBm_INVERSE },
-	[TRANS_LUr] = { TRANS_CUBE_LUr_INVERSE },
-	[TRANS_LUm] = { TRANS_CUBE_LUm_INVERSE },
-	[TRANS_LFr] = { TRANS_CUBE_LFr_INVERSE },
-	[TRANS_LFm] = { TRANS_CUBE_LFm_INVERSE },
-	[TRANS_LDr] = { TRANS_CUBE_LDr_INVERSE },
-	[TRANS_LDm] = { TRANS_CUBE_LDm_INVERSE },
-	[TRANS_LBr] = { TRANS_CUBE_LBr_INVERSE },
-	[TRANS_LBm] = { TRANS_CUBE_LBm_INVERSE },
-	[TRANS_FUr] = { TRANS_CUBE_FUr_INVERSE },
-	[TRANS_FUm] = { TRANS_CUBE_FUm_INVERSE },
-	[TRANS_FRr] = { TRANS_CUBE_FRr_INVERSE },
-	[TRANS_FRm] = { TRANS_CUBE_FRm_INVERSE },
-	[TRANS_FDr] = { TRANS_CUBE_FDr_INVERSE },
-	[TRANS_FDm] = { TRANS_CUBE_FDm_INVERSE },
-	[TRANS_FLr] = { TRANS_CUBE_FLr_INVERSE },
-	[TRANS_FLm] = { TRANS_CUBE_FLm_INVERSE },
-	[TRANS_BUr] = { TRANS_CUBE_BUr_INVERSE },
-	[TRANS_BUm] = { TRANS_CUBE_BUm_INVERSE },
-	[TRANS_BRr] = { TRANS_CUBE_BRr_INVERSE },
-	[TRANS_BRm] = { TRANS_CUBE_BRm_INVERSE },
-	[TRANS_BDr] = { TRANS_CUBE_BDr_INVERSE },
-	[TRANS_BDm] = { TRANS_CUBE_BDm_INVERSE },
-	[TRANS_BLr] = { TRANS_CUBE_BLr_INVERSE },
-	[TRANS_BLm] = { TRANS_CUBE_BLm_INVERSE },
-};
-
 STATIC cube_t
 transform_edges(cube_t c, uint8_t t)
 {
-	cube_t ret, trans_cube, trans_inv;
-
-	DBG_ASSERT(t < 48, ZERO_CUBE,
-	    "transform: invalid transformation %" PRIu8
-	    ", must be between 0 and 47\n", t);
-
-	trans_cube = cubefromarray_single(cube_trans_table[t]);
-	trans_inv = cubefromarray_single(cube_trans_table_inverse[t]);
-
-	ret = compose_edges(trans_cube, c);
-	ret = compose_edges(ret, trans_inv);
-
-	return ret;
+	switch (t) {
+	case TRANS_UFr:
+		return c;
+	case TRANS_ULr:
+		return TRANS_EDGES_ROTATION(ULr, c);
+	case TRANS_UBr:
+		return TRANS_EDGES_ROTATION(UBr, c);
+	case TRANS_URr:
+		return TRANS_EDGES_ROTATION(URr, c);
+	case TRANS_DFr:
+		return TRANS_EDGES_ROTATION(DFr, c);
+	case TRANS_DLr:
+		return TRANS_EDGES_ROTATION(DLr, c);
+	case TRANS_DBr:
+		return TRANS_EDGES_ROTATION(DBr, c);
+	case TRANS_DRr:
+		return TRANS_EDGES_ROTATION(DRr, c);
+	case TRANS_RUr:
+		return TRANS_EDGES_ROTATION(RUr, c);
+	case TRANS_RFr:
+		return TRANS_EDGES_ROTATION(RFr, c);
+	case TRANS_RDr:
+		return TRANS_EDGES_ROTATION(RDr, c);
+	case TRANS_RBr:
+		return TRANS_EDGES_ROTATION(RBr, c);
+	case TRANS_LUr:
+		return TRANS_EDGES_ROTATION(LUr, c);
+	case TRANS_LFr:
+		return TRANS_EDGES_ROTATION(LFr, c);
+	case TRANS_LDr:
+		return TRANS_EDGES_ROTATION(LDr, c);
+	case TRANS_LBr:
+		return TRANS_EDGES_ROTATION(LBr, c);
+	case TRANS_FUr:
+		return TRANS_EDGES_ROTATION(FUr, c);
+	case TRANS_FRr:
+		return TRANS_EDGES_ROTATION(FRr, c);
+	case TRANS_FDr:
+		return TRANS_EDGES_ROTATION(FDr, c);
+	case TRANS_FLr:
+		return TRANS_EDGES_ROTATION(FLr, c);
+	case TRANS_BUr:
+		return TRANS_EDGES_ROTATION(BUr, c);
+	case TRANS_BRr:
+		return TRANS_EDGES_ROTATION(BRr, c);
+	case TRANS_BDr:
+		return TRANS_EDGES_ROTATION(BDr, c);
+	case TRANS_BLr:
+		return TRANS_EDGES_ROTATION(BLr, c);
+	case TRANS_UFm:
+		return TRANS_EDGES_MIRRORED(UFm, c);
+	case TRANS_ULm:
+		return TRANS_EDGES_MIRRORED(ULm, c);
+	case TRANS_UBm:
+		return TRANS_EDGES_MIRRORED(UBm, c);
+	case TRANS_URm:
+		return TRANS_EDGES_MIRRORED(URm, c);
+	case TRANS_DFm:
+		return TRANS_EDGES_MIRRORED(DFm, c);
+	case TRANS_DLm:
+		return TRANS_EDGES_MIRRORED(DLm, c);
+	case TRANS_DBm:
+		return TRANS_EDGES_MIRRORED(DBm, c);
+	case TRANS_DRm:
+		return TRANS_EDGES_MIRRORED(DRm, c);
+	case TRANS_RUm:
+		return TRANS_EDGES_MIRRORED(RUm, c);
+	case TRANS_RFm:
+		return TRANS_EDGES_MIRRORED(RFm, c);
+	case TRANS_RDm:
+		return TRANS_EDGES_MIRRORED(RDm, c);
+	case TRANS_RBm:
+		return TRANS_EDGES_MIRRORED(RBm, c);
+	case TRANS_LUm:
+		return TRANS_EDGES_MIRRORED(LUm, c);
+	case TRANS_LFm:
+		return TRANS_EDGES_MIRRORED(LFm, c);
+	case TRANS_LDm:
+		return TRANS_EDGES_MIRRORED(LDm, c);
+	case TRANS_LBm:
+		return TRANS_EDGES_MIRRORED(LBm, c);
+	case TRANS_FUm:
+		return TRANS_EDGES_MIRRORED(FUm, c);
+	case TRANS_FRm:
+		return TRANS_EDGES_MIRRORED(FRm, c);
+	case TRANS_FDm:
+		return TRANS_EDGES_MIRRORED(FDm, c);
+	case TRANS_FLm:
+		return TRANS_EDGES_MIRRORED(FLm, c);
+	case TRANS_BUm:
+		return TRANS_EDGES_MIRRORED(BUm, c);
+	case TRANS_BRm:
+		return TRANS_EDGES_MIRRORED(BRm, c);
+	case TRANS_BDm:
+		return TRANS_EDGES_MIRRORED(BDm, c);
+	case TRANS_BLm:
+		return TRANS_EDGES_MIRRORED(BLm, c);
+	default:
+		LOG("transform error, unknown transformation %" PRIu8 "\n", t);
+		return ZERO_CUBE;
+	}
 }
 
 STATIC cube_t
 transform_corners(cube_t c, uint8_t t)
 {
-	cube_t ret, trans_cube, trans_inv;
-
-	DBG_ASSERT(t < 48, ZERO_CUBE,
-	    "transform: invalid transformation %" PRIu8
-	    ", must be between 0 and 47\n", t);
-
-	trans_cube = cubefromarray_single(cube_trans_table[t]);
-	trans_inv = cubefromarray_single(cube_trans_table_inverse[t]);
-
-	ret = compose_corners(trans_cube, c);
-	ret = compose_corners(ret, trans_inv);
-
-	return t < 24 ? ret : invertco(ret);
+	switch (t) {
+	case TRANS_UFr:
+		return c;
+	case TRANS_ULr:
+		return TRANS_CORNERS_ROTATION(ULr, c);
+	case TRANS_UBr:
+		return TRANS_CORNERS_ROTATION(UBr, c);
+	case TRANS_URr:
+		return TRANS_CORNERS_ROTATION(URr, c);
+	case TRANS_DFr:
+		return TRANS_CORNERS_ROTATION(DFr, c);
+	case TRANS_DLr:
+		return TRANS_CORNERS_ROTATION(DLr, c);
+	case TRANS_DBr:
+		return TRANS_CORNERS_ROTATION(DBr, c);
+	case TRANS_DRr:
+		return TRANS_CORNERS_ROTATION(DRr, c);
+	case TRANS_RUr:
+		return TRANS_CORNERS_ROTATION(RUr, c);
+	case TRANS_RFr:
+		return TRANS_CORNERS_ROTATION(RFr, c);
+	case TRANS_RDr:
+		return TRANS_CORNERS_ROTATION(RDr, c);
+	case TRANS_RBr:
+		return TRANS_CORNERS_ROTATION(RBr, c);
+	case TRANS_LUr:
+		return TRANS_CORNERS_ROTATION(LUr, c);
+	case TRANS_LFr:
+		return TRANS_CORNERS_ROTATION(LFr, c);
+	case TRANS_LDr:
+		return TRANS_CORNERS_ROTATION(LDr, c);
+	case TRANS_LBr:
+		return TRANS_CORNERS_ROTATION(LBr, c);
+	case TRANS_FUr:
+		return TRANS_CORNERS_ROTATION(FUr, c);
+	case TRANS_FRr:
+		return TRANS_CORNERS_ROTATION(FRr, c);
+	case TRANS_FDr:
+		return TRANS_CORNERS_ROTATION(FDr, c);
+	case TRANS_FLr:
+		return TRANS_CORNERS_ROTATION(FLr, c);
+	case TRANS_BUr:
+		return TRANS_CORNERS_ROTATION(BUr, c);
+	case TRANS_BRr:
+		return TRANS_CORNERS_ROTATION(BRr, c);
+	case TRANS_BDr:
+		return TRANS_CORNERS_ROTATION(BDr, c);
+	case TRANS_BLr:
+		return TRANS_CORNERS_ROTATION(BLr, c);
+	case TRANS_UFm:
+		return TRANS_CORNERS_MIRRORED(UFm, c);
+	case TRANS_ULm:
+		return TRANS_CORNERS_MIRRORED(ULm, c);
+	case TRANS_UBm:
+		return TRANS_CORNERS_MIRRORED(UBm, c);
+	case TRANS_URm:
+		return TRANS_CORNERS_MIRRORED(URm, c);
+	case TRANS_DFm:
+		return TRANS_CORNERS_MIRRORED(DFm, c);
+	case TRANS_DLm:
+		return TRANS_CORNERS_MIRRORED(DLm, c);
+	case TRANS_DBm:
+		return TRANS_CORNERS_MIRRORED(DBm, c);
+	case TRANS_DRm:
+		return TRANS_CORNERS_MIRRORED(DRm, c);
+	case TRANS_RUm:
+		return TRANS_CORNERS_MIRRORED(RUm, c);
+	case TRANS_RFm:
+		return TRANS_CORNERS_MIRRORED(RFm, c);
+	case TRANS_RDm:
+		return TRANS_CORNERS_MIRRORED(RDm, c);
+	case TRANS_RBm:
+		return TRANS_CORNERS_MIRRORED(RBm, c);
+	case TRANS_LUm:
+		return TRANS_CORNERS_MIRRORED(LUm, c);
+	case TRANS_LFm:
+		return TRANS_CORNERS_MIRRORED(LFm, c);
+	case TRANS_LDm:
+		return TRANS_CORNERS_MIRRORED(LDm, c);
+	case TRANS_LBm:
+		return TRANS_CORNERS_MIRRORED(LBm, c);
+	case TRANS_FUm:
+		return TRANS_CORNERS_MIRRORED(FUm, c);
+	case TRANS_FRm:
+		return TRANS_CORNERS_MIRRORED(FRm, c);
+	case TRANS_FDm:
+		return TRANS_CORNERS_MIRRORED(FDm, c);
+	case TRANS_FLm:
+		return TRANS_CORNERS_MIRRORED(FLm, c);
+	case TRANS_BUm:
+		return TRANS_CORNERS_MIRRORED(BUm, c);
+	case TRANS_BRm:
+		return TRANS_CORNERS_MIRRORED(BRm, c);
+	case TRANS_BDm:
+		return TRANS_CORNERS_MIRRORED(BDm, c);
+	case TRANS_BLm:
+		return TRANS_CORNERS_MIRRORED(BLm, c);
+	default:
+		LOG("transform error, unknown transformation %" PRIu8 "\n", t);
+		return ZERO_CUBE;
+	}
 }
 
 STATIC cube_t
 transform(cube_t c, uint8_t t)
 {
-	cube_t ret, trans_cube, trans_inv;
-
-	DBG_ASSERT(t < 48, ZERO_CUBE,
-	    "transform: invalid transformation %" PRIu8
-	    ", must be between 0 and 47\n", t);
-
-	trans_cube = cubefromarray_single(cube_trans_table[t]);
-	trans_inv = cubefromarray_single(cube_trans_table_inverse[t]);
-
-	ret = compose(trans_cube, c);
-	ret = compose(ret, trans_inv);
-
-	return t < 24 ? ret : invertco(ret);
+	switch (t) {
+	case TRANS_UFr:
+		return c;
+	case TRANS_ULr:
+		return TRANS_ROTATION(ULr, c);
+	case TRANS_UBr:
+		return TRANS_ROTATION(UBr, c);
+	case TRANS_URr:
+		return TRANS_ROTATION(URr, c);
+	case TRANS_DFr:
+		return TRANS_ROTATION(DFr, c);
+	case TRANS_DLr:
+		return TRANS_ROTATION(DLr, c);
+	case TRANS_DBr:
+		return TRANS_ROTATION(DBr, c);
+	case TRANS_DRr:
+		return TRANS_ROTATION(DRr, c);
+	case TRANS_RUr:
+		return TRANS_ROTATION(RUr, c);
+	case TRANS_RFr:
+		return TRANS_ROTATION(RFr, c);
+	case TRANS_RDr:
+		return TRANS_ROTATION(RDr, c);
+	case TRANS_RBr:
+		return TRANS_ROTATION(RBr, c);
+	case TRANS_LUr:
+		return TRANS_ROTATION(LUr, c);
+	case TRANS_LFr:
+		return TRANS_ROTATION(LFr, c);
+	case TRANS_LDr:
+		return TRANS_ROTATION(LDr, c);
+	case TRANS_LBr:
+		return TRANS_ROTATION(LBr, c);
+	case TRANS_FUr:
+		return TRANS_ROTATION(FUr, c);
+	case TRANS_FRr:
+		return TRANS_ROTATION(FRr, c);
+	case TRANS_FDr:
+		return TRANS_ROTATION(FDr, c);
+	case TRANS_FLr:
+		return TRANS_ROTATION(FLr, c);
+	case TRANS_BUr:
+		return TRANS_ROTATION(BUr, c);
+	case TRANS_BRr:
+		return TRANS_ROTATION(BRr, c);
+	case TRANS_BDr:
+		return TRANS_ROTATION(BDr, c);
+	case TRANS_BLr:
+		return TRANS_ROTATION(BLr, c);
+	case TRANS_UFm:
+		return TRANS_MIRRORED(UFm, c);
+	case TRANS_ULm:
+		return TRANS_MIRRORED(ULm, c);
+	case TRANS_UBm:
+		return TRANS_MIRRORED(UBm, c);
+	case TRANS_URm:
+		return TRANS_MIRRORED(URm, c);
+	case TRANS_DFm:
+		return TRANS_MIRRORED(DFm, c);
+	case TRANS_DLm:
+		return TRANS_MIRRORED(DLm, c);
+	case TRANS_DBm:
+		return TRANS_MIRRORED(DBm, c);
+	case TRANS_DRm:
+		return TRANS_MIRRORED(DRm, c);
+	case TRANS_RUm:
+		return TRANS_MIRRORED(RUm, c);
+	case TRANS_RFm:
+		return TRANS_MIRRORED(RFm, c);
+	case TRANS_RDm:
+		return TRANS_MIRRORED(RDm, c);
+	case TRANS_RBm:
+		return TRANS_MIRRORED(RBm, c);
+	case TRANS_LUm:
+		return TRANS_MIRRORED(LUm, c);
+	case TRANS_LFm:
+		return TRANS_MIRRORED(LFm, c);
+	case TRANS_LDm:
+		return TRANS_MIRRORED(LDm, c);
+	case TRANS_LBm:
+		return TRANS_MIRRORED(LBm, c);
+	case TRANS_FUm:
+		return TRANS_MIRRORED(FUm, c);
+	case TRANS_FRm:
+		return TRANS_MIRRORED(FRm, c);
+	case TRANS_FDm:
+		return TRANS_MIRRORED(FDm, c);
+	case TRANS_FLm:
+		return TRANS_MIRRORED(FLm, c);
+	case TRANS_BUm:
+		return TRANS_MIRRORED(BUm, c);
+	case TRANS_BRm:
+		return TRANS_MIRRORED(BRm, c);
+	case TRANS_BDm:
+		return TRANS_MIRRORED(BDm, c);
+	case TRANS_BLm:
+		return TRANS_MIRRORED(BLm, c);
+	default:
+		LOG("transform error, unknown transformation %" PRIu8 "\n", t);
+		return ZERO_CUBE;
+	}
 }
 
 STATIC cube_t

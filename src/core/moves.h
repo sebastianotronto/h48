@@ -1,5 +1,5 @@
-#define MOVE(M, c) compose(c, cubefrompieces(MOVE_CUBE_ ## M))
-#define PREMOVE(M, c) compose(cubefrompieces(MOVE_CUBE_ ## M), c)
+#define MOVE(M, c) compose(c, MOVE_CUBE_ ## M)
+#define PREMOVE(M, c) compose(MOVE_CUBE_ ## M, c)
 
 STATIC_INLINE bool allowednextmove(uint8_t *, uint8_t);
 

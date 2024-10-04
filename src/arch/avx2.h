@@ -6,6 +6,16 @@
 #define EO_AVX2 \
     _mm256_set_epi64x(INT64_C(0x10101010), INT64_C(0x1010101010101010), 0, 0)
 
+#define STATIC_CUBE(c_ufr, c_ubl, c_dfl, c_dbr, c_ufl, c_ubr, c_dfr, c_dbl, \
+    e_uf, e_ub, e_db, e_df, e_ur, e_ul, e_dl, e_dr, e_fr, e_fl, e_bl, e_br) \
+    _mm256_set_epi8(0, 0, 0, 0, e_br, e_bl, e_fl, e_fr, \
+        e_dr, e_dl, e_ul, e_ur, e_df, e_db, e_ub, e_uf, \
+        0, 0, 0, 0, 0, 0, 0, 0, \
+        c_dbl, c_dfr, c_ubr, c_ufl, c_dbr, c_dfl, c_ubl, c_ufr)
+#define ZERO_CUBE _mm256_set_epi64x(0, 0, 0, 0)
+#define SOLVED_CUBE STATIC_CUBE( \
+    0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
+
 STATIC void
 pieces(cube_t *cube, uint8_t c[static 8], uint8_t e[static 12])
 {
@@ -14,38 +24,6 @@ pieces(cube_t *cube, uint8_t c[static 8], uint8_t e[static 12])
 	_mm256_storeu_si256((__m256i_u *)aux, *cube);
 	memcpy(c, aux, 8);
 	memcpy(e, aux+16, 12);
-}
-
-STATIC_INLINE cube_t
-cubefrompieces(
-	uint8_t c_ufr,
-	uint8_t c_ubl,
-	uint8_t c_dfl,
-	uint8_t c_dbr,
-	uint8_t c_ufl,
-	uint8_t c_ubr,
-	uint8_t c_dfr,
-	uint8_t c_dbl, 
-
-	uint8_t e_uf,
-	uint8_t e_ub,
-	uint8_t e_db,
-	uint8_t e_df,
-	uint8_t e_ur,
-	uint8_t e_ul,
-	uint8_t e_dl,
-	uint8_t e_dr,
-	uint8_t e_fr,
-	uint8_t e_fl,
-	uint8_t e_bl,
-	uint8_t e_br
-) {
-	return _mm256_set_epi8(
-	    0, 0, 0, 0, e_br, e_bl, e_fl, e_fr,
-	    e_dr, e_dl, e_ul, e_ur, e_df, e_db, e_ub, e_uf,
-            0, 0, 0, 0, 0, 0, 0, 0,
-            c_dbl, c_dfr, c_ubr, c_ufl, c_dbr, c_dfl, c_ubl, c_ufr
-	);
 }
 
 STATIC_INLINE bool

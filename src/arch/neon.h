@@ -7,6 +7,25 @@
 STATIC_INLINE uint8x16_t compose_edges_slim(uint8x16_t, uint8x16_t);
 STATIC_INLINE uint8x16_t compose_corners_slim(uint8x16_t, uint8x16_t);
 
+// static cube
+#define STATIC_CUBE(c_ufr, c_ubl, c_dfl, c_dbr, c_ufl, c_ubr, c_dfr, c_dbl, \
+					e_uf, e_ub, e_db, e_df, e_ur, e_ul, e_dl, e_dr, e_fr, e_fl, e_bl, e_br) \
+	((cube_t){ \
+		.corner = {c_ufr, c_ubl, c_dfl, c_dbr, c_ufl, c_ubr, c_dfr, c_dbl, 0, 0, 0, 0, 0, 0, 0, 0}, \
+		.edge = {e_uf, e_ub, e_db, e_df, e_ur, e_ul, e_dl, e_dr, e_fr, e_fl, e_bl, e_br, 0, 0, 0, 0}})
+
+// zero cube
+#define ZERO_CUBE \
+	(cube_t) \
+	{ \
+		.corner = vdupq_n_u8(0), \
+		.edge = vdupq_n_u8(0) \
+	}
+
+// solved cube
+#define SOLVED_CUBE STATIC_CUBE(	\
+	0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
+
 STATIC void
 pieces(cube_t *cube, uint8_t c[static 8], uint8_t e[static 12])
 {
@@ -18,44 +37,6 @@ pieces(cube_t *cube, uint8_t c[static 8], uint8_t e[static 12])
 	vst1_u8(e, vget_low_u8(cube->edge));
 	// Next 4 bytes
 	vst1_lane_u32((uint32_t *)(e + 8), vreinterpret_u32_u8(vget_high_u8(cube->edge)), 0);
-}
-
-STATIC_INLINE cube_t
-cubefrompieces(
-	uint8_t c_ufr,
-	uint8_t c_ubl,
-	uint8_t c_dfl,
-	uint8_t c_dbr,
-	uint8_t c_ufl,
-	uint8_t c_ubr,
-	uint8_t c_dfr,
-	uint8_t c_dbl, 
-
-	uint8_t e_uf,
-	uint8_t e_ub,
-	uint8_t e_db,
-	uint8_t e_df,
-	uint8_t e_ur,
-	uint8_t e_ul,
-	uint8_t e_dl,
-	uint8_t e_dr,
-	uint8_t e_fr,
-	uint8_t e_fl,
-	uint8_t e_bl,
-	uint8_t e_br
-) {
-	cube_t ret = {
-		.corner = {
-			c_ufr, c_ubl, c_dfl, c_dbr, c_ufl, c_ubr, c_dfr, c_dbl,
-			0, 0, 0, 0, 0, 0, 0, 0
-		},
-		.edge = {
-			e_uf, e_ub, e_db, e_df, e_ur, e_ul, e_dl, e_dr, e_fr,
-			e_fl, e_bl, e_br, 0, 0, 0, 0
-		}
-	};
-
-	return ret;
 }
 
 STATIC_INLINE bool

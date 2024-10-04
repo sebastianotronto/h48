@@ -1,11 +1,4 @@
-#define ZERO_CUBE cubefrompieces( \
-    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-#define SOLVED_CUBE cubefrompieces( \
-    0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
 STATIC void pieces(cube_t *, uint8_t [static 8], uint8_t [static 12]);
-STATIC_INLINE cube_t cubefrompieces(uint8_t, uint8_t, uint8_t, uint8_t,
-    uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t,
-    uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t);
 STATIC_INLINE bool equal(cube_t, cube_t);
 STATIC_INLINE cube_t invertco(cube_t);
 STATIC_INLINE cube_t compose_epcpeo(cube_t, cube_t);
