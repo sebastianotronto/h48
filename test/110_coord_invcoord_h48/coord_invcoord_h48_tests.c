@@ -1,8 +1,5 @@
 #include "../test.h"
 
-#define COCSEP_CLASSES 3393
-#define INFOSIZE       512
-
 size_t gendata_cocsep(void *, uint64_t *, cube_t *);
 int64_t coord_h48(cube_t, const uint32_t *, uint8_t);
 cube_t invcoord_h48(int64_t, const cube_t *, uint8_t);

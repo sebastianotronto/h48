@@ -1,11 +1,5 @@
 #include "../test.h"
 
-#define COCLASS_MASK          (UINT32_C(0xFFFF) << UINT32_C(16))
-#define COCLASS(x)            (((x) & COCLASS_MASK) >> UINT32_C(16))
-
-#define INFOSIZE       512
-#define COCSEP_CLASSES 3393
-
 size_t gendata_cocsep(void *, uint64_t *, cube_t *);
 cube_t transform(cube_t, uint8_t);
 int64_t coord_cocsep(cube_t);

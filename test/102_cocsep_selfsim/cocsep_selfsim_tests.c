@@ -7,9 +7,6 @@
  */
 #include "../test.h"
 
-#define COCSEP_CLASSES 3393
-#define INFOSIZE       512
-
 size_t gendata_cocsep(void *, uint64_t *, cube_t *);
 int64_t coord_cocsep(cube_t);
 

@@ -1,25 +1,3 @@
-#define COCSEP_CLASSES        ((size_t)3393)
-#define COCSEP_TABLESIZE      ((size_t)POW_3_7 << (size_t)7)
-#define COCSEP_VISITEDSIZE    DIV_ROUND_UP(COCSEP_TABLESIZE, (size_t)8)
-#define COCSEP_FULLSIZE       (INFOSIZE + (size_t)4 * COCSEP_TABLESIZE)
-
-#define VISITED_IND(i)        ((uint32_t)(i) / UINT32_C(8))
-#define VISITED_MASK(i)       (UINT32_C(1) << ((uint32_t)(i) % UINT32_C(8)))
-
-#define CBOUND_MASK           UINT32_C(0xFF)
-#define CBOUND(x)             ((x) & CBOUND_MASK)
-
-typedef struct {
-	cube_t cube;
-	uint8_t depth;
-	uint8_t maxdepth;
-	uint16_t *n;
-	uint32_t *buf32;
-	uint8_t *visited;
-	uint64_t *selfsim;
-	cube_t *rep;
-} cocsep_dfs_arg_t;
-
 STATIC_INLINE bool get_visited(const uint8_t *, int64_t);
 STATIC_INLINE void set_visited(uint8_t *, int64_t);
 

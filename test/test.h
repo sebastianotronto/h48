@@ -1,6 +1,7 @@
 #define TEST_H
 
 #include <inttypes.h>
+#include <pthread.h>
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -8,6 +9,10 @@
 #include <string.h>
 
 #include "../src/arch/arch.h"
+#include "../src/solvers/tables_types_macros.h"
+#include "../src/solvers/h48/coordinate_macros.h"
+#include "../src/solvers/h48/map_types_macros.h"
+#include "../src/solvers/h48/gendata_types_macros.h"
 
 #define STRLENMAX 10000
 

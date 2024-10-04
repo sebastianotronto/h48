@@ -1,41 +1,5 @@
-#define OFFSET(B, K)             (((uint8_t *)B) + K)
-
-#define INFOSIZE                 512
-#define INFO_SOLVER_STRLEN       100
-#define INFO_DISTRIBUTION_LEN    21
-
-#define TABLETYPE_PRUNING        0
-#define TABLETYPE_SPECIAL        1
-
-#define INFO_OFFSET_DISTRIBUTION 0
-#define INFO_OFFSET_TYPE         (INFO_DISTRIBUTION_LEN * sizeof(uint64_t))
-#define INFO_OFFSET_INFOSIZE     (INFO_OFFSET_TYPE + sizeof(uint64_t))
-#define INFO_OFFSET_FULLSIZE     (INFO_OFFSET_INFOSIZE + sizeof(uint64_t))
-#define INFO_OFFSET_HASH         (INFO_OFFSET_FULLSIZE + sizeof(uint64_t))
-#define INFO_OFFSET_ENTRIES      (INFO_OFFSET_HASH + sizeof(uint64_t))
-#define INFO_OFFSET_CLASSES      (INFO_OFFSET_ENTRIES + sizeof(uint64_t))
-#define INFO_OFFSET_NEXT         (INFO_OFFSET_CLASSES + sizeof(uint64_t))
-#define INFO_OFFSET_SOLVER       (INFO_OFFSET_NEXT + sizeof(uint64_t))
-#define INFO_OFFSET_H48H         (INFO_OFFSET_SOLVER + INFO_SOLVER_STRLEN)
-#define INFO_OFFSET_BITS         (INFO_OFFSET_H48H + sizeof(uint8_t))
-#define INFO_OFFSET_BASE         (INFO_OFFSET_BITS + sizeof(uint8_t))
-#define INFO_OFFSET_MAXVALUE     (INFO_OFFSET_BASE + sizeof(uint8_t))
-
-typedef struct {
-	uint64_t distribution[INFO_DISTRIBUTION_LEN];
-	uint64_t type;
-	uint64_t infosize;
-	uint64_t fullsize;
-	uint64_t hash;
-	uint64_t entries;
-	uint64_t classes; /* Used only by cocsepdata, for now */
-	uint64_t next;
-	char solver[INFO_SOLVER_STRLEN];
-	uint8_t h48h; /* Specific to H48 tables */
-	uint8_t bits;
-	uint8_t base;
-	uint8_t maxvalue;
-} tableinfo_t;
+/* Type definitions and macros are in a separate file for easier testing */
+#include "tables_types_macros.h"
 
 STATIC bool readtableinfo(const void *, tableinfo_t *);
 STATIC bool readtableinfo_n(const void *, uint8_t, tableinfo_t *);

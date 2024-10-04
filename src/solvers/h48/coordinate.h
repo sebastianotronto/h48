@@ -1,9 +1,5 @@
-#define H48_ESIZE(h) ((COMB_12_4 * COMB_8_4) << (int64_t)(h))
-
-#define COCLASS_MASK (UINT32_C(0xFFFF) << UINT32_C(16))
-#define COCLASS(x)   (((x) & COCLASS_MASK) >> UINT32_C(16))
-#define TTREP_MASK   (UINT32_C(0xFF) << UINT32_C(8))
-#define TTREP(x)     (((x) & TTREP_MASK) >> UINT32_C(8))
+/* Macros defined in a separate file for easier testing */
+#include "coordinate_macros.h"
 
 STATIC_INLINE int64_t coord_h48(cube_t, const uint32_t *, uint8_t);
 STATIC_INLINE int64_t coord_h48_edges(cube_t, int64_t, uint8_t, uint8_t);

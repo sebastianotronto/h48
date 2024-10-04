@@ -1,19 +1,6 @@
 #include "../test.h"
 
-#define MAP_KEYSHIFT          UINT64_C(40)
 #define MAXPOS 1000
-
-typedef struct {
-	uint64_t n;
-	uint64_t capacity;
-	uint64_t randomizer;
-	uint64_t *table;
-} h48map_t;
-
-typedef struct {
-	uint64_t key;
-	uint64_t val;
-} kvpair_t;
 
 void h48map_create(h48map_t *, uint64_t, uint64_t);
 void h48map_destroy(h48map_t *);

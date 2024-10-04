@@ -1,33 +1,6 @@
 #include "../test.h"
 
-#define COCSEP_CLASSES 3393
-#define INFOSIZE       512
-#define MAXPOS         200
-
-typedef struct {
-	uint64_t n;
-	uint64_t capacity;
-	uint64_t randomizer;
-	uint64_t *table;
-	uint32_t *info;
-	uint32_t *cocsepdata;
-	uint32_t *h48data;
-	uint64_t selfsim[COCSEP_CLASSES];
-	cube_t crep[COCSEP_CLASSES];
-} h48map_t;
-
-typedef struct {
-	uint64_t key;
-	uint64_t val;
-} kvpair_t;
-
-typedef struct {
-	uint8_t maxdepth;
-	const uint32_t *cocsepdata;
-	const cube_t *crep;
-	const uint64_t *selfsim;
-	h48map_t *map;
-} gendata_h48short_arg_t;
+#define MAXPOS 200
 
 void h48map_create(h48map_t *, uint64_t, uint64_t);
 void h48map_destroy(h48map_t *);

@@ -1,26 +1,5 @@
 #include "../test.h"
 
-#define INFOSIZE                 512
-#define INFO_SOLVER_STRLEN       100
-#define INFO_DISTRIBUTION_LEN    21
-#define COCSEP_CLASSES           3393
-
-typedef struct {
-	uint64_t distribution[INFO_DISTRIBUTION_LEN];
-	uint64_t type;
-	uint64_t infosize;
-	uint64_t fullsize;
-	uint64_t hash;
-	uint64_t entries;
-	uint64_t classes; /* Used only by cocsepdata, for now */
-	uint64_t next;
-	char solver[INFO_SOLVER_STRLEN];
-	uint8_t h48h;
-	uint8_t bits;
-	uint8_t base;
-	uint8_t maxvalue;
-} tableinfo_t;
-
 size_t gendata_cocsep(void *, uint64_t *, cube_t *);
 bool readtableinfo(const void *, tableinfo_t *);
 
