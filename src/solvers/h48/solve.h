@@ -8,8 +8,8 @@ typedef struct {
 	int64_t maxsolutions;
 	uint8_t h;
 	uint8_t k;
-	_Atomic const uint32_t *cocsepdata;
-	_Atomic const uint8_t *h48data;
+	const uint32_t *cocsepdata;
+	const uint8_t *h48data;
 	char **nextsol;
 	uint8_t nissbranch;
 	int8_t npremoves;

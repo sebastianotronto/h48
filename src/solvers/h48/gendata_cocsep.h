@@ -5,8 +5,7 @@ STATIC size_t gendata_cocsep(void *, uint64_t *, cube_t *);
 STATIC uint32_t gendata_cocsep_dfs(cocsep_dfs_arg_t *);
 STATIC void getdistribution_cocsep(const uint32_t *, uint64_t [static 21]);
 
-STATIC_INLINE int8_t get_h48_cdata(
-    cube_t, _Atomic const uint32_t *, uint32_t *);
+STATIC_INLINE int8_t get_h48_cdata(cube_t, const uint32_t *, uint32_t *);
 
 /*
 Each element of the cocsep table is a uint32_t used as follows:
@@ -159,7 +158,7 @@ set_visited(uint8_t *a, int64_t i)
 }
 
 STATIC_INLINE int8_t
-get_h48_cdata(cube_t cube, _Atomic const uint32_t *cocsepdata, uint32_t *cdata)
+get_h48_cdata(cube_t cube, const uint32_t *cocsepdata, uint32_t *cdata)
 {
 	int64_t coord;
 

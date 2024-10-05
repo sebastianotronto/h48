@@ -10,8 +10,8 @@ typedef struct {
 	int8_t nmoves;
 	int8_t depth;
 	uint8_t moves[MAXLEN];
-	_Atomic const uint32_t *cocsepdata;
-	_Atomic const uint8_t *h48data;
+	const uint32_t *cocsepdata;
+	const uint8_t *h48data;
 	char *s;
 } dfsarg_solveh48stats_t;
 
