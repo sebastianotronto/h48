@@ -277,6 +277,37 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 	static const uint8_t shortdepth = 8;
 	static const uint64_t capacity = 10000019;
 	static const uint64_t randomizer = 10000079;
+
+	/*
+	 * A good base value for the k=2 tables have few positions with value
+	 * 0, because those are treated as lower bound 0 and require a second
+	 * lookup in another table, and at the same time not too many positions
+	 * with value 3, because some of those are under-estimates.
+	 *
+	 * The following values for the base have been hand-picked. I first
+	 * performed some statistics on the frequency of these values, but
+	 * they turned out to be unreliable. I have not figured out why yet.
+	 * In the end I resorted to generating the same table with multiple
+	 * base value and see what was best.
+	 *
+	 * A curious case is h3, which has this distribution for base 8:
+	 *   [0] = 6686828
+	 *   [1] = 63867852
+	 *   [2] = 392789689
+	 *   [3] = 477195231
+	 *
+	 * and this for base 9:
+	 *   [0] = 70554680
+	 *   [1] = 392789689
+	 *   [2] = 462294676
+	 *   [3] = 14900555
+	 *
+	 * I ended up picking base 8 to have a much lower count of elements
+	 * with value 0, at the cost of a less precise estimate for the higher
+	 * values. But I am not 100% confident this is the optimal choice,
+	 * so I'll leave it here for future considerations.
+	 */
+	 
 	static const uint8_t base[] = {
 		[0]  = 8,
 		[1]  = 8,
