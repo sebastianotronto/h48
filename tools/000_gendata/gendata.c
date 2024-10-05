@@ -18,11 +18,11 @@ run(void) {
 		goto gendata_run_finish;
 	default:
 		nissy_datainfo(buf, write_stdout);
-		printf("\n");
-		printf("Succesfully generated %" PRId64 " bytes. "
-		       "See above for details on the tables.\n", size);
-
-		writetable(buf, size, filename);
+		if (check_distribution(solver, buf)) {
+			printf("\n");
+			printf("Generated %" PRId64 " bytes.\n", size);
+			writetable(buf, size, filename);
+		}
 		break;
 	}
 
