@@ -23,7 +23,7 @@ gendata_cocsep(void *buf, uint64_t *selfsim, cube_t *rep)
 {
 	uint32_t *buf32, cc;
 	uint16_t n;
-	uint8_t i, j, visited[COCSEP_VISITEDSIZE];
+	uint8_t i, visited[COCSEP_VISITEDSIZE];
 	tableinfo_t info;
 	cocsep_dfs_arg_t arg;
 
@@ -71,10 +71,14 @@ gendata_cocsep(void *buf, uint64_t *selfsim, cube_t *rep)
 	    "expected %zu\n", n, COCSEP_CLASSES);
 
 	LOG("cocsep data computed\n");
+
+	/* The following output is just noise
+
 	LOG("Symmetry classes: %" PRIu32 "\n", COCSEP_CLASSES);
 	LOG("Pruning value distribution:\n");
 	for (j = 0; j < 10; j++)
 		LOG("%" PRIu8 ":\t%" PRIu32 "\n", j, info.distribution[j]);
+	*/
 
 gendata_cocsep_return_size:
 	return COCSEP_FULLSIZE;

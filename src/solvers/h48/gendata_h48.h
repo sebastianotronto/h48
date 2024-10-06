@@ -32,19 +32,15 @@ gendata_h48short(gendata_h48short_arg_t *arg)
 {
 	uint8_t i, m;
 	int64_t coord;
-	uint64_t j, oldn;
+	uint64_t j;
 	kvpair_t kv;
 	cube_t cube, d;
 
 	cube = SOLVED_CUBE;
 	coord = coord_h48(cube, arg->cocsepdata, 11);
 	h48map_insertmin(arg->map, coord, 0);
-	oldn = 0;
-	LOG("Short h48: depth 0\nfound %" PRIu8 "\n", arg->map->n-oldn);
 	for (i = 0; i < arg->maxdepth; i++) {
-		LOG("Short h48: depth %" PRIu8 "\n", i+1);
 		j = 0;
-		oldn = arg->map->n;
 		for (kv = h48map_nextkvpair(arg->map, &j);
 		     j != arg->map->capacity;
 		     kv = h48map_nextkvpair(arg->map, &j)
@@ -60,7 +56,6 @@ gendata_h48short(gendata_h48short_arg_t *arg)
 				)
 			}
 		}
-		LOG("found %" PRIu8 "\n", arg->map->n-oldn);
 	}
 
 	return arg->map->n;
@@ -336,6 +331,7 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 		.map = &shortcubes
 	};
 	gendata_h48short(&shortarg);
+	LOG("Computed %" PRIu64 " positions\n", shortarg.map->n);
 
 	if (arg->base >= 20)
 		arg->base = base[arg->h];
