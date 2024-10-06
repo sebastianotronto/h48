@@ -75,7 +75,7 @@ checkdata(const void *buf, const tableinfo_t *info)
 		getdistribution_cocsep(
 		    (uint32_t *)((char *)buf + INFOSIZE), distr);
 	} else if (!strncmp(info->solver, "h48", 3)) {
-		getdistribution_h48((_Atomic uint8_t *)buf + INFOSIZE, distr,
+		getdistribution_h48((uint8_t *)buf + INFOSIZE, distr,
 		    info->h48h, info->bits);
 	} else {
 		LOG("checkdata: unknown solver %s\n", info->solver);

@@ -22,6 +22,25 @@
 #define MAXLEN 20
 #define CHUNKS COCSEP_CLASSES
 
+/*
+TODO: This loop over similar h48 coordinates can be improved by only
+transforming edges, but we need to compose transformations (i.e. conjugate
+_t by _ttrep).
+*/
+#define FOREACH_H48SIM(ARG_CUBE, ARG_COCSEPDATA, ARG_SELFSIM, ARG_ACTION) \
+	int64_t VAR_COCSEP = coord_cocsep(ARG_CUBE); \
+	uint8_t VAR_TTREP = TTREP(ARG_COCSEPDATA[VAR_COCSEP]); \
+	uint8_t VAR_INVERSE_TTREP = inverse_trans(VAR_TTREP); \
+	int64_t VAR_COCLASS = COCLASS(ARG_COCSEPDATA[VAR_COCSEP]); \
+	cube_t VAR_REP = transform(ARG_CUBE, VAR_TTREP); \
+	uint64_t VAR_S = ARG_SELFSIM[VAR_COCLASS]; \
+	for (uint8_t VAR_T = 0; VAR_T < 48 && VAR_S; VAR_T++, VAR_S >>= 1) { \
+		if (!(VAR_S & 1)) continue; \
+		ARG_CUBE = transform(VAR_REP, VAR_T); \
+		ARG_CUBE = transform(ARG_CUBE, VAR_INVERSE_TTREP); \
+		ARG_ACTION \
+	}
+
 typedef struct {
 	cube_t cube;
 	uint8_t depth;
@@ -72,7 +91,7 @@ typedef struct {
 	uint8_t base;
 	uint8_t shortdepth;
 	uint32_t *cocsepdata;
-	_Atomic uint8_t *table;
+	uint8_t *table;
 	uint64_t *selfsim;
 	cube_t *crep;
 	h48map_t *shortcubes;
@@ -89,6 +108,7 @@ typedef struct {
 	uint8_t k;
 	uint32_t *cocsepdata;
 	uint64_t *selfsim;
-	_Atomic uint8_t *table;
+	uint8_t *table;
+	_Atomic uint8_t *table_atomic;
 	pthread_mutex_t **table_mutex;
 } gendata_h48_mark_t;
