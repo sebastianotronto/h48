@@ -228,7 +228,6 @@ coord_csep(cube_t c)
 		ret += p * ((mem[i] & CSEPBIT) >> 2);
 
 	return ret;
-	return 0;
 }
 
 STATIC_INLINE int64_t
