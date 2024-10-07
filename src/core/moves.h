@@ -1,7 +1,5 @@
 #define MOVE(M, c) compose(c, MOVE_CUBE_ ## M)
-#define MOVE_NOCO(M, c) compose_epcpeo(c, MOVE_CUBE_ ## M)
 #define PREMOVE(M, c) compose(MOVE_CUBE_ ## M, c)
-#define PREMOVE_NOCO(M, c) compose_epcpeo(MOVE_CUBE_ ## M, c)
 
 STATIC_INLINE bool allowednextmove(uint8_t *, uint8_t);
 
@@ -90,39 +88,39 @@ move(cube_t c, uint8_t m)
 {
 	switch (m) {
 	case MOVE_U:
-		return MOVE_NOCO(U, c);
+		return MOVE(U, c);
 	case MOVE_U2:
-		return MOVE_NOCO(U2, c);
+		return MOVE(U2, c);
 	case MOVE_U3:
-		return MOVE_NOCO(U3, c);
+		return MOVE(U3, c);
 	case MOVE_D:
-		return MOVE_NOCO(D, c);
+		return MOVE(D, c);
 	case MOVE_D2:
-		return MOVE_NOCO(D2, c);
+		return MOVE(D2, c);
 	case MOVE_D3:
-		return MOVE_NOCO(D3, c);
+		return MOVE(D3, c);
 	case MOVE_R:
 		return MOVE(R, c);
 	case MOVE_R2:
-		return MOVE_NOCO(R2, c);
+		return MOVE(R2, c);
 	case MOVE_R3:
 		return MOVE(R3, c);
 	case MOVE_L:
 		return MOVE(L, c);
 	case MOVE_L2:
-		return MOVE_NOCO(L2, c);
+		return MOVE(L2, c);
 	case MOVE_L3:
 		return MOVE(L3, c);
 	case MOVE_F:
 		return MOVE(F, c);
 	case MOVE_F2:
-		return MOVE_NOCO(F2, c);
+		return MOVE(F2, c);
 	case MOVE_F3:
 		return MOVE(F3, c);
 	case MOVE_B:
 		return MOVE(B, c);
 	case MOVE_B2:
-		return MOVE_NOCO(B2, c);
+		return MOVE(B2, c);
 	case MOVE_B3:
 		return MOVE(B3, c);
 	default:
