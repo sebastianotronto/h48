@@ -1,7 +1,6 @@
 STATIC void pieces(cube_t *, uint8_t [static 8], uint8_t [static 12]);
 STATIC_INLINE bool equal(cube_t, cube_t);
 STATIC_INLINE cube_t invertco(cube_t);
-STATIC_INLINE cube_t compose_epcpeo(cube_t, cube_t);
 STATIC_INLINE cube_t compose_edges(cube_t, cube_t);
 STATIC_INLINE cube_t compose_corners(cube_t, cube_t);
 STATIC_INLINE cube_t compose(cube_t, cube_t);
