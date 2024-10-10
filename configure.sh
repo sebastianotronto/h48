@@ -85,8 +85,9 @@ validatethreads
 validatearch
 
 STD="-std=c11"
-WFLAGS="-pedantic -Wall -Wextra"
+WFLAGS="-pedantic -Wall -Wextra -Werror"
 WNOFLAGS="-Wno-unused-parameter -Wno-unused-function -Wno-unknown-pragmas"
+WNOFLAGS="$WNOFLAGS -Wno-unused-command-line-argument"
 
 [ "$ARCH" = "AVX2" ] && AVX="-mavx2"
 
