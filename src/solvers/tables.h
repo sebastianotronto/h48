@@ -1,13 +1,33 @@
 /* Type definitions and macros are in a separate file for easier testing */
 #include "tables_types_macros.h"
 
+STATIC uint64_t read_unaligned_u64(const void *);
+STATIC void write_unaligned_u64(void *, uint64_t);
 STATIC bool readtableinfo(const void *, tableinfo_t *);
 STATIC bool readtableinfo_n(const void *, uint8_t, tableinfo_t *);
 STATIC bool writetableinfo(const tableinfo_t *, void *);
 
+STATIC uint64_t
+read_unaligned_u64(const void *buf)
+{
+	uint64_t ret;
+
+	memcpy(&ret, buf, sizeof(uint64_t));
+
+	return ret;
+}
+
+STATIC void
+write_unaligned_u64(void *buf, uint64_t x)
+{
+	memcpy(buf, &x, sizeof(uint64_t));
+}
+
 STATIC bool
 readtableinfo(const void *buf, tableinfo_t *info)
 {
+	size_t i;
+
 	if (buf == NULL) {
 		LOG("Error reading table: buffer is NULL\n");
 		return false;
@@ -18,16 +38,17 @@ readtableinfo(const void *buf, tableinfo_t *info)
 		return false;
 	}
 
-	memcpy(info->distribution, OFFSET(buf, INFO_OFFSET_DISTRIBUTION),
-	    INFO_DISTRIBUTION_LEN * sizeof(uint64_t));
+	for (i = 0; i < INFO_DISTRIBUTION_LEN; i++)
+		info->distribution[i] = read_unaligned_u64(OFFSET(buf,
+		    INFO_OFFSET_DISTRIBUTION + i * sizeof(uint64_t)));
 
-	info->type = *(const uint64_t *)OFFSET(buf, INFO_OFFSET_TYPE);
-	info->infosize = *(const uint64_t *)OFFSET(buf, INFO_OFFSET_INFOSIZE);
-	info->fullsize = *(const uint64_t *)OFFSET(buf, INFO_OFFSET_FULLSIZE);
-	info->hash = *(const uint64_t *)OFFSET(buf, INFO_OFFSET_HASH);
-	info->entries = *(const uint64_t *)OFFSET(buf, INFO_OFFSET_ENTRIES);
-	info->classes = *(const uint64_t *)OFFSET(buf, INFO_OFFSET_CLASSES);
-	info->next = *(const uint64_t* )OFFSET(buf, INFO_OFFSET_NEXT);
+	info->type = read_unaligned_u64(OFFSET(buf, INFO_OFFSET_TYPE));
+	info->infosize = read_unaligned_u64(OFFSET(buf, INFO_OFFSET_INFOSIZE));
+	info->fullsize = read_unaligned_u64(OFFSET(buf, INFO_OFFSET_FULLSIZE));
+	info->hash = read_unaligned_u64(OFFSET(buf, INFO_OFFSET_HASH));
+	info->entries = read_unaligned_u64(OFFSET(buf, INFO_OFFSET_ENTRIES));
+	info->classes = read_unaligned_u64(OFFSET(buf, INFO_OFFSET_CLASSES));
+	info->next = read_unaligned_u64(OFFSET(buf, INFO_OFFSET_NEXT));
 
 	memcpy(info->solver, OFFSET(buf, INFO_OFFSET_SOLVER),
 	    INFO_SOLVER_STRLEN);
@@ -53,7 +74,9 @@ readtableinfo_n(const void *buf, uint8_t n, tableinfo_t *info)
 STATIC bool
 writetableinfo(const tableinfo_t *info, void *buf)
 {
-	int i;
+	size_t i;
+	bool end;
+	uint8_t *c;
 
 	if (buf == NULL) {
 		LOG("Error writing table: buffer is NULL\n");
@@ -65,24 +88,29 @@ writetableinfo(const tableinfo_t *info, void *buf)
 		return false;
 	}
 
-	memcpy(OFFSET(buf, INFO_OFFSET_DISTRIBUTION), info->distribution,
-	    INFO_DISTRIBUTION_LEN * sizeof(uint64_t));
+	for (i = 0; i < INFO_DISTRIBUTION_LEN; i++)
+		write_unaligned_u64(OFFSET(buf, INFO_OFFSET_DISTRIBUTION +
+		    i * sizeof(uint64_t)), info->distribution[i]);
 
-	*(uint64_t *)OFFSET(buf, INFO_OFFSET_TYPE) = info->type;
-	*(uint64_t *)OFFSET(buf, INFO_OFFSET_INFOSIZE) = info->infosize;
-	*(uint64_t *)OFFSET(buf, INFO_OFFSET_FULLSIZE) = info->fullsize;
-	*(uint64_t *)OFFSET(buf, INFO_OFFSET_HASH) = info->hash;
-	*(uint64_t *)OFFSET(buf, INFO_OFFSET_ENTRIES) = info->entries;
-	*(uint64_t *)OFFSET(buf, INFO_OFFSET_CLASSES) = info->classes;
-	*(uint64_t *)OFFSET(buf, INFO_OFFSET_NEXT) = info->next;
+	write_unaligned_u64(OFFSET(buf, INFO_OFFSET_TYPE), info->type);
+	write_unaligned_u64(OFFSET(buf, INFO_OFFSET_INFOSIZE), info->infosize);
+	write_unaligned_u64(OFFSET(buf, INFO_OFFSET_FULLSIZE), info->fullsize);
+	write_unaligned_u64(OFFSET(buf, INFO_OFFSET_HASH), info->hash);
+	write_unaligned_u64(OFFSET(buf, INFO_OFFSET_ENTRIES), info->entries);
+	write_unaligned_u64(OFFSET(buf, INFO_OFFSET_CLASSES), info->classes);
+	write_unaligned_u64(OFFSET(buf, INFO_OFFSET_NEXT), info->next);
 
 	memcpy(OFFSET(buf, INFO_OFFSET_SOLVER), info->solver,
 	    INFO_SOLVER_STRLEN);
 
 	/* Zeroing all chars after the end of the string, for consistency */
-	for (i = 1; i < INFO_SOLVER_STRLEN; i++)
-		if (*OFFSET(buf, i) == 0)
-			*OFFSET(buf, i) = 0;
+	end = false;
+	for (i = 0; i < INFO_SOLVER_STRLEN; i++) {
+		c = OFFSET(buf, INFO_OFFSET_SOLVER + i);
+		end = end || *c == 0;
+		if (end)
+			*c = 0;
+	}
 
 	*OFFSET(buf, INFO_OFFSET_H48H) = info->h48h;
 	*OFFSET(buf, INFO_OFFSET_BITS) = info->bits;
