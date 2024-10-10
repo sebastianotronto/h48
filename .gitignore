@@ -1,4 +1,5 @@
 .DS_Store
+cachegrind.out.*
 config.mk
 gen
 debuggen
