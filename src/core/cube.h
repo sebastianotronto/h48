@@ -66,16 +66,10 @@ isconsistent(cube_t cube)
 	return true;
 
 inconsistent_ep:
-	LOG("Inconsistent EP\n");
-	return false;
 inconsistent_cp:
-	LOG("Inconsistent CP\n");
-	return false;
 inconsistent_eo:
-	LOG("Inconsistent EO\n");
-	return false;
 inconsistent_co:
-	LOG("Inconsistent CO\n");
+	/* We used to do more logging here, hence the 4 different labels */
 	return false;
 }
 
@@ -115,13 +109,9 @@ issolvable(cube_t cube)
 	return true;
 
 issolvable_parity:
-	LOG("EP and CP parities are different\n");
-	return false;
 issolvable_eo:
-	LOG("Odd number of flipped edges\n");
-	return false;
 issolvable_co:
-	LOG("Sum of corner orientation is not multiple of 3\n");
+	/* We used to do more logging here, hence the 3 different labels */
 	return false;
 }
 

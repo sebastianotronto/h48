@@ -1,3 +1,6 @@
+STATIC cube_t readcube(const char *, const char *);
+STATIC int writecube(const char *, cube_t, char *);
+STATIC void log_available_formats(void);
 STATIC uint8_t readco(const char *);
 STATIC uint8_t readcp(const char *);
 STATIC uint8_t readeo(const char *);
@@ -29,7 +32,7 @@ STATIC struct {
 	{ .name = "NONE", .read = NULL, .write = NULL },
 };
 
-cube_t
+STATIC cube_t
 readcube(const char *format, const char *buf)
 {
 	int i;
@@ -38,11 +41,12 @@ readcube(const char *format, const char *buf)
 		if (!strcmp(format, ioformat[i].name))
 			return ioformat[i].read(buf);
 
-	LOG("Cannot read cube in the given format\n");
+	LOG("Cannot read cube: unknown format '%s'\n", format);
+	log_available_formats();
 	return ZERO_CUBE;
 }
 
-void
+STATIC int
 writecube(const char *format, cube_t cube, char *buf)
 {
 	char *errormsg;
@@ -58,18 +62,30 @@ writecube(const char *format, cube_t cube, char *buf)
 	for (i = 0; ioformat[i].write != NULL; i++) {
 		if (!strcmp(format, ioformat[i].name)) {
 			ioformat[i].write(cube, buf);
-			return;
+			return 0;
 		}
 	}
 
+	LOG("Cannot write cube: unknown format '%s'\n", format);
+	log_available_formats();
 	errormsg = "ERROR: format";
 
 writecube_error:
-	LOG("writecube error, see stdout for details\n");
 	len = strlen(errormsg);
 	memcpy(buf, errormsg, len);
-	buf[len] = '\n';
-	buf[len+1] = '\0';
+	buf[len] = '\0';
+	return 1;
+}
+
+STATIC void
+log_available_formats(void)
+{
+	int i;
+
+	LOG("Available formats: ");
+	for (i = 0; ioformat[i].read != NULL; i++)
+		LOG("'%s' ", ioformat[i].name);
+	LOG("\n");
 }
 
 STATIC uint8_t
@@ -133,14 +149,34 @@ readcube_B32(const char *buf)
 
 	for (i = 0; i < 8; i++) {
 		c[i] = b32tocorner(buf[i]);
-		DBG_ASSERT(c[i] < 255, ZERO_CUBE,
-		    "Error reading B32 corner %d (char %d)\n", i, i);
+		if (c[i] == UINT8_ERROR) {
+			LOG("Error reading B32 corner %d ", i);
+			if (buf[i] == 0) {
+				LOG("(string terminated early)\n");
+			} else {
+				LOG("(char '%c')\n", buf[i]);
+			}
+			return ZERO_CUBE;
+		}
+	}
+
+	if (buf[8] != '=') {
+		LOG("Error reading B32 separator: a single '=' "
+		    "must be used to separate edges and corners\n");
+		return ZERO_CUBE;
 	}
 
 	for (i = 0; i < 12; i++) {
 		e[i] = b32toedge(buf[i+9]);
-		DBG_ASSERT(e[i] < 255, ZERO_CUBE,
-		    "Error reading B32 edge %d (char %d)\n", i, i+9);
+		if (e[i] == UINT8_ERROR) {
+			LOG("Error reading B32 edge %d ", i);
+			if (buf[i+9] == 0) {
+				LOG("(string terminated early)\n");
+			} else {
+				LOG("(char '%c')\n", buf[i+9]);
+			}
+			return ZERO_CUBE;
+		}
 	}
 
 	return cubefromarray(c, e);
@@ -314,7 +350,7 @@ STATIC uint8_t
 b32toedge(char c)
 {
 	if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'f')))
-		return 255;
+		return UINT8_ERROR;
 
 	return c <= 'Z' ? (uint8_t)(c - 'A') : (uint8_t)(c - 'a') + 26;
 }
@@ -324,7 +360,7 @@ b32tocorner(char c) {
 	uint8_t val;
 
 	if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'f')))
-		return 255;
+		return UINT8_ERROR;
 
 	val = c <= 'Z' ? (uint8_t)(c - 'A') : (uint8_t)(c - 'a') + 26;
 

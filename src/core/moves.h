@@ -18,7 +18,7 @@ STATIC cube_t applymoves(cube_t, const char *);
 STATIC cube_t frommoves(const char *);
 
 #define FOREACH_READMOVE(ARG_BUF, ARG_MOVE, ARG_C, ARG_MAX, \
-	LABEL_ERROR, ARG_ACTION) \
+	RET_ERROR, ARG_ACTION) \
 	const char *VAR_B; \
 	uint8_t VAR_MOVE_NOMOD, VAR_MOD; \
 	for (VAR_B = ARG_BUF, ARG_C = 0; *VAR_B != '\0'; VAR_B++, ARG_C++) { \
@@ -26,8 +26,10 @@ STATIC cube_t frommoves(const char *);
 			VAR_B++; \
 		if (*VAR_B == '\0' || ARG_C == ARG_MAX) \
 			break; \
-		if ((VAR_MOVE_NOMOD = readmove(*VAR_B)) == UINT8_ERROR) \
-			goto LABEL_ERROR; \
+		if ((VAR_MOVE_NOMOD = readmove(*VAR_B)) == UINT8_ERROR) { \
+			LOG("Error: unknown move '%c'\n", *VAR_B); \
+			return RET_ERROR; \
+		} \
 		if ((VAR_MOD = readmodifier(*(VAR_B+1))) != 0) \
 			VAR_B++; \
 		ARG_MOVE = VAR_MOVE_NOMOD + VAR_MOD; \
@@ -124,7 +126,7 @@ move(cube_t c, uint8_t m)
 	case MOVE_B3:
 		return MOVE(B3, c);
 	default:
-		LOG("move error, unknown move\n");
+		LOG("move error: unknown move %" PRIu8 "\n", m);
 		return ZERO_CUBE;
 	}
 }
@@ -171,7 +173,7 @@ premove(cube_t c, uint8_t m)
 	case MOVE_B3:
 		return PREMOVE(B, c);
 	default:
-		LOG("move error, unknown move\n");
+		LOG("premove error: unknown move %" PRIu8 "\n", m);
 		return ZERO_CUBE;
 	}
 }
@@ -222,15 +224,11 @@ readmoves(const char *buf, int max, uint8_t *ret)
 	uint8_t m;
 	int c;
 
-	FOREACH_READMOVE(buf, m, c, max, readmoves_error,
+	FOREACH_READMOVE(buf, m, c, max, -1,
 		ret[c] = m;
 	)
 
 	return c;
-
-readmoves_error:
-	LOG("readmoves error\n");
-	return -1;
 }
 
 STATIC cube_t
@@ -242,15 +240,11 @@ applymoves(cube_t cube, const char *buf)
 	DBG_ASSERT(isconsistent(cube), ZERO_CUBE,
 	    "move error: inconsistent cube\n");
 
-	FOREACH_READMOVE(buf, m, c, -1, applymoves_error,
+	FOREACH_READMOVE(buf, m, c, -1, ZERO_CUBE,
 		cube = move(cube, m);
 	)
 
 	return cube;
-
-applymoves_error:
-	LOG("applymoves error\n");
-	return ZERO_CUBE;
 }
 
 STATIC cube_t

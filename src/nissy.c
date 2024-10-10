@@ -110,13 +110,19 @@ STATIC int64_t
 write_result(cube_t cube, char result[static 22])
 {
 	if (!isconsistent(cube)) {
+		LOG("Error: resulting cube is invalid\n");
 		writecube("B32", ZERO_CUBE, result);
-		return 2;
+		return 8;
 	}
 
 	writecube("B32", cube, result);
 
-	return issolvable(cube) ? 0 : 1;
+	if (!issolvable(cube)) {
+		LOG("Warning: resulting cube is not solvable\n");
+		return 9;
+	}
+
+	return 0;
 }
 
 int64_t
@@ -129,7 +135,19 @@ nissy_compose(
 	cube_t c, p, res;
 
 	c = readcube("B32", cube);
+
+	if (!isconsistent(c)) {
+		LOG("Error in nissy_compose: given cube is invalid\n");
+		return 1;
+	}
+
 	p = readcube("B32", permutation);
+
+	if (!isconsistent(p)) {
+		LOG("Error in nissy_compose: given permutation is invalid\n");
+		return 2;
+	}
+
 	res = compose(c, p);
 
 	return write_result(res, result);
@@ -144,6 +162,12 @@ nissy_inverse(
 	cube_t c, res;
 
 	c = readcube("B32", cube);
+
+	if (iserror(c)) {
+		LOG("Error in nissy_inverse: given cube is invalid\n");
+		return 1;
+	}
+
 	res = inverse(c);
 
 	return write_result(res, result);
@@ -159,6 +183,12 @@ nissy_applymoves(
 	cube_t c, res;
 
 	c = readcube("B32", cube);
+
+	if (!isconsistent(c)) {
+		LOG("Error in nissy_applymoves: given cube is invalid\n");
+		return 1;
+	}
+
 	res = applymoves(c, moves);
 
 	return write_result(res, result);
@@ -174,6 +204,12 @@ nissy_applytrans(
 	cube_t c, res;
 
 	c = readcube("B32", cube);
+
+	if (!isconsistent(c)) {
+		LOG("Error in nissy_applytrans: given cube is invalid\n");
+		return 1;
+	}
+
 	res = applytrans(c, transformation);
 
 	return write_result(res, result);
@@ -189,6 +225,11 @@ nissy_frommoves(
 
 	res = applymoves(SOLVED_CUBE, moves);
 
+	if (!isconsistent(res)) {
+		/* Moves must be invalid */
+		return 1;
+	}
+
 	return write_result(res, result);
 }
 
@@ -200,12 +241,20 @@ nissy_convert(
 	char *result
 )
 {
+	int ret;
 	cube_t c;
 
 	c = readcube(format_in, cube_string);
-	writecube(format_out, c, result);
 
-	return isconsistent(c) ? 0 : 2;
+	if (iserror(c))
+		return 1;
+
+	ret = writecube(format_out, c, result);
+
+	if (ret != 0)
+		return 2;
+
+	return isconsistent(c) ? 0 : 3;
 }
 
 int64_t
@@ -387,8 +436,10 @@ nissy_solve(
 			return -1;
 		} else {
 			return THREADS > 1 ?
-				solve_h48_multithread(c, minmoves, maxmoves, maxsolutions, data, solutions) :
-				solve_h48(c, minmoves, maxmoves, maxsolutions, data, solutions);
+				solve_h48_multithread(c, minmoves,
+				    maxmoves, maxsolutions, data, solutions) :
+				solve_h48(c, minmoves,
+				    maxmoves, maxsolutions, data, solutions);
 		}
 	} else if (!strcmp(solver, "simple")) {
 		return solve_simple(

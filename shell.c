@@ -56,9 +56,6 @@ typedef struct {
 	int64_t maxsolutions;
 } args_t;
 
-static void print_cube_result(int64_t, char [static 22]);
-static void print_str_result(int64_t, char *);
-
 static int64_t compose_exec(args_t *);
 static int64_t inverse_exec(args_t *);
 static int64_t applymoves_exec(args_t *);
@@ -240,36 +237,6 @@ rand64(void)
 	return ret;
 }
 
-static void
-print_cube_result(int64_t ret, char result[static 22])
-{
-	switch (ret) {
-	case 0:
-		break;
-	case 1:
-		fprintf(stderr, "Warning: resulting cube not solvable\n");
-		break;
-	case 2: /* Fallthrough */
-	default:
-		fprintf(stderr, "Unknown error (result is inconsistent)\n");
-	}
-
-	printf("%s\n", result);
-}
-
-static void
-print_str_result(int64_t ret, char *result)
-{
-	switch (ret) {
-	case 0:
-		break;
-	default:
-		fprintf(stderr, "Unknown error\n");
-	}
-
-	printf("%s\n", result);
-}
-
 static int64_t
 compose_exec(args_t *args)
 {
@@ -277,7 +244,8 @@ compose_exec(args_t *args)
 	int64_t ret;
 
 	ret = nissy_compose(args->cube, args->cube_perm, result);
-	print_cube_result(ret, result);
+	if (ret == 0)
+		printf("%s\n", result);
 
 	return ret;
 }
@@ -289,7 +257,8 @@ inverse_exec(args_t *args)
 	int64_t ret;
 
 	ret = nissy_inverse(args->cube, result);
-	print_cube_result(ret, result);
+	if (ret == 0)
+		printf("%s\n", result);
 
 	return ret;
 }
@@ -301,7 +270,8 @@ applymoves_exec(args_t *args)
 	int64_t ret;
 
 	ret = nissy_applymoves(args->cube, args->str_moves, result);
-	print_cube_result(ret, result);
+	if (ret == 0)
+		printf("%s\n", result);
 
 	return ret;
 }
@@ -313,7 +283,8 @@ applytrans_exec(args_t *args)
 	int64_t ret;
 
 	ret = nissy_applytrans(args->cube, args->str_trans, result);
-	print_cube_result(ret, result);
+	if (ret == 0)
+		printf("%s\n", result);
 
 	return ret;
 }
@@ -325,7 +296,8 @@ frommoves_exec(args_t *args)
 	int64_t ret;
 
 	ret = nissy_frommoves(args->str_moves, result);
-	print_cube_result(ret, result);
+	if (ret == 0)
+		printf("%s\n", result);
 
 	return ret;
 }
@@ -338,7 +310,8 @@ convert_exec(args_t *args)
 
 	ret = nissy_convert(
 	    args->str_format_in, args->str_format_out, args->str_cube, result);
-	print_str_result(ret, result);
+	if (ret == 0)
+		printf("%s\n", result);
 
 	return ret;
 }
@@ -354,7 +327,8 @@ randomcube_exec(args_t *args)
 	cp = rand64();
 	co = rand64();
 	ret = nissy_getcube(ep, eo, cp, co, "fix", result);
-	print_str_result(ret, result);
+	if (ret == 0)
+		printf("%s\n", result);
 
 	return ret;
 }
@@ -526,7 +500,7 @@ help_exec(args_t *args)
 		printf("Available commands and usage:\n\n");
 		for (i = 0; commands[i].name != NULL; i++)
 			printf("%-15s%s\n", commands[i].name, commands[i].syn);
-		printf("\nUse 'help COMMAND' for more information.\n");
+		printf("\nUse 'help -command COMMAND' for more information.\n");
 	} else {
 		for (i = 0; commands[i].name != NULL; i++)
 			if (!strcmp(args->str_command, commands[i].name))

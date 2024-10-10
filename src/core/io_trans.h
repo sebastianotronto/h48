@@ -10,7 +10,6 @@ readtrans(const char *buf)
 		if (!strncmp(buf, transstr[t], 11))
 			return t;
 
-	LOG("readtrans error\n");
 	return UINT8_ERROR;
 }
 
