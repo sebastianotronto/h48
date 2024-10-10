@@ -71,9 +71,15 @@ gendata_h48(gendata_h48_arg_t *arg)
 
 	cocsepsize = gendata_cocsep(arg->buf, arg->selfsim, arg->crep);
 
-	cocsepdata_offset = (char *)arg->buf + INFOSIZE;
-	arg->cocsepdata = (uint32_t *)cocsepdata_offset;
-	arg->h48buf = (char *)arg->buf + cocsepsize;
+	if (arg->buf == NULL) {
+		cocsepdata_offset = NULL;
+		arg->cocsepdata = NULL;
+		arg->h48buf = NULL;
+	} else {
+		cocsepdata_offset = (char *)arg->buf + INFOSIZE;
+		arg->cocsepdata = (uint32_t *)cocsepdata_offset;
+		arg->h48buf = (char *)arg->buf + cocsepsize;
+	}
 
 	arg->base = 99; // TODO: set this somewhere else
 
@@ -683,6 +689,7 @@ gendata_h48_derive(uint8_t h, const void *fulltable, void *buf)
 
 	/* Initializing values in case of error */
 	/* TODO cleanup this */
+	fulltableinfo.h48h = 11;
 	fulltableinfo.bits = 2;
 	fulltableinfo.base = 8;
 
