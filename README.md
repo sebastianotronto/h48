@@ -130,10 +130,10 @@ $ ./run convert -fin B32 -fout H48 -cubestr "WDSQREVX=VBKYDUCJXWAb"
 UL1 UB0 BL0 FR1 DF0 UR1 DB0 FL0 DR1 DL1 UF0 BR1 DFR2 DBR0 DFL2 UFR2 UBL2 UFL0 UBR2 DBL2
 ```
 
-To solve a cube (experimental) you can use:
+To solve a cube you can use:
 
 ```
-$ ./run solve -solver "h48" -options "0;20" -n 1 -M 4 -cube "JLQWSVUH=ZLCUABGIVTKH"
+$ ./run solve -solver "h48h0k4" -n 1 -M 4 -cube "JLQWSVUH=ZLCUABGIVTKH"
 Found 0 solutions, searching at depth 0
 Found 0 solutions, searching at depth 1
 Found 0 solutions, searching at depth 2

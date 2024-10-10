@@ -9,4 +9,4 @@ for testing purposes only.
 #include "../src/solvers/tables.h"
 
 size_t gendata_h48_derive(uint8_t, const void *, void *);
-int parse_h48_options(const char *, uint8_t *, uint8_t *, uint8_t *);
+int parse_h48_solver(const char *, uint8_t [static 1], uint8_t [static 1]);

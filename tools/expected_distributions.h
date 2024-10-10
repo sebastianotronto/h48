@@ -155,7 +155,7 @@ check_distribution(const char *solver, const void *data)
 {
 	tableinfo_t info = {0};
 
-	if (!strcmp(solver, "h48")) {
+	if (!strncmp(solver, "h48", 3)) {
 		readtableinfo(data, &info);
 		if (!distribution_equal(
 		    expected_cocsep, info.distribution, info.maxvalue)) {

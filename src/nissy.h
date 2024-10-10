@@ -75,14 +75,12 @@ the same parameters, or -1 in case of error. The returned value can be
 slightly larger than the actual table size.
 */
 int64_t nissy_datasize(
-	const char *solver,
-	const char *options /* TODO: remove options, use only solver name */
+	const char *solver
 );
 
 /* Returns the number of bytes written, or -1 in case of error */
 int64_t nissy_gendata(
 	const char *solver,
-	const char *options, /* TODO: remove options, use only solver name */
 	void *generated_data
 );
 
@@ -93,9 +91,9 @@ int64_t nissy_derivedata(
 	void *generated_data
 );
 
+/* Returns 0 on positive check, 1 on error */
 int64_t nissy_checkdata(
 	const char *solver,
-	const char *options,
 	const void *data
 );
 
@@ -109,7 +107,6 @@ int64_t nissy_datainfo(
 int64_t nissy_solve(
 	const char cube[static 22],
 	const char *solver, 
-	const char *options, /* TODO: remove options, use only solver name */
 	const char *nisstype, /* TODO: remove, use flags */
 	int8_t minmoves,
 	int8_t maxmoves,

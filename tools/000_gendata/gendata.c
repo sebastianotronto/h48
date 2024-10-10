@@ -1,16 +1,16 @@
 #include "../tool.h"
 #include "../expected_distributions.h"
 
-char *solver, *options;
+char *solver;
 uint64_t *expected;
 
 static void
 run(void) {
 	int64_t size;
+	bool consistent, expected;
 	char *buf, filename[1024];
 	
-	getfilename(solver, options, filename);
-	size = generatetable(solver, options, &buf);
+	size = generatetable(solver, &buf);
 	switch (size) {
 	case -1:
 		return;
@@ -18,11 +18,19 @@ run(void) {
 		goto gendata_run_finish;
 	default:
 		nissy_datainfo(buf, write_stdout);
-		if (check_distribution(solver, buf)) {
+		consistent = nissy_checkdata(solver, buf) == 0;
+		expected = check_distribution(solver, buf);
+		if (consistent && expected) {
 			printf("\n");
 			printf("Generated %" PRId64 " bytes.\n", size);
+			sprintf(filename, "tables/%s", solver);
 			writetable(buf, size, filename);
 		}
+		if (!consistent)
+			printf("Error: table is not consistent with info"
+			    " (nissy_checkdata() failed)\n");
+		if (!expected)
+			printf("Error: distribution is not as expected\n");
 		break;
 	}
 
@@ -33,15 +41,14 @@ gendata_run_finish:
 int main(int argc, char **argv) {
 	uint8_t h, k;
 
-	if (argc < 3) {
+	if (argc < 2) {
 		fprintf(stderr, "Error: not enough arguments. "
-		    "A solver and its options must be given.\n");
+		    "A solver must be given.\n");
 		return 1;
 	}
 
 	solver = argv[1];
-	options = argv[2];
-	parse_h48_options(options, &h, &k, NULL);
+	parse_h48_solver(solver, &h, &k);
 	expected = expected_h48[h][k];
 
 	nissy_setlogger(log_stderr);

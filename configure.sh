@@ -71,6 +71,7 @@ validatearch() {
 		;;
 	*)
 		echo "Error: architecture '$ARCH' not supported"
+		echo "Supported architectures: AVX2, NEON, PORTABLE"
 		exit 1
 		;;
 	esac

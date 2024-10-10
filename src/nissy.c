@@ -12,13 +12,12 @@
 
 #include "nissy.h"
 
-int parse_h48_options(const char *, uint8_t *, uint8_t *, uint8_t *);
+int parse_h48_solver(const char *, uint8_t [static 1], uint8_t [static 1]);
 STATIC int64_t write_result(cube_t, char [static 22]);
 STATIC bool distribution_equal(const uint64_t [static INFO_DISTRIBUTION_LEN],
     const uint64_t [static INFO_DISTRIBUTION_LEN], uint8_t);
 STATIC bool checkdata(const void *, const tableinfo_t *);
 
-/* TODO: add option to get DR, maybe C-only, E-only, eo... */
 #define GETCUBE_OPTIONS(S, F) { .option = S, .fix = F }
 struct {
 	char *option;
@@ -29,40 +28,41 @@ struct {
 };
 
 int
-parse_h48_options(const char *buf, uint8_t *h, uint8_t *k, uint8_t *maxdepth)
+parse_h48_solver(const char *buf, uint8_t h[static 1], uint8_t k[static 1])
 {
-	bool h_valid, k_valid, maxdepth_valid;
-	int i;
+	const char *fullbuf = buf;
 
-	/* TODO temporarily, options are in the form "h;k;maxdepth" */
-	if (h != NULL)
-		*h = atoi(buf);
-	h_valid = h == NULL || *h <= 11;
+	buf += 3;
 
-	for (i = 0; buf[i] != ';'; i++)
-		if (buf[i] == 0)
-			goto parse_h48_options_error;
+	if (!strcmp(buf, "stats")) {
+		*h = 0;
+		*k = 4;
+		return 0;
+	}
 
-	if (k != NULL)
-		*k = atoi(&buf[i+1]);
-	k_valid = k == NULL || (*k == 2 || *k == 4);
+	if (*buf != 'h')
+		goto parse_h48_solver_error;
+	buf++;
 
-	for (i = i+1; buf[i] != ';'; i++)
-		if (buf[i] == 0)
-			goto parse_h48_options_error;
+	*h = atoi(buf);
 
-	if (maxdepth != NULL)
-		*maxdepth = atoi(&buf[i+1]);
-	maxdepth_valid = maxdepth == NULL || *maxdepth <= 20;
+	for ( ; *buf >= 0 + '0' && *buf <= 9 + '0'; buf++)
+		if (*buf == 0)
+			goto parse_h48_solver_error;
 
-	return h_valid && k_valid && maxdepth_valid ? 0 : 1;
+	if (*buf != 'k')
+		goto parse_h48_solver_error;
+	buf++;
 
-parse_h48_options_error:
+	*k = atoi(buf);
+
+	return *h < 12 && (*k == 2 || (*k == 4 && *h == 0)) ? 0 : 1;
+
+parse_h48_solver_error:
 	*h = 0;
 	*k = 0;
-	*maxdepth = 0;
-	LOG("Error parsing options: must be in \"h;k;maxdepth\" format "
-	    " (instead it was \"%s\")\n", buf);
+	LOG("Error parsing solver: must be in \"h48h*k*\" format"
+	    " or \"h48stats\", but got %s\n", fullbuf);
 	return -1;
 }
 
@@ -103,13 +103,7 @@ distribution_equal(
 		}
 	}
 
-	if (wrong > 0) {
-		LOG("checkdata: %d wrong values\n", wrong);
-	} else {
-		LOG("checkdata: table is consistent with info\n");
-	}
-
-	return wrong > 0;
+	return wrong == 0;
 }
 
 STATIC int64_t
@@ -238,12 +232,11 @@ nissy_getcube(
 
 int64_t
 nissy_datasize(
-	const char *solver,
-	const char *options
+	const char *solver
 )
 {
 	/* gendata() handles a NULL *data as a "dryrun" request */
-	return nissy_gendata(solver, options, NULL);
+	return nissy_gendata(solver, NULL);
 }
 
 int64_t
@@ -294,7 +287,6 @@ nissy_datainfo(
 int64_t
 nissy_gendata(
 	const char *solver,
-	const char *options,
 	void *data
 )
 {
@@ -303,21 +295,12 @@ nissy_gendata(
 	gendata_h48_arg_t arg;
 
 	arg.buf = data;
-	if (!strcmp(solver, "h48")) {
-		p = parse_h48_options(options, &arg.h, &arg.k, &arg.maxdepth);
-		if (p != 0) {
-			LOG("gendata: could not parse options\n");
-			ret = -1;
-		} else {
-			ret = gendata_h48(&arg);
-		}
-	} else if (!strcmp(solver, "h48stats")) {
-		arg.h = 0;
-		arg.k = 4;
+	if (!strncmp(solver, "h48", 3)) {
+		p = parse_h48_solver(solver, &arg.h, &arg.k);
 		arg.maxdepth = 20;
-		ret = gendata_h48(&arg);
+		ret = p == 0 ? (int64_t)gendata_h48(&arg) : -1;
 	} else {
-		LOG("gendata: implemented only for h48 solver\n");
+		LOG("gendata: unknown solver %s\n", solver);
 		ret = -1;
 	}
 
@@ -327,7 +310,6 @@ nissy_gendata(
 int64_t
 nissy_checkdata(
 	const char *solver,
-	const char *options,
 	const void *data
 )
 {
@@ -335,8 +317,11 @@ nissy_checkdata(
 	tableinfo_t info;
 
 	for (buf = (char *)data; readtableinfo(buf, &info); buf += info.next) {
-		if (!checkdata(buf, &info))
+		if (!checkdata(buf, &info)) {
+			LOG("Error: data for %s is inconsistent with info!\n",
+			    info.solver);
 			return 1;
+		}
 		if (info.next == 0)
 			break;
 	}
@@ -348,7 +333,6 @@ int64_t
 nissy_solve(
 	const char cube[static 22],
 	const char *solver, 
-	const char *options,
 	const char *nisstype,
 	int8_t minmoves,
 	int8_t maxmoves,
@@ -360,7 +344,6 @@ nissy_solve(
 {
 	cube_t c;
 	int p;
-	int64_t ret;
 	uint8_t h, k;
 
 	c = readcube_B32(cube);
@@ -395,28 +378,25 @@ nissy_solve(
 		return -1;
 	}
 
-	/* TODO define and use solve_options_t */
-	if (!strcmp(solver, "h48")) {
-		p = parse_h48_options(options, &h, &k, NULL);
+	if (!strncmp(solver, "h48", 3)) {
+		if (!strcmp(solver, "h48stats"))
+			return solve_h48stats(c, maxmoves, data, solutions);
+
+		p = parse_h48_solver(solver, &h, &k);
 		if (p != 0) {
-			LOG("gendata: could not parse options\n");
-			ret = -1;
+			return -1;
 		} else {
-			ret = THREADS > 1 ?
+			return THREADS > 1 ?
 				solve_h48_multithread(c, minmoves, maxmoves, maxsolutions, data, solutions) :
 				solve_h48(c, minmoves, maxmoves, maxsolutions, data, solutions);
 		}
-	} else if (!strcmp(solver, "h48stats")) {
-		ret = solve_h48stats(c, maxmoves, data, solutions);
 	} else if (!strcmp(solver, "simple")) {
-		ret = solve_simple(
+		return solve_simple(
 		    c, minmoves, maxmoves, maxsolutions, optimal, solutions);
 	} else {
 		LOG("solve: unknown solver '%s'\n", solver);
-		ret = -1;
+		return -1;
 	}
-
-	return ret;
 }
 
 void

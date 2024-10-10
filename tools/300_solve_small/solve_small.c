@@ -1,8 +1,6 @@
 #include "../tool.h"
 
-const char *solver = "h48";
-const char *options = "0;4;20";
-const char *filename = "tables/h48h0k4";
+const char *solver = "h48h0k4";
 char *buf;
 
 char *scrambles[] = {
@@ -28,7 +26,7 @@ void run(void) {
 			continue;
 		}
 		n = nissy_solve(
-		    cube, "h48", options, "", 0, 20, 1, -1, buf, sol);
+		    cube, solver, "", 0, 20, 1, -1, buf, sol);
 		if (n == 0) {
 			printf("No solution\n");
 			fprintf(stderr, "No solution found\n");
@@ -39,10 +37,13 @@ void run(void) {
 }
 
 int main(void) {
+	char filename[255];
+
 	srand(time(NULL));
 	nissy_setlogger(log_stderr);
 
-	if (getdata(solver, options, &buf, filename) != 0)
+	sprintf(filename, "tables/%s", solver);
+	if (getdata(solver, &buf, filename) != 0)
 		return 1;
 
 	timerun(run);

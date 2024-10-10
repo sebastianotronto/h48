@@ -1,15 +1,15 @@
 #include "../tool.h"
 #include "../expected_distributions.h"
 
-char *solver, *options, *filename;
+char *solver, *filename;
 
 static void
 run(void) {
-	int64_t size;
+	int64_t size, result;
 	char *buf;
 	FILE *f;
 	
-	size = nissy_datasize(solver, options);
+	size = nissy_datasize(solver);
 
 	if (size <= 0) {
 		fprintf(stderr, "Error in datasize\n");
@@ -24,22 +24,23 @@ run(void) {
 	buf = malloc(size);
 	fread(buf, size, 1, f);
 	fclose(f);
-	nissy_checkdata(solver, options, buf);
+	result = nissy_checkdata(solver, buf);
 	free(buf);
+
+	printf("checkdata %s\n", result == 0 ? "succeeded" : "failed");
 
 	/* TODO: cross-check with expected distributions? */
 }
 
 int main(int argc, char **argv) {
-	if (argc < 4) {
+	if (argc < 3) {
 		fprintf(stderr, "Error: not enough arguments. "
-		    "A solver, its options and a file name must be given.\n");
+		    "A solver and a file name must be given.\n");
 		return 1;
 	}
 
 	solver = argv[1];
-	options = argv[2];
-	filename = argv[3];
+	filename = argv[2];
 	nissy_setlogger(log_stderr);
 
 	timerun(run);

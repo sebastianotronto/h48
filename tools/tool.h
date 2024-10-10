@@ -12,12 +12,11 @@
 static void log_stderr(const char *, ...);
 static void log_stdout(const char *, ...);
 static double timerun(void (*)(void));
-static void getfilename(const char *, const char *, char *);
 static void writetable(const char *, int64_t, const char *);
-static int64_t generatetable(const char *, const char *, char **);
+static int64_t generatetable(const char *, char **);
 static int64_t derivetable(const char *, const char *, const char *, char **);
-static int getdata(const char *, const char *, char **, const char *);
-static void gendata_run(const char *, const char *, uint64_t[static 21]);
+static int getdata(const char *, char **, const char *);
+static void gendata_run(const char *, uint64_t[static 21]);
 static void derivedata_run(
     const char *, const char *, const char *, const char *);
 
@@ -71,50 +70,39 @@ timerun(void (*run)(void))
 }
 
 static void
-getfilename(const char *solver, const char *options, char *filename)
-{
-	uint8_t h, k;
-
-	/* Only h48 supported for now */
-	parse_h48_options(options, &h, &k, NULL);
-
-	sprintf(filename, "tables/%sh%dk%d", solver, h, k);
-}
-
-static void
 writetable(const char *buf, int64_t size, const char *filename)
 {
 	FILE *f;
 
 	if ((f = fopen(filename, "wb")) == NULL) {
-		fprintf(stderr, "Could not write tables to file %s"
+		printf("Could not write tables to file %s"
 		    ", will be regenerated next time.\n", filename);
 	} else {
 		fwrite(buf, size, 1, f);
 		fclose(f);
-		fprintf(stderr, "Table written to %s.\n", filename);
+		printf("Table written to %s.\n", filename);
 	}
 }
 
 static int64_t
-generatetable(const char *solver, const char *options, char **buf)
+generatetable(const char *solver, char **buf)
 {
 	int64_t size, gensize;
 
-	size = nissy_datasize(solver, options);
+	size = nissy_datasize(solver);
 	if (size == -1) {
 		printf("Error getting table size.\n");
 		return -1;
 	}
 
 	*buf = malloc(size);
-	gensize = nissy_gendata(solver, options, *buf);
+	gensize = nissy_gendata(solver, *buf);
 
 	if (gensize != size) {
-		fprintf(stderr, "Error generating table");
+		printf("Error generating table");
 		if (gensize != -1)
-			fprintf(stderr, " (got %" PRId64 " bytes)", gensize);
-		fprintf(stderr, "\n");
+			printf(" (got %" PRId64 " bytes)", gensize);
+		printf("\n");
 		return -2;
 	}
 
@@ -123,46 +111,53 @@ generatetable(const char *solver, const char *options, char **buf)
 
 static int64_t
 derivetable(
-	const char *opts_large,
-	const char *opts_small,
+	const char *solver_large,
+	const char *solver_small,
 	const char *filename_large,
 	char **buf
 )
 {
-	uint8_t h;
+	uint8_t h, k;
 	int64_t size, gensize;
 	char *fulltable;
 
-	if (getdata("h48", opts_large, &fulltable, filename_large) != 0) {
+	if (getdata(solver_large, &fulltable, filename_large) != 0) {
 		printf("Error reading full table.\n");
-		return -1;
+		gensize = -1;
+		goto derivetable_error_nofree;
 	}
 
-	size = nissy_datasize("h48", opts_small);
+	size = nissy_datasize(solver_small);
 	if (size == -1) {
 		printf("Error getting table size.\n");
-		free(fulltable);
-		return -1;
+		gensize = -2;
+		goto derivetable_error;
 	}
 
-	h = atoi(opts_small); /* TODO: use option parser */
+	if (parse_h48_solver(solver_small, &h, &k) != 0) {
+		gensize = -3;
+		goto derivetable_error;
+	}
+
 	*buf = malloc(size);
 	gensize = gendata_h48_derive(h, fulltable, *buf);
 
 	if (gensize != size) {
-		fprintf(stderr, "Error deriving table\n");
-		free(fulltable);
-		return -2;
+		printf("Error deriving table\n");
+		gensize = -4;
+		goto derivetable_error;
 	}
 
+derivetable_error:
 	free(fulltable);
+
+derivetable_error_nofree:
 	return gensize;
 }
 
 static int
 getdata(
 	const char *solver,
-	const char *options,
 	char **buf,
 	const char *filename
 ) {
@@ -170,8 +165,8 @@ getdata(
 	FILE *f;
 
 	if ((f = fopen(filename, "rb")) == NULL) {
-		fprintf(stderr, "Table file not found, generating it.\n");
-		size = generatetable(solver, options, buf);
+		printf("Table file not found, generating it.\n");
+		size = generatetable(solver, buf);
 		switch (size) {
 		case -1:
 			goto getdata_error_nofree;
@@ -182,13 +177,13 @@ getdata(
 			break;
 		}
 	} else {
-		fprintf(stderr, "Reading tables from file %s\n", filename);
-		size = nissy_datasize(solver, options);
+		printf("Reading tables from file %s\n", filename);
+		size = nissy_datasize(solver);
 		*buf = malloc(size);
 		sizeread = fread(*buf, size, 1, f);
 		fclose(f);
 		if (sizeread != 1) {
-			fprintf(stderr, "Error reading table, stopping\n");
+			printf("Error reading table, stopping\n");
 			goto getdata_error;
 		}
 	}
@@ -204,14 +199,13 @@ getdata_error_nofree:
 static void
 gendata_run(
 	const char *solver,
-	const char *options,
 	uint64_t expected[static 21]
 ) {
 	int64_t size;
 	char *buf, filename[1024];
 
-	getfilename(solver, options, filename);
-	size = generatetable(solver, options, &buf);
+	sprintf(filename, "tables/%s", solver);
+	size = generatetable(solver, &buf);
 	switch (size) {
 	case -1:
 		return;
@@ -234,8 +228,8 @@ gendata_run_finish:
 
 static void
 derivedata_run(
-	const char *opts_large,
-	const char *opts_small,
+	const char *solver_large,
+	const char *solver_small,
 	const char *filename_large,
 	const char *filename_small
 )
@@ -243,7 +237,7 @@ derivedata_run(
 	int64_t size;
 	char *buf;
 
-	size = derivetable(opts_large, opts_small, filename_large, &buf);
+	size = derivetable(solver_large, solver_small, filename_large, &buf);
 	switch (size) {
 	case -1:
 		return;

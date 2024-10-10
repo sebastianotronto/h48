@@ -29,15 +29,12 @@ date +'%Y-%m-%d %H:%M'
 echo ""
 echo "======== config.mk ========"
 cat config.mk
-echo "==========================="
 echo ""
 echo "=== tool configuration ===="
 echo "TOOL=$toolname"
 echo "TOOLARGS=$TOOLARGS"
 echo "CC=$CC"
-echo "==========================="
 echo ""
 echo "======= tool output ======="
 $BIN $TOOLARGS 
-echo "==========================="
 ) | tee "$file" "$LAST"

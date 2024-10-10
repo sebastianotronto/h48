@@ -23,7 +23,6 @@
 #define FLAG_MOVES        "-moves"
 #define FLAG_TRANS        "-trans"
 #define FLAG_SOLVER       "-solver"
-#define FLAG_OPTIONS      "-options"
 #define FLAG_NISSTYPE     "-nisstype"
 #define FLAG_MINMOVES     "-m"
 #define FLAG_MAXMOVES     "-M"
@@ -50,7 +49,6 @@ typedef struct {
 	char *str_moves;
 	char *str_trans;
 	char *str_solver;
-	char *str_options; /* TODO: remove, use only solver */
 	char *str_nisstype; /* TODO: remove, use flags */
 	int8_t minmoves;
 	int8_t maxmoves;
@@ -87,7 +85,6 @@ static bool set_str_format_out(int, char **, args_t *);
 static bool set_str_moves(int, char **, args_t *);
 static bool set_str_trans(int, char **, args_t *);
 static bool set_str_solver(int, char **, args_t *);
-static bool set_str_options(int, char **, args_t *);
 static bool set_str_nisstype(int, char **, args_t *);
 static bool set_minmoves(int, char **, args_t *);
 static bool set_maxmoves(int, char **, args_t *);
@@ -113,7 +110,6 @@ struct {
 	OPTION(FLAG_MOVES, 1, set_str_moves),
 	OPTION(FLAG_TRANS, 1, set_str_trans),
 	OPTION(FLAG_SOLVER, 1, set_str_solver),
-	OPTION(FLAG_OPTIONS, 1, set_str_options), /* TODO: remove, use only solver */
 	OPTION(FLAG_NISSTYPE, 1, set_str_nisstype), /* TODO: remove, use flags */
 	OPTION(FLAG_MINMOVES, 1, set_minmoves),
 	OPTION(FLAG_MAXMOVES, 1, set_maxmoves),
@@ -183,21 +179,21 @@ struct {
 	),
 	COMMAND(
 		"datasize",
-		"datasize " FLAG_SOLVER " SOLVER " FLAG_OPTIONS " OPTIONS",
+		"datasize " FLAG_SOLVER " SOLVER",
 		"Return the size in bytes of the data table used by "
 		"SOLVER when called with the given OPTIONS.",
 		datasize_exec
 	),
 	COMMAND(
 		"gendata",
-		"gendata " FLAG_SOLVER " SOLVER " FLAG_OPTIONS " OPTIONS",
+		"gendata " FLAG_SOLVER " SOLVER",
 		"Generate the data table used by "
 		"SOLVER when called with the given OPTIONS.",
 		gendata_exec
 	),
 	COMMAND(
 		"solve",
-		"solve " FLAG_SOLVER " SOLVER " FLAG_OPTIONS " OPTIONS "
+		"solve " FLAG_SOLVER " SOLVER"
 		"[" FLAG_MINMOVES " n] [" FLAG_MAXMOVES " N] "
 		FLAG_CUBE " CUBE",
 		"Solve the given CUBE using SOLVER with the given OPTIONS, "
@@ -357,7 +353,7 @@ datasize_exec(args_t *args)
 {
 	int64_t ret;
 
-	ret = nissy_datasize(args->str_solver, args->str_options);
+	ret = nissy_datasize(args->str_solver);
 	if (ret < 0)
 		fprintf(stderr, "Unknown error (make sure solver is valid)\n");
 	printf("%" PRId64 "\n", ret);
@@ -389,7 +385,7 @@ gendata_exec(args_t *args)
 		return -2;
 	}
 
-	size = nissy_datasize(args->str_solver, args->str_options);
+	size = nissy_datasize(args->str_solver);
 
 	if (size < 0) {
 		fprintf(stderr,
@@ -401,7 +397,7 @@ gendata_exec(args_t *args)
 
 	buf = malloc(size);
 
-	ret = nissy_gendata(args->str_solver, args->str_options, buf);
+	ret = nissy_gendata(args->str_solver, buf);
 	if (ret < 0) {
 		fprintf(stderr, "Unknown error in generating data\n");
 		fclose(file);
@@ -476,7 +472,7 @@ solve_exec(args_t *args)
 		return -1;
 	}
 
-	size = nissy_datasize(args->str_solver, args->str_options);
+	size = nissy_datasize(args->str_solver);
 	buf = malloc(size);
 	read = fread(buf, size, 1, file);
 	fclose(file);
@@ -488,9 +484,8 @@ solve_exec(args_t *args)
 	}
 
 	ret = nissy_solve(
-	    args->cube, args->str_solver, args->str_options, args->str_nisstype,
-	    args->minmoves, args->maxmoves, args->maxsolutions, args->optimal,
-	    buf, solutions);
+	    args->cube, args->str_solver, args->str_nisstype, args->minmoves,
+	    args->maxmoves, args->maxsolutions, args->optimal, buf, solutions);
 
 	free(buf);
 
@@ -545,7 +540,6 @@ parse_args(int argc, char **argv, args_t *args)
 		.str_moves = "",
 		.str_trans = "",
 		.str_solver = "",
-		.str_options = "",
 		.str_nisstype = "",
 		.minmoves = 0,
 		.maxmoves = 20,
@@ -698,14 +692,6 @@ static bool
 set_str_solver(int argc, char **argv, args_t *args)
 {
 	args->str_solver = argv[0];
-
-	return true;
-}
-
-static bool
-set_str_options(int argc, char **argv, args_t *args)
-{
-	args->str_options = argv[0];
 
 	return true;
 }
