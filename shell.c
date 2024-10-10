@@ -69,6 +69,7 @@ static int64_t randomcube_exec(args_t *);
 static int64_t datasize_exec(args_t *);
 static int64_t gendata_exec(args_t *);
 static int64_t solve_exec(args_t *);
+static int64_t solve_scramble_exec(args_t *);
 static int64_t help_exec(args_t *);
 
 static int parse_args(int, char **, args_t *);
@@ -196,10 +197,20 @@ struct {
 		"solve " FLAG_SOLVER " SOLVER"
 		"[" FLAG_MINMOVES " n] [" FLAG_MAXMOVES " N] "
 		FLAG_CUBE " CUBE",
-		"Solve the given CUBE using SOLVER with the given OPTIONS, "
+		"Solve the given CUBE using SOLVER, "
 		"using at least n and at most N moves. "
 		INFO_CUBEFORMAT("CUBE"),
 		solve_exec
+	),
+	COMMAND(
+		"solve_scramble",
+		"solve_scramble " FLAG_SOLVER " SOLVER"
+		"[" FLAG_MINMOVES " n] [" FLAG_MAXMOVES " N] "
+		FLAG_CUBE " CUBE",
+		"Solve the given SCRAMBLE using SOLVER, "
+		"using at least n and at most N moves. "
+		INFO_MOVESFORMAT,
+		solve_scramble_exec
 	),
 	COMMAND(
 		"help",
@@ -495,6 +506,14 @@ solve_exec(args_t *args)
 		printf("%s", solutions);
 
 	return 0;
+}
+
+static int64_t
+solve_scramble_exec(args_t *args)
+{
+	nissy_frommoves(args->str_moves, args->cube);
+
+	return solve_exec(args);
 }
 
 static int64_t
