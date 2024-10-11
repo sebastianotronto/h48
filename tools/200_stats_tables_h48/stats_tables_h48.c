@@ -6,6 +6,7 @@
 #define LOG_EVERY (NCUBES_PER_THREAD / 10)
 
 int NCUBES_PER_THREAD;
+int64_t size = 0;
 const char *solver = "h48stats";
 const char *filename = "tables/h48h0k4";
 char *buf;
@@ -40,11 +41,12 @@ run_thread(void *arg)
 		cp = rand64();
 		co = rand64();
 		nissy_getcube(ep, eo, cp, co, "fix", cube);
-		nissy_solve(cube, "h48stats", "", 0, MAXMOVES, 1, -1, buf, s);
+		nissy_solve(cube, "h48stats", NISSY_NISSFLAG_NORMAL,
+		    0, MAXMOVES, 1, -1, size, buf, 12, s);
 		for (j = 0; j < 12; j++)
 			a->v[j][(int)s[j]]++;
 		if ((i+1) % LOG_EVERY == 0)
-			fprintf(stderr, "[thread %d] %d cubes solved...\n",
+			printf("[thread %d] %d cubes solved...\n",
 			    a->thread_id, i+1);
 	}
 
@@ -56,6 +58,8 @@ void run(void) {
 	double avg;
 	pthread_t thread[THREADS];
 	thread_arg_t arg[THREADS];
+
+	size = nissy_datasize(solver);
 
 	for (i = 0; i < THREADS; i++) {
 		arg[i] = (thread_arg_t) {
@@ -88,7 +92,7 @@ int main(int argc, char **argv) {
 	nissy_setlogger(log_stderr);
 
 	if (argc < 2) {
-		fprintf(stderr, "Error: not enough arguments. "
+		printf("Error: not enough arguments. "
 		    "Number of cubes per thread must be provided.\n");
 		return 1;
 	}
@@ -96,7 +100,7 @@ int main(int argc, char **argv) {
 	NCUBES_PER_THREAD = atoi(argv[1]);
 
 	if (NCUBES_PER_THREAD < 1 || NCUBES_PER_THREAD > 1000000) {
-		fprintf(stderr, "Invalid number of cubes: must be > 0 and "
+		printf("Invalid number of cubes: must be > 0 and "
 		    "< 1000000, but %d was given.\n", NCUBES_PER_THREAD);
 		return 1;
 	}

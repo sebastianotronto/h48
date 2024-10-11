@@ -96,7 +96,7 @@ generatetable(const char *solver, char **buf)
 	}
 
 	*buf = malloc(size);
-	gensize = nissy_gendata(solver, *buf);
+	gensize = nissy_gendata(solver, size, *buf);
 
 	if (gensize != size) {
 		printf("Error generating table");
@@ -212,7 +212,7 @@ gendata_run(
 	case -2:
 		goto gendata_run_finish;
 	default:
-		nissy_datainfo(buf, write_stdout);
+		nissy_datainfo(size, buf, write_stdout);
 		printf("\n");
 		printf("Succesfully generated %" PRId64 " bytes. "
 		       "See above for details on the tables.\n", size);
@@ -237,6 +237,7 @@ derivedata_run(
 	int64_t size;
 	char *buf;
 
+	buf = NULL;
 	size = derivetable(solver_large, solver_small, filename_large, &buf);
 	switch (size) {
 	case -1:
@@ -244,7 +245,7 @@ derivedata_run(
 	case -2:
 		goto derivedata_run_finish;
 	default:
-		nissy_datainfo(buf, write_stdout);
+		nissy_datainfo(size, buf, write_stdout);
 		printf("\n");
 		printf("Succesfully generated %" PRId64 " bytes. "
 		       "See above for details on the tables.\n", size);

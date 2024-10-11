@@ -1,6 +1,9 @@
 #include "../tool.h"
 
+#define SOL_BUFFER_LEN 1000
+
 const char *solver = "h48h0k4";
+int64_t size = 0;
 char *buf;
 
 char *scrambles[] = {
@@ -14,25 +17,22 @@ char *scrambles[] = {
 void run(void) {
 	int i;
 	int64_t n;
-	char sol[100], cube[22];
+	char sol[SOL_BUFFER_LEN], cube[22];
 
 	printf("Solved the following scrambles:\n\n");
 	for (i = 0; scrambles[i] != NULL; i++) {
 		printf("%d. %s\n", i+1, scrambles[i]);
-		fprintf(stderr, "Solving scramble %s\n", scrambles[i]);
+		printf("Solving scramble %s\n", scrambles[i]);
 		if (nissy_frommoves(scrambles[i], cube) == -1) {
-			fprintf(stderr, "Invalid scramble\n");
-			printf("Invalid\n");
+			printf("Invalid scramble\n");
 			continue;
 		}
-		n = nissy_solve(
-		    cube, solver, "", 0, 20, 1, -1, buf, sol);
-		if (n == 0) {
-			printf("No solution\n");
-			fprintf(stderr, "No solution found\n");
-		} else {
+		n = nissy_solve(cube, solver, NISSY_NISSFLAG_NORMAL,
+		    0, 20, 1, -1, size, buf, SOL_BUFFER_LEN, sol);
+		if (n == 0)
+			printf("No solution found\n");
+		else
 			printf("Solutions:\n%s\n", sol);
-		}
 	}
 }
 
@@ -45,6 +45,8 @@ int main(void) {
 	sprintf(filename, "tables/%s", solver);
 	if (getdata(solver, &buf, filename) != 0)
 		return 1;
+
+	size = nissy_datasize(solver);
 
 	timerun(run);
 

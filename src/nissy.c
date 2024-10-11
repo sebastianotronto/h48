@@ -16,7 +16,7 @@ int parse_h48_solver(const char *, uint8_t [static 1], uint8_t [static 1]);
 STATIC int64_t write_result(cube_t, char [static 22]);
 STATIC bool distribution_equal(const uint64_t [static INFO_DISTRIBUTION_LEN],
     const uint64_t [static INFO_DISTRIBUTION_LEN], uint8_t);
-STATIC bool checkdata(const void *, const tableinfo_t *);
+STATIC bool checkdata(const char *, const tableinfo_t *);
 
 #define GETCUBE_OPTIONS(S, F) { .option = S, .fix = F }
 struct {
@@ -67,7 +67,7 @@ parse_h48_solver_error:
 }
 
 STATIC bool
-checkdata(const void *buf, const tableinfo_t *info)
+checkdata(const char *buf, const tableinfo_t *info)
 {
 	uint64_t distr[INFO_DISTRIBUTION_LEN];
 
@@ -202,6 +202,12 @@ nissy_applymoves(
 	cube_t c, res;
 	int64_t err;
 
+	if (moves == NULL) {
+		LOG("Error: 'moves' argument is NULL\n");
+		err = NISSY_ERROR_NULL_POINTER;
+		goto nissy_applymoves_error;
+	}
+
 	c = readcube("B32", cube);
 
 	if (!isconsistent(c)) {
@@ -228,7 +234,7 @@ nissy_applymoves_error:
 int64_t
 nissy_applytrans(
 	const char cube[static 22],
-	const char *transformation,
+	const char transformation[static 12],
 	char result[static 22]
 )
 {
@@ -267,6 +273,12 @@ nissy_frommoves(
 	cube_t res;
 	int64_t err;
 
+	if (moves == NULL) {
+		LOG("Error: 'moves' argument is NULL\n");
+		err = NISSY_ERROR_NULL_POINTER;
+		goto nissy_frommoves_error;
+	}
+
 	res = applymoves(SOLVED_CUBE, moves);
 
 	if (!isconsistent(res)) {
@@ -287,12 +299,31 @@ nissy_convert(
 	const char *format_in,
 	const char *format_out,
 	const char *cube_string,
-	char *result
+        size_t result_size,
+	char result[result_size]
 )
 {
 	cube_t c;
 	int ret;
 	int64_t err;
+
+	if (format_in == NULL) {
+		LOG("Error: 'format_in' argument is NULL\n");
+		err = NISSY_ERROR_NULL_POINTER;
+		goto nissy_convert_error;
+	}
+
+	if (format_out == NULL) {
+		LOG("Error: 'format_out' argument is NULL\n");
+		err = NISSY_ERROR_NULL_POINTER;
+		goto nissy_convert_error;
+	}
+
+	if (cube_string == NULL) {
+		LOG("Error: 'cube_string' argument is NULL\n");
+		err = NISSY_ERROR_NULL_POINTER;
+		goto nissy_convert_error;
+	}
 
 	c = readcube(format_in, cube_string);
 
@@ -334,6 +365,11 @@ nissy_getcube(
 	int i;
 	cube_t c;
 
+	if (options == NULL) {
+		LOG("Error: 'options' argument is NULL\n");
+		return NISSY_ERROR_NULL_POINTER;
+	}
+
 	for (i = 0; getcube_options[i].option != NULL; i++)
 		if (!strcmp(options, getcube_options[i].option))
 			getcube_options[i].fix(&ep, &eo, &cp, &co);
@@ -355,13 +391,19 @@ nissy_datasize(
 	const char *solver
 )
 {
+	if (solver == NULL) {
+		LOG("Error: 'solver' argument is NULL\n");
+		return NISSY_ERROR_NULL_POINTER;
+	}
+
 	/* gendata() handles a NULL *data as a "dryrun" request */
-	return nissy_gendata(solver, NULL);
+	return nissy_gendata(solver, 0, NULL);
 }
 
 int64_t
 nissy_datainfo(
-	const void *data,
+        size_t data_size,
+	const char data[data_size],
 	void (*write)(const char *, ...)
 )
 {
@@ -396,7 +438,8 @@ nissy_datainfo(
 	}
 
 	if (info.next != 0)
-		return nissy_datainfo((char *)data + info.next, write);
+		return nissy_datainfo(
+		    data_size - info.next, (char *)data + info.next, write);
 
 	write("\n---------\n");
 
@@ -406,11 +449,17 @@ nissy_datainfo(
 int64_t
 nissy_gendata(
 	const char *solver,
-	void *data
+	size_t data_size,
+	char data[data_size]
 )
 {
 	int p;
 	gendata_h48_arg_t arg;
+
+	if (solver == NULL) {
+		LOG("Error: 'solver' argument is NULL\n");
+		return NISSY_ERROR_NULL_POINTER;
+	}
 
 	arg.buf = data;
 	if (!strncmp(solver, "h48", 3)) {
@@ -427,8 +476,8 @@ nissy_gendata(
 
 int64_t
 nissy_checkdata(
-	const char *solver,
-	const void *data
+	uint64_t data_size,
+	const char data[data_size]
 )
 {
 	char *buf;
@@ -454,15 +503,22 @@ nissy_solve(
 	uint8_t nissflag,
 	int8_t minmoves,
 	int8_t maxmoves,
-	int64_t maxsolutions,
+	int64_t maxsols,
 	int8_t optimal,
-	const void *data,
-	char *solutions
+	size_t data_size,
+	const char data[data_size],
+	size_t sols_size,
+	char sols[sols_size]
 )
 {
 	cube_t c;
 	int p;
 	uint8_t h, k;
+
+	if (solver == NULL) {
+		LOG("Error: 'solver' argument is NULL\n");
+		return NISSY_ERROR_NULL_POINTER;
+	}
 
 	c = readcube_B32(cube);
 
@@ -486,24 +542,19 @@ nissy_solve(
 		maxmoves = 20;
 	}
 
-	if (maxsolutions < 0) {
+	if (maxsols < 0) {
 		LOG("solve: 'maxsols' is negative, stopping\n");
 		return NISSY_ERROR_OPTIONS;
 	}
 
-	if (maxsolutions == 0) {
+	if (maxsols == 0) {
 		LOG("solve: 'maxsols' is 0, returning no solution\n");
 		return 0;
 	}
 
-	if (solutions == NULL) {
-		LOG("solve: return parameter 'solutions' is NULL, stopping\n");
-		return NISSY_ERROR_NULL_POINTER;
-	}
-
 	if (!strncmp(solver, "h48", 3)) {
 		if (!strcmp(solver, "h48stats"))
-			return solve_h48stats(c, maxmoves, data, solutions);
+			return solve_h48stats(c, maxmoves, data, sols);
 
 		p = parse_h48_solver(solver, &h, &k);
 		if (p != 0) {
@@ -512,13 +563,13 @@ nissy_solve(
 		} else {
 			return THREADS > 1 ?
 				solve_h48_multithread(c, minmoves,
-				    maxmoves, maxsolutions, data, solutions) :
+				    maxmoves, maxsols, data, sols) :
 				solve_h48(c, minmoves,
-				    maxmoves, maxsolutions, data, solutions);
+				    maxmoves, maxsols, data, sols);
 		}
 	} else if (!strcmp(solver, "simple")) {
 		return solve_simple(
-		    c, minmoves, maxmoves, maxsolutions, optimal, solutions);
+		    c, minmoves, maxmoves, maxsols, optimal, sols);
 	} else {
 		LOG("solve: unknown solver '%s'\n", solver);
 		return NISSY_ERROR_INVALID_SOLVER;

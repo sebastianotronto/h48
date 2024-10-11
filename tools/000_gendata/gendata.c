@@ -17,8 +17,8 @@ run(void) {
 	case -2:
 		goto gendata_run_finish;
 	default:
-		nissy_datainfo(buf, write_stdout);
-		consistent = nissy_checkdata(solver, buf) == 0;
+		nissy_datainfo(size, buf, write_stdout);
+		consistent = nissy_checkdata(size, buf) == 0;
 		expected = check_distribution(solver, buf);
 		if (consistent && expected) {
 			printf("\n");
@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
 	uint8_t h, k;
 
 	if (argc < 2) {
-		fprintf(stderr, "Error: not enough arguments. "
+		printf("Error: not enough arguments. "
 		    "A solver must be given.\n");
 		return 1;
 	}

@@ -98,7 +98,7 @@ Apply the given sequence of moves on the given cube.
 
 Parameters:
    cube   - The cube to move, in B32 format.
-   moves  - The moves to apply to the cube.
+   moves  - The moves to apply to the cube. Must be a NULL-terminated string.
    result - The return parameter for the resulting cube, in B32 format.
 
 Return values:
@@ -108,6 +108,7 @@ Return values:
                                or due to an unknown internal error.
    NISSY_ERROR_INVALID_CUBE  - The given cube is invalid.
    NISSY_ERROR_INVALID_MOVES - The given moves are invalid.
+   NISSY_ERROR_NULL_POINTER  - The 'moves' argument is NULL.
 */
 int64_t nissy_applymoves(
 	const char cube[static 22],
@@ -132,7 +133,7 @@ Return values:
 */
 int64_t nissy_applytrans(
 	const char cube[static 22],
-	const char *transformation,
+	const char transformation[static 12],
 	char result[static 22]
 );
 
@@ -140,7 +141,8 @@ int64_t nissy_applytrans(
 Apply the given moves to the solved cube.
 
 Parameters:
-   moves  - The moves to be applied to the solved cube.
+   moves  - The moves to be applied to the solved cube. Must be a
+            NULL-terminated string.
    result - Return parameter for the resulting cube, in B32 format.
 
 Return values:
@@ -148,6 +150,7 @@ Return values:
    NISSY_WARNING_UNSOLVABLE  - The resulting cube is not solvable. This is
                                probably due to an unknown internal error.
    NISSY_ERROR_INVALID_MOVES - The given moves are invalid.
+   NISSY_ERROR_NULL_POINTER  - The 'moves' argument is NULL.
 */
 int64_t nissy_frommoves(
 	const char *moves,
@@ -158,23 +161,26 @@ int64_t nissy_frommoves(
 Convert the given cube between the two given formats.
 
 Parameters:
-   format_in  - The input format.
-   format_out - The output format.
-   string     - The cube, in format_in format.
-   result     - Return parameter for the cube in format_out format. Must be
-                large enough to contains the cube in this format.
+   format_in   - The input format.
+   format_out  - The output format.
+   cube_string - The cube, in format_in format.
+   retult_size - The allocated size of the result array.
+   result      - Return parameter for the cube in format_out format.
 
 Return values:
    NISSY_OK                   - The conversion was performed succesfully.
    NISSY_ERROR_INVALID_CUBE   - The given cube is invalid.
    NISSY_ERROR_INVALID_FORMAT - At least one of the given formats is invalid.
    NISSY_ERROR_UNKNOWN        - An unknown error occurred.
+   NISSY_ERROR_NULL_POINTER   - At least one of 'format_in', 'format_out' or
+                                'cube_string' arguments is NULL.
 */
 int64_t nissy_convert(
 	const char *format_in,
 	const char *format_out,
-	const char *cube,
-	char *result
+	const char *cube_string,
+	uint64_t result_size,
+	char result[result_size]
 );
 
 /*
@@ -214,6 +220,7 @@ Parameters:
 
 Return values:
    NISSY_ERROR_INVALID_SOLVER - The given solver is not known.
+   NISSY_ERROR_NULL_POINTER   - The 'solver' argument is null.
    NISSY_ERROR_UNKNOWN        - An unknown error occurred.
    Any value >= 0             - The size of the data, in bytes.
 */
@@ -225,55 +232,75 @@ int64_t nissy_datasize(
 Compute the data for the given solver and store it in generated_data.
 
 Parameters:
-   solver - The name of the solver.
-   data   - The return parameter for the generated data. Must be large enoguh
-            to contain the whole data. It is advised to use nissy_datasize to
-            check how much memory is needed.
+   solver    - The name of the solver.
+   data_size - The size of the data buffer. It is advised to use nissy_datasize
+               to check how much memory is needed.
+   data      - The return parameter for the generated data.
 
 Return values:
    NISSY_ERROR_INVALID_SOLVER - The given solver is not known.
+   NISSY_ERROR_NULL_POINTER   - The 'solver' argument is null.
    NISSY_ERROR_UNKNOWN        - An error occurred while generating the data.
    Any value >= 0             - The size of the data, in bytes.
 */
 int64_t nissy_gendata(
 	const char *solver,
-	void *data
+	uint64_t data_size,
+	char data[data_size]
 );
 
 /*
 Print information on a data table via the provided callback writer.
 
 Parameters:
-   data  - The data 
-   write - A callback writer with the same signature as printf(3).
+   data_size - The size of the data buffer.
+   data      - The data to be read.
+   write     - A callback writer with the same signature as printf(3).
 
 Return values:
    NISSY_OK         - The data is correct.
    NISSY_ERROR_DATA - The data contains errors.
 */
 int64_t nissy_datainfo(
-	const void *data,
+	uint64_t data_size,
+	const char data[data_size],
 	void (*write)(const char *, ...)
+);
+
+/*
+Check that the data is a valid data table for a solver.
+
+Parameters:
+   data_size - The size of the data buffer.
+   data      - The data for the solver. Can be computed with gendata.
+
+Return values:
+   NISSY_OK         - The data is valid.
+   NISSY_ERROR_DATA - The data is invalid.
+*/
+int64_t nissy_checkdata(
+	uint64_t data_size,
+	const char data[data_size]
 );
 
 /*
 Solve the given cube using the given solver and options.
 
 Parameters:
-   cube         - The cube to solver, in B32 format.
-   solver       - The name of the solver.
-   nissflag     - The flags for NISS (linear, inverse, mixed, or combinations).
-   minmoves     - The minimum number of moves for a solution.
-   maxmoves     - The maximum number of moves for a solution.
-   maxsolutions - The maximum number of solutions.
-   optimal      - If set to a non-negative value, the maximum number of moves
-                  above the optimal solution length.
-   data         - The data for the solver. Can be computed with gendata.
-   solutions    - The return parameter for the solutions. Must be large enough
-                  to store all found solutions. The solutions are separated by
-                  a '\n' (newline) and a '\0' (NULL character) terminates the
-                  list.
-                  TODO: replace with callback writer.
+   cube      - The cube to solver, in B32 format.
+   solver    - The name of the solver.
+   nissflag  - The flags for NISS (linear, inverse, mixed, or combinations).
+   minmoves  - The minimum number of moves for a solution.
+   maxmoves  - The maximum number of moves for a solution.
+   maxsols   - The maximum number of solutions.
+   optimal   - If set to a non-negative value, the maximum number of moves
+               above the optimal solution length.
+   data_size - The size of the data buffer.
+   data      - The data for the solver. Can be computed with gendata.
+   sols_size - The size of the solutions buffer.
+   sols      - The return parameter for the solutions. The solutions are
+               separated by a '\n' (newline) and a '\0' (NULL character)
+               terminates the list.
 
 Return values:
    NISSY_OK                    - Cube solved succesfully.
@@ -281,8 +308,8 @@ Return values:
    NISSY_ERROR_UNSOLVABLE_CUBE - The given cube is valid, but not solvable with
                                  the given solver.
    NISSY_ERROR_OPTIONS         - One or more of the given options are invalid.
-   NISSY_ERROR_NULL_POINTER    - One of the provided pointers is null.
    NISSY_ERROR_INVALID_SOLVER  - The given solver is not known.
+   NISSY_ERROR_NULL_POINTER    - The 'solver' argument is null.
    Any value >= 0              - The number of solutions found.
 */
 int64_t nissy_solve(
@@ -293,8 +320,10 @@ int64_t nissy_solve(
 	int8_t maxmoves,
 	int64_t maxsolutions,
 	int8_t optimal,
-	const void *data,
-	char *solutions
+	uint64_t data_size,
+	const char data[data_size],
+	uint64_t sols_size,
+	char sols[sols_size]
 );
 
 /*

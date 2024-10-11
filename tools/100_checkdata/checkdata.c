@@ -12,19 +12,19 @@ run(void) {
 	size = nissy_datasize(solver);
 
 	if (size <= 0) {
-		fprintf(stderr, "Error in datasize\n");
+		printf("Error in datasize\n");
 		return;
 	}
 
 	if ((f = fopen(filename, "rb")) == NULL) {
-		fprintf(stderr, "Error reading file %s\n", filename);
+		printf("Error reading file %s\n", filename);
 		return;
 	}
 
 	buf = malloc(size);
 	fread(buf, size, 1, f);
 	fclose(f);
-	result = nissy_checkdata(solver, buf);
+	result = nissy_checkdata(size, buf);
 	free(buf);
 
 	printf("checkdata %s\n", result == 0 ? "succeeded" : "failed");
@@ -34,7 +34,7 @@ run(void) {
 
 int main(int argc, char **argv) {
 	if (argc < 3) {
-		fprintf(stderr, "Error: not enough arguments. "
+		printf("Error: not enough arguments. "
 		    "A solver and a file name must be given.\n");
 		return 1;
 	}

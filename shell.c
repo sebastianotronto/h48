@@ -9,9 +9,9 @@
 
 #include "src/nissy.h"
 
-#define PRINTCUBE_BUFFER_SIZE 1024 /* Should be enough */
-#define SOLUTIONS_BUFFER_SIZE 500000 /* Should be enough */
-#define MAX_PATH_LENGTH 10000 /* Should be enough */
+#define PRINTCUBE_BUFFER_SIZE UINT64_C(1024)
+#define SOLUTIONS_BUFFER_SIZE UINT64_C(500000)
+#define MAX_PATH_LENGTH       UINT64_C(10000)
 
 #define FLAG_CUBE         "-cube"
 #define FLAG_PERM         "-perm"
@@ -308,8 +308,8 @@ convert_exec(args_t *args)
 	char result[PRINTCUBE_BUFFER_SIZE];
 	int64_t ret;
 
-	ret = nissy_convert(
-	    args->str_format_in, args->str_format_out, args->str_cube, result);
+	ret = nissy_convert(args->str_format_in, args->str_format_out,
+	    args->str_cube, PRINTCUBE_BUFFER_SIZE, result);
 	if (ret == NISSY_OK || ret == NISSY_WARNING_UNSOLVABLE)
 		printf("%s\n", result);
 
@@ -382,7 +382,7 @@ gendata_exec(args_t *args)
 
 	buf = malloc(size);
 
-	ret = nissy_gendata(args->str_solver, buf);
+	ret = nissy_gendata(args->str_solver, size, buf);
 	if (ret < 0) {
 		fprintf(stderr, "Unknown error in generating data\n");
 		fclose(file);
@@ -473,7 +473,8 @@ solve_exec(args_t *args)
 
 	ret = nissy_solve(
 	    args->cube, args->str_solver, nissflag, args->minmoves,
-	    args->maxmoves, args->maxsolutions, args->optimal, buf, solutions);
+	    args->maxmoves, args->maxsolutions, args->optimal,
+	    size, buf, SOLUTIONS_BUFFER_SIZE, solutions);
 
 	free(buf);
 

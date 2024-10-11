@@ -19,8 +19,7 @@ void run(void) {
 
 int main(int argc, char **argv) {
 	if (argc < 5) {
-		fprintf(stderr,
-		    "Error: not enough arguments. Required:\n"
+		printf("Error: not enough arguments. Required:\n"
 		    "1. Solver name for large table\n"
 		    "2. Solver name for derived table\n"
 		    "3. Filename containing large table\n"
