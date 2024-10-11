@@ -12,7 +12,7 @@ All the functions return 0 or a positive integer in case of success and
 a negative integer in case of error, unless otherwise specified.
 You can see the list of error codes below, or use nissy_explainerror().
 
-Arguments of type char [static 22] denote a cube in B32 format.
+All cube arguments are in B32 formats, unless otherwise specified.
 Other available formats are H48 and SRC. See README.md for more info on
 these formats.
 
