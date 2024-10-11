@@ -49,7 +49,7 @@ typedef struct {
 	char *str_moves;
 	char *str_trans;
 	char *str_solver;
-	char *str_nisstype; /* TODO: remove, use flags */
+	char *str_nisstype;
 	int8_t minmoves;
 	int8_t maxmoves;
 	int8_t optimal;
@@ -108,7 +108,7 @@ struct {
 	OPTION(FLAG_MOVES, 1, set_str_moves),
 	OPTION(FLAG_TRANS, 1, set_str_trans),
 	OPTION(FLAG_SOLVER, 1, set_str_solver),
-	OPTION(FLAG_NISSTYPE, 1, set_str_nisstype), /* TODO: remove, use flags */
+	OPTION(FLAG_NISSTYPE, 1, set_str_nisstype), /* TODO: more args ? */
 	OPTION(FLAG_MINMOVES, 1, set_minmoves),
 	OPTION(FLAG_MAXMOVES, 1, set_maxmoves),
 	OPTION(FLAG_OPTIMAL, 1, set_optimal),
@@ -244,7 +244,7 @@ compose_exec(args_t *args)
 	int64_t ret;
 
 	ret = nissy_compose(args->cube, args->cube_perm, result);
-	if (ret == 0)
+	if (ret == NISSY_OK || ret == NISSY_WARNING_UNSOLVABLE)
 		printf("%s\n", result);
 
 	return ret;
@@ -257,7 +257,7 @@ inverse_exec(args_t *args)
 	int64_t ret;
 
 	ret = nissy_inverse(args->cube, result);
-	if (ret == 0)
+	if (ret == NISSY_OK || ret == NISSY_WARNING_UNSOLVABLE)
 		printf("%s\n", result);
 
 	return ret;
@@ -270,7 +270,7 @@ applymoves_exec(args_t *args)
 	int64_t ret;
 
 	ret = nissy_applymoves(args->cube, args->str_moves, result);
-	if (ret == 0)
+	if (ret == NISSY_OK || ret == NISSY_WARNING_UNSOLVABLE)
 		printf("%s\n", result);
 
 	return ret;
@@ -283,7 +283,7 @@ applytrans_exec(args_t *args)
 	int64_t ret;
 
 	ret = nissy_applytrans(args->cube, args->str_trans, result);
-	if (ret == 0)
+	if (ret == NISSY_OK || ret == NISSY_WARNING_UNSOLVABLE)
 		printf("%s\n", result);
 
 	return ret;
@@ -296,7 +296,7 @@ frommoves_exec(args_t *args)
 	int64_t ret;
 
 	ret = nissy_frommoves(args->str_moves, result);
-	if (ret == 0)
+	if (ret == NISSY_OK || ret == NISSY_WARNING_UNSOLVABLE)
 		printf("%s\n", result);
 
 	return ret;
@@ -310,7 +310,7 @@ convert_exec(args_t *args)
 
 	ret = nissy_convert(
 	    args->str_format_in, args->str_format_out, args->str_cube, result);
-	if (ret == 0)
+	if (ret == NISSY_OK || ret == NISSY_WARNING_UNSOLVABLE)
 		printf("%s\n", result);
 
 	return ret;
@@ -327,7 +327,7 @@ randomcube_exec(args_t *args)
 	cp = rand64();
 	co = rand64();
 	ret = nissy_getcube(ep, eo, cp, co, "fix", result);
-	if (ret == 0)
+	if (ret == NISSY_OK || ret == NISSY_WARNING_UNSOLVABLE)
 		printf("%s\n", result);
 
 	return ret;
@@ -418,10 +418,13 @@ static int64_t
 solve_exec(args_t *args)
 {
 	int i;
+	uint8_t nissflag;
 	FILE *file;
 	char *buf, solutions[SOLUTIONS_BUFFER_SIZE], path[MAX_PATH_LENGTH];
 	int64_t ret, gendata_ret, size;
 	size_t read;
+
+	nissflag = NISSY_NISSFLAG_NORMAL; /* TODO: parse str_nisstype */
 
 	for (i = 0; tablepaths[i] != NULL; i++) {
 		strcpy(path, tablepaths[i]);
@@ -469,12 +472,12 @@ solve_exec(args_t *args)
 	}
 
 	ret = nissy_solve(
-	    args->cube, args->str_solver, args->str_nisstype, args->minmoves,
+	    args->cube, args->str_solver, nissflag, args->minmoves,
 	    args->maxmoves, args->maxsolutions, args->optimal, buf, solutions);
 
 	free(buf);
 
-	if (ret == 0)
+	if (ret == NISSY_OK || ret == NISSY_WARNING_UNSOLVABLE)
 		fprintf(stderr, "No solutions found\n");
 	else
 		printf("%s", solutions);

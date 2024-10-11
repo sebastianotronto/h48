@@ -109,20 +109,14 @@ distribution_equal(
 STATIC int64_t
 write_result(cube_t cube, char result[static 22])
 {
-	if (!isconsistent(cube)) {
-		LOG("Error: resulting cube is invalid\n");
-		writecube("B32", ZERO_CUBE, result);
-		return 8;
-	}
-
 	writecube("B32", cube, result);
 
 	if (!issolvable(cube)) {
 		LOG("Warning: resulting cube is not solvable\n");
-		return 9;
+		return NISSY_WARNING_UNSOLVABLE;
 	}
 
-	return 0;
+	return NISSY_OK;
 }
 
 int64_t
@@ -133,24 +127,37 @@ nissy_compose(
 )
 {
 	cube_t c, p, res;
+	int64_t err;
 
 	c = readcube("B32", cube);
 
 	if (!isconsistent(c)) {
 		LOG("Error in nissy_compose: given cube is invalid\n");
-		return 1;
+		err = NISSY_ERROR_INVALID_CUBE;
+		goto nissy_compose_error;
 	}
 
 	p = readcube("B32", permutation);
 
 	if (!isconsistent(p)) {
 		LOG("Error in nissy_compose: given permutation is invalid\n");
-		return 2;
+		err = NISSY_ERROR_INVALID_CUBE;
+		goto nissy_compose_error;
 	}
 
 	res = compose(c, p);
 
+	if (!isconsistent(res)) {
+		LOG("Unknown error: resulting cube is invalid\n");
+		err = NISSY_ERROR_UNKNOWN;
+		goto nissy_compose_error;
+	}
+
 	return write_result(res, result);
+
+nissy_compose_error:
+	writecube("B32", ZERO_CUBE, result);
+	return err;
 }
 
 int64_t
@@ -160,17 +167,29 @@ nissy_inverse(
 )
 {
 	cube_t c, res;
+	int64_t err;
 
 	c = readcube("B32", cube);
 
 	if (iserror(c)) {
 		LOG("Error in nissy_inverse: given cube is invalid\n");
-		return 1;
+		err = NISSY_ERROR_INVALID_CUBE;
+		goto nissy_inverse_error;
 	}
 
 	res = inverse(c);
 
+	if (!isconsistent(res)) {
+		LOG("Unknown error: inverted cube is invalid\n");
+		err = NISSY_ERROR_UNKNOWN;
+		goto nissy_inverse_error;
+	}
+
 	return write_result(res, result);
+
+nissy_inverse_error:
+	writecube("B32", ZERO_CUBE, result);
+	return err;
 }
 
 int64_t
@@ -181,17 +200,29 @@ nissy_applymoves(
 )
 {
 	cube_t c, res;
+	int64_t err;
 
 	c = readcube("B32", cube);
 
 	if (!isconsistent(c)) {
 		LOG("Error in nissy_applymoves: given cube is invalid\n");
-		return 1;
+		err = NISSY_ERROR_INVALID_CUBE;
+		goto nissy_applymoves_error;
 	}
 
 	res = applymoves(c, moves);
 
+	if (!isconsistent(res)) {
+		/* Assume we got a reasonable error message from applymoves */
+		err = NISSY_ERROR_INVALID_MOVES;
+		goto nissy_applymoves_error;
+	}
+
 	return write_result(res, result);
+
+nissy_applymoves_error:
+	writecube("B32", ZERO_CUBE, result);
+	return err;
 }
 
 int64_t
@@ -202,17 +233,29 @@ nissy_applytrans(
 )
 {
 	cube_t c, res;
+	int64_t err;
 
 	c = readcube("B32", cube);
 
 	if (!isconsistent(c)) {
 		LOG("Error in nissy_applytrans: given cube is invalid\n");
-		return 1;
+		err = NISSY_ERROR_INVALID_CUBE;
+		goto nissy_applytrans_error;
 	}
 
 	res = applytrans(c, transformation);
 
+	if (!isconsistent(res)) {
+		/* Assume we got a reasonable error message from applytrans */
+		err = NISSY_ERROR_INVALID_TRANS;
+		goto nissy_applytrans_error;
+	}
+
 	return write_result(res, result);
+
+nissy_applytrans_error:
+	writecube("B32", ZERO_CUBE, result);
+	return err;
 }
 
 int64_t
@@ -222,15 +265,21 @@ nissy_frommoves(
 )
 {
 	cube_t res;
+	int64_t err;
 
 	res = applymoves(SOLVED_CUBE, moves);
 
 	if (!isconsistent(res)) {
-		/* Moves must be invalid */
-		return 1;
+		/* Assume we got a reasonable error message from applymoves */
+		err = NISSY_ERROR_INVALID_MOVES;
+		goto nissy_frommoves_error;
 	}
 
 	return write_result(res, result);
+
+nissy_frommoves_error:
+	writecube("B32", ZERO_CUBE, result);
+	return err;
 }
 
 int64_t
@@ -241,20 +290,35 @@ nissy_convert(
 	char *result
 )
 {
-	int ret;
 	cube_t c;
+	int ret;
+	int64_t err;
 
 	c = readcube(format_in, cube_string);
 
-	if (iserror(c))
-		return 1;
+	if (iserror(c)) {
+		err = NISSY_ERROR_INVALID_CUBE;
+		goto nissy_convert_error;
+	}
 
 	ret = writecube(format_out, c, result);
 
-	if (ret != 0)
-		return 2;
+	if (ret != 0) {
+		/* Assume the format was invalid */
+		err = NISSY_ERROR_INVALID_FORMAT;
+		goto nissy_convert_error;
+	}
 
-	return isconsistent(c) ? 0 : 3;
+	if (!isconsistent(c)) {
+		err = NISSY_ERROR_UNKNOWN;
+		goto nissy_convert_error;
+	}
+
+	return NISSY_OK;
+
+nissy_convert_error:
+	/* We don't write anything to result, we don't know the format */
+	return err;
 }
 
 int64_t
@@ -276,6 +340,13 @@ nissy_getcube(
 
 	c = getcube(ep, eo, cp, co);
 
+	if (!isconsistent(c)) {
+		LOG("Error: could not get cube with ep=%" PRId64 ", eo=%"
+		    PRId64 ", cp=%" PRId64 ", co=%" PRId64 ".\n",
+		    ep, eo, cp, co);
+		return NISSY_ERROR_OPTIONS;
+	}
+
 	return write_result(c, result);
 }
 
@@ -290,14 +361,14 @@ nissy_datasize(
 
 int64_t
 nissy_datainfo(
-	const void *table,
+	const void *data,
 	void (*write)(const char *, ...)
 )
 {
 	uint8_t i;
 	tableinfo_t info;
 
-	readtableinfo(table, &info);
+	readtableinfo(data, &info);
 
 	write("\n---------\n\n");
 	write("Table information for '%s'\n", info.solver);
@@ -321,16 +392,15 @@ nissy_datainfo(
 		break;
 	default:
 		LOG("datainfo: unknown table type\n");
-		return 1;
+		return NISSY_ERROR_DATA;
 	}
 
-	if (info.next != 0) {
-		return nissy_datainfo((char *)table + info.next, write);
-	}
+	if (info.next != 0)
+		return nissy_datainfo((char *)data + info.next, write);
 
 	write("\n---------\n");
 
-	return 0;
+	return NISSY_OK;
 }
 
 int64_t
@@ -340,20 +410,19 @@ nissy_gendata(
 )
 {
 	int p;
-	int64_t ret;
 	gendata_h48_arg_t arg;
 
 	arg.buf = data;
 	if (!strncmp(solver, "h48", 3)) {
 		p = parse_h48_solver(solver, &arg.h, &arg.k);
 		arg.maxdepth = 20;
-		ret = p == 0 ? (int64_t)gendata_h48(&arg) : -1;
+		if (p != 0)
+			return NISSY_ERROR_UNKNOWN;
+		return (int64_t)gendata_h48(&arg);
 	} else {
 		LOG("gendata: unknown solver %s\n", solver);
-		ret = -1;
+		return NISSY_ERROR_INVALID_SOLVER;
 	}
-
-	return ret;
 }
 
 int64_t
@@ -369,20 +438,20 @@ nissy_checkdata(
 		if (!checkdata(buf, &info)) {
 			LOG("Error: data for %s is inconsistent with info!\n",
 			    info.solver);
-			return 1;
+			return NISSY_ERROR_DATA;
 		}
 		if (info.next == 0)
 			break;
 	}
 
-	return 0;
+	return NISSY_OK;
 }
 
 int64_t
 nissy_solve(
 	const char cube[static 22],
 	const char *solver, 
-	const char *nisstype,
+	uint8_t nissflag,
 	int8_t minmoves,
 	int8_t maxmoves,
 	int64_t maxsolutions,
@@ -397,9 +466,14 @@ nissy_solve(
 
 	c = readcube_B32(cube);
 
+	if (!isconsistent(c)) {
+		LOG("solve: cube is invalid\n");
+		return NISSY_ERROR_INVALID_CUBE;
+	}
+
 	if (!issolvable(c)) {
 		LOG("solve: cube is not solvable\n");
-		return -1;
+		return NISSY_ERROR_UNSOLVABLE_CUBE;
 	}
 
 	if (minmoves < 0) {
@@ -414,7 +488,7 @@ nissy_solve(
 
 	if (maxsolutions < 0) {
 		LOG("solve: 'maxsols' is negative, stopping\n");
-		return -1;
+		return NISSY_ERROR_OPTIONS;
 	}
 
 	if (maxsolutions == 0) {
@@ -424,7 +498,7 @@ nissy_solve(
 
 	if (solutions == NULL) {
 		LOG("solve: return parameter 'solutions' is NULL, stopping\n");
-		return -1;
+		return NISSY_ERROR_NULL_POINTER;
 	}
 
 	if (!strncmp(solver, "h48", 3)) {
@@ -433,7 +507,8 @@ nissy_solve(
 
 		p = parse_h48_solver(solver, &h, &k);
 		if (p != 0) {
-			return -1;
+			LOG("solve: unknown solver %s\n", solver);
+			return NISSY_ERROR_INVALID_SOLVER;
 		} else {
 			return THREADS > 1 ?
 				solve_h48_multithread(c, minmoves,
@@ -446,12 +521,151 @@ nissy_solve(
 		    c, minmoves, maxmoves, maxsolutions, optimal, solutions);
 	} else {
 		LOG("solve: unknown solver '%s'\n", solver);
-		return -1;
+		return NISSY_ERROR_INVALID_SOLVER;
 	}
 }
 
-void
-nissy_setlogger(void (*log)(const char *, ...))
+int64_t
+nissy_setlogger(
+	void (*log)(const char *, ...)
+)
 {
 	nissy_log = log;
+
+	if (log == NULL)
+		return NISSY_WARNING_NULL_CALLBACK;
+
+	return NISSY_OK;
+}
+
+int64_t
+nissy_explainerror(
+	int64_t error_code,
+	void (*write)(const char *, ...)
+)
+{
+	if (write == NULL)
+		return NISSY_WARNING_NULL_CALLBACK;
+
+	switch (error_code) {
+	case NISSY_OK:
+		write(
+		    "The value %" PRId64 " denotes a success.\n"
+		    "If returned by solve, it means that no solutions has "
+		    "been found.\n", NISSY_OK
+		);
+		return NISSY_OK;
+	case NISSY_WARNING_UNSOLVABLE:
+		write(
+		    "The value %" PRId64 " is a warning. It means that the "
+		    "operation was completed succesfully, but the resulting "
+		    "cube is in an unsolvable state. This could be intended, "
+		    "for example if the user has provided an unsolvable cube "
+		    "as input.\n", NISSY_WARNING_UNSOLVABLE
+		);
+		return NISSY_OK;
+	case NISSY_WARNING_NULL_CALLBACK:
+		write(
+		    "The value %" PRId64 " is a warning. It means that the "
+		    "provided pointer to a writer function is NULL.\n"
+		    "If returned by nissy_setlogger, it means that any future "
+		    "log messages will not be printed.\n",
+		    NISSY_WARNING_NULL_CALLBACK
+		);
+		return NISSY_OK;
+	case NISSY_ERROR_INVALID_CUBE:
+		write(
+		    "The value %" PRId64 " means that the provided cube is "
+		    "invalid. It could be written in an unknown format, or "
+		    "in a format different from what specified, or simply "
+		    "ill-formed.\n", NISSY_ERROR_INVALID_CUBE
+		);
+		return NISSY_OK;
+	case NISSY_ERROR_UNSOLVABLE_CUBE:
+		write(
+		    "The value %" PRId64 " means that the provided cube is "
+		    "in an unsolvable state.\n", NISSY_ERROR_INVALID_CUBE
+		);
+		return NISSY_OK;
+	case NISSY_ERROR_INVALID_MOVES:
+		write(
+		    "The value %" PRId64 " means that the given moves are "
+		    "invalid.\n", NISSY_ERROR_INVALID_MOVES
+		);
+		return NISSY_OK;
+	case NISSY_ERROR_INVALID_TRANS:
+		write(
+		    "The value %" PRId64 " means that the given transformation "
+		    "is invalid.\n", NISSY_ERROR_INVALID_TRANS
+		);
+		return NISSY_OK;
+	case NISSY_ERROR_INVALID_FORMAT:
+		write(
+		    "The value %" PRId64 " means that the given format is not "
+		    "known.\n", NISSY_ERROR_INVALID_FORMAT
+		);
+		return NISSY_OK;
+	case NISSY_ERROR_INVALID_SOLVER:
+		write(
+		    "The value %" PRId64 " means that the given solver is not "
+		    "known.\n", NISSY_ERROR_INVALID_SOLVER
+		);
+		return NISSY_OK;
+	case NISSY_ERROR_NULL_POINTER:
+		write(
+		    "The value %" PRId64 " means that one of the provided "
+		    "pointer arguments is NULL. For example, it may be "
+		    "returned by solve when called with a solver that "
+		    "requires some pre-computed data, but the provided data "
+		    "is NULL.\n", NISSY_ERROR_NULL_POINTER
+		);
+		return NISSY_OK;
+	case NISSY_ERROR_DATA:
+		write(
+		    "The value %" PRId64 " means that the provided data is "
+		    "invalid. For example, it may be returned by solve when "
+		    "called with incompatible solver and data arguments.\n",
+		    NISSY_ERROR_DATA
+		);
+		return NISSY_OK;
+	case NISSY_ERROR_OPTIONS:
+		write(
+		    "The value %" PRId64 " means that one or more of the "
+		    "given options are invalid. For example, it may be "
+		    "returned by solve when called with a negative maximum "
+		    "number of solutions.\n", NISSY_ERROR_OPTIONS
+		);
+		return NISSY_OK;
+	case NISSY_ERROR_INVALID_CODE:
+		write(
+		    "The value %" PRId64 " means that the given error code "
+		    "is not known. It may be returned by explainerror.\n",
+		    NISSY_ERROR_INVALID_CODE
+		);
+		return NISSY_OK;
+	case NISSY_ERROR_UNKNOWN:
+		write(
+		    "The value %" PRId64 " denotes an unexpected error. It "
+		    "probably means that there some bug in this library.\n"
+		    "If you can, report any error of this kind to "
+		    "sebastiano@tronto.net. Thanks!\n", NISSY_ERROR_UNKNOWN
+		);
+		return NISSY_OK;
+	default:
+		break;
+	}
+
+	if (error_code > 0) {
+		write(
+		    "A positive return values does not denote an error\n"
+		    "If returned by gendata or datasize, it denotes the size "
+		    "of the data, in bytes\n"
+		    "If returned by solve, it denotes the number of solutions "
+		    "found.\n"
+		);
+		return NISSY_OK;
+	} else {
+		write("Unknown error code %" PRId64 "\n", error_code);
+		return NISSY_ERROR_INVALID_CODE;
+	}
 }
