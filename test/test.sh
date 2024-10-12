@@ -10,7 +10,7 @@ for t in test/*; do
 	if [ -n "$re" ] && !(echo "$t" | grep -q "$re"); then
 		continue
 	fi
-	
+
 	# Verify if $t is a directory and if its name starts with three digits
 	if [ -d "$t" ] && basename "$t" | grep -Eq '^[0-9]{3}'; then
 		$CC -o $TESTBIN "$t"/*.c $OBJ || exit 1

@@ -8,6 +8,8 @@ utils/.DS_Store
 perf.data
 perf.data.old
 run
+shell/lasttest.out
+shell/lasttest.err
 tables/*
 test/*/runtest
 test/.DS_Store

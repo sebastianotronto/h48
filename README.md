@@ -108,8 +108,14 @@ commands manually. To build the shell use:
 $ make shell
 ```
 
-This will create an executable called `run`.  Then you can for example
-get a cube from a sequence of moves:
+This will create an executable called `run`.
+Optionally, you can run some tests:
+
+```
+$ make shelltest
+```
+
+Then you can for example get a cube from a sequence of moves:
 
 ```
 $ ./run frommoves -moves "R' U' F"

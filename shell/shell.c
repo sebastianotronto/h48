@@ -7,7 +7,7 @@
 #include <string.h>
 #include <time.h>
 
-#include "src/nissy.h"
+#include "../src/nissy.h"
 
 #define PRINTCUBE_BUFFER_SIZE UINT64_C(1024)
 #define SOLUTIONS_BUFFER_SIZE UINT64_C(500000)

@@ -30,10 +30,13 @@ debugtool: debugnissy.o
 
 shell: nissy.o
 	mkdir -p tables
-	${CC} ${MACROS} ${CFLAGS} -o run nissy.o shell.c
+	${CC} ${MACROS} ${CFLAGS} -o run nissy.o shell/shell.c
 
 debugshell: debugnissy.o
 	mkdir -p tables
-	${CC} ${MACROS} ${DBGFLAGS} -o run debugnissy.o shell.c
+	${CC} ${MACROS} ${DBGFLAGS} -o run debugnissy.o shell/shell.c
 
-.PHONY: all clean test tool debugtool shell debugshell
+shelltest: debugshell
+	./shell/test.sh
+
+.PHONY: all clean test tool debugtool shell debugshell shelltest
