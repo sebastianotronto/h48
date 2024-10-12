@@ -3,7 +3,7 @@
 #define MAXMOVES 20
 
 int64_t readmoves(const char *, int, uint8_t *);
-void writemoves(uint8_t *, int, char *);
+void writemoves(uint8_t *, int, uint64_t, char *);
 void invertmoves(uint8_t *, uint8_t, uint8_t *);
 
 void run(void) {
@@ -15,7 +15,7 @@ void run(void) {
 	c = readmoves(movestr, MAXMOVES, moves);
 
 	invertmoves(moves, c, ret);
-	writemoves(ret, c, outstr);
+	writemoves(ret, c, STRLENMAX, outstr);
 
 	printf("%s\n", outstr);
 }

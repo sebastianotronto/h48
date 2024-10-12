@@ -559,9 +559,6 @@ nissy_solve(
 			    solve_h48(c, minmoves, maxmoves, maxsols,
 			        data_size, data, sols_size, sols);
 		}
-	} else if (!strcmp(solver, "simple")) {
-		return solve_simple(
-		    c, minmoves, maxmoves, maxsols, optimal, sols);
 	} else {
 		LOG("solve: unknown solver '%s'\n", solver);
 		return NISSY_ERROR_INVALID_SOLVER;

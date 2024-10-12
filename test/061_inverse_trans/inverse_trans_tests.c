@@ -1,6 +1,6 @@
 #include "../test.h"
 
-uint8_t readtrans(char *);
+uint8_t readtrans(char [static NISSY_SIZE_TRANSFORMATION]);
 uint8_t inverse_trans(uint8_t);
 cube_t applymoves(cube_t, char *);
 cube_t applytrans(cube_t, char *);

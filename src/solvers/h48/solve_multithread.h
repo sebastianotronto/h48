@@ -27,12 +27,17 @@ STATIC void
 solve_h48_appendsolution_thread(dfsarg_solveh48_t *arg, task_queue_t *tq)
 {
 	pthread_mutex_lock(&tq->mutex);
-	int strl = 0;
+	int64_t strl = 0;
 	uint8_t invertedpremoves[MAXLEN];
 	char *solution = *arg->nextsol;
 
-	strl = writemoves(arg->moves, arg->nmoves, *arg->nextsol);
+	strl = writemoves(
+	    arg->moves, arg->nmoves, arg->solutions_size, *arg->nextsol);
+
+	if (strl < 0)
+		goto solve_h48_appendsolution_thread_error;
 	*arg->nextsol += strl;
+	arg->solutions_size -= strl;
 
 	if (arg->npremoves)
 	{
@@ -40,14 +45,22 @@ solve_h48_appendsolution_thread(dfsarg_solveh48_t *arg, task_queue_t *tq)
 		(*arg->nextsol)++;
 
 		invertmoves(arg->premoves, arg->npremoves, invertedpremoves);
-		strl = writemoves(invertedpremoves, arg->npremoves, *arg->nextsol);
+		strl = writemoves(invertedpremoves,
+		    arg->npremoves, arg->solutions_size, *arg->nextsol);
+
+		if (strl < 0)
+			goto solve_h48_appendsolution_thread_error;
 		*arg->nextsol += strl;
+		arg->solutions_size -= strl;
 	}
 	LOG("Solution found: %s\n", solution);
 
 	**arg->nextsol = '\n';
 	(*arg->nextsol)++;
 	(*arg->nsols)++;
+
+solve_h48_appendsolution_thread_error:
+	/* We could add some logging, but writemoves() already does */
 	pthread_mutex_unlock(&tq->mutex);
 }
 
@@ -264,7 +277,9 @@ solve_h48_multithread(
 		.k = info.bits,
 		.cocsepdata = get_cocsepdata_constptr(data),
 		.h48data = get_h48data_constptr(data),
-		.nextsol = &solutions};
+		.solutions_size = solutions_size,
+		.nextsol = &solutions
+	};
 
 	task_queue_t q;
 	init_queue(&q);

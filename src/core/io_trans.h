@@ -1,8 +1,8 @@
-STATIC uint8_t readtrans(const char *);
-STATIC void writetrans(uint8_t, char *);
+STATIC uint8_t readtrans(const char [static NISSY_SIZE_TRANSFORMATION]);
+STATIC void writetrans(uint8_t, char [static NISSY_SIZE_TRANSFORMATION]);
 
 STATIC uint8_t
-readtrans(const char *buf)
+readtrans(const char buf[static NISSY_SIZE_TRANSFORMATION])
 {
 	uint8_t t;
 
@@ -14,7 +14,7 @@ readtrans(const char *buf)
 }
 
 STATIC void
-writetrans(uint8_t t, char *buf)
+writetrans(uint8_t t, char buf[static NISSY_SIZE_TRANSFORMATION])
 {
 	if (t >= 48)
 		memcpy(buf, "error trans", 11);

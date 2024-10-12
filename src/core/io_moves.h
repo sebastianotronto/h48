@@ -1,6 +1,6 @@
 STATIC uint8_t readmove(char);
 STATIC uint8_t readmodifier(char);
-STATIC int writemoves(uint8_t *, int, char *);
+STATIC int64_t writemoves(uint8_t *, int, uint64_t, char *);
 
 STATIC uint8_t
 readmove(char c)
@@ -38,18 +38,29 @@ readmodifier(char c)
 	}
 }
 
-STATIC int
-writemoves(uint8_t *m, int n, char *buf)
+STATIC int64_t
+writemoves(uint8_t *m, int n, uint64_t buf_size, char *buf)
 {
 	int i;
-	size_t len;
+	uint64_t len;
 	const char *s;
 	char *b;
 
-	for (i = 0, b = buf; i < n; i++, b++) {
+	if (buf_size == 0) {
+		LOG("Error: cannot write moves to buffer of size 0.\n");
+		return NISSY_ERROR_BUFFER_SIZE;
+	}
+
+	for (i = 0, b = buf; i < n; i++, b++, buf_size--) {
 		s = movestr[m[i]];
 		len = strlen(s);
+		if (len >= buf_size) {
+			LOG("Error: the given buffer is too small for "
+			     "writing the given moves.\n");
+			goto writemoves_error;
+		}
 		memcpy(b, s, len);
+		buf_size -= len;
 		b += len;	
 		*b = ' ';
 	}
@@ -58,5 +69,9 @@ writemoves(uint8_t *m, int n, char *buf)
 		b--; /* Remove last space */
 	*b = '\0';
 
-	return b - buf;
+	return buf_size;
+
+writemoves_error:
+	*buf = '\0';
+	return NISSY_ERROR_BUFFER_SIZE;
 }

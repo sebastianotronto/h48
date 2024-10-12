@@ -10,6 +10,7 @@ typedef struct {
 	uint8_t k;
 	const uint32_t *cocsepdata;
 	const uint8_t *h48data;
+	uint64_t solutions_size;
 	char **nextsol;
 	uint8_t nissbranch;
 	int8_t npremoves;
@@ -55,26 +56,40 @@ allowednextmove_h48(uint8_t *moves, uint8_t n, uint32_t h48branch)
 STATIC void
 solve_h48_appendsolution(dfsarg_solveh48_t *arg)
 {
-	int strl;
+	int64_t strl;
 	uint8_t invertedpremoves[MAXLEN];
 	char *solution = *arg->nextsol; 
 
-	strl = writemoves(arg->moves, arg->nmoves, *arg->nextsol);
+	strl = writemoves(
+	    arg->moves, arg->nmoves, arg->solutions_size, *arg->nextsol);
+
+	if (strl < 0)
+		goto solve_h48_appendsolution_error;
 	*arg->nextsol += strl; 
+	arg->solutions_size -= strl;
 
 	if (arg->npremoves) {
 		**arg->nextsol = ' ';
 		(*arg->nextsol)++;
 
 		invertmoves(arg->premoves, arg->npremoves, invertedpremoves);
-		strl = writemoves(invertedpremoves, arg->npremoves, *arg->nextsol);
+		strl = writemoves(invertedpremoves,
+		    arg->npremoves, arg->solutions_size, *arg->nextsol);
+
+		if (strl < 0)
+			goto solve_h48_appendsolution_error;
 		*arg->nextsol += strl;
+		arg->solutions_size -= strl;
 	}
 	LOG("Solution found: %s\n", solution);
 
 	**arg->nextsol = '\n';
 	(*arg->nextsol)++;
 	(*arg->nsols)++;
+
+solve_h48_appendsolution_error:
+	/* We could add some logging, but writemoves() already does */
+	return;
 }
 
 STATIC_INLINE bool
@@ -188,6 +203,7 @@ solve_h48(
 		.k = info.bits,
 		.cocsepdata = get_cocsepdata_constptr(data),
 		.h48data = get_h48data_constptr(data),
+		.solutions_size = solutions_size,
 		.nextsol = &solutions
 	};
 
