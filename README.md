@@ -150,6 +150,41 @@ F' U R
 
 For a full list of available command, use `run help`.
 
+## Running commands from a Python shell
+
+There is a work-in-progress python module available. To build it you need
+the Python development headers installed. You can check this from the output
+of `./configure.sh`:
+
+```
+$ ./configure.sh
+...
+Python3 development libraries: version 3.12
+```
+
+Then to build the module:
+
+```
+$ make python
+```
+
+And to import it
+
+```
+$ python                                  # In the main folder
+>>> import nissy_python_module as nissy   # In the python shell
+```
+
+From here you can call the library functions directly, for example:
+
+```
+>>> nissy.compose("NEORSQLH=ZFCYUAGLHTKB", "NEORSQLH=ZFCYUAGLHTKB")
+'ASTUGFBH=DACXEZGBLIKF'
+```
+
+Please note: as this is work in progress, not all functions are currently
+available from the Python module.
+
 ## Cube formats
 
 The cube is represented as a string in one of the following formats,

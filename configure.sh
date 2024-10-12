@@ -102,21 +102,33 @@ else
 fi
 LIBS="-lpthread"
 
-CFLAGS="$STD $LIBS $WFLAGS $WNOFLAGS $AVX -O3"
-DBGFLAGS="$STD $LIBS $WFLAGS $WNOFLAGS $SAN $AVX -g3 -DDEBUG"
+CFLAGS="$STD $LIBS $WFLAGS $WNOFLAGS $AVX -O3 -fPIC"
+DBGFLAGS="$STD $LIBS $WFLAGS $WNOFLAGS $SAN $AVX -g3 -DDEBUG -fPIC"
 MACROS="-DTHREADS=$THREADS -D$ARCH"
+
+if (command -v "python3-config" >/dev/null 2>&1) ; then
+	PYTHON3_INCLUDES="$(python3-config --includes)"
+	PYTHON3="version $(echo "$PYTHON3_INCLUDES" | sed 's/.*3\./3./')"
+else
+	PYTHON3_INCLUDES=""
+	PYTHON3="Not found, Python shell won't be available"
+fi
 
 echo "Compiler: $CC"
 echo "Selected architecture: $ARCH"
 echo "Number of threads: $THREADS"
 echo "Sanitizer options (debug build only): $SAN"
+echo "Python3 development libraries: $PYTHON3"
 
 {
 echo "ARCH = $ARCH";
 echo "";
 echo "CFLAGS = $CFLAGS";
+echo "";
 echo "DBGFLAGS = $DBGFLAGS";
+echo "";
 echo "MACROS = $MACROS"
 echo "";
+echo "PYTHON3_INCLUDES = $PYTHON3_INCLUDES"
 echo "CC = $CC"
 } > config.mk
