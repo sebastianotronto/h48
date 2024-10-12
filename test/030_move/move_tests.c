@@ -17,7 +17,7 @@ void run(void) {
 	} else if (!issolvable(cube)) {
 		printf("Moved cube is not solvable\n");
 	} else {
-		writecube("H48", cube, cubestr);
+		writecube("H48", cube, NISSY_SIZE_H48, cubestr);
 		printf("%s\n", cubestr);
 	}
 }

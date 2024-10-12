@@ -16,7 +16,7 @@ void run(void) {
 	} else if (!issolvable(cube)) {
 		printf("Cube is not solvable\n");
 	} else {
-		writecube("LST", cube, str);
+		writecube("LST", cube, STRLENMAX, str);
 		printf("%s\n", str);
 	}
 }

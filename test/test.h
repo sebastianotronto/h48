@@ -8,6 +8,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "../src/nissy.h"
 #include "../src/arch/arch.h"
 #include "../src/solvers/tables_types_macros.h"
 #include "../src/solvers/h48/coordinate_macros.h"
@@ -23,8 +24,7 @@ bool isconsistent(cube_t);
 bool issolvable(cube_t);
 bool issolved(cube_t);
 cube_t readcube(char *, char *);
-void writecube(char *, cube_t, char *);
-void nissy_setlogger(void (*logger_function)(const char *, ...));
+int64_t writecube(char *, cube_t, uint64_t, char *);
 
 /* Test function to be implemented by all tests */
 void run(void);

@@ -15,7 +15,7 @@ void run(void) {
 	} else if (!issolvable(inv)) {
 		printf("Inverted cube is not solvable\n");
 	} else {
-		writecube("H48", inv, str);
+		writecube("H48", inv, NISSY_SIZE_H48, str);
 		printf("%s\n", str);
 	}
 }

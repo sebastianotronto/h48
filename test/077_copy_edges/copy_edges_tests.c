@@ -19,7 +19,7 @@ void run(void) {
 	} else if (!isconsistent(c1)) {
 		printf("Setting EO resulted in inconsistent cube\n");
 	} else {
-		writecube("H48", c1, str);
+		writecube("H48", c1, NISSY_SIZE_H48, str);
 		printf("%s\n", str);
 	}
 }

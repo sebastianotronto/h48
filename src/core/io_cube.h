@@ -1,5 +1,5 @@
 STATIC cube_t readcube(const char *, const char *);
-STATIC int writecube(const char *, cube_t, char *);
+STATIC int64_t writecube(const char *, cube_t, uint64_t, char *);
 STATIC void log_available_formats(void);
 STATIC uint8_t readco(const char *);
 STATIC uint8_t readcp(const char *);
@@ -10,10 +10,10 @@ STATIC cube_t readcube_H48(const char *);
 STATIC uint8_t readpiece_LST(const char **);
 STATIC cube_t readcube_LST(const char *);
 
-STATIC int writepiece_LST(uint8_t, char *);
-STATIC void writecube_B32(cube_t, char *);
-STATIC void writecube_H48(cube_t, char *);
-STATIC void writecube_LST(cube_t, char *);
+STATIC int64_t writepiece_LST(uint8_t, uint64_t, char *);
+STATIC int64_t writecube_B32(cube_t, uint64_t, char *);
+STATIC int64_t writecube_H48(cube_t, uint64_t, char *);
+STATIC int64_t writecube_LST(cube_t, uint64_t, char *);
 
 STATIC uint8_t b32toedge(char);
 STATIC uint8_t b32tocorner(char);
@@ -23,7 +23,7 @@ STATIC char cornertob32(uint8_t);
 STATIC struct {
 	const char *name;
 	cube_t (*read)(const char *);
-	void (*write)(cube_t, char *);
+	int64_t (*write)(cube_t, uint64_t, char *);
 } ioformat[] =
 {
 	{ .name = "B32", .read = readcube_B32, .write = writecube_B32 },
@@ -46,35 +46,18 @@ readcube(const char *format, const char *buf)
 	return ZERO_CUBE;
 }
 
-STATIC int
-writecube(const char *format, cube_t cube, char *buf)
+STATIC int64_t
+writecube(const char *format, cube_t cube, uint64_t buf_size, char *buf)
 {
-	char *errormsg;
-	size_t len;
-
-	if (!isconsistent(cube)) {
-		errormsg = "ERROR: inconsistent";
-		goto writecube_error;
-	}
-
 	int i;
 
-	for (i = 0; ioformat[i].write != NULL; i++) {
-		if (!strcmp(format, ioformat[i].name)) {
-			ioformat[i].write(cube, buf);
-			return 0;
-		}
-	}
+	for (i = 0; ioformat[i].write != NULL; i++)
+		if (!strcmp(format, ioformat[i].name))
+			return ioformat[i].write(cube, buf_size, buf);
 
 	LOG("Cannot write cube: unknown format '%s'\n", format);
 	log_available_formats();
-	errormsg = "ERROR: format";
-
-writecube_error:
-	len = strlen(errormsg);
-	memcpy(buf, errormsg, len);
-	buf[len] = '\0';
-	return 1;
+	return NISSY_ERROR_INVALID_FORMAT;
 }
 
 STATIC void
@@ -249,17 +232,23 @@ readcube_LST(const char *buf)
 	return cubefromarray(c, e);
 }
 
-STATIC int
-writepiece_LST(uint8_t piece, char *buf)
+STATIC int64_t
+writepiece_LST(uint8_t piece, uint64_t buf_size, char *buf)
 {
 	char digits[3];
-	int i, len;
+	uint64_t i, len;
+
+	if (piece > 99 || buf_size < 3)
+		return 0;
 
 	len = 0;
 	while (piece != 0) {
 		digits[len++] = (piece % 10) + '0';
 		piece /= 10;
 	}
+
+	if (buf_size < len+2)
+		return 0;
 
 	if (len == 0)
 		digits[len++] = '0';
@@ -273,11 +262,18 @@ writepiece_LST(uint8_t piece, char *buf)
 	return len+2;
 }
 
-STATIC void
-writecube_B32(cube_t cube, char *buf)
+STATIC int64_t
+writecube_B32(cube_t cube, uint64_t buf_size, char *buf)
 {
 	int i;
 	uint8_t corner[8], edge[12];
+
+	if (buf_size < NISSY_SIZE_B32) {
+		LOG("Cannot write cube in B32 format: buffer size must be "
+		    "at least %" PRIu64 " bytes, but the provided one is %"
+		    PRIu64 " bytes.\n", NISSY_SIZE_B32, buf_size);
+		return NISSY_ERROR_BUFFER_SIZE;
+	}
 
 	pieces(&cube, corner, edge);
 
@@ -290,13 +286,22 @@ writecube_B32(cube_t cube, char *buf)
 		buf[i+9] = edgetob32(edge[i]);
 
 	buf[21] = '\0';
+
+	return NISSY_OK;
 }
 
-STATIC void
-writecube_H48(cube_t cube, char *buf)
+STATIC int64_t
+writecube_H48(cube_t cube, uint64_t buf_size, char *buf)
 {
 	uint8_t piece, perm, orient, corner[8], edge[12];
 	int i;
+
+	if (buf_size < NISSY_SIZE_H48) {
+		LOG("Cannot write cube in H48 format: buffer size must be "
+		    "at least %" PRIu64 " bytes, but the provided one is %"
+		    PRIu64 " bytes.\n", NISSY_SIZE_H48, buf_size);
+		return NISSY_ERROR_BUFFER_SIZE;
+	}
 
 	pieces(&cube, corner, edge);
 
@@ -321,13 +326,15 @@ writecube_H48(cube_t cube, char *buf)
 	}
 
 	buf[48+39] = '\0';
+
+	return NISSY_OK;
 }
 
-STATIC void
-writecube_LST(cube_t cube, char *buf)
+STATIC int64_t
+writecube_LST(cube_t cube, uint64_t buf_size, char *buf)
 {
 	int i;
-	size_t ptr;
+	uint64_t ptr;
 	uint8_t piece, corner[8], edge[12];
 
 	ptr = 0;
@@ -335,15 +342,27 @@ writecube_LST(cube_t cube, char *buf)
 
 	for (i = 0; i < 8; i++) {
 		piece = corner[i];
-		ptr += writepiece_LST(piece, buf + ptr);
+		ptr += writepiece_LST(piece, buf_size - ptr, buf + ptr);
+		if (ptr == 0)
+			goto writecube_LST_error;
 	}
 
 	for (i = 0; i < 12; i++) {
 		piece = edge[i];
-		ptr += writepiece_LST(piece, buf + ptr);
+		ptr += writepiece_LST(piece, buf_size - ptr, buf + ptr);
+		if (ptr == 0)
+			goto writecube_LST_error;
 	}
 
-	*(buf+ptr-2) = 0;
+	*(buf+ptr-2) = '\0';
+
+	return NISSY_OK;
+
+writecube_LST_error:
+	LOG("Cannot write cube in LST: buffer is too small (%" PRIu64
+	    " bytes given). The LST format has a variable size, try a "
+	    "larger buffer.\n", buf_size);
+	return NISSY_ERROR_BUFFER_SIZE;
 }
 
 STATIC uint8_t

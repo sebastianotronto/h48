@@ -16,7 +16,7 @@ void run(void) {
 	} else if (!issolvable(cube)) {
 		printf("Cube is not solvable\n");
 	} else {
-		writecube("B32", cube, str);
+		writecube("B32", cube, NISSY_SIZE_B32, str);
 		printf("%s\n", str);
 	}
 }

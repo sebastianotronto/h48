@@ -30,7 +30,7 @@ void run(void) {
 		fprintf(stderr, "\n");
 		printf("Setting EO resulted in inconsistent cube\n");
 	} else {
-		writecube("H48", cube, str);
+		writecube("H48", cube, NISSY_SIZE_H48, str);
 		printf("%s\n", str);
 	}
 }

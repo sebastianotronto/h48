@@ -18,7 +18,7 @@ void run(void) {
 	} else if (!issolvable(c3)) {
 		printf("Composed cube is not solvable\n");
 	} else {
-		writecube("H48", c3, str);
+		writecube("H48", c3, NISSY_SIZE_H48, str);
 		printf("%s\n", str);
 	}
 }

@@ -35,10 +35,16 @@ for example 'rotation UF' or 'mirrored BL'.
 #define NISSY_ERROR_INVALID_FORMAT   INT64_C(-40)
 #define NISSY_ERROR_INVALID_SOLVER   INT64_C(-50)
 #define NISSY_ERROR_NULL_POINTER     INT64_C(-60)
+#define NISSY_ERROR_BUFFER_SIZE      INT64_C(-61)
 #define NISSY_ERROR_DATA             INT64_C(-70)
 #define NISSY_ERROR_OPTIONS          INT64_C(-80)
 #define NISSY_ERROR_INVALID_CODE     INT64_C(-90)
 #define NISSY_ERROR_UNKNOWN          INT64_C(-999)
+
+/* Some constants for size for I/O buffers */
+#define NISSY_SIZE_B32            UINT64_C(22)
+#define NISSY_SIZE_H48            UINT64_C(88)
+#define NISSY_SIZE_TRANSFORMATION UINT64_C(12)
 
 /* Flags for NISS options */
 #define NISSY_NISSFLAG_NORMAL  UINT8_C(1)
@@ -68,9 +74,9 @@ Return values:
    NISSY_ERROR_UNKNOWN       - An unknown error occurred.
 */
 int64_t nissy_compose(
-	const char cube[static 22],
-	const char permutation[static 22],
-	char result[static 22]
+	const char cube[static NISSY_SIZE_B32],
+	const char permutation[static NISSY_SIZE_B32],
+	char result[static NISSY_SIZE_B32]
 );
 
 /*
@@ -89,8 +95,8 @@ Return values:
    NISSY_ERROR_UNKNOWN       - An unknown error occurred.
 */
 int64_t nissy_inverse(
-	const char cube[static 22],
-	char result[static 22]
+	const char cube[static NISSY_SIZE_B32],
+	char result[static NISSY_SIZE_B32]
 );
 
 /*
@@ -111,9 +117,9 @@ Return values:
    NISSY_ERROR_NULL_POINTER  - The 'moves' argument is NULL.
 */
 int64_t nissy_applymoves(
-	const char cube[static 22],
+	const char cube[static NISSY_SIZE_B32],
 	const char *moves,
-	char result[static 22]
+	char result[static NISSY_SIZE_B32]
 );
 
 /*
@@ -132,9 +138,9 @@ Return values:
    NISSY_ERROR_INVALID_TRANS - The given transformation is invalid.
 */
 int64_t nissy_applytrans(
-	const char cube[static 22],
-	const char transformation[static 12],
-	char result[static 22]
+	const char cube[static NISSY_SIZE_B32],
+	const char transformation[static NISSY_SIZE_TRANSFORMATION],
+	char result[static NISSY_SIZE_B32]
 );
 
 /*
@@ -154,7 +160,7 @@ Return values:
 */
 int64_t nissy_frommoves(
 	const char *moves,
-	char result[static 22]
+	char result[static NISSY_SIZE_B32]
 );
 
 /*
@@ -169,6 +175,7 @@ Parameters:
 
 Return values:
    NISSY_OK                   - The conversion was performed succesfully.
+   NISSY_ERROR_BUFFER_SIZE    - The given buffer is too small for the result.
    NISSY_ERROR_INVALID_CUBE   - The given cube is invalid.
    NISSY_ERROR_INVALID_FORMAT - At least one of the given formats is invalid.
    NISSY_ERROR_UNKNOWN        - An unknown error occurred.
@@ -208,7 +215,7 @@ int64_t nissy_getcube(
 	int64_t cp,
 	int64_t co,
 	const char *options,
-	char result[static 22]
+	char result[static NISSY_SIZE_B32]
 );
 
 /*
@@ -313,7 +320,7 @@ Return values:
    Any value >= 0              - The number of solutions found.
 */
 int64_t nissy_solve(
-	const char cube[static 22],
+	const char cube[static NISSY_SIZE_B32],
 	const char *solver, 
 	uint8_t nissflag,
 	int8_t minmoves,
