@@ -299,7 +299,7 @@ nissy_convert(
 	const char *format_in,
 	const char *format_out,
 	const char *cube_string,
-        size_t result_size,
+        uint64_t result_size,
 	char result[result_size]
 )
 {
@@ -402,7 +402,7 @@ nissy_datasize(
 
 int64_t
 nissy_datainfo(
-        size_t data_size,
+        uint64_t data_size,
 	const char data[data_size],
 	void (*write)(const char *, ...)
 )
@@ -449,7 +449,7 @@ nissy_datainfo(
 int64_t
 nissy_gendata(
 	const char *solver,
-	size_t data_size,
+	uint64_t data_size,
 	char data[data_size]
 )
 {
@@ -505,9 +505,9 @@ nissy_solve(
 	int8_t maxmoves,
 	int64_t maxsols,
 	int8_t optimal,
-	size_t data_size,
+	uint64_t data_size,
 	const char data[data_size],
-	size_t sols_size,
+	uint64_t sols_size,
 	char sols[sols_size]
 )
 {
