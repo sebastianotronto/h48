@@ -3,10 +3,10 @@ This is libnissy (temporarily also known as h48), a Rubik's cube library.
 
 If you include this file, you should also use the following includes:
 
-#include <inttypes>
-#include <stdarg>
-#include <stdbool>
-#include <string>
+#include <inttypes.h>
+#include <stdarg.h>
+#include <stdbool.h>
+#include <string.h>
 
 All the functions return 0 or a positive integer in case of success and
 a negative integer in case of error, unless otherwise specified.
