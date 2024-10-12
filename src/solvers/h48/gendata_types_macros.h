@@ -58,6 +58,7 @@ typedef struct {
 	uint8_t base;
 	uint8_t maxdepth;
 	tableinfo_t info;
+	uint64_t buf_size;
 	void *buf;
 	void *h48buf;
 	uint32_t *cocsepdata;

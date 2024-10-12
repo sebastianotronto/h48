@@ -394,8 +394,11 @@ nissy_datainfo(
 {
 	uint8_t i;
 	tableinfo_t info;
+	int64_t ret;
 
-	readtableinfo(data, &info);
+	ret = readtableinfo(data_size, data, &info);
+	if (ret != 0)
+		return ret;
 
 	write("\n---------\n\n");
 	write("Table information for '%s'\n", info.solver);
@@ -446,13 +449,14 @@ nissy_gendata(
 		return NISSY_ERROR_NULL_POINTER;
 	}
 
+	arg.buf_size = data_size;
 	arg.buf = data;
 	if (!strncmp(solver, "h48", 3)) {
 		p = parse_h48_solver(solver, &arg.h, &arg.k);
 		arg.maxdepth = 20;
 		if (p != 0)
 			return NISSY_ERROR_UNKNOWN;
-		return (int64_t)gendata_h48(&arg);
+		return gendata_h48(&arg);
 	} else {
 		LOG("gendata: unknown solver %s\n", solver);
 		return NISSY_ERROR_INVALID_SOLVER;
@@ -468,7 +472,10 @@ nissy_checkdata(
 	char *buf;
 	tableinfo_t info;
 
-	for (buf = (char *)data; readtableinfo(buf, &info); buf += info.next) {
+	for (buf = (char *)data;
+	     readtableinfo(data_size, buf, &info);
+	     buf += info.next, data_size -= info.next)
+	{
 		if (!checkdata(buf, &info)) {
 			LOG("Error: data for %s is inconsistent with info!\n",
 			    info.solver);
@@ -547,10 +554,10 @@ nissy_solve(
 			return NISSY_ERROR_INVALID_SOLVER;
 		} else {
 			return THREADS > 1 ?
-				solve_h48_multithread(c, minmoves,
-				    maxmoves, maxsols, data, sols) :
-				solve_h48(c, minmoves,
-				    maxmoves, maxsols, data, sols);
+			    solve_h48_multithread(c, minmoves, maxmoves,
+			        maxsols, data_size, data, sols_size, sols) :
+			    solve_h48(c, minmoves, maxmoves, maxsols,
+			        data_size, data, sols_size, sols);
 		}
 	} else if (!strcmp(solver, "simple")) {
 		return solve_simple(

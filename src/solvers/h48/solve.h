@@ -21,7 +21,8 @@ STATIC uint32_t allowednextmove_h48(uint8_t *, uint8_t, uint32_t);
 STATIC void solve_h48_appendsolution(dfsarg_solveh48_t *);
 STATIC_INLINE bool solve_h48_stop(dfsarg_solveh48_t *);
 STATIC int64_t solve_h48_dfs(dfsarg_solveh48_t *);
-STATIC int64_t solve_h48(cube_t, int8_t, int8_t, int8_t, const void *, char *);
+STATIC int64_t solve_h48(cube_t, int8_t, int8_t,
+    int8_t, uint64_t, const void *, uint64_t, char *);
 
 STATIC uint32_t
 allowednextmove_h48(uint8_t *moves, uint8_t n, uint32_t h48branch)
@@ -163,7 +164,9 @@ solve_h48(
 	int8_t minmoves,
 	int8_t maxmoves,
 	int8_t maxsolutions,
+	uint64_t data_size,
 	const void *data,
+	uint64_t solutions_size,
 	char *solutions
 )
 {
@@ -171,9 +174,9 @@ solve_h48(
 	dfsarg_solveh48_t arg;
 	tableinfo_t info;
 
-	if(!readtableinfo_n(data, 2, &info)) {
+	if(readtableinfo_n(data_size, data, 2, &info) != NISSY_OK) {
 		LOG("solve_h48: error reading table\n");
-		return 0;
+		return NISSY_ERROR_DATA;
 	}
 
 	arg = (dfsarg_solveh48_t) {

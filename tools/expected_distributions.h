@@ -129,11 +129,11 @@ distribution_equal(const uint64_t *expected, const uint64_t *actual, int n)
 }
 
 static bool
-check_cocsep(const void *data)
+check_cocsep(uint64_t data_size, const void *data)
 {
 	tableinfo_t info;
 
-	readtableinfo(data, &info);
+	readtableinfo(data_size, data, &info);
 	return distribution_equal(
 	    expected_cocsep, info.distribution, info.maxvalue);
 }
@@ -151,12 +151,12 @@ unknown_h48(uint8_t h, uint8_t k)
 }
 
 STATIC bool
-check_distribution(const char *solver, const void *data)
+check_distribution(const char *solver, uint64_t data_size, const void *data)
 {
 	tableinfo_t info = {0};
 
 	if (!strncmp(solver, "h48", 3)) {
-		readtableinfo(data, &info);
+		readtableinfo(data_size, data, &info);
 		if (!distribution_equal(
 		    expected_cocsep, info.distribution, info.maxvalue)) {
 			printf("ERROR! cocsep distribution is incorrect\n");
@@ -164,7 +164,7 @@ check_distribution(const char *solver, const void *data)
 		}
 		printf("cocsep distribution is correct\n");
 
-		readtableinfo_n(data, 2, &info);
+		readtableinfo_n(data_size, data, 2, &info);
 		if (unknown_h48(info.h48h, info.bits))
 			goto check_distribution_unknown;
 

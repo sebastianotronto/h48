@@ -1,7 +1,8 @@
 STATIC_INLINE bool get_visited(const uint8_t *, int64_t);
 STATIC_INLINE void set_visited(uint8_t *, int64_t);
 
-STATIC size_t gendata_cocsep(void *, uint64_t *, cube_t *);
+STATIC size_t gendata_cocsep(
+    char [static COCSEP_FULLSIZE+INFOSIZE], uint64_t *, cube_t *);
 STATIC uint32_t gendata_cocsep_dfs(cocsep_dfs_arg_t *);
 STATIC void getdistribution_cocsep(const uint32_t *, uint64_t [static 21]);
 
@@ -19,7 +20,11 @@ After the data as described above, more auxiliary information is appended:
     of positions having that pruning value.
 */
 STATIC size_t
-gendata_cocsep(void *buf, uint64_t *selfsim, cube_t *rep)
+gendata_cocsep(
+	char buf[static COCSEP_FULLSIZE+INFOSIZE],
+	uint64_t *selfsim,
+	cube_t *rep
+)
 {
 	uint32_t *buf32, cc;
 	uint16_t n;
@@ -64,7 +69,7 @@ gendata_cocsep(void *buf, uint64_t *selfsim, cube_t *rep)
 		info.distribution[i] = cc;
 	}
 
-	writetableinfo(&info, buf);
+	writetableinfo(&info, COCSEP_FULLSIZE+INFOSIZE, buf);
 
 	DBG_ASSERT(n == COCSEP_CLASSES, 0,
 	    "cocsep: computed %" PRIu16 " symmetry classes, "

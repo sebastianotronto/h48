@@ -1,14 +1,14 @@
 /* Type definitions and macros are in a separate file for easier testing */
 #include "tables_types_macros.h"
 
-STATIC uint64_t read_unaligned_u64(const void *);
-STATIC void write_unaligned_u64(void *, uint64_t);
-STATIC bool readtableinfo(const void *, tableinfo_t *);
-STATIC bool readtableinfo_n(const void *, uint8_t, tableinfo_t *);
-STATIC bool writetableinfo(const tableinfo_t *, void *);
+STATIC uint64_t read_unaligned_u64(const char *);
+STATIC void write_unaligned_u64(char *, uint64_t);
+STATIC int64_t readtableinfo(uint64_t, const char *, tableinfo_t *);
+STATIC int64_t readtableinfo_n(uint64_t, const char *, uint8_t, tableinfo_t *);
+STATIC int64_t writetableinfo(const tableinfo_t *, uint64_t, char *);
 
 STATIC uint64_t
-read_unaligned_u64(const void *buf)
+read_unaligned_u64(const char *buf)
 {
 	uint64_t ret;
 
@@ -18,24 +18,30 @@ read_unaligned_u64(const void *buf)
 }
 
 STATIC void
-write_unaligned_u64(void *buf, uint64_t x)
+write_unaligned_u64(char *buf, uint64_t x)
 {
 	memcpy(buf, &x, sizeof(uint64_t));
 }
 
-STATIC bool
-readtableinfo(const void *buf, tableinfo_t *info)
+STATIC int64_t
+readtableinfo(uint64_t buf_size, const char *buf, tableinfo_t *info)
 {
 	size_t i;
 
 	if (buf == NULL) {
 		LOG("Error reading table: buffer is NULL\n");
-		return false;
+		return NISSY_ERROR_NULL_POINTER;
+	}
+
+	if (buf_size < INFOSIZE) {
+		LOG("Error reading table: buffer size is too small "
+		    "(smaller than INFOSIZE = %" PRId64 ")\n", INFOSIZE);
+		return NISSY_ERROR_BUFFER_SIZE;
 	}
 
 	if (info == NULL) {
 		LOG("Error reading table info: info struct is NULL\n");
-		return false;
+		return NISSY_ERROR_UNKNOWN;
 	}
 
 	for (i = 0; i < INFO_DISTRIBUTION_LEN; i++)
@@ -53,39 +59,53 @@ readtableinfo(const void *buf, tableinfo_t *info)
 	memcpy(info->solver, OFFSET(buf, INFO_OFFSET_SOLVER),
 	    INFO_SOLVER_STRLEN);
 
-	info->h48h = *OFFSET(buf, INFO_OFFSET_H48H);
-	info->bits = *OFFSET(buf, INFO_OFFSET_BITS);
-	info->base = *OFFSET(buf, INFO_OFFSET_BASE);
-	info->maxvalue = *OFFSET(buf, INFO_OFFSET_MAXVALUE);
+	info->h48h = *(uint8_t *)OFFSET(buf, INFO_OFFSET_H48H);
+	info->bits = *(uint8_t *)OFFSET(buf, INFO_OFFSET_BITS);
+	info->base = *(uint8_t *)OFFSET(buf, INFO_OFFSET_BASE);
+	info->maxvalue = *(uint8_t *)OFFSET(buf, INFO_OFFSET_MAXVALUE);
 
-	return true;
+	return NISSY_OK;
 }
 
-STATIC bool
-readtableinfo_n(const void *buf, uint8_t n, tableinfo_t *info)
+STATIC int64_t
+readtableinfo_n(
+	uint64_t buf_size,
+	const char *buf,
+	uint8_t n,
+	tableinfo_t *info
+)
 {
-	for ( ; n > 0; n--, buf = (char *)buf + info->next)
-		if (!readtableinfo(buf, info))
-			return false;
+	int64_t ret;
 
-	return true;
+	for (; n > 0; n--, buf = buf + info->next, buf_size -= info->next)
+		if ((ret = readtableinfo(buf_size, buf, info)) != 0)
+			return ret;
+
+	return NISSY_OK;
 }
 
-STATIC bool
-writetableinfo(const tableinfo_t *info, void *buf)
+STATIC int64_t
+writetableinfo(const tableinfo_t *info, uint64_t data_size, char *buf)
 {
 	size_t i;
 	bool end;
-	uint8_t *c;
+	char *c;
 
 	if (buf == NULL) {
 		LOG("Error writing table: buffer is NULL\n");
-		return false;
+		return NISSY_ERROR_NULL_POINTER;
 	}
 
 	if (info == NULL) {
 		LOG("Error writing table info: provided info is NULL\n");
-		return false;
+		return NISSY_ERROR_UNKNOWN;
+	}
+
+	if (data_size < info->fullsize) {
+		LOG("Error writing table: buffer size is too small "
+		    "(given %" PRId64 " but table requires %" PRId64 ")\n",
+		    data_size, info->fullsize);
+		return NISSY_ERROR_BUFFER_SIZE;
 	}
 
 	for (i = 0; i < INFO_DISTRIBUTION_LEN; i++)
@@ -112,10 +132,10 @@ writetableinfo(const tableinfo_t *info, void *buf)
 			*c = 0;
 	}
 
-	*OFFSET(buf, INFO_OFFSET_H48H) = info->h48h;
-	*OFFSET(buf, INFO_OFFSET_BITS) = info->bits;
-	*OFFSET(buf, INFO_OFFSET_BASE) = info->base;
-	*OFFSET(buf, INFO_OFFSET_MAXVALUE) = info->maxvalue;
+	*(uint8_t *)OFFSET(buf, INFO_OFFSET_H48H) = info->h48h;
+	*(uint8_t *)OFFSET(buf, INFO_OFFSET_BITS) = info->bits;
+	*(uint8_t *)OFFSET(buf, INFO_OFFSET_BASE) = info->base;
+	*(uint8_t *)OFFSET(buf, INFO_OFFSET_MAXVALUE) = info->maxvalue;
 
-	return true;
+	return NISSY_OK;
 }

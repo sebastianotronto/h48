@@ -1,11 +1,11 @@
-#define OFFSET(B, K)             (((uint8_t *)B) + K)
+#define OFFSET(B, K)             (((char *)B) + K)
 
-#define INFOSIZE                 512
-#define INFO_SOLVER_STRLEN       100
-#define INFO_DISTRIBUTION_LEN    21
+#define INFOSIZE                 INT64_C(512)
+#define INFO_SOLVER_STRLEN       INT64_C(100)
+#define INFO_DISTRIBUTION_LEN    INT64_C(21)
 
-#define TABLETYPE_PRUNING        0
-#define TABLETYPE_SPECIAL        1
+#define TABLETYPE_PRUNING        UINT64_C(0)
+#define TABLETYPE_SPECIAL        UINT64_C(1)
 
 #define INFO_OFFSET_DISTRIBUTION 0
 #define INFO_OFFSET_TYPE         (INFO_DISTRIBUTION_LEN * sizeof(uint64_t))

@@ -1,10 +1,12 @@
 #include "../test.h"
 
+#define BUF_SIZE 2000000
+
 size_t gendata_cocsep(void *, uint64_t *, cube_t *);
-bool readtableinfo(const void *, tableinfo_t *);
+bool readtableinfo(uint64_t, const char *, tableinfo_t *);
 
 void run(void) {
-	char buf[2000000];
+	char buf[BUF_SIZE];
 	uint32_t i;
 	uint64_t selfsim[COCSEP_CLASSES];
 	cube_t rep[COCSEP_CLASSES];
@@ -12,7 +14,7 @@ void run(void) {
 	tableinfo_t info;
 
 	result = gendata_cocsep(buf, selfsim, rep);
-	if (!readtableinfo(buf, &info)) {
+	if (readtableinfo(BUF_SIZE, buf, &info) != NISSY_OK) {
 		printf("Error reading info from table\n");
 		return;
 	}

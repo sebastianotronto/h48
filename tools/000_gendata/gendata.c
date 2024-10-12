@@ -19,7 +19,7 @@ run(void) {
 	default:
 		nissy_datainfo(size, buf, write_stdout);
 		consistent = nissy_checkdata(size, buf) == 0;
-		expected = check_distribution(solver, buf);
+		expected = check_distribution(solver, size, buf);
 		if (consistent && expected) {
 			printf("\n");
 			printf("Generated %" PRId64 " bytes.\n", size);

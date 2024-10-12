@@ -20,7 +20,8 @@ STATIC void copy_queue(task_queue_t *, task_queue_t *, int, _Atomic int64_t *);
 STATIC void *start_thread(void *);
 STATIC int64_t solve_h48_bfs(dfsarg_solveh48_t *, task_queue_t *, int8_t);
 STATIC int64_t solve_h48_single(dfsarg_solveh48_t *, task_queue_t *);
-STATIC int64_t solve_h48_multithread(cube_t, int8_t, int8_t, int8_t, const void *, char *);
+STATIC int64_t solve_h48_multithread(cube_t, int8_t, int8_t, int8_t,
+    uint64_t, const void *, uint64_t, char *);
 
 STATIC void
 solve_h48_appendsolution_thread(dfsarg_solveh48_t *arg, task_queue_t *tq)
@@ -236,8 +237,11 @@ solve_h48_multithread(
 	int8_t minmoves,
 	int8_t maxmoves,
 	int8_t maxsolutions,
+	uint64_t data_size,
 	const void *data,
-	char *solutions)
+	uint64_t solutions_size,
+	char *solutions
+)
 {
 	_Atomic int64_t nsols = 0;
 	int p_depth = 0;
@@ -245,9 +249,9 @@ solve_h48_multithread(
 	tableinfo_t info;
 	pthread_t threads[THREADS];
 
-	if (!readtableinfo_n(data, 2, &info)){
+	if (readtableinfo_n(data_size, data, 2, &info) != NISSY_OK) {
 		LOG("solve_h48: error reading table\n");
-		return 0;
+		return NISSY_ERROR_DATA;
 	}
 
 	arg = (dfsarg_solveh48_t){

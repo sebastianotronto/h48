@@ -1,14 +1,16 @@
 STATIC uint64_t gendata_h48short(gendata_h48short_arg_t *);
-STATIC size_t gendata_h48(gendata_h48_arg_t *);
-STATIC size_t gendata_h48h0k4(gendata_h48_arg_t *);
-STATIC size_t gendata_h48k2(gendata_h48_arg_t *);
+STATIC int64_t gendata_h48(gendata_h48_arg_t *);
+STATIC void gendata_h48h0k4(gendata_h48_arg_t *);
+STATIC void gendata_h48k2(gendata_h48_arg_t *);
+STATIC void gendata_h48k2_realcoord(gendata_h48_arg_t *);
+
 STATIC void * gendata_h48h0k4_runthread(void *);
+STATIC void * gendata_h48k2_runthread(void *);
+
 STATIC_INLINE void gendata_h48_mark_atomic(gendata_h48_mark_t *);
 STATIC_INLINE void gendata_h48_mark(gendata_h48_mark_t *);
 STATIC_INLINE bool gendata_h48k2_dfs_stop(cube_t, int8_t, h48k2_dfs_arg_t *);
-STATIC size_t gendata_h48k2_realcoord(gendata_h48_arg_t *);
 STATIC void gendata_h48k2_dfs(h48k2_dfs_arg_t *arg);
-STATIC void * gendata_h48k2_runthread(void *);
 STATIC tableinfo_t makeinfo_h48k2(gendata_h48_arg_t *);
 STATIC void getdistribution_h48(const uint8_t *,
     uint64_t [static INFO_DISTRIBUTION_LEN], uint8_t, uint8_t);
@@ -62,74 +64,76 @@ gendata_h48short(gendata_h48short_arg_t *arg)
 }
 
 /* Generic function that dispatches to the data generators */
-STATIC size_t
+STATIC int64_t
 gendata_h48(gendata_h48_arg_t *arg)
 {
+	uint64_t size;
 	void *cocsepdata_offset;
-	size_t cocsepsize, h48size;
+	size_t cocsepsize;
 	tableinfo_t cocsepinfo;
+
+	if (arg == NULL) {
+		LOG("Error computing H48 data: arg is NULL.\n");
+		return NISSY_ERROR_UNKNOWN;
+	}
+
+	size = 2*INFOSIZE + COCSEP_FULLSIZE + H48_TABLESIZE(arg->h, arg->k);
+
+	if (arg->buf == NULL)
+		return size; /* Dry-run */
+
+	if (arg->buf_size < size) {
+		LOG("Error computing H48 data: buffer is too small "
+		    "(needed %" PRId64 " bytes but received %" PRId64 ")\n",
+		    size, arg->buf_size);
+		return NISSY_ERROR_BUFFER_SIZE;
+	}
 
 	cocsepsize = gendata_cocsep(arg->buf, arg->selfsim, arg->crep);
 
-	if (arg->buf == NULL) {
-		cocsepdata_offset = NULL;
-		arg->cocsepdata = NULL;
-		arg->h48buf = NULL;
-	} else {
-		cocsepdata_offset = (char *)arg->buf + INFOSIZE;
-		arg->cocsepdata = (uint32_t *)cocsepdata_offset;
-		arg->h48buf = (char *)arg->buf + cocsepsize;
-	}
+	cocsepdata_offset = (char *)arg->buf + INFOSIZE;
+	arg->cocsepdata = (uint32_t *)cocsepdata_offset;
+	arg->h48buf = (char *)arg->buf + cocsepsize;
 
-	arg->base = 99; // TODO: set this somewhere else
+	arg->base = 99; /* TODO: set this somewhere else */
 
 	if (arg->h == 0 && arg->k == 4) {
-		h48size = gendata_h48h0k4(arg);
+		gendata_h48h0k4(arg);
 	} else if ((arg->h == 0 || arg->h == 11) && arg->k == 2) {
-		h48size = gendata_h48k2_realcoord(arg);
+		gendata_h48k2_realcoord(arg);
 	} else if (arg->k == 2) {
-		h48size = gendata_h48k2(arg);
+		gendata_h48k2(arg);
 	} else {
 		LOG("Cannot generate data for h = %" PRIu8 " and k = %" PRIu8
 		    " (not implemented yet)\n", arg->h, arg->k);
-		goto gendata_h48_error;
+		return NISSY_ERROR_INVALID_SOLVER;
 	}
 
-	if (arg->buf == NULL)
-		goto gendata_h48_return_size;
-
-	if (!readtableinfo(arg->buf, &cocsepinfo)) {
+	if (readtableinfo(arg->buf_size, arg->buf, &cocsepinfo) != NISSY_OK) {
 		LOG("gendata_h48: could not read info for cocsep table\n");
-		goto gendata_h48_error;
+		return NISSY_ERROR_UNKNOWN;
 	}
 
 	cocsepinfo.next = cocsepsize;
-	if (!writetableinfo(&cocsepinfo, arg->buf)) {
+	if (writetableinfo(&cocsepinfo, arg->buf_size, arg->buf) != NISSY_OK) {
 		LOG("gendata_h48: could not write info for cocsep table"
 		    " with updated 'next' value\n");
-		goto gendata_h48_error;
+		return NISSY_ERROR_UNKNOWN;
 	}
 
-gendata_h48_return_size:
-	return cocsepsize + h48size;
-
-gendata_h48_error:
-	return 0;
+	return size;
 }
 
-STATIC size_t
+STATIC void
 gendata_h48h0k4(gendata_h48_arg_t *arg)
 {
 	_Atomic uint8_t *table;
 	uint8_t val;
 	int64_t i, sc, done, d, h48max;
-	uint64_t t, tt, isize, cc;
+	uint64_t t, tt, isize, cc, bufsize;
 	h48h0k4_bfs_arg_t bfsarg[THREADS];
 	pthread_t thread[THREADS];
 	pthread_mutex_t table_mutex[CHUNKS];
-
-	if (arg->buf == NULL)
-		goto gendata_h48h0k4_return_size;
 
 	arg->info = (tableinfo_t) {
 		.solver = "h48 solver h = 0, k = 4",
@@ -194,10 +198,8 @@ gendata_h48h0k4(gendata_h48_arg_t *arg)
 	}
 
 	arg->info.maxvalue = d - 1;
-	writetableinfo(&arg->info, arg->h48buf);
-
-gendata_h48h0k4_return_size:
-	return H48_TABLESIZE(0, 4) + INFOSIZE;
+	bufsize = arg->buf_size - COCSEP_FULLSIZE - INFOSIZE;
+	writetableinfo(&arg->info, bufsize, arg->h48buf);
 }
 
 STATIC void *
@@ -258,7 +260,7 @@ gendata_h48h0k4_runthread(void *arg)
 	return NULL;
 }
 
-STATIC size_t
+STATIC void
 gendata_h48k2(gendata_h48_arg_t *arg)
 {
 	static const uint8_t shortdepth = 8;
@@ -313,19 +315,15 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 	uint8_t t;
 	uint8_t *table;
 	int64_t j;
-	uint64_t i, ii, inext, count;
+	uint64_t i, ii, inext, count, bufsize;
 	h48map_t shortcubes;
 	gendata_h48short_arg_t shortarg;
 	h48k2_dfs_arg_t dfsarg[THREADS];
 	pthread_t thread[THREADS];
 	pthread_mutex_t shortcubes_mutex, table_mutex[CHUNKS];
 
-	if (arg->buf == NULL)
-		goto gendata_h48k2_return_size;
-
 	table = (uint8_t *)arg->h48buf + INFOSIZE;
-	if (arg->buf != NULL)
-		memset(table, 0xFF, H48_TABLESIZE(arg->h, arg->k));
+	memset(table, 0xFF, H48_TABLESIZE(arg->h, arg->k));
 
 	LOG("Computing depth <=%" PRIu8 "\n", shortdepth)
 	h48map_create(&shortcubes, capacity, randomizer);
@@ -379,10 +377,8 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 		arg->info.distribution[t]++;
 	}
 
-	writetableinfo(&arg->info, arg->h48buf);
-
-gendata_h48k2_return_size:
-	return H48_TABLESIZE(arg->h, 2) + INFOSIZE;
+	bufsize = arg->buf_size - COCSEP_FULLSIZE - INFOSIZE;
+	writetableinfo(&arg->info, bufsize, arg->h48buf);
 }
 
 STATIC void *
@@ -565,11 +561,11 @@ gendata_h48k2_dfs_stop(cube_t cube, int8_t depth, h48k2_dfs_arg_t *arg)
 	}
 }
 
-STATIC size_t
+STATIC void
 gendata_h48k2_realcoord(gendata_h48_arg_t *arg)
 {
 	/* TODO */
-	return gendata_h48k2(arg);
+	gendata_h48k2(arg);
 }
 
 STATIC void *
@@ -684,6 +680,7 @@ gendata_h48_derive(uint8_t h, const void *fulltable, void *buf)
 	const uint8_t *h48full;
 	uint8_t *h48derive;
 	int64_t i, j, h48max;
+	uint64_t bufsize;
 	gendata_h48_arg_t arg;
 	tableinfo_t cocsepinfo, fulltableinfo;
 
@@ -693,7 +690,9 @@ gendata_h48_derive(uint8_t h, const void *fulltable, void *buf)
 	fulltableinfo.bits = 2;
 	fulltableinfo.base = 8;
 
-	readtableinfo_n(fulltable, 2, &fulltableinfo);
+	int64_t TODOlarge = 999999999999; /* TODO: cleanup here */
+
+	readtableinfo_n(TODOlarge, fulltable, 2, &fulltableinfo);
 	arg.h = h;
 	arg.k = fulltableinfo.bits;
 	arg.maxdepth = 20;
@@ -711,13 +710,15 @@ gendata_h48_derive(uint8_t h, const void *fulltable, void *buf)
 	if (buf == NULL)
 		goto gendata_h48_derive_return_size;
 
-	if (!readtableinfo(buf, &cocsepinfo)) {
+	bufsize = COCSEP_FULLSIZE + INFOSIZE;
+	if (readtableinfo(bufsize, buf, &cocsepinfo) != NISSY_OK) {
 		LOG("gendata_h48: could not read info for cocsep table\n");
 		goto gendata_h48_derive_error;
 	}
 
 	cocsepinfo.next = cocsepsize;
-	if (!writetableinfo(&cocsepinfo, buf)) {
+	bufsize = COCSEP_FULLSIZE + INFOSIZE;
+	if (writetableinfo(&cocsepinfo, bufsize, buf) != NISSY_OK) {
 		LOG("gendata_h48_derive: could not write info for cocsep table"
 		    " with updated 'next' value\n");
 		goto gendata_h48_derive_error;
@@ -742,7 +743,8 @@ gendata_h48_derive(uint8_t h, const void *fulltable, void *buf)
 
 	getdistribution_h48(h48derive, arg.info.distribution, h, arg.k);
 
-	if (!writetableinfo(&arg.info, arg.h48buf)) {
+	bufsize = arg.buf_size - COCSEP_FULLSIZE - INFOSIZE;
+	if (writetableinfo(&arg.info, bufsize, arg.h48buf) != NISSY_OK) {
 		LOG("gendata_h48_derive: could not write info for table\n");
 		goto gendata_h48_derive_error;
 	}
