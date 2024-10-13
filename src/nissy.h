@@ -9,8 +9,8 @@ If you include this file, you should also use the following includes:
 #include <string.h>
 
 All the functions return 0 or a positive integer in case of success and
-a negative integer in case of error, unless otherwise specified.
-You can see the list of error codes below, or use nissy_explainerror().
+a negative integer in case of error, unless otherwise specified. See at
+the bottom of this file for the list of error codes and their meaning.
 
 All cube arguments are in B32 formats, unless otherwise specified.
 Other available formats are H48 and SRC. See README.md for more info on
@@ -23,23 +23,6 @@ A transformation must be given in the format
     (rotation|mirrored) (2 letters)
 for example 'rotation UF' or 'mirrored BL'.
 */
-
-/* Error codes */
-#define NISSY_OK                     INT64_C(0)
-#define NISSY_WARNING_UNSOLVABLE     INT64_C(-1)
-#define NISSY_WARNING_NULL_CALLBACK  INT64_C(-2)
-#define NISSY_ERROR_INVALID_CUBE     INT64_C(-10)
-#define NISSY_ERROR_UNSOLVABLE_CUBE  INT64_C(-11)
-#define NISSY_ERROR_INVALID_MOVES    INT64_C(-20)
-#define NISSY_ERROR_INVALID_TRANS    INT64_C(-30)
-#define NISSY_ERROR_INVALID_FORMAT   INT64_C(-40)
-#define NISSY_ERROR_INVALID_SOLVER   INT64_C(-50)
-#define NISSY_ERROR_NULL_POINTER     INT64_C(-60)
-#define NISSY_ERROR_BUFFER_SIZE      INT64_C(-61)
-#define NISSY_ERROR_DATA             INT64_C(-70)
-#define NISSY_ERROR_OPTIONS          INT64_C(-80)
-#define NISSY_ERROR_INVALID_CODE     INT64_C(-90)
-#define NISSY_ERROR_UNKNOWN          INT64_C(-999)
 
 /* Some constants for size for I/O buffers */
 #define NISSY_SIZE_B32            UINT64_C(22)
@@ -257,24 +240,6 @@ int64_t nissy_gendata(
 );
 
 /*
-Print information on a data table via the provided callback writer.
-
-Parameters:
-   data_size - The size of the data buffer.
-   data      - The data to be read.
-   write     - A callback writer with the same signature as printf(3).
-
-Return values:
-   NISSY_OK         - The data is correct.
-   NISSY_ERROR_DATA - The data contains errors.
-*/
-int64_t nissy_datainfo(
-	uint64_t data_size,
-	const char data[data_size],
-	void (*write)(const char *, ...)
-);
-
-/*
 Check that the data is a valid data table for a solver.
 
 Parameters:
@@ -340,28 +305,99 @@ Parameters:
    write - A callback writer with the same signature as printf(3).
 
 Return values:
-   NISSY_OK                    - Logger set succesfully.
-   NISSY_WARNING_NULL_CALLBACK - The provided callback writer is NULL.
+   NISSY_OK - Logger set succesfully. No warning or error is goind to be given
+              if the logger is NULL or invalid.
 */
 int64_t nissy_setlogger(
 	void (*logger_function)(const char *, ...)
 );
 
+
+/* Error codes */
+
 /*
-Print an explanation of the given error code via the provided callback writer.
-
-Parameters:
-   error_code - The error code to be explained. It can be any value returned
-                by a function in this library, not necessarily an error.
-   write      - A callback writer with the same signature as printf(3).
-                Must be non-NULL.
-
-Return values:
-   NISSY_OK                    - The error code is known.
-   NISSY_WARNING_NULL_CALLBACK - The provided callback writer is NULL.
-   NISSY_ERROR_INVALID_CODE    - The error code is unknown.
+The value NISSY_OK denotes a success. If returned by solve, it means
+that no solution has been found.
 */
-int64_t nissy_explainerror(
-	int64_t error_code,
-	void (*write)(const char *, ...)
-);
+#define NISSY_OK                     INT64_C(0)
+
+/*
+The value NISSY_WARNING_UNSOLVABLE is a warning. It means that the
+operation was completed succesfully, but the resulting cube is in an
+unsolvable state. This could be intended, for example if the user has
+provided an unsolvable cube as input.
+*/
+#define NISSY_WARNING_UNSOLVABLE     INT64_C(-1)
+
+/*
+The value NISSY_ERROR_INVALID_CUBE means that the provided cube is
+invalid. It could be written in an unknown format, or in a format
+different from what specified, or simply ill-formed.
+*/
+#define NISSY_ERROR_INVALID_CUBE     INT64_C(-10)
+
+/*
+The value NISSY_ERROR_UNSOLVABLE_CUBE means that the provided cube is
+in an unsolvable state.
+*/
+#define NISSY_ERROR_UNSOLVABLE_CUBE  INT64_C(-11)
+
+/*
+The value NISSY_ERROR_INVALID_MOVES means that the given moves are
+invalid.
+*/
+#define NISSY_ERROR_INVALID_MOVES    INT64_C(-20)
+
+/*
+The value NISSY_ERROR_INVALID_TRANS means that the given transformation
+is invalid.
+*/
+#define NISSY_ERROR_INVALID_TRANS    INT64_C(-30)
+
+/*
+The value NISSY_ERROR_INVALID_FORMAT means that the given format is
+not known.
+*/
+#define NISSY_ERROR_INVALID_FORMAT   INT64_C(-40)
+
+/*
+The value NISSY_ERROR_INVALID_SOLVER means that the given solver is
+not known.
+*/
+#define NISSY_ERROR_INVALID_SOLVER   INT64_C(-50)
+
+/*
+The value NISSY_ERROR_NULL_POINTER means that one of the provided pointer
+arguments is NULL. For example, it may be returned by solve when called
+with a solver that requires some pre-computed data, but the provided
+data is NULL.
+*/
+#define NISSY_ERROR_NULL_POINTER     INT64_C(-60)
+
+/*
+The value NISSY_ERROR_BUFFER_SIZE means that one of the buffers provided
+is too small. For example, it could be too small to hold the result or
+too small to hold the data generated by gendata.
+*/
+#define NISSY_ERROR_BUFFER_SIZE      INT64_C(-61)
+
+/*
+The value NISSY_ERROR_DATA means that the provided data is invalid. For
+example, it may be returned by solve when called with incompatible solver
+and data arguments.
+*/
+#define NISSY_ERROR_DATA             INT64_C(-70)
+
+/*
+The value NISSY_ERROR_OPTIONS means that one or more of the given options
+are invalid. For example, it may be returned by solve when called with
+a negative maximum number of solutions.
+*/
+#define NISSY_ERROR_OPTIONS          INT64_C(-80)
+
+/*
+The value NISSY_ERROR_UNKNOWN denotes an unexpected error. It probably
+means that there some bug in this library.  If you can, report any error
+of this kind to sebastiano@tronto.net. Thanks!
+*/
+#define NISSY_ERROR_UNKNOWN          INT64_C(-999)
