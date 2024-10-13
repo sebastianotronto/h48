@@ -5,7 +5,7 @@ char *solver, *filename;
 
 static void
 run(void) {
-	int64_t size, result;
+	long long int size, result;
 	char *buf;
 	FILE *f;
 	

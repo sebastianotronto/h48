@@ -13,8 +13,9 @@ static void log_stderr(const char *, ...);
 static void log_stdout(const char *, ...);
 static double timerun(void (*)(void));
 static void writetable(const char *, int64_t, const char *);
-static int64_t generatetable(const char *, char **);
-static int64_t derivetable(const char *, const char *, const char *, char **);
+static long long int generatetable(const char *, char **);
+static long long int derivetable(
+    const char *, const char *, const char *, char **);
 static int getdata(const char *, char **, const char *);
 static void gendata_run(const char *, uint64_t[static 21]);
 static void derivedata_run(
@@ -84,10 +85,10 @@ writetable(const char *buf, int64_t size, const char *filename)
 	}
 }
 
-static int64_t
+static long long int
 generatetable(const char *solver, char **buf)
 {
-	int64_t size, gensize;
+	long long int size, gensize;
 
 	size = nissy_datasize(solver);
 	if (size == -1) {
@@ -101,7 +102,7 @@ generatetable(const char *solver, char **buf)
 	if (gensize != size) {
 		printf("Error generating table");
 		if (gensize != -1)
-			printf(" (got %" PRId64 " bytes)", gensize);
+			printf(" (got %lld bytes)", gensize);
 		printf("\n");
 		return -2;
 	}
@@ -109,7 +110,7 @@ generatetable(const char *solver, char **buf)
 	return gensize;
 }
 
-static int64_t
+static long long int
 derivetable(
 	const char *solver_large,
 	const char *solver_small,
@@ -118,7 +119,7 @@ derivetable(
 )
 {
 	uint8_t h, k;
-	int64_t size, gensize;
+	long long int size, gensize;
 	char *fulltable;
 
 	if (getdata(solver_large, &fulltable, filename_large) != 0) {
@@ -161,7 +162,7 @@ getdata(
 	char **buf,
 	const char *filename
 ) {
-	int64_t size, sizeread;
+	long long int size, sizeread;
 	FILE *f;
 
 	if ((f = fopen(filename, "rb")) == NULL) {
@@ -201,7 +202,7 @@ gendata_run(
 	const char *solver,
 	uint64_t expected[static 21]
 ) {
-	int64_t size;
+	long long int size;
 	char *buf, filename[1024];
 
 	sprintf(filename, "tables/%s", solver);
@@ -214,7 +215,7 @@ gendata_run(
 	default:
 		nissy_datainfo(size, buf, write_stdout);
 		printf("\n");
-		printf("Succesfully generated %" PRId64 " bytes. "
+		printf("Succesfully generated %lld bytes. "
 		       "See above for details on the tables.\n", size);
 
 		/* TODO: check that the table is correct */
@@ -234,7 +235,7 @@ derivedata_run(
 	const char *filename_small
 )
 {
-	int64_t size;
+	long long int size;
 	char *buf;
 
 	buf = NULL;
@@ -247,7 +248,7 @@ derivedata_run(
 	default:
 		nissy_datainfo(size, buf, write_stdout);
 		printf("\n");
-		printf("Succesfully generated %" PRId64 " bytes. "
+		printf("Succesfully generated %lld bytes. "
 		       "See above for details on the tables.\n", size);
 
 		writetable(buf, size, filename_small);

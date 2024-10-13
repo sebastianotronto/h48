@@ -50,10 +50,10 @@ typedef struct {
 	char *str_trans;
 	char *str_solver;
 	char *str_nisstype;
-	int8_t minmoves;
-	int8_t maxmoves;
-	int8_t optimal;
-	int64_t maxsolutions;
+	unsigned int minmoves;
+	unsigned int maxmoves;
+	unsigned int optimal;
+	unsigned int maxsolutions;
 } args_t;
 
 static int64_t compose_exec(args_t *);
@@ -70,8 +70,7 @@ static int64_t solve_scramble_exec(args_t *);
 static int64_t help_exec(args_t *);
 
 static int parse_args(int, char **, args_t *);
-static bool parse_int8(char *, int8_t *);
-static bool parse_int64(char *, int64_t *);
+static bool parse_uint(char *, unsigned int *);
 
 static bool set_cube(int, char **, args_t *);
 static bool set_cube_perm(int, char **, args_t *);
@@ -292,14 +291,8 @@ applytrans_exec(args_t *args)
 static int64_t
 frommoves_exec(args_t *args)
 {
-	char result[22];
-	int64_t ret;
-
-	ret = nissy_frommoves(args->str_moves, result);
-	if (ret == NISSY_OK || ret == NISSY_WARNING_UNSOLVABLE)
-		printf("%s\n", result);
-
-	return ret;
+	sprintf(args->cube, NISSY_SOLVED_CUBE);
+	return applymoves_exec(args);
 }
 
 static int64_t
@@ -591,21 +584,9 @@ parse_args(int argc, char **argv, args_t *args)
 }
 
 bool
-parse_int8(char *argv, int8_t *result)
+parse_uint(char *argv, int8_t *result)
 {
-	bool noerror;
-	int64_t n;
-
-	noerror = parse_int64(argv, &n);
-	*result = (int8_t)n;
-
-	return noerror && n >= INT8_MIN && n <= INT8_MAX;
-}
-
-bool
-parse_int64(char *argv, int64_t *result)
-{
-	*result = strtoll(argv, NULL, 10);
+	*result = strtol(argv, NULL, 10);
 
 	/* TODO: figure out how errno works and use it */
 	return true;
@@ -704,25 +685,25 @@ set_str_nisstype(int argc, char **argv, args_t *args)
 static bool
 set_minmoves(int argc, char **argv, args_t *args)
 {
-	return parse_int8(argv[0], &args->minmoves);
+	return parse_uint(argv[0], &args->minmoves);
 }
 
 static bool
 set_maxmoves(int argc, char **argv, args_t *args)
 {
-	return parse_int8(argv[0], &args->maxmoves);
+	return parse_uint(argv[0], &args->maxmoves);
 }
 
 static bool
 set_optimal(int argc, char **argv, args_t *args)
 {
-	return parse_int8(argv[0], &args->optimal);
+	return parse_uint(argv[0], &args->optimal);
 }
 
 static bool
 set_maxsolutions(int argc, char **argv, args_t *args)
 {
-	return parse_int64(argv[0], &args->maxsolutions);
+	return parse_uint(argv[0], &args->maxsolutions);
 }
 
 void

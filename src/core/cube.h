@@ -4,7 +4,7 @@ STATIC bool isconsistent(cube_t);
 STATIC bool issolvable(cube_t);
 STATIC bool issolved(cube_t);
 STATIC bool iserror(cube_t);
-STATIC void getcube_fix(int64_t *, int64_t *, int64_t *, int64_t *);
+STATIC void getcube_fix(long long *, long long *, long long *, long long *);
 STATIC cube_t getcube(int64_t, int64_t, int64_t, int64_t);
 
 /* This is used only in tests, use SOLVED_CUBE directly everywhere else */
@@ -128,7 +128,7 @@ iserror(cube_t cube)
 }
 
 STATIC void
-getcube_fix(int64_t *ep, int64_t *eo, int64_t *cp, int64_t *co)
+getcube_fix(long long *ep, long long *eo, long long *cp, long long *co)
 {
 	uint8_t e[12], c[8], coarr[8];
 

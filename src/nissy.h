@@ -1,13 +1,6 @@
 /*
 This is libnissy (temporarily also known as h48), a Rubik's cube library.
 
-If you include this file, you should also use the following includes:
-
-#include <inttypes.h>
-#include <stdarg.h>
-#include <stdbool.h>
-#include <string.h>
-
 All the functions return 0 or a positive integer in case of success and
 a negative integer in case of error, unless otherwise specified. See at
 the bottom of this file for the list of error codes and their meaning.
@@ -24,19 +17,28 @@ A transformation must be given in the format
 for example 'rotation UF' or 'mirrored BL'.
 */
 
+
+/* Constants *****************************************************************/
+
 /* Some constants for size for I/O buffers */
-#define NISSY_SIZE_B32            UINT64_C(22)
-#define NISSY_SIZE_H48            UINT64_C(88)
-#define NISSY_SIZE_TRANSFORMATION UINT64_C(12)
+#define NISSY_SIZE_B32            22U
+#define NISSY_SIZE_H48            88U
+#define NISSY_SIZE_TRANSFORMATION 12U
 
 /* Flags for NISS options */
-#define NISSY_NISSFLAG_NORMAL  UINT8_C(1)
-#define NISSY_NISSFLAG_INVERSE UINT8_C(2)
-#define NISSY_NISSFLAG_MIXED   UINT8_C(4)
-#define NISSY_NISSFLAG_LINEAR  \
+#define NISSY_NISSFLAG_NORMAL  1U
+#define NISSY_NISSFLAG_INVERSE 2U
+#define NISSY_NISSFLAG_MIXED   4U
+#define NISSY_NISSFLAG_LINEAR \
     (NISSY_NISSFLAG_NORMAL | NISSY_NISSFLAG_INVERSE)
-#define NISSY_NISSFLAG_ALL     \
+#define NISSY_NISSFLAG_ALL \
     (NISSY_NISSFLAG_NORMAL | NISSY_NISSFLAG_INVERSE | NISSY_NISSFLAG_MIXED)
+
+/* The solved cube in B32 format */
+#define NISSY_SOLVED_CUBE "ABCDEFGH=ABCDEFGHIJKL"
+
+
+/* Library functions *********************************************************/
 
 /*
 Apply the secod argument as a permutation on the first argument.
@@ -56,7 +58,7 @@ Return values:
    NISSY_ERROR_INVALID_CUBE  - At least one of the given cubes is invalid.
    NISSY_ERROR_UNKNOWN       - An unknown error occurred.
 */
-int64_t nissy_compose(
+long long nissy_compose(
 	const char cube[static NISSY_SIZE_B32],
 	const char permutation[static NISSY_SIZE_B32],
 	char result[static NISSY_SIZE_B32]
@@ -77,7 +79,7 @@ Return values:
    NISSY_ERROR_INVALID_CUBE  - The given cube is invalid.
    NISSY_ERROR_UNKNOWN       - An unknown error occurred.
 */
-int64_t nissy_inverse(
+long long nissy_inverse(
 	const char cube[static NISSY_SIZE_B32],
 	char result[static NISSY_SIZE_B32]
 );
@@ -99,7 +101,7 @@ Return values:
    NISSY_ERROR_INVALID_MOVES - The given moves are invalid.
    NISSY_ERROR_NULL_POINTER  - The 'moves' argument is NULL.
 */
-int64_t nissy_applymoves(
+long long nissy_applymoves(
 	const char cube[static NISSY_SIZE_B32],
 	const char *moves,
 	char result[static NISSY_SIZE_B32]
@@ -120,29 +122,9 @@ Return values:
    NISSY_ERROR_INVALID_CUBE  - The given cube is invalid.
    NISSY_ERROR_INVALID_TRANS - The given transformation is invalid.
 */
-int64_t nissy_applytrans(
+long long nissy_applytrans(
 	const char cube[static NISSY_SIZE_B32],
 	const char transformation[static NISSY_SIZE_TRANSFORMATION],
-	char result[static NISSY_SIZE_B32]
-);
-
-/*
-Apply the given moves to the solved cube.
-
-Parameters:
-   moves  - The moves to be applied to the solved cube. Must be a
-            NULL-terminated string.
-   result - Return parameter for the resulting cube, in B32 format.
-
-Return values:
-   NISSY_OK                  - The moves were performed succesfully.
-   NISSY_WARNING_UNSOLVABLE  - The resulting cube is not solvable. This is
-                               probably due to an unknown internal error.
-   NISSY_ERROR_INVALID_MOVES - The given moves are invalid.
-   NISSY_ERROR_NULL_POINTER  - The 'moves' argument is NULL.
-*/
-int64_t nissy_frommoves(
-	const char *moves,
 	char result[static NISSY_SIZE_B32]
 );
 
@@ -165,11 +147,11 @@ Return values:
    NISSY_ERROR_NULL_POINTER   - At least one of 'format_in', 'format_out' or
                                 'cube_string' arguments is NULL.
 */
-int64_t nissy_convert(
+long long nissy_convert(
 	const char *format_in,
 	const char *format_out,
 	const char *cube_string,
-	uint64_t result_size,
+	unsigned result_size,
 	char result[result_size]
 );
 
@@ -192,11 +174,11 @@ Return values:
    NISSY_WARNING_UNSOLVABLE - The resulting cube is unsolvable.
    NISSY_ERROR_OPTIONS      - One or more of the given parameters is invalid.
 */
-int64_t nissy_getcube(
-	int64_t ep,
-	int64_t eo,
-	int64_t cp,
-	int64_t co,
+long long nissy_getcube(
+	long long ep,
+	long long eo,
+	long long cp,
+	long long co,
 	const char *options,
 	char result[static NISSY_SIZE_B32]
 );
@@ -214,7 +196,7 @@ Return values:
    NISSY_ERROR_UNKNOWN        - An unknown error occurred.
    Any value >= 0             - The size of the data, in bytes.
 */
-int64_t nissy_datasize(
+long long nissy_datasize(
 	const char *solver
 );
 
@@ -233,9 +215,9 @@ Return values:
    NISSY_ERROR_UNKNOWN        - An error occurred while generating the data.
    Any value >= 0             - The size of the data, in bytes.
 */
-int64_t nissy_gendata(
+long long nissy_gendata(
 	const char *solver,
-	uint64_t data_size,
+	unsigned long long data_size,
 	char data[data_size]
 );
 
@@ -250,8 +232,8 @@ Return values:
    NISSY_OK         - The data is valid.
    NISSY_ERROR_DATA - The data is invalid.
 */
-int64_t nissy_checkdata(
-	uint64_t data_size,
+long long nissy_checkdata(
+	unsigned long long data_size,
 	const char data[data_size]
 );
 
@@ -284,17 +266,17 @@ Return values:
    NISSY_ERROR_NULL_POINTER    - The 'solver' argument is null.
    Any value >= 0              - The number of solutions found.
 */
-int64_t nissy_solve(
+long long nissy_solve(
 	const char cube[static NISSY_SIZE_B32],
 	const char *solver, 
-	uint8_t nissflag,
-	int8_t minmoves,
-	int8_t maxmoves,
-	int64_t maxsolutions,
-	int8_t optimal,
-	uint64_t data_size,
+	unsigned nissflag,
+	unsigned minmoves,
+	unsigned maxmoves,
+	unsigned maxsolutions,
+	int optimal,
+	unsigned long long data_size,
 	const char data[data_size],
-	uint64_t sols_size,
+	unsigned sols_size,
 	char sols[sols_size]
 );
 
@@ -308,18 +290,18 @@ Return values:
    NISSY_OK - Logger set succesfully. No warning or error is goind to be given
               if the logger is NULL or invalid.
 */
-int64_t nissy_setlogger(
+long long nissy_setlogger(
 	void (*logger_function)(const char *, ...)
 );
 
 
-/* Error codes */
+/* Error codes ***************************************************************/
 
 /*
 The value NISSY_OK denotes a success. If returned by solve, it means
 that no solution has been found.
 */
-#define NISSY_OK                     INT64_C(0)
+#define NISSY_OK 0LL
 
 /*
 The value NISSY_WARNING_UNSOLVABLE is a warning. It means that the
@@ -327,44 +309,44 @@ operation was completed succesfully, but the resulting cube is in an
 unsolvable state. This could be intended, for example if the user has
 provided an unsolvable cube as input.
 */
-#define NISSY_WARNING_UNSOLVABLE     INT64_C(-1)
+#define NISSY_WARNING_UNSOLVABLE -1LL
 
 /*
 The value NISSY_ERROR_INVALID_CUBE means that the provided cube is
 invalid. It could be written in an unknown format, or in a format
 different from what specified, or simply ill-formed.
 */
-#define NISSY_ERROR_INVALID_CUBE     INT64_C(-10)
+#define NISSY_ERROR_INVALID_CUBE -10LL
 
 /*
 The value NISSY_ERROR_UNSOLVABLE_CUBE means that the provided cube is
 in an unsolvable state.
 */
-#define NISSY_ERROR_UNSOLVABLE_CUBE  INT64_C(-11)
+#define NISSY_ERROR_UNSOLVABLE_CUBE -11LL
 
 /*
 The value NISSY_ERROR_INVALID_MOVES means that the given moves are
 invalid.
 */
-#define NISSY_ERROR_INVALID_MOVES    INT64_C(-20)
+#define NISSY_ERROR_INVALID_MOVES -20LL
 
 /*
 The value NISSY_ERROR_INVALID_TRANS means that the given transformation
 is invalid.
 */
-#define NISSY_ERROR_INVALID_TRANS    INT64_C(-30)
+#define NISSY_ERROR_INVALID_TRANS -30LL
 
 /*
 The value NISSY_ERROR_INVALID_FORMAT means that the given format is
 not known.
 */
-#define NISSY_ERROR_INVALID_FORMAT   INT64_C(-40)
+#define NISSY_ERROR_INVALID_FORMAT -40LL
 
 /*
 The value NISSY_ERROR_INVALID_SOLVER means that the given solver is
 not known.
 */
-#define NISSY_ERROR_INVALID_SOLVER   INT64_C(-50)
+#define NISSY_ERROR_INVALID_SOLVER -50LL
 
 /*
 The value NISSY_ERROR_NULL_POINTER means that one of the provided pointer
@@ -372,32 +354,32 @@ arguments is NULL. For example, it may be returned by solve when called
 with a solver that requires some pre-computed data, but the provided
 data is NULL.
 */
-#define NISSY_ERROR_NULL_POINTER     INT64_C(-60)
+#define NISSY_ERROR_NULL_POINTER -60LL
 
 /*
 The value NISSY_ERROR_BUFFER_SIZE means that one of the buffers provided
 is too small. For example, it could be too small to hold the result or
 too small to hold the data generated by gendata.
 */
-#define NISSY_ERROR_BUFFER_SIZE      INT64_C(-61)
+#define NISSY_ERROR_BUFFER_SIZE -61LL
 
 /*
 The value NISSY_ERROR_DATA means that the provided data is invalid. For
 example, it may be returned by solve when called with incompatible solver
 and data arguments.
 */
-#define NISSY_ERROR_DATA             INT64_C(-70)
+#define NISSY_ERROR_DATA -70LL
 
 /*
 The value NISSY_ERROR_OPTIONS means that one or more of the given options
 are invalid. For example, it may be returned by solve when called with
 a negative maximum number of solutions.
 */
-#define NISSY_ERROR_OPTIONS          INT64_C(-80)
+#define NISSY_ERROR_OPTIONS -80LL
 
 /*
 The value NISSY_ERROR_UNKNOWN denotes an unexpected error. It probably
 means that there some bug in this library.  If you can, report any error
 of this kind to sebastiano@tronto.net. Thanks!
 */
-#define NISSY_ERROR_UNKNOWN          INT64_C(-999)
+#define NISSY_ERROR_UNKNOWN -999LL

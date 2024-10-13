@@ -40,7 +40,7 @@ shelltest: debugshell
 	./shell/test.sh
 
 python: nissy.o
-	${CC} -shared ${PYTHON3_INCLUDES} -o nissy_python_module.so \
+	${CC} ${CFLAGS} -shared ${PYTHON3_INCLUDES} -o nissy_python_module.so \
 		nissy.o python/nissy_module.c
 
 .PHONY: all clean test tool debugtool shell debugshell shelltest python

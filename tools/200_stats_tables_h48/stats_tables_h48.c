@@ -17,11 +17,11 @@ typedef struct {
 	int64_t v[12][100];
 } thread_arg_t;
 
-uint64_t rand64(void) {
-	uint64_t i, ret;
+uint64_t randll(void) {
+	long long int i, ret;
 
 	for (i = 0, ret = 0; i < 64; i++)
-		ret |= (uint64_t)(rand() % 2) << i;
+		ret |= (long long int)(rand() % 2) << i;
 
 	return ret;
 }
@@ -30,16 +30,16 @@ static void *
 run_thread(void *arg)
 {
 	char s[12], cube[22];
-	int64_t ep, eo, cp, co;
+	long long int ep, eo, cp, co;
 	int i, j;
 
 	thread_arg_t *a = (thread_arg_t *)arg;
 
 	for (i = 0; i < a->n; i++) {
-		ep = rand64();
-		eo = rand64();
-		cp = rand64();
-		co = rand64();
+		ep = randll();
+		eo = randll();
+		cp = randll();
+		co = randll();
 		nissy_getcube(ep, eo, cp, co, "fix", cube);
 		nissy_solve(cube, "h48stats", NISSY_NISSFLAG_NORMAL,
 		    0, MAXMOVES, 1, -1, size, buf, 12, s);

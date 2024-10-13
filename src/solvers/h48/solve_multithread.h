@@ -36,13 +36,14 @@ solve_h48_appendsolution_thread(dfsarg_solveh48_t *arg, task_queue_t *tq)
 
 	if (strl < 0)
 		goto solve_h48_appendsolution_thread_error;
-	*arg->nextsol += strl;
-	arg->solutions_size -= strl;
+	*arg->nextsol += strl-1;
+	arg->solutions_size -= strl-1;
 
 	if (arg->npremoves)
 	{
 		**arg->nextsol = ' ';
 		(*arg->nextsol)++;
+		arg->solutions_size--;
 
 		invertmoves(arg->premoves, arg->npremoves, invertedpremoves);
 		strl = writemoves(invertedpremoves,
@@ -50,13 +51,14 @@ solve_h48_appendsolution_thread(dfsarg_solveh48_t *arg, task_queue_t *tq)
 
 		if (strl < 0)
 			goto solve_h48_appendsolution_thread_error;
-		*arg->nextsol += strl;
-		arg->solutions_size -= strl;
+		*arg->nextsol += strl-1;
+		arg->solutions_size -= strl-1;
 	}
 	LOG("Solution found: %s\n", solution);
 
 	**arg->nextsol = '\n';
 	(*arg->nextsol)++;
+	arg->solutions_size--;
 	(*arg->nsols)++;
 
 solve_h48_appendsolution_thread_error:

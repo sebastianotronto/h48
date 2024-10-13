@@ -15,7 +15,6 @@ STATIC void invertmoves(uint8_t *, uint8_t, uint8_t *);
 
 STATIC int readmoves(const char *, int, uint8_t *);
 STATIC cube_t applymoves(cube_t, const char *);
-STATIC cube_t frommoves(const char *);
 
 #define FOREACH_READMOVE(ARG_BUF, ARG_MOVE, ARG_C, ARG_MAX, \
 	RET_ERROR, ARG_ACTION) \
@@ -245,10 +244,4 @@ applymoves(cube_t cube, const char *buf)
 	)
 
 	return cube;
-}
-
-STATIC cube_t
-frommoves(const char *buf)
-{
-	return applymoves(SOLVED_CUBE, buf);
 }
