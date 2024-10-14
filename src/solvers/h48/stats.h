@@ -80,8 +80,8 @@ solve_h48stats(
 
 	arg = (dfsarg_solveh48stats_t) {
 		.cube = cube,
-		.cocsepdata = get_cocsepdata_constptr(data),
-		.h48data = get_h48data_constptr(data),
+		.cocsepdata = (uint32_t *)((char *)data + INFOSIZE),
+		.h48data = (uint8_t *)data + COCSEP_FULLSIZE + INFOSIZE,
 		.s = solutions
 	};
 

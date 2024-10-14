@@ -261,13 +261,11 @@ solve_h48_multithread(
 	_Atomic int64_t nsols = 0;
 	int p_depth = 0;
 	dfsarg_solveh48_t arg;
-	tableinfo_t info;
+	tableinfo_t info, fbinfo;
 	pthread_t threads[THREADS];
 
-	if (readtableinfo_n(data_size, data, 2, &info) != NISSY_OK) {
-		LOG("solve_h48: error reading table\n");
-		return NISSY_ERROR_DATA;
-	}
+	if (readtableinfo_n(data_size, data, 2, &info) != NISSY_OK)
+		goto solve_h48_multithread_error_data;
 
 	arg = (dfsarg_solveh48_t){
 		.cube = cube,
@@ -278,11 +276,22 @@ solve_h48_multithread(
 		.h = info.h48h,
 		.k = info.bits,
 		.base = info.base,
-		.cocsepdata = get_cocsepdata_constptr(data),
-		.h48data = get_h48data_constptr(data),
+		.cocsepdata = (uint32_t *)((char *)data + INFOSIZE),
+		.h48data = (uint8_t *)data + COCSEP_FULLSIZE + INFOSIZE,
 		.solutions_size = solutions_size,
 		.nextsol = &solutions
 	};
+
+	if (info.bits == 2) {
+		if (readtableinfo_n(data_size, data, 3, &fbinfo) != NISSY_OK)
+			goto solve_h48_multithread_error_data;
+		/* We only support h0k4 as fallback table */
+		if (fbinfo.h48h != 0 || fbinfo.bits != 4)
+			goto solve_h48_multithread_error_data;
+		arg.h48data_fallback = arg.h48data + info.next;
+	} else {
+		arg.h48data_fallback = NULL;
+	}
 
 	task_queue_t q;
 	init_queue(&q);
@@ -301,7 +310,8 @@ solve_h48_multithread(
 		 p_depth <= maxmoves && nsols < maxsolutions;
 		 p_depth++)
 	{
-		LOG("Found %" PRId64 " solutions, searching at depth %" PRId8 "\n", nsols, p_depth);
+		LOG("Found %" PRId64 " solutions, "
+		    "searching at depth %" PRId8 "\n", nsols, p_depth);
 		copy_queue(&q, &nq, p_depth, &nsols);
 		
 		pthread_mutex_lock(&nq.mutex);
@@ -319,4 +329,8 @@ solve_h48_multithread(
 	**arg.nextsol = '\0';
 	(*arg.nextsol)++;
 	return nsols;
+
+solve_h48_multithread_error_data:
+	LOG("solve_h48: error reading table\n");
+	return NISSY_ERROR_DATA;
 }

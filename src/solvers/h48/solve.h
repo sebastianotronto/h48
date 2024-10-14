@@ -11,6 +11,7 @@ typedef struct {
 	uint8_t base;
 	const uint32_t *cocsepdata;
 	const uint8_t *h48data;
+	const uint8_t *h48data_fallback;
 	uint64_t solutions_size;
 	char **nextsol;
 	uint8_t nissbranch;
@@ -112,16 +113,31 @@ solve_h48_stop(dfsarg_solveh48_t *arg)
 
 	h48bound = get_h48_bound(arg->cube, data, arg->h, arg->k, arg->h48data);
 
-	/* If the h48 bound is > 0, we add the base value.        */
-	/* Otherwise, we use the cbound value instead (fallback). */
-	h48bound += h48bound == 0 ? cbound : arg->base;
+	/* If the h48 bound is > 0, we add the base value.    */
+	/* Otherwise, we use the fallback h0k4 value instead. */
+
+	if (arg->k == 2) {
+		if (h48bound == 0) {
+			h48bound = get_h48_bound(
+			    arg->cube, data, 0, 4, arg->h48data_fallback);
+		} else {
+			h48bound += arg->base;
+		}
+	}
 	if (h48bound + arg->nmoves + arg->npremoves > arg->depth)
 		return true;
 	if (h48bound + arg->nmoves + arg->npremoves == arg->depth)
 		arg->nissbranch = MM_INVERSEBRANCH;
 
 	h48bound_inv = get_h48_bound(arg->inverse, data_inv, arg->h, arg->k, arg->h48data);
-	h48bound_inv += h48bound_inv == 0 ? cbound_inv : arg->base;
+	if (arg->k == 2) {
+		if (h48bound_inv == 0) {
+			h48bound_inv = get_h48_bound(
+			    arg->inverse, data_inv, 0, 4, arg->h48data_fallback);
+		} else {
+			h48bound_inv += arg->base;
+		}
+	}
 	if (h48bound_inv + arg->nmoves + arg->npremoves > arg->depth)
 		return true;
 	if (h48bound_inv + arg->nmoves + arg->npremoves == arg->depth)
@@ -194,12 +210,10 @@ solve_h48(
 {
 	_Atomic int64_t nsols;
 	dfsarg_solveh48_t arg;
-	tableinfo_t info;
+	tableinfo_t info, fbinfo;
 
-	if(readtableinfo_n(data_size, data, 2, &info) != NISSY_OK) {
-		LOG("solve_h48: error reading table\n");
-		return NISSY_ERROR_DATA;
-	}
+	if(readtableinfo_n(data_size, data, 2, &info) != NISSY_OK)
+		goto solve_h48_error_data;
 
 	arg = (dfsarg_solveh48_t) {
 		.cube = cube,
@@ -209,11 +223,22 @@ solve_h48(
 		.h = info.h48h,
 		.k = info.bits,
 		.base = info.base,
-		.cocsepdata = get_cocsepdata_constptr(data),
-		.h48data = get_h48data_constptr(data),
+		.cocsepdata = (uint32_t *)((char *)data + INFOSIZE),
+		.h48data = (uint8_t *)data + COCSEP_FULLSIZE + INFOSIZE,
 		.solutions_size = solutions_size,
 		.nextsol = &solutions
 	};
+
+	if (info.bits == 2) {
+		if (readtableinfo_n(data_size, data, 3, &fbinfo) != NISSY_OK)
+			goto solve_h48_error_data;
+		/* We only support h0k4 as fallback table */
+		if (fbinfo.h48h != 0 || fbinfo.bits != 4)
+			goto solve_h48_error_data;
+		arg.h48data_fallback = arg.h48data + info.next;
+	} else {
+		arg.h48data_fallback = NULL;
+	}
 
 	nsols = 0;
 	for (arg.depth = minmoves;
@@ -229,4 +254,8 @@ solve_h48(
 	**arg.nextsol = '\0';
 	(*arg.nextsol)++;
 	return nsols;
+
+solve_h48_error_data:
+	LOG("solve_h48: error reading table\n");
+	return NISSY_ERROR_DATA;
 }

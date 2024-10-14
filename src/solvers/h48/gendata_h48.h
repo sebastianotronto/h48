@@ -67,17 +67,20 @@ gendata_h48short(gendata_h48short_arg_t *arg)
 STATIC int64_t
 gendata_h48(gendata_h48_arg_t *arg)
 {
-	uint64_t size;
+	uint64_t size, cocsepsize, h48size, fallbacksize;
 	void *cocsepdata_offset;
-	size_t cocsepsize;
-	tableinfo_t cocsepinfo;
+	tableinfo_t cocsepinfo, h48info;
+	gendata_h48_arg_t arg_h0k4;
 
 	if (arg == NULL) {
 		LOG("Error computing H48 data: arg is NULL.\n");
 		return NISSY_ERROR_UNKNOWN;
 	}
 
-	size = 2*INFOSIZE + COCSEP_FULLSIZE + H48_TABLESIZE(arg->h, arg->k);
+	cocsepsize = COCSEP_FULLSIZE;
+	h48size = INFOSIZE + H48_TABLESIZE(arg->h, arg->k);
+	fallbacksize = arg->k == 2 ? INFOSIZE + H48_TABLESIZE(0, 4) : 0;
+	size = cocsepsize + h48size + fallbacksize;
 
 	if (arg->buf == NULL)
 		return size; /* Dry-run */
@@ -89,7 +92,7 @@ gendata_h48(gendata_h48_arg_t *arg)
 		return NISSY_ERROR_BUFFER_SIZE;
 	}
 
-	cocsepsize = gendata_cocsep(arg->buf, arg->selfsim, arg->crep);
+	gendata_cocsep(arg->buf, arg->selfsim, arg->crep);
 
 	cocsepdata_offset = (char *)arg->buf + INFOSIZE;
 	arg->cocsepdata = (uint32_t *)cocsepdata_offset;
@@ -119,6 +122,32 @@ gendata_h48(gendata_h48_arg_t *arg)
 		LOG("gendata_h48: could not write info for cocsep table"
 		    " with updated 'next' value\n");
 		return NISSY_ERROR_UNKNOWN;
+	}
+
+	if (arg->k == 2) {
+		arg_h0k4 = *arg;
+		arg_h0k4.h = 0;
+		arg_h0k4.k = 4;
+		arg_h0k4.base = 0;
+		arg_h0k4.maxdepth = 20;
+		arg_h0k4.buf_size = arg->buf_size - h48size;
+		arg_h0k4.buf = (char *)arg->buf + cocsepsize + h48size;
+		arg_h0k4.h48buf = (char *)arg->h48buf + h48size;
+
+		gendata_h48h0k4(&arg_h0k4);
+
+		if (readtableinfo_n(arg->buf_size, arg->buf, 2, &h48info)
+		    != NISSY_OK) {
+			LOG("gendata_h48: could not read info for h48 table\n");
+			return NISSY_ERROR_UNKNOWN;
+		}
+
+		h48info.next = h48size;
+		if (writetableinfo(&h48info, arg->buf_size - cocsepsize,
+		    (char *)arg->buf + cocsepsize) != NISSY_OK) {
+			LOG("gendata_h48: could not write info for h48 table\n");
+			return NISSY_ERROR_UNKNOWN;
+		}
 	}
 
 	return size;
@@ -198,7 +227,7 @@ gendata_h48h0k4(gendata_h48_arg_t *arg)
 	}
 
 	arg->info.maxvalue = d - 1;
-	bufsize = arg->buf_size - COCSEP_FULLSIZE - INFOSIZE;
+	bufsize = arg->buf_size - COCSEP_FULLSIZE;
 	writetableinfo(&arg->info, bufsize, arg->h48buf);
 }
 
@@ -377,7 +406,7 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 		arg->info.distribution[t]++;
 	}
 
-	bufsize = arg->buf_size - COCSEP_FULLSIZE - INFOSIZE;
+	bufsize = arg->buf_size - COCSEP_FULLSIZE;
 	writetableinfo(&arg->info, bufsize, arg->h48buf);
 }
 
@@ -619,7 +648,6 @@ getdistribution_h48(
 		distr[val]++;
 	}
 }
-
 STATIC const uint32_t *
 get_cocsepdata_constptr(const void *data)
 {
