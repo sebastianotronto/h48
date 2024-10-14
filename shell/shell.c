@@ -50,10 +50,10 @@ typedef struct {
 	char *str_trans;
 	char *str_solver;
 	char *str_nisstype;
-	unsigned int minmoves;
-	unsigned int maxmoves;
-	unsigned int optimal;
-	unsigned int maxsolutions;
+	unsigned minmoves;
+	unsigned maxmoves;
+	unsigned optimal;
+	unsigned maxsolutions;
 } args_t;
 
 static int64_t compose_exec(args_t *);
@@ -70,7 +70,7 @@ static int64_t solve_scramble_exec(args_t *);
 static int64_t help_exec(args_t *);
 
 static int parse_args(int, char **, args_t *);
-static bool parse_uint(char *, unsigned int *);
+static bool parse_uint(char *, unsigned *);
 
 static bool set_cube(int, char **, args_t *);
 static bool set_cube_perm(int, char **, args_t *);
@@ -482,7 +482,7 @@ solve_exec(args_t *args)
 static int64_t
 solve_scramble_exec(args_t *args)
 {
-	nissy_frommoves(args->str_moves, args->cube);
+	nissy_applymoves(NISSY_SOLVED_CUBE, args->str_moves, args->cube);
 
 	return solve_exec(args);
 }
@@ -584,7 +584,7 @@ parse_args(int argc, char **argv, args_t *args)
 }
 
 bool
-parse_uint(char *argv, int8_t *result)
+parse_uint(char *argv, unsigned *result)
 {
 	*result = strtol(argv, NULL, 10);
 
