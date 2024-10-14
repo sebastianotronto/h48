@@ -277,6 +277,7 @@ solve_h48_multithread(
 		.maxsolutions = maxsolutions,
 		.h = info.h48h,
 		.k = info.bits,
+		.base = info.base,
 		.cocsepdata = get_cocsepdata_constptr(data),
 		.h48data = get_h48data_constptr(data),
 		.solutions_size = solutions_size,

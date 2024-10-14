@@ -8,6 +8,7 @@ typedef struct {
 	int64_t maxsolutions;
 	uint8_t h;
 	uint8_t k;
+	uint8_t base;
 	const uint32_t *cocsepdata;
 	const uint8_t *h48data;
 	uint64_t solutions_size;
@@ -98,27 +99,32 @@ STATIC_INLINE bool
 solve_h48_stop(dfsarg_solveh48_t *arg)
 {
 	uint32_t data, data_inv;
-	int8_t bound;
+	int8_t cbound, cbound_inv, h48bound, h48bound_inv;
 
 	arg->nissbranch = MM_NORMAL;
-	bound = get_h48_cdata(arg->cube, arg->cocsepdata, &data);
-	if (bound + arg->nmoves + arg->npremoves > arg->depth)
+	cbound = get_h48_cdata(arg->cube, arg->cocsepdata, &data);
+	if (cbound + arg->nmoves + arg->npremoves > arg->depth)
 		return true;
 
-	bound = get_h48_cdata(arg->inverse, arg->cocsepdata, &data_inv);
-	if (bound + arg->nmoves + arg->npremoves > arg->depth)
+	cbound_inv = get_h48_cdata(arg->inverse, arg->cocsepdata, &data_inv);
+	if (cbound_inv + arg->nmoves + arg->npremoves > arg->depth)
 		return true;
 
-	bound = get_h48_bound(arg->cube, data, arg->h, arg->k, arg->h48data);
-	if (bound + arg->nmoves + arg->npremoves > arg->depth)
+	h48bound = get_h48_bound(arg->cube, data, arg->h, arg->k, arg->h48data);
+
+	/* If the h48 bound is > 0, we add the base value.        */
+	/* Otherwise, we use the cbound value instead (fallback). */
+	h48bound += h48bound == 0 ? cbound : arg->base;
+	if (h48bound + arg->nmoves + arg->npremoves > arg->depth)
 		return true;
-	if (bound + arg->nmoves + arg->npremoves == arg->depth)
+	if (h48bound + arg->nmoves + arg->npremoves == arg->depth)
 		arg->nissbranch = MM_INVERSEBRANCH;
 
-	bound = get_h48_bound(arg->inverse, data_inv, arg->h, arg->k, arg->h48data);
-	if (bound + arg->nmoves + arg->npremoves > arg->depth)
+	h48bound_inv = get_h48_bound(arg->inverse, data_inv, arg->h, arg->k, arg->h48data);
+	h48bound_inv += h48bound_inv == 0 ? cbound_inv : arg->base;
+	if (h48bound_inv + arg->nmoves + arg->npremoves > arg->depth)
 		return true;
-	if (bound + arg->nmoves + arg->npremoves == arg->depth)
+	if (h48bound_inv + arg->nmoves + arg->npremoves == arg->depth)
 		arg->nissbranch = MM_NORMALBRANCH;
 
 	return false;
@@ -144,7 +150,6 @@ solve_h48_dfs(dfsarg_solveh48_t *arg)
 		return 1;
 	}
 
-	/* TODO: avoid copy, change arg and undo changes after recursion */
 	nextarg = *arg;
 	ret = 0;
 	uint32_t allowed;
@@ -203,6 +208,7 @@ solve_h48(
 		.maxsolutions = maxsolutions,
 		.h = info.h48h,
 		.k = info.bits,
+		.base = info.base,
 		.cocsepdata = get_cocsepdata_constptr(data),
 		.h48data = get_h48data_constptr(data),
 		.solutions_size = solutions_size,
