@@ -91,7 +91,7 @@ generatetable(const char *solver, char **buf)
 	long long int size, gensize;
 
 	size = nissy_datasize(solver);
-	if (size == -1) {
+	if (size < 0) {
 		printf("Error getting table size.\n");
 		return -1;
 	}
@@ -101,7 +101,7 @@ generatetable(const char *solver, char **buf)
 
 	if (gensize != size) {
 		printf("Error generating table");
-		if (gensize != -1)
+		if (gensize == NISSY_OK)
 			printf(" (got %lld bytes)", gensize);
 		printf("\n");
 		return -2;
