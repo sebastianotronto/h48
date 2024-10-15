@@ -1,6 +1,6 @@
 #!/bin/sh
 
-SHELLBIN="./run"
+SHELLBIN="./debugrun"
 TESTDIR="./shell/testcases"
 TESTOUT="shell/lasttest.out"
 TESTERR="shell/lasttest.err"

@@ -15,7 +15,7 @@ debugnissy.o:
 	${CC} ${MACROS} ${DBGFLAGS} -c -o debugnissy.o src/nissy.c
 
 clean:
-	rm -rf *.o *.so run
+	rm -rf *.o *.so run debugrun
 
 test: debugnissy.o
 	CC="${CC} ${MACROS} ${DBGFLAGS}" OBJ=debugnissy.o ./test/test.sh
@@ -34,7 +34,7 @@ shell: nissy.o
 
 debugshell: debugnissy.o
 	mkdir -p tables
-	${CC} ${MACROS} ${DBGFLAGS} -o run debugnissy.o shell/shell.c
+	${CC} ${MACROS} ${DBGFLAGS} -o debugrun debugnissy.o shell/shell.c
 
 shelltest: debugshell
 	./shell/test.sh
