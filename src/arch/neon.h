@@ -1,24 +1,24 @@
-#define CO2_NEON vdupq_n_u8(0x60)
-#define COCW_NEON vdupq_n_u8(0x20)
-#define CP_NEON vdupq_n_u8(0x07)
+#define CO2_NEON vdup_n_u8(0x60)
+#define COCW_NEON vdup_n_u8(0x20)
+#define CP_NEON vdup_n_u8(0x07)
 #define EP_NEON vcombine_u8(vdupq_n_u8(0x0F), vdupq_n_u8(0x0F))
 #define EO_NEON vcombine_u8(vdupq_n_u8(0x10), vdupq_n_u8(0x10))
 
 STATIC_INLINE uint8x16_t compose_edges_slim(uint8x16_t, uint8x16_t);
-STATIC_INLINE uint8x16_t compose_corners_slim(uint8x16_t, uint8x16_t);
+STATIC_INLINE uint8x8_t compose_corners_slim(uint8x8_t, uint8x8_t);
 
 // static cube
 #define STATIC_CUBE(c_ufr, c_ubl, c_dfl, c_dbr, c_ufl, c_ubr, c_dfr, c_dbl, \
 					e_uf, e_ub, e_db, e_df, e_ur, e_ul, e_dl, e_dr, e_fr, e_fl, e_bl, e_br) \
 	((cube_t){ \
-		.corner = {c_ufr, c_ubl, c_dfl, c_dbr, c_ufl, c_ubr, c_dfr, c_dbl, 0, 0, 0, 0, 0, 0, 0, 0}, \
+		.corner = {c_ufr, c_ubl, c_dfl, c_dbr, c_ufl, c_ubr, c_dfr, c_dbl}, \
 		.edge = {e_uf, e_ub, e_db, e_df, e_ur, e_ul, e_dl, e_dr, e_fr, e_fl, e_bl, e_br, 0, 0, 0, 0}})
 
 // zero cube
 #define ZERO_CUBE \
 	(cube_t) \
 	{ \
-		.corner = vdupq_n_u8(0), \
+		.corner = vdup_n_u8(0), \
 		.edge = vdupq_n_u8(0) \
 	}
 
@@ -30,7 +30,7 @@ STATIC void
 pieces(cube_t *cube, uint8_t c[static 8], uint8_t e[static 12])
 {
 	// First 8 bytes of the corner vector are copied from the c array
-	vst1_u8(c, vget_low_u8(cube->corner));
+	vst1_u8(c, cube->corner);
 
 	// 12 bytes of the edge vector are copied from the e array
 	// First 8 bytes
@@ -42,20 +42,17 @@ pieces(cube_t *cube, uint8_t c[static 8], uint8_t e[static 12])
 STATIC_INLINE bool
 equal(cube_t c1, cube_t c2)
 {
-	uint8x16_t cmp_corner, cmp_edge;
-	uint64x2_t cmp_corner_u64, cmp_edge_u64;
-	uint64x2_t cmp_result;
+	uint8x8_t cmp_corner;
+	uint8x16_t cmp_edge;
+	uint64x2_t cmp_corner_u64, cmp_edge_u64, cmp_result;
 
-	// compare the corner vectors
-	cmp_corner = vceqq_u8(c1.corner, c2.corner);
-	// compare the edge vectors
+	// compare the corner vectors and the edge vectors
+	cmp_corner = vceq_u8(c1.corner, c2.corner);
 	cmp_edge = vceqq_u8(c1.edge, c2.edge);
 
-	// convert the comparison vectors to 64-bit vectors
-	cmp_corner_u64 = vreinterpretq_u64_u8(cmp_corner);
+	// convert the comparison vectors to 64-bit vectors and combine them
+	cmp_corner_u64 = vreinterpretq_u64_u8(vcombine_u64(cmp_corner, cmp_corner));
 	cmp_edge_u64 = vreinterpretq_u64_u8(cmp_edge);
-
-	// combine the comparison vectors
 	cmp_result = vandq_u64(cmp_corner_u64, cmp_edge_u64);
 
 	// check if all the bits are set
@@ -66,15 +63,15 @@ STATIC_INLINE cube_t
 invertco(cube_t c)
 {
 	cube_t ret;
-	uint8x16_t co, shleft, shright, summed, newco, cleanco;
+	uint8x8_t co, shleft, shright, summed, newco, cleanco;
 
-	co = vandq_u8(c.corner, CO2_NEON);
-	shleft = vshlq_n_u8(co, 1);
-	shright = vshrq_n_u8(co, 1);
-	summed = vorrq_u8(shleft, shright);
-	newco = vandq_u8(summed, CO2_NEON);
-	cleanco = veorq_u8(c.corner, co);
-	ret.corner = vorrq_u8(cleanco, newco);
+	co = vand_u8(c.corner, CO2_NEON);
+	shleft = vshl_n_u8(co, 1);
+	shright = vshr_n_u8(co, 1);
+	summed = vorr_u8(shleft, shright);
+	newco = vand_u8(summed, CO2_NEON);
+	cleanco = veor_u8(c.corner, co);
+	ret.corner = vorr_u8(cleanco, newco);
 	ret.edge = c.edge;
 	
 	return ret;
@@ -120,30 +117,25 @@ compose_edges_slim(uint8x16_t edge1, uint8x16_t edge2)
 	return ret;
 }
 
-STATIC_INLINE uint8x16_t
-compose_corners_slim(uint8x16_t corner1, uint8x16_t corner2)
+STATIC_INLINE uint8x8_t
+compose_corners_slim(uint8x8_t corner1, uint8x8_t corner2)
 {
 	// Masks
-	uint8x16_t p_bits = vdupq_n_u8(PBITS);
-	uint8x16_t cobits = vdupq_n_u8(COBITS);
-	uint8x16_t cobits2 = vdupq_n_u8(COBITS_2);
-	uint8x16_t twist_cw = vdupq_n_u8(CTWIST_CW);
+	uint8x8_t p_bits = vdup_n_u8(PBITS);
+	uint8x8_t cobits = vdup_n_u8(COBITS);
+	uint8x8_t cobits2 = vdup_n_u8(COBITS_2);
+	uint8x8_t twist_cw = vdup_n_u8(CTWIST_CW);
 
 	// Find the index and permutation
-	uint8x16_t p = vandq_u8(corner2, p_bits);
-	uint8x16_t piece1 = vqtbl1q_u8(corner1, p);
+	uint8x8_t p = vand_u8(corner2, p_bits);
+	uint8x8_t piece1 = vtbl1_u8(corner1, p);
 
 	// Calculate the orientation
-	uint8x16_t aux = vaddq_u8(vandq_u8(corner2, cobits), vandq_u8(piece1, cobits));
-	uint8x16_t auy = vshrq_n_u8(vaddq_u8(aux, twist_cw), 2);
-	uint8x16_t orien = vandq_u8(vaddq_u8(aux, auy), cobits2);
+	uint8x8_t aux = vadd_u8(vand_u8(corner2, cobits), vand_u8(piece1, cobits));
+	uint8x8_t auy = vshr_n_u8(vadd_u8(aux, twist_cw), 2);
+	uint8x8_t orien = vand_u8(vadd_u8(aux, auy), cobits2);
 
-	// Combine the results
-	uint8x16_t ret = vorrq_u8(vandq_u8(piece1, p_bits), orien);
-
-	// Mask to clear the last 64 bits of the result
-	uint8x16_t mask_last_64 = vsetq_lane_u64(0, vreinterpretq_u64_u8(ret), 1);
-	ret = vreinterpretq_u8_u64(mask_last_64);
+	uint8x8_t ret = vorr_u8(vand_u8(piece1, p_bits), orien);
 
 	return ret;
 }
@@ -167,14 +159,14 @@ inverse(cube_t cube)
 
 	// Temp arrays to store the NEON vectors
 	uint8_t edges[16];
-	uint8_t corners[16];
+	uint8_t corners[8];
 
 	// Copy the NEON vectors to the arrays
 	vst1q_u8(edges, cube.edge);
-	vst1q_u8(corners, cube.corner);
+	vst1_u8(corners, cube.corner);
 
 	uint8_t edge_result[16] = {0};
-	uint8_t corner_result[16] = {0};
+	uint8_t corner_result[8] = {0};
 
 	// Process the edges
 	for (i = 0; i < 12; i++)
@@ -194,7 +186,7 @@ inverse(cube_t cube)
 
 	// Copy the results back to the NEON vectors
 	ret.edge = vld1q_u8(edge_result);
-	ret.corner = vld1q_u8(corner_result);
+	ret.corner = vld1_u8(corner_result);
 
 	return ret;
 }
@@ -203,8 +195,8 @@ STATIC_INLINE int64_t
 coord_co(cube_t c)
 {
 	// Temp array to store the NEON vector
-	uint8_t mem[16];
-	vst1q_u8(mem, c.corner);
+	uint8_t mem[8];
+	vst1_u8(mem, c.corner);
 
 	int i, p;
 	int64_t ret;
@@ -219,8 +211,8 @@ STATIC_INLINE int64_t
 coord_csep(cube_t c)
 {
 	// Temp array to store the NEON vector
-	uint8_t mem[16];
-	vst1q_u8(mem, c.corner);
+	uint8_t mem[8];
+	vst1_u8(mem, c.corner);
 
 	int64_t ret = 0;
 	int i, p;
@@ -228,6 +220,7 @@ coord_csep(cube_t c)
 		ret += p * ((mem[i] & CSEPBIT) >> 2);
 
 	return ret;
+	return 0;
 }
 
 STATIC_INLINE int64_t
