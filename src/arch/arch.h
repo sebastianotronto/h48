@@ -15,7 +15,7 @@ typedef __m256i cube_t;
 #include <arm_neon.h>
 
 typedef struct {
-	uint8x16_t corner;
+	uint8x8_t corner;
 	uint8x16_t edge;
 } cube_t;
 

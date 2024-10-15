@@ -19,7 +19,7 @@ typedef struct {
 	uint8_t premoves[MAXLEN];
 } dfsarg_solveh48_t;
 
-STATIC uint32_t allowednextmove_h48(uint8_t *, uint8_t, uint32_t);
+STATIC uint32_t allowednextmove_h48(uint8_t *, uint8_t, uint8_t);
 
 STATIC void solve_h48_appendsolution(dfsarg_solveh48_t *);
 STATIC_INLINE bool solve_h48_stop(dfsarg_solveh48_t *);
@@ -28,7 +28,7 @@ STATIC int64_t solve_h48(cube_t, int8_t, int8_t,
     int8_t, uint64_t, const void *, uint64_t, char *);
 
 STATIC uint32_t
-allowednextmove_h48(uint8_t *moves, uint8_t n, uint32_t h48branch)
+allowednextmove_h48(uint8_t *moves, uint8_t n, uint8_t h48branch)
 {
 	uint32_t result = MM_ALLMOVES;
 	if (h48branch & MM_NORMALBRANCH)

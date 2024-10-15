@@ -93,10 +93,10 @@ STATIC int64_t binomial[12][12] = {
 #define TRANS_BDm UINT8_C(46)
 #define TRANS_BLm UINT8_C(47)
 
-#define MM_NORMAL         UINT32_C(0x00)
-#define MM_INVERSE        UINT32_C(0x01)
-#define MM_INVERSEBRANCH  UINT32_C(0x03)
-#define MM_NORMALBRANCH   UINT32_C(0x02)
+#define MM_NORMAL         UINT8_C(0x00)
+#define MM_INVERSE        UINT8_C(0x01)
+#define MM_INVERSEBRANCH  UINT8_C(0x03)
+#define MM_NORMALBRANCH   UINT8_C(0x02)
 #define MM_ALLMOVES       UINT32_C(0x3FFFF)
 #define MM_NOHALFTURNS    UINT32_C(0x2DB6D)
 
