@@ -101,6 +101,7 @@ solve_h48_stop(dfsarg_solveh48_t *arg)
 {
 	uint32_t data, data_inv;
 	int8_t cbound, cbound_inv, h48bound, h48bound_inv;
+	int64_t coord, coord_inv;
 
 	arg->nissbranch = MM_NORMAL;
 	cbound = get_h48_cdata(arg->cube, arg->cocsepdata, &data);
@@ -111,15 +112,16 @@ solve_h48_stop(dfsarg_solveh48_t *arg)
 	if (cbound_inv + arg->nmoves + arg->npremoves > arg->depth)
 		return true;
 
-	h48bound = get_h48_bound(arg->cube, data, arg->h, arg->k, arg->h48data);
+	coord = coord_h48_edges(arg->cube, COCLASS(data), TTREP(data), arg->h);
+	h48bound = get_h48_pval(arg->h48data, coord, arg->k);
 
 	/* If the h48 bound is > 0, we add the base value.    */
 	/* Otherwise, we use the fallback h0k4 value instead. */
 
 	if (arg->k == 2) {
 		if (h48bound == 0) {
-			h48bound = get_h48_bound(
-			    arg->cube, data, 0, 4, arg->h48data_fallback);
+			h48bound = get_h48_pval(
+			    arg->h48data_fallback, coord >> arg->h, 4);
 		} else {
 			h48bound += arg->base;
 		}
@@ -129,11 +131,13 @@ solve_h48_stop(dfsarg_solveh48_t *arg)
 	if (h48bound + arg->nmoves + arg->npremoves == arg->depth)
 		arg->nissbranch = MM_INVERSEBRANCH;
 
-	h48bound_inv = get_h48_bound(arg->inverse, data_inv, arg->h, arg->k, arg->h48data);
+	coord_inv = coord_h48_edges(
+	    arg->inverse, COCLASS(data_inv), TTREP(data_inv), arg->h);
+	h48bound_inv = get_h48_pval(arg->h48data, coord_inv, arg->k);
 	if (arg->k == 2) {
 		if (h48bound_inv == 0) {
-			h48bound_inv = get_h48_bound(
-			    arg->inverse, data_inv, 0, 4, arg->h48data_fallback);
+			h48bound_inv = get_h48_pval(
+			    arg->h48data_fallback, coord_inv >> arg->h, 4);
 		} else {
 			h48bound_inv += arg->base;
 		}

@@ -24,8 +24,6 @@ STATIC_INLINE uint8_t get_h48_pval_atomic(
     _Atomic const uint8_t *, int64_t, uint8_t);
 STATIC_INLINE void set_h48_pval_atomic(
     _Atomic uint8_t *, int64_t, uint8_t, uint8_t);
-STATIC_INLINE uint8_t get_h48_bound(
-    cube_t, uint32_t, uint8_t, uint8_t, const uint8_t *);
 
 size_t gendata_h48_derive(uint8_t, const void *, void *);
 
@@ -684,20 +682,6 @@ set_h48_pval_atomic(_Atomic uint8_t *table, int64_t i, uint8_t k, uint8_t val)
 {
 	table[H48_INDEX(i, k)] = (table[H48_INDEX(i, k)] & (~H48_MASK(i, k)))
 	    | (val << H48_SHIFT(i, k));
-}
-
-STATIC_INLINE uint8_t
-get_h48_bound(
-	cube_t cube,
-	uint32_t cdata,
-	uint8_t h,
-	uint8_t k,
-	const uint8_t *table
-) {
-	int64_t coord;
-
-	coord = coord_h48_edges(cube, COCLASS(cdata), TTREP(cdata), h);
-	return get_h48_pval(table, coord, k);
 }
 
 size_t

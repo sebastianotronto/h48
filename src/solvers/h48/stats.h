@@ -36,7 +36,7 @@ solve_h48stats_dfs(dfsarg_solveh48stats_t *arg)
 
 	/* Check h48 lower bound for h=0 (esep, but no eo) */
 	coord = coord_h48_edges(arg->cube, COCLASS(d), TTREP(d), 0);
-	bound = get_h48_bound(arg->cube, d, 0, 4, arg->h48data);
+	bound = get_h48_pval(arg->h48data, coord, 4);
 	if (bound + arg->nmoves > arg->depth)
 		return 0;
 	
