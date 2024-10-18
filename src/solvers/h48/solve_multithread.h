@@ -11,6 +11,8 @@ typedef struct {
 	pthread_cond_t cond;
 	pthread_cond_t active_cond;
 	atomic_bool terminate;
+	_Atomic long long nodes_visited_global;
+	_Atomic long long table_fallbacks_global;
 } task_queue_t;
 
 STATIC void solve_h48_appendsolution_thread(dfsarg_solveh48_t *, task_queue_t *);
@@ -128,6 +130,8 @@ start_thread(void *arg)
 			pthread_mutex_unlock(&queue->mutex);
 			
 			solve_h48_single(&task, queue);
+			queue->nodes_visited_global += task.nodes_visited;
+			queue->table_fallbacks_global += task.table_fallbacks;
 
 			pthread_mutex_lock(&queue->mutex);
 			queue->active--;
@@ -243,6 +247,9 @@ solve_h48_single(dfsarg_solveh48_t *arg, task_queue_t *tq)
 			}
 		}
 	}
+
+	arg->nodes_visited = nextarg.nodes_visited;
+	arg->table_fallbacks = nextarg.table_fallbacks;
 	return ret;
 }
 
@@ -260,7 +267,6 @@ solve_h48_multithread(
 )
 {
 	_Atomic int64_t nsols = 0;
-	_Atomic long long nodes, fallbacks;
 	int p_depth = 0;
 	dfsarg_solveh48_t arg;
 	tableinfo_t info, fbinfo;
@@ -269,7 +275,6 @@ solve_h48_multithread(
 	if (readtableinfo_n(data_size, data, 2, &info) != NISSY_OK)
 		goto solve_h48_multithread_error_data;
 
-	nodes = fallbacks = 0;
 	arg = (dfsarg_solveh48_t){
 		.cube = cube,
 		.inverse = inverse(cube),
@@ -283,8 +288,8 @@ solve_h48_multithread(
 		.h48data = (uint8_t *)data + COCSEP_FULLSIZE + INFOSIZE,
 		.solutions_size = solutions_size,
 		.nextsol = &solutions,
-		.nodes_visited = &nodes,
-		.table_fallbacks = &fallbacks
+		.nodes_visited = 0,
+		.table_fallbacks = 0
 	};
 
 	if (info.bits == 2) {
@@ -306,6 +311,7 @@ solve_h48_multithread(
 	task_queue_t nq;
 	init_queue(&nq);
 
+	nq.nodes_visited_global = nq.table_fallbacks_global = 0;
 	for (int i = 0; i < THREADS; i++) {
 		pthread_create(&threads[i], NULL, &start_thread, &nq);
 	}
@@ -333,13 +339,12 @@ solve_h48_multithread(
 	}
 	**arg.nextsol = '\0';
 
-	stats[0] = nodes;
-	stats[1] = fallbacks;
-	LOG("Nodes visited: %lld\nTable fallbacks: %lld\n", nodes, fallbacks);
+	stats[0] = nq.nodes_visited_global;
+	stats[1] = nq.table_fallbacks_global;
+	LOG("Nodes visited: %lld\nTable fallbacks: %lld\n",
+	    nq.nodes_visited_global, nq.table_fallbacks_global);
 
 	return nsols;
 
-solve_h48_multithread_error_data:
-	LOG("solve_h48: error reading table\n");
-	return NISSY_ERROR_DATA;
+solve_h48_multithread_error_data: LOG("solve_h48: error reading table\n"); return NISSY_ERROR_DATA;
 }
