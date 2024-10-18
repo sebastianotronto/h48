@@ -15,7 +15,7 @@
 #
 # THREADS=n
 # Choose how many threads to use for multi-threaded oerations.
-# By default, 16 threads will be used (TODO: in the future this will be
+# By default, 8 threads will be used (TODO: in the future this will be
 # determined base on the system).
 # The number n must be between 1 and 128.
 #
@@ -29,18 +29,18 @@
 #
 # Examples
 #
-# 1. Build using clang and 8 threads
-#    CC=clang THREADS=8 ./configure.sh && make
+# 1. Build using clang and 4 threads
+#    CC=clang THREADS=4 ./configure.sh && make
 #
 # 2. Build using thread and undefined behavior sanitizers when in debug mode
-#    SANITIZE="thread,undefined" ./configures && make
+#    SANITIZE="thread,undefined" ./configure.sh && make
 
 greparch() {
 	$CC -march=native -dM -E - </dev/null 2>/dev/null | grep "$1"
 }
 
 detectthreads() {
-	echo 16 # TODO: choose based on system
+	echo 8 # TODO: choose based on system
 }
 
 detectarch() {
