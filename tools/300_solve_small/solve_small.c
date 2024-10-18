@@ -7,16 +7,24 @@ int64_t size = 0;
 char *buf;
 
 char *scrambles[] = {
-	"R D' R2 D R U2 R' D' R U2 R D R'", /* 12 optimal */
-	"RLUD RLUD RLUD", /* 12 optimal */
-	"R' U' F D2 L2 F R2 U2 R2 B D2 L B2 D' B2 L' R' B D2 B U2 L U2 R' U' F", /* FMC2019 A1 - 16 optimal */
-	// "R' U' F D R F2 D L F D2 F2 L' U R' L2 D' R2 F2 R2 D L2 U2 R' U' F", /* FMC2024 A1 - 19 optimal */
+	/* 12 optimal */
+	"R D' R2 D R U2 R' D' R U2 R D R'",
+
+	/* 12 optimal */
+	"RLUD RLUD RLUD",
+
+	/* FMC2019 A1 - 16 optimal */
+	"R' U' F D2 L2 F R2 U2 R2 B D2 L B2 D' B2 L' R' B D2 B U2 L U2 R' U' F",
+
+	/* FMC2024 A1 - 19 optimal */
+	"R' U' F D R F2 D L F D2 F2 L' U R' L2 D' R2 F2 R2 D L2 U2 R' U' F",
 	NULL
 };
 
 void run(void) {
 	int i;
 	int64_t n;
+	long long stats[NISSY_SIZE_SOLVE_STATS];
 	char sol[SOL_BUFFER_LEN], cube[22];
 
 	printf("Solved the following scrambles:\n\n");
@@ -29,7 +37,7 @@ void run(void) {
 			continue;
 		}
 		n = nissy_solve(cube, solver, NISSY_NISSFLAG_NORMAL,
-		    0, 20, 1, -1, size, buf, SOL_BUFFER_LEN, sol);
+		    0, 20, 1, -1, size, buf, SOL_BUFFER_LEN, sol, stats);
 		if (n == 0)
 			printf("No solution found\n");
 		else

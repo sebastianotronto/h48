@@ -20,8 +20,8 @@ STATIC void copy_queue(task_queue_t *, task_queue_t *, int, _Atomic int64_t *);
 STATIC void *start_thread(void *);
 STATIC int64_t solve_h48_bfs(dfsarg_solveh48_t *, task_queue_t *, int8_t);
 STATIC int64_t solve_h48_single(dfsarg_solveh48_t *, task_queue_t *);
-STATIC int64_t solve_h48_multithread(cube_t, int8_t, int8_t, int8_t,
-    uint64_t, const void *, uint64_t, char *);
+STATIC int64_t solve_h48_multithread(cube_t, int8_t, int8_t, int8_t, uint64_t,
+    const void *, uint64_t, char *, long long [static NISSY_SIZE_SOLVE_STATS]);
 
 STATIC void
 solve_h48_appendsolution_thread(dfsarg_solveh48_t *arg, task_queue_t *tq)
@@ -255,10 +255,12 @@ solve_h48_multithread(
 	uint64_t data_size,
 	const void *data,
 	uint64_t solutions_size,
-	char *solutions
+	char *solutions,
+	long long stats[static NISSY_SIZE_SOLVE_STATS]
 )
 {
 	_Atomic int64_t nsols = 0;
+	_Atomic long long nodes, fallbacks;
 	int p_depth = 0;
 	dfsarg_solveh48_t arg;
 	tableinfo_t info, fbinfo;
@@ -267,6 +269,7 @@ solve_h48_multithread(
 	if (readtableinfo_n(data_size, data, 2, &info) != NISSY_OK)
 		goto solve_h48_multithread_error_data;
 
+	nodes = fallbacks = 0;
 	arg = (dfsarg_solveh48_t){
 		.cube = cube,
 		.inverse = inverse(cube),
@@ -279,7 +282,9 @@ solve_h48_multithread(
 		.cocsepdata = (uint32_t *)((char *)data + INFOSIZE),
 		.h48data = (uint8_t *)data + COCSEP_FULLSIZE + INFOSIZE,
 		.solutions_size = solutions_size,
-		.nextsol = &solutions
+		.nextsol = &solutions,
+		.nodes_visited = &nodes,
+		.table_fallbacks = &fallbacks
 	};
 
 	if (info.bits == 2) {
@@ -301,7 +306,7 @@ solve_h48_multithread(
 	task_queue_t nq;
 	init_queue(&nq);
 
-	for (int i = 0; i < THREADS; i++){
+	for (int i = 0; i < THREADS; i++) {
 		pthread_create(&threads[i], NULL, &start_thread, &nq);
 	}
 
@@ -323,11 +328,15 @@ solve_h48_multithread(
 	atomic_store(&nq.terminate, true);
 	pthread_cond_broadcast(&nq.cond);
 
-	for (int i = 0; i < THREADS; i++){
+	for (int i = 0; i < THREADS; i++) {
 		pthread_join(threads[i], NULL);
 	}
 	**arg.nextsol = '\0';
-	(*arg.nextsol)++;
+
+	stats[0] = nodes;
+	stats[1] = fallbacks;
+	LOG("Nodes visited: %lld\nTable fallbacks: %lld\n", nodes, fallbacks);
+
 	return nsols;
 
 solve_h48_multithread_error_data:

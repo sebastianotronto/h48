@@ -422,6 +422,7 @@ solve_exec(args_t *args)
 	uint8_t nissflag;
 	FILE *file;
 	char *buf, solutions[SOLUTIONS_BUFFER_SIZE], path[MAX_PATH_LENGTH];
+	long long stats[NISSY_SIZE_SOLVE_STATS];
 	int64_t ret, gendata_ret, size;
 	size_t read;
 
@@ -475,7 +476,7 @@ solve_exec(args_t *args)
 	ret = nissy_solve(
 	    args->cube, args->str_solver, nissflag, args->minmoves,
 	    args->maxmoves, args->maxsolutions, args->optimal,
-	    size, buf, SOLUTIONS_BUFFER_SIZE, solutions);
+	    size, buf, SOLUTIONS_BUFFER_SIZE, solutions, stats);
 
 	free(buf);
 

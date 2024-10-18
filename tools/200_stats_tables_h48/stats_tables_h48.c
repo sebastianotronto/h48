@@ -30,7 +30,7 @@ static void *
 run_thread(void *arg)
 {
 	char s[12], cube[22];
-	long long int ep, eo, cp, co;
+	long long int ep, eo, cp, co, stats[NISSY_SIZE_SOLVE_STATS];
 	int i, j;
 
 	thread_arg_t *a = (thread_arg_t *)arg;
@@ -42,7 +42,7 @@ run_thread(void *arg)
 		co = randll();
 		nissy_getcube(ep, eo, cp, co, "fix", cube);
 		nissy_solve(cube, "h48stats", NISSY_NISSFLAG_NORMAL,
-		    0, MAXMOVES, 1, -1, size, buf, 12, s);
+		    0, MAXMOVES, 1, -1, size, buf, 12, s, stats);
 		for (j = 0; j < 12; j++)
 			a->v[j][(int)s[j]]++;
 		if ((i+1) % LOG_EVERY == 0)

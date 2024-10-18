@@ -155,7 +155,7 @@ datasize(PyObject *self, PyObject *args)
 	return long_result(result);
 }
 
-/* TODO: gendata, checkdata and solve */
+/* TODO: gendata, checkdata and solve and countmoves */
 
 static PyMethodDef nissy_methods[] = {
 	{ "compose", compose, METH_VARARGS, NULL },

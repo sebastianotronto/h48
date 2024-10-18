@@ -471,7 +471,8 @@ nissy_solve(
 	unsigned long long data_size,
 	const char data[data_size],
 	unsigned sols_size,
-	char sols[sols_size]
+	char sols[sols_size],
+	long long stats[static NISSY_SIZE_SOLVE_STATS]
 )
 {
 	cube_t c;
@@ -511,9 +512,9 @@ nissy_solve(
 		} else {
 			return THREADS > 1 ?
 			    solve_h48_multithread(c, minmoves, maxmoves,
-			        maxsols, data_size, data, sols_size, sols) :
+			        maxsols, data_size, data, sols_size, sols, stats) :
 			    solve_h48(c, minmoves, maxmoves, maxsols,
-			        data_size, data, sols_size, sols);
+			        data_size, data, sols_size, sols, stats);
 		}
 	} else {
 		LOG("solve: unknown solver '%s'\n", solver);

@@ -24,6 +24,7 @@ for example 'rotation UF' or 'mirrored BL'.
 #define NISSY_SIZE_B32            22U
 #define NISSY_SIZE_H48            88U
 #define NISSY_SIZE_TRANSFORMATION 12U
+#define NISSY_SIZE_SOLVE_STATS    10U
 
 /* Flags for NISS options */
 #define NISSY_NISSFLAG_NORMAL  1U
@@ -58,7 +59,8 @@ Return values:
    NISSY_ERROR_INVALID_CUBE  - At least one of the given cubes is invalid.
    NISSY_ERROR_UNKNOWN       - An unknown error occurred.
 */
-long long nissy_compose(
+long long
+nissy_compose(
 	const char cube[static NISSY_SIZE_B32],
 	const char permutation[static NISSY_SIZE_B32],
 	char result[static NISSY_SIZE_B32]
@@ -79,7 +81,8 @@ Return values:
    NISSY_ERROR_INVALID_CUBE  - The given cube is invalid.
    NISSY_ERROR_UNKNOWN       - An unknown error occurred.
 */
-long long nissy_inverse(
+long long
+nissy_inverse(
 	const char cube[static NISSY_SIZE_B32],
 	char result[static NISSY_SIZE_B32]
 );
@@ -101,7 +104,8 @@ Return values:
    NISSY_ERROR_INVALID_MOVES - The given moves are invalid.
    NISSY_ERROR_NULL_POINTER  - The 'moves' argument is NULL.
 */
-long long nissy_applymoves(
+long long
+nissy_applymoves(
 	const char cube[static NISSY_SIZE_B32],
 	const char *moves,
 	char result[static NISSY_SIZE_B32]
@@ -122,7 +126,8 @@ Return values:
    NISSY_ERROR_INVALID_CUBE  - The given cube is invalid.
    NISSY_ERROR_INVALID_TRANS - The given transformation is invalid.
 */
-long long nissy_applytrans(
+long long
+nissy_applytrans(
 	const char cube[static NISSY_SIZE_B32],
 	const char transformation[static NISSY_SIZE_TRANSFORMATION],
 	char result[static NISSY_SIZE_B32]
@@ -147,7 +152,8 @@ Return values:
    NISSY_ERROR_NULL_POINTER   - At least one of 'format_in', 'format_out' or
                                 'cube_string' arguments is NULL.
 */
-long long nissy_convert(
+long long
+nissy_convert(
 	const char *format_in,
 	const char *format_out,
 	const char *cube_string,
@@ -174,7 +180,8 @@ Return values:
    NISSY_WARNING_UNSOLVABLE - The resulting cube is unsolvable.
    NISSY_ERROR_OPTIONS      - One or more of the given parameters is invalid.
 */
-long long nissy_getcube(
+long long
+nissy_getcube(
 	long long ep,
 	long long eo,
 	long long cp,
@@ -196,7 +203,8 @@ Return values:
    NISSY_ERROR_UNKNOWN        - An unknown error occurred.
    Any value >= 0             - The size of the data, in bytes.
 */
-long long nissy_datasize(
+long long
+nissy_datasize(
 	const char *solver
 );
 
@@ -215,7 +223,8 @@ Return values:
    NISSY_ERROR_UNKNOWN        - An error occurred while generating the data.
    Any value >= 0             - The size of the data, in bytes.
 */
-long long nissy_gendata(
+long long
+nissy_gendata(
 	const char *solver,
 	unsigned long long data_size,
 	char data[data_size]
@@ -232,7 +241,8 @@ Return values:
    NISSY_OK         - The data is valid.
    NISSY_ERROR_DATA - The data is invalid.
 */
-long long nissy_checkdata(
+long long
+nissy_checkdata(
 	unsigned long long data_size,
 	const char data[data_size]
 );
@@ -255,6 +265,7 @@ Parameters:
    sols      - The return parameter for the solutions. The solutions are
                separated by a '\n' (newline) and a '\0' (NULL character)
                terminates the list.
+   stats     - An array to store some statistics about the solve.
 
 Return values:
    NISSY_OK                    - Cube solved succesfully.
@@ -266,7 +277,8 @@ Return values:
    NISSY_ERROR_NULL_POINTER    - The 'solver' argument is null.
    Any value >= 0              - The number of solutions found.
 */
-long long nissy_solve(
+long long
+nissy_solve(
 	const char cube[static NISSY_SIZE_B32],
 	const char *solver, 
 	unsigned nissflag,
@@ -277,7 +289,8 @@ long long nissy_solve(
 	unsigned long long data_size,
 	const char data[data_size],
 	unsigned sols_size,
-	char sols[sols_size]
+	char sols[sols_size],
+	long long stats[static NISSY_SIZE_SOLVE_STATS]
 );
 
 /*
@@ -289,7 +302,8 @@ Return values:
    NISSY_ERROR_NULL_POINTER  - The 'moves' argument is NULL.
    Any value >= 0            - The number of moves.
 */
-long long nissy_countmoves(
+long long
+nissy_countmoves(
 	const char *moves
 );
 
@@ -303,7 +317,8 @@ Return values:
    NISSY_OK - Logger set succesfully. No warning or error is goind to be given
               if the logger is NULL or invalid.
 */
-long long nissy_setlogger(
+long long
+nissy_setlogger(
 	void (*logger_function)(const char *, ...)
 );
 

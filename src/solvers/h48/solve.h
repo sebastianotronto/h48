@@ -17,6 +17,8 @@ typedef struct {
 	uint8_t nissbranch;
 	int8_t npremoves;
 	uint8_t premoves[MAXLEN];
+	_Atomic long long *nodes_visited;
+	_Atomic long long *table_fallbacks;
 } dfsarg_solveh48_t;
 
 STATIC uint32_t allowednextmove_h48(uint8_t *, uint8_t, uint8_t);
@@ -24,8 +26,8 @@ STATIC uint32_t allowednextmove_h48(uint8_t *, uint8_t, uint8_t);
 STATIC void solve_h48_appendsolution(dfsarg_solveh48_t *);
 STATIC_INLINE bool solve_h48_stop(dfsarg_solveh48_t *);
 STATIC int64_t solve_h48_dfs(dfsarg_solveh48_t *);
-STATIC int64_t solve_h48(cube_t, int8_t, int8_t,
-    int8_t, uint64_t, const void *, uint64_t, char *);
+STATIC int64_t solve_h48(cube_t, int8_t, int8_t, int8_t, uint64_t,
+    const void *, uint64_t, char *, long long [static NISSY_SIZE_SOLVE_STATS]);
 
 STATIC uint32_t
 allowednextmove_h48(uint8_t *moves, uint8_t n, uint8_t h48branch)
@@ -103,6 +105,8 @@ solve_h48_stop(dfsarg_solveh48_t *arg)
 	int8_t cbound, cbound_inv, h48bound, h48bound_inv;
 	int64_t coord, coord_inv;
 
+	(*arg->nodes_visited)++;
+
 	arg->nissbranch = MM_NORMAL;
 	cbound = get_h48_cdata(arg->cube, arg->cocsepdata, &data);
 	if (cbound + arg->nmoves + arg->npremoves > arg->depth)
@@ -120,6 +124,7 @@ solve_h48_stop(dfsarg_solveh48_t *arg)
 
 	if (arg->k == 2) {
 		if (h48bound == 0) {
+			(*arg->table_fallbacks)++;
 			h48bound = get_h48_pval(
 			    arg->h48data_fallback, coord >> arg->h, 4);
 		} else {
@@ -136,6 +141,7 @@ solve_h48_stop(dfsarg_solveh48_t *arg)
 	h48bound_inv = get_h48_pval(arg->h48data, coord_inv, arg->k);
 	if (arg->k == 2) {
 		if (h48bound_inv == 0) {
+			(*arg->table_fallbacks)++;
 			h48bound_inv = get_h48_pval(
 			    arg->h48data_fallback, coord_inv >> arg->h, 4);
 		} else {
@@ -209,16 +215,19 @@ solve_h48(
 	uint64_t data_size,
 	const void *data,
 	uint64_t solutions_size,
-	char *solutions
+	char *solutions,
+	long long stats[static NISSY_SIZE_SOLVE_STATS]
 )
 {
 	_Atomic int64_t nsols;
+	_Atomic long long nodes, fallbacks;
 	dfsarg_solveh48_t arg;
 	tableinfo_t info, fbinfo;
 
 	if(readtableinfo_n(data_size, data, 2, &info) != NISSY_OK)
 		goto solve_h48_error_data;
 
+	nodes = fallbacks = 0;
 	arg = (dfsarg_solveh48_t) {
 		.cube = cube,
 		.inverse = inverse(cube),
@@ -230,7 +239,9 @@ solve_h48(
 		.cocsepdata = (uint32_t *)((char *)data + INFOSIZE),
 		.h48data = (uint8_t *)data + COCSEP_FULLSIZE + INFOSIZE,
 		.solutions_size = solutions_size,
-		.nextsol = &solutions
+		.nextsol = &solutions,
+		.nodes_visited = &nodes,
+		.table_fallbacks = &fallbacks
 	};
 
 	if (info.bits == 2) {
@@ -256,7 +267,11 @@ solve_h48(
 		solve_h48_dfs(&arg);
 	}
 	**arg.nextsol = '\0';
-	(*arg.nextsol)++;
+
+	stats[0] = nodes;
+	stats[1] = fallbacks;
+	LOG("Nodes visited: %lld\nTable fallbacks: %lld\n", nodes, fallbacks);
+
 	return nsols;
 
 solve_h48_error_data:
