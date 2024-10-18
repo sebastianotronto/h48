@@ -1,4 +1,5 @@
 #include <inttypes.h>
+#include <limits.h>
 #include <pthread.h>
 #include <stdatomic.h>
 #include <stdarg.h>
@@ -518,6 +519,17 @@ nissy_solve(
 		LOG("solve: unknown solver '%s'\n", solver);
 		return NISSY_ERROR_INVALID_SOLVER;
 	}
+}
+
+long long
+nissy_countmoves(
+	const char *moves
+)
+{
+	if (moves == NULL)
+		return NISSY_ERROR_NULL_POINTER;
+
+	return readmoves(moves, INT_MAX, NULL);
 }
 
 long long

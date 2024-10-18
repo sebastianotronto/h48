@@ -67,6 +67,7 @@ static int64_t datasize_exec(args_t *);
 static int64_t gendata_exec(args_t *);
 static int64_t solve_exec(args_t *);
 static int64_t solve_scramble_exec(args_t *);
+static int64_t countmoves_exec(args_t *);
 static int64_t help_exec(args_t *);
 
 static int parse_args(int, char **, args_t *);
@@ -202,11 +203,18 @@ struct {
 		"solve_scramble",
 		"solve_scramble " FLAG_SOLVER " SOLVER"
 		"[" FLAG_MINMOVES " n] [" FLAG_MAXMOVES " N] "
-		FLAG_CUBE " CUBE",
+		FLAG_MOVES " MOVES",
 		"Solve the given SCRAMBLE using SOLVER, "
 		"using at least n and at most N moves. "
 		INFO_MOVESFORMAT,
 		solve_scramble_exec
+	),
+	COMMAND(
+		"countmoves",
+		"countmoves " FLAG_MOVES " MOVES",
+		"Count the given MOVES in HTM. "
+		INFO_MOVESFORMAT,
+		countmoves_exec
 	),
 	COMMAND(
 		"help",
@@ -485,6 +493,19 @@ solve_scramble_exec(args_t *args)
 	nissy_applymoves(NISSY_SOLVED_CUBE, args->str_moves, args->cube);
 
 	return solve_exec(args);
+}
+
+static int64_t
+countmoves_exec(args_t *args)
+{
+	long long count;
+
+	count = nissy_countmoves(args->str_moves);
+
+	if (count >= 0)
+		printf("%lld\n", count);
+
+	return count >= 0 ? 0 : count;
 }
 
 static int64_t

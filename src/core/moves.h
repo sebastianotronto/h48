@@ -223,8 +223,9 @@ readmoves(const char *buf, int max, uint8_t *ret)
 	uint8_t m;
 	int c;
 
-	FOREACH_READMOVE(buf, m, c, max, -1,
-		ret[c] = m;
+	FOREACH_READMOVE(buf, m, c, max, NISSY_ERROR_INVALID_MOVES,
+		if (ret != NULL)
+			ret[c] = m;
 	)
 
 	return c;

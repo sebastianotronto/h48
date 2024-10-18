@@ -281,6 +281,19 @@ long long nissy_solve(
 );
 
 /*
+Parameters:
+   moves  - The moves to be counted.
+
+Return values:
+   NISSY_ERROR_INVALID_MOVES - The given moves are invalid.
+   NISSY_ERROR_NULL_POINTER  - The 'moves' argument is NULL.
+   Any value >= 0            - The number of moves.
+*/
+long long nissy_countmoves(
+	const char *moves
+);
+
+/*
 Set a global logger function used by this library.
 
 Parameters:
