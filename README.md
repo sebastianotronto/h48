@@ -182,8 +182,14 @@ From here you can call the library functions directly, for example:
 'ASTUGFBH=DACXEZGBLIKF'
 ```
 
-Please note: as this is work in progress, not all functions are currently
-available from the Python module.
+Some methods have a different signature in the Pythn module than in
+libnissy: for example `solve()` returns the solutions as a list of
+strings instead of writing them to a return parameter buffer.
+You can access the documentation for the Python module from within
+a Python interpreter with `help(nissy)`. Cross-check this documentation
+with the comments in nissy.h for more details.
+
+Please note: the support for the Python module is still rudimentary.
 
 ## Cube formats
 

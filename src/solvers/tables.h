@@ -35,7 +35,8 @@ readtableinfo(uint64_t buf_size, const char *buf, tableinfo_t *info)
 
 	if (buf_size < INFOSIZE) {
 		LOG("Error reading table: buffer size is too small "
-		    "(smaller than INFOSIZE = %" PRId64 ")\n", INFOSIZE);
+		    "(given size %" PRIu64 " is smaller than INFOSIZE = %"
+		    PRId64 ")\n", buf_size, INFOSIZE);
 		return NISSY_ERROR_BUFFER_SIZE;
 	}
 

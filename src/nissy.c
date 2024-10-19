@@ -71,7 +71,10 @@ checkdata(const char *buf, const tableinfo_t *info)
 {
 	uint64_t distr[INFO_DISTRIBUTION_LEN];
 
-	if (!strncmp(info->solver, "cocsep", 6)) {
+	if (info == NULL) {
+		LOG("checkdata: error reading table info\n");
+		return false;
+	} else if (!strncmp(info->solver, "cocsep", 6)) {
 		getdistribution_cocsep(
 		    (uint32_t *)((char *)buf + INFOSIZE), distr);
 	} else if (!strncmp(info->solver, "h48", 3)) {
@@ -442,21 +445,23 @@ nissy_checkdata(
 {
 	char *buf;
 	tableinfo_t info;
+	int64_t err;
 
 	for (buf = (char *)data;
-	     readtableinfo(data_size, buf, &info);
+	     (err = readtableinfo(data_size, buf, &info)) == NISSY_OK;
 	     buf += info.next, data_size -= info.next)
 	{
 		if (!checkdata(buf, &info)) {
-			LOG("Error: data for %s is inconsistent with info!\n",
+			LOG("Error: data for solver '%s' is corrupted!\n",
 			    info.solver);
 			return NISSY_ERROR_DATA;
 		}
+
 		if (info.next == 0)
 			break;
 	}
 
-	return NISSY_OK;
+	return err;
 }
 
 long long
