@@ -13,10 +13,11 @@
 #include "solvers/solvers.h"
 
 int parse_h48_solver(const char *, uint8_t [static 1], uint8_t [static 1]);
-STATIC long long write_result(cube_t, char [static NISSY_SIZE_B32]);
+STATIC bool checkdata(const char *, const tableinfo_t *);
 STATIC bool distribution_equal(const uint64_t [static INFO_DISTRIBUTION_LEN],
     const uint64_t [static INFO_DISTRIBUTION_LEN], uint8_t);
-STATIC bool checkdata(const char *, const tableinfo_t *);
+STATIC long long write_result(cube_t, char [static NISSY_SIZE_B32]);
+STATIC size_t my_strnlen(const char *, size_t); 
 
 #define GETCUBE_OPTIONS(S, F) { .option = S, .fix = F }
 struct {
@@ -71,7 +72,8 @@ checkdata(const char *buf, const tableinfo_t *info)
 {
 	uint64_t distr[INFO_DISTRIBUTION_LEN];
 
-	if (info == NULL) {
+	if (info == NULL || my_strnlen(info->solver, INFO_SOLVER_STRLEN)
+	    == INFO_SOLVER_STRLEN) {
 		LOG("checkdata: error reading table info\n");
 		return false;
 	} else if (!strncmp(info->solver, "cocsep", 6)) {
@@ -120,6 +122,18 @@ write_result(cube_t cube, char result[static NISSY_SIZE_B32])
 	}
 
 	return NISSY_OK;
+}
+
+STATIC size_t
+my_strnlen(const char *str, size_t maxlen)
+{
+	size_t i;
+
+	for (i = 0; i < maxlen; i++)
+		if (str[i] == '\0')
+			return i;
+
+	return maxlen;
 }
 
 long long
