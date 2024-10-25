@@ -27,6 +27,7 @@ typedef struct {
 	_Atomic int64_t nodes_visited;
 	_Atomic int64_t table_fallbacks;
 	_Atomic int64_t table_lookups;
+	_Atomic int64_t skipped_lookups;
 	pthread_mutex_t *solutions_mutex;
 	pthread_mutex_t *task_mutex;
 	uint16_t *task_moves;
@@ -111,24 +112,29 @@ solve_h48_stop(dfsarg_solveh48_t *arg)
 {
 	uint32_t data, data_inv, nh;
 	int64_t coord, coord_inv;
-	uint8_t target;
-
-	if (*arg->nsols == arg->maxsolutions)
-		return true;
+	int8_t target;
 
 	target = arg->depth - arg->nmoves - arg->npremoves;
+	if (target <= 0 || *arg->nsols == arg->maxsolutions)
+		return true;
+
 	arg->movemask_normal = arg->movemask_inverse = MM_ALLMOVES;
 	arg->nodes_visited++;
 
+	/* Preliminary corner probing */
+
+	if (get_h48_cdata(arg->inverse, arg->cocsepdata, &data_inv) > target)
+		return true;
+
+	if (get_h48_cdata(arg->cube, arg->cocsepdata, &data) > target)
+		return true;
+
 	/* Inverse probing */
 
-	if (arg->last_double)
+	if (arg->last_double) {
+		arg->skipped_lookups++;
 		goto solve_h48_stop_inverseprobe_check;
-
-	arg->lastbound_inverse =
-	    get_h48_cdata(arg->inverse, arg->cocsepdata, &data_inv);
-	if (arg->lastbound_inverse + arg->nmoves + arg->npremoves > arg->depth)
-		return true;
+	}
 
 	coord_inv = coord_h48_edges(
 	    arg->inverse, COCLASS(data_inv), TTREP(data_inv), arg->h);
@@ -153,13 +159,10 @@ solve_h48_stop_inverseprobe_check:
 
 	/* Normal probing */
 
-	if (arg->last_double_pre)
+	if (arg->last_double_pre) {
+		arg->skipped_lookups++;
 		goto solve_h48_stop_normalprobe_check;
-
-	arg->lastbound_normal =
-	    get_h48_cdata(arg->cube, arg->cocsepdata, &data);
-	if (arg->lastbound_normal + arg->nmoves + arg->npremoves > arg->depth)
-		return true;
+	}
 
 	coord = coord_h48_edges(arg->cube, COCLASS(data), TTREP(data), arg->h);
 	arg->lastbound_normal = get_h48_pval(arg->h48data, coord, arg->k);
@@ -193,9 +196,6 @@ solve_h48_dfs(dfsarg_solveh48_t *arg)
 	uint32_t mm_normal, mm_inverse;
 	cube_t backup_cube, backup_inverse;
 
-	if (solve_h48_stop(arg))
-		return 0;
-
 	if (issolved(arg->cube)) {
 		if (arg->nmoves + arg->npremoves != arg->depth)
 			return 0;
@@ -204,6 +204,9 @@ solve_h48_dfs(dfsarg_solveh48_t *arg)
 		pthread_mutex_unlock(arg->solutions_mutex);
 		return 1;
 	}
+
+	if (solve_h48_stop(arg))
+		return 0;
 
 	backup_last_double = arg->last_double;
 	backup_last_double_pre = arg->last_double_pre;
@@ -343,10 +346,10 @@ solve_h48(
 	int8_t d;
 	_Atomic int64_t nsols;
 	dfsarg_solveh48_t arg[THREADS];
-	long double fallback_rate, lookups_per_node;
+	long double fallback_rate, lookups_per_node, skipped_per_node;
 	uint16_t task_moves;
 	uint64_t solutions_used;
-	int64_t nodes_visited, table_lookups, table_fallbacks;
+	int64_t nodes_visited, table_lookups, table_fallbacks, skipped_lookups;
 	tableinfo_t info, fbinfo;
 	const uint32_t *cocsepdata;
 	const uint8_t *fallback, *h48data;
@@ -387,6 +390,7 @@ solve_h48(
 			.nodes_visited = 0,
 			.table_fallbacks = 0,
 			.table_lookups = 0,
+			.skipped_lookups = 0,
 			.solutions_mutex = &solutions_mutex,
 			.task_mutex = &task_mutex,
 			.task_moves = &task_moves,
@@ -422,22 +426,27 @@ solve_h48(
 	if (!solve_h48_appendchar(&arg[0], '\0'))
 		goto solve_h48_error_solutions_buffer;
 
-	nodes_visited = table_lookups = table_fallbacks = 0;
+	nodes_visited = table_lookups = table_fallbacks = skipped_lookups = 0;
 	for (i = 0; i < THREADS; i++) {
 		nodes_visited += arg[i].nodes_visited;
 		table_fallbacks += arg[i].table_fallbacks;
 		table_lookups += arg[i].table_lookups;
+		skipped_lookups += arg[i].skipped_lookups;
 	}
 
 	stats[0] = nodes_visited;
 	stats[1] = table_lookups;
-	lookups_per_node = table_lookups / (long double)nodes_visited;
 	stats[2] = table_fallbacks;
+	stats[3] = skipped_lookups;
+	lookups_per_node = table_lookups / (long double)nodes_visited;
+	skipped_per_node = skipped_lookups / (long double)nodes_visited;
 	fallback_rate = nodes_visited == 0 ? 0.0 :
 	    (table_fallbacks * 100) / (long double)table_lookups;
 	LOG("Nodes visited: %" PRId64 "\n", nodes_visited);
 	LOG("Lookups: %" PRId64 " (%.3Lf per node)\n",
 	    table_lookups, lookups_per_node);
+	LOG("Skipped lookups: %" PRId64 " (%.3Lf per node)\n",
+	    skipped_lookups, skipped_per_node);
 	LOG("Table fallbacks: %" PRId64 " (%.3Lf%%)\n",
 	    table_fallbacks, fallback_rate);
 
