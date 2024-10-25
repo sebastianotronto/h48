@@ -26,6 +26,17 @@ STATIC_INLINE uint8x8_t compose_corners_slim(uint8x8_t, uint8x8_t);
 #define SOLVED_CUBE STATIC_CUBE(	\
 	0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
 
+/* TODO: optimize this (use intrinsics?) */
+STATIC_INLINE int
+{
+	int ret;
+
+	for (ret = 0; x != 0; x >>= 1)
+		ret += x & 1;
+
+	return ret;
+}
+
 STATIC void
 pieces(cube_t *cube, uint8_t c[static 8], uint8_t e[static 12])
 {

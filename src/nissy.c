@@ -18,6 +18,7 @@ STATIC bool distribution_equal(const uint64_t [static INFO_DISTRIBUTION_LEN],
     const uint64_t [static INFO_DISTRIBUTION_LEN], uint8_t);
 STATIC long long write_result(cube_t, char [static NISSY_SIZE_B32]);
 STATIC size_t my_strnlen(const char *, size_t); 
+STATIC long long nissy_gendata_unsafe(const char *, unsigned long long, char *);
 
 #define GETCUBE_OPTIONS(S, F) { .option = S, .fix = F }
 struct {
@@ -360,20 +361,6 @@ nissy_getcube(
 }
 
 long long
-nissy_datasize(
-	const char *solver
-)
-{
-	if (solver == NULL) {
-		LOG("Error: 'solver' argument is NULL\n");
-		return NISSY_ERROR_NULL_POINTER;
-	}
-
-	/* gendata() handles a NULL *data as a "dryrun" request */
-	return nissy_gendata(solver, 0, NULL);
-}
-
-long long
 nissy_datainfo(
         uint64_t data_size,
 	const char data[data_size],
@@ -423,10 +410,29 @@ nissy_datainfo(
 }
 
 long long
+nissy_datasize(
+	const char *solver
+)
+{
+	/* gendata() handles a NULL *data as a "dryrun" request */
+	return nissy_gendata_unsafe(solver, 0, NULL);
+}
+
+long long
 nissy_gendata(
 	const char *solver,
 	unsigned long long data_size,
 	char data[data_size]
+)
+{
+	return nissy_gendata_unsafe(solver, data_size, data);
+}
+
+STATIC long long
+nissy_gendata_unsafe(
+	const char *solver,
+	unsigned long long data_size,
+	char *data
 )
 {
 	int p;

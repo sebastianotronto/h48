@@ -16,6 +16,12 @@
 #define SOLVED_CUBE STATIC_CUBE( \
     0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
 
+STATIC_INLINE int
+popcount_u32(uint32_t x)
+{
+	return _mm_popcnt_u32(x);
+}
+
 STATIC void
 pieces(cube_t *cube, uint8_t c[static 8], uint8_t e[static 12])
 {

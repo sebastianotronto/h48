@@ -346,5 +346,7 @@ solve_h48_multithread(
 
 	return nsols;
 
-solve_h48_multithread_error_data: LOG("solve_h48: error reading table\n"); return NISSY_ERROR_DATA;
+solve_h48_multithread_error_data:
+	LOG("solve_h48: error reading table\n");
+	return NISSY_ERROR_DATA;
 }
