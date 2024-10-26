@@ -15,7 +15,7 @@ debugnissy.o:
 	${CC} ${MACROS} ${DBGFLAGS} -c -o debugnissy.o src/nissy.c
 
 clean:
-	rm -rf *.o *.so run debugrun
+	rm -rf *.o *.s *.so run debugrun
 
 test: debugnissy.o
 	CC="${CC} ${MACROS} ${DBGFLAGS}" OBJ=debugnissy.o ./test/test.sh
