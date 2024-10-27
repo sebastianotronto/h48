@@ -7,10 +7,10 @@ typedef struct {
 	uint8_t moves[MAXLEN];
 	int8_t npremoves;
 	uint8_t premoves[MAXLEN];
-	int8_t lastbound_normal;
-	int8_t lastbound_inverse;
-	bool last_double;
-	bool last_double_pre;
+	int8_t lb_normal;
+	int8_t lb_inverse;
+	bool use_lb_normal;
+	bool use_lb_inverse;
 	_Atomic int64_t *nsols;
 	int64_t maxsolutions;
 	uint8_t h;
@@ -24,10 +24,9 @@ typedef struct {
 	char **solutions;
 	uint32_t movemask_normal;
 	uint32_t movemask_inverse;
-	_Atomic int64_t nodes_visited;
-	_Atomic int64_t table_fallbacks;
-	_Atomic int64_t table_lookups;
-	_Atomic int64_t skipped_lookups;
+	int64_t nodes_visited;
+	int64_t table_fallbacks;
+	int64_t table_lookups;
 	pthread_mutex_t *solutions_mutex;
 	pthread_mutex_t *task_mutex;
 	uint16_t *task_moves;
@@ -121,67 +120,69 @@ solve_h48_stop(dfsarg_solveh48_t *arg)
 	arg->movemask_normal = arg->movemask_inverse = MM_ALLMOVES;
 	arg->nodes_visited++;
 
-	/* Preliminary corner probing */
+	/* Preliminary probing using last computed bound, if possible */
 
-	if (get_h48_cdata(arg->inverse, arg->cocsepdata, &data_inv) > target)
+	if ((arg->use_lb_normal && arg->lb_normal > target) ||
+	    (arg->use_lb_inverse && arg->lb_inverse > target))
 		return true;
 
-	if (get_h48_cdata(arg->cube, arg->cocsepdata, &data) > target)
+	/* Preliminary corner probing */
+
+	if (get_h48_cdata(arg->cube, arg->cocsepdata, &data) > target ||
+	    get_h48_cdata(arg->inverse, arg->cocsepdata, &data_inv) > target)
 		return true;
 
 	/* Inverse probing */
 
-	if (arg->last_double) {
-		arg->skipped_lookups++;
+	if (arg->use_lb_inverse)
 		goto solve_h48_stop_inverseprobe_check;
-	}
 
 	coord_inv = coord_h48_edges(
 	    arg->inverse, COCLASS(data_inv), TTREP(data_inv), arg->h);
-	arg->lastbound_inverse = get_h48_pval(arg->h48data, coord_inv, arg->k);
+	arg->lb_inverse = get_h48_pval(arg->h48data, coord_inv, arg->k);
 	arg->table_lookups++;
 
 	if (arg->k == 2) {
-		if (arg->lastbound_inverse == 0) {
+		if (arg->lb_inverse == 0) {
 			arg->table_fallbacks++;
-			arg->lastbound_inverse = get_h48_pval(
+			arg->lb_inverse = get_h48_pval(
 			    arg->h48data_fallback, coord_inv >> arg->h, 4);
 		} else {
-			arg->lastbound_inverse += arg->base;
+			arg->lb_inverse += arg->base;
 		}
 	}
 
 solve_h48_stop_inverseprobe_check:
-	if (arg->lastbound_inverse > target)
+	arg->use_lb_inverse = true;
+	if (arg->lb_inverse > target)
 		return true;
-	nh = arg->lastbound_inverse == target;
+	nh = arg->lb_inverse == target;
 	arg->movemask_normal = nh * MM_NOHALFTURNS + (1-nh) * MM_ALLMOVES;
 
 	/* Normal probing */
 
-	if (arg->last_double_pre) {
-		arg->skipped_lookups++;
+	if (arg->use_lb_normal)
 		goto solve_h48_stop_normalprobe_check;
-	}
 
 	coord = coord_h48_edges(arg->cube, COCLASS(data), TTREP(data), arg->h);
-	arg->lastbound_normal = get_h48_pval(arg->h48data, coord, arg->k);
+	arg->lb_normal = get_h48_pval(arg->h48data, coord, arg->k);
 	arg->table_lookups++;
 
 	if (arg->k == 2) {
-		if (arg->lastbound_normal == 0) {
+		if (arg->lb_normal == 0) {
 			arg->table_fallbacks++;
-			arg->lastbound_normal = get_h48_pval(
+			arg->lb_normal = get_h48_pval(
 			    arg->h48data_fallback, coord >> arg->h, 4);
 		} else {
-			arg->lastbound_normal += arg->base;
+			arg->lb_normal += arg->base;
 		}
 	}
 
 solve_h48_stop_normalprobe_check:
-	if (arg->lastbound_normal > target)
+	arg->use_lb_normal = true;
+	if (arg->lb_normal > target)
 		return true;
-	nh = arg->lastbound_normal == target;
+	nh = arg->lb_normal == target;
 	arg->movemask_inverse = nh * MM_NOHALFTURNS + (1-nh) * MM_ALLMOVES;
 
 	return false;
@@ -191,9 +192,9 @@ STATIC int64_t
 solve_h48_dfs(dfsarg_solveh48_t *arg)
 {
 	int64_t ret;
-	bool backup_last_double, backup_last_double_pre;
-	uint8_t m, backup_lastbound_normal, backup_lastbound_inverse;
+	uint8_t m, lbn, lbi;
 	uint32_t mm_normal, mm_inverse;
+	bool ulbi, ulbn;
 	cube_t backup_cube, backup_inverse;
 
 	if (issolved(arg->cube)) {
@@ -208,12 +209,12 @@ solve_h48_dfs(dfsarg_solveh48_t *arg)
 	if (solve_h48_stop(arg))
 		return 0;
 
-	backup_last_double = arg->last_double;
-	backup_last_double_pre = arg->last_double_pre;
 	backup_cube = arg->cube;
 	backup_inverse = arg->inverse;
-	backup_lastbound_normal = arg->lastbound_normal;
-	backup_lastbound_inverse = arg->lastbound_inverse;
+	lbn = arg->lb_normal;
+	lbi = arg->lb_inverse;
+	ulbn = arg->use_lb_normal;
+	ulbi = arg->use_lb_inverse;
 
 	ret = 0;
 	mm_normal = allowednextmove_mask(arg->moves, arg->nmoves) &
@@ -221,43 +222,37 @@ solve_h48_dfs(dfsarg_solveh48_t *arg)
 	mm_inverse = allowednextmove_mask(arg->premoves, arg->npremoves) &
 	    arg->movemask_inverse;
 	if (popcount_u32(mm_normal) <= popcount_u32(mm_inverse)) {
-		arg->last_double_pre = false;
 		arg->nmoves++;
 		for (m = 0; m < 18; m++) {
 			if (mm_normal & (1 << m)) {
 				arg->moves[arg->nmoves-1] = m;
 				arg->cube = move(backup_cube, m);
 				arg->inverse = premove(backup_inverse, m);
-				arg->lastbound_inverse =
-				    backup_lastbound_inverse;
-				arg->last_double = m % 3 == 1;
+				arg->lb_inverse = lbi;
+				arg->use_lb_normal = false;
+				arg->use_lb_inverse = ulbi && m % 3 == 1;
 				ret += solve_h48_dfs(arg);
 			}
 		}
 		arg->nmoves--;
 	} else {
-		arg->last_double = false;
 		arg->npremoves++;
 		for (m = 0; m < 18; m++) {
 			if(mm_inverse & (1 << m)) {
 				arg->premoves[arg->npremoves-1] = m;
 				arg->inverse = move(backup_inverse, m);
 				arg->cube = premove(backup_cube, m);
-				arg->lastbound_normal =
-				    backup_lastbound_normal;
-				arg->last_double_pre = m % 3 == 1;
+				arg->lb_normal = lbn;
+				arg->use_lb_inverse = false;
+				arg->use_lb_normal = ulbn && m % 3 == 1;
 				ret += solve_h48_dfs(arg);
 			}
 		}
 		arg->npremoves--;
 	}
 
-	arg->last_double = backup_last_double;
-	arg->last_double_pre = backup_last_double_pre;
 	arg->cube = backup_cube;
 	arg->inverse = backup_inverse;
-	arg->lastbound_normal = backup_lastbound_normal;
-	arg->lastbound_inverse = backup_lastbound_inverse;
 
 	return ret;
 }
@@ -291,10 +286,10 @@ solve_h48_gettask_found:
 	arg->inverse = inverse(arg->cube);
 	arg->nmoves = 2;
 	arg->npremoves = 0;
-	arg->lastbound_normal = 0;
-	arg->lastbound_inverse = 0;
-	arg->last_double = false;
-	arg->last_double_pre = false;
+	arg->lb_normal = 0;
+	arg->lb_inverse = 0;
+	arg->use_lb_normal = false;
+	arg->use_lb_inverse = false;
 	arg->movemask_normal = MM_ALLMOVES;
 	arg->movemask_inverse = MM_ALLMOVES;
 
@@ -346,10 +341,10 @@ solve_h48(
 	int8_t d;
 	_Atomic int64_t nsols;
 	dfsarg_solveh48_t arg[THREADS];
-	long double fallback_rate, lookups_per_node, skipped_per_node;
+	long double fallback_rate, lookups_per_node;
 	uint16_t task_moves;
 	uint64_t solutions_used;
-	int64_t nodes_visited, table_lookups, table_fallbacks, skipped_lookups;
+	int64_t nodes_visited, table_lookups, table_fallbacks;
 	tableinfo_t info, fbinfo;
 	const uint32_t *cocsepdata;
 	const uint8_t *fallback, *h48data;
@@ -390,7 +385,6 @@ solve_h48(
 			.nodes_visited = 0,
 			.table_fallbacks = 0,
 			.table_lookups = 0,
-			.skipped_lookups = 0,
 			.solutions_mutex = &solutions_mutex,
 			.task_mutex = &task_mutex,
 			.task_moves = &task_moves,
@@ -426,27 +420,22 @@ solve_h48(
 	if (!solve_h48_appendchar(&arg[0], '\0'))
 		goto solve_h48_error_solutions_buffer;
 
-	nodes_visited = table_lookups = table_fallbacks = skipped_lookups = 0;
+	nodes_visited = table_lookups = table_fallbacks = 0;
 	for (i = 0; i < THREADS; i++) {
 		nodes_visited += arg[i].nodes_visited;
 		table_fallbacks += arg[i].table_fallbacks;
 		table_lookups += arg[i].table_lookups;
-		skipped_lookups += arg[i].skipped_lookups;
 	}
 
 	stats[0] = nodes_visited;
 	stats[1] = table_lookups;
 	stats[2] = table_fallbacks;
-	stats[3] = skipped_lookups;
 	lookups_per_node = table_lookups / (long double)nodes_visited;
-	skipped_per_node = skipped_lookups / (long double)nodes_visited;
 	fallback_rate = nodes_visited == 0 ? 0.0 :
 	    (table_fallbacks * 100) / (long double)table_lookups;
 	LOG("Nodes visited: %" PRId64 "\n", nodes_visited);
 	LOG("Lookups: %" PRId64 " (%.3Lf per node)\n",
 	    table_lookups, lookups_per_node);
-	LOG("Skipped lookups: %" PRId64 " (%.3Lf per node)\n",
-	    skipped_lookups, skipped_per_node);
 	LOG("Table fallbacks: %" PRId64 " (%.3Lf%%)\n",
 	    table_fallbacks, fallback_rate);
 
