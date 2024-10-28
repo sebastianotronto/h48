@@ -12,13 +12,15 @@
 #include "core/core.h"
 #include "solvers/solvers.h"
 
-int parse_h48_solver(const char *, uint8_t [static 1], uint8_t [static 1]);
+long long parse_h48_solver(
+    const char *, uint8_t [static 1], uint8_t [static 1]);
 STATIC bool checkdata(const char *, const tableinfo_t *);
 STATIC bool distribution_equal(const uint64_t [static INFO_DISTRIBUTION_LEN],
     const uint64_t [static INFO_DISTRIBUTION_LEN], uint8_t);
 STATIC long long write_result(cube_t, char [static NISSY_SIZE_B32]);
 STATIC size_t my_strnlen(const char *, size_t); 
-STATIC long long nissy_gendata_unsafe(const char *, unsigned long long, char *);
+STATIC long long nissy_gendata_unsafe(
+    const char *, unsigned long long, char *);
 
 #define GETCUBE_OPTIONS(S, F) { .option = S, .fix = F }
 struct {
@@ -29,7 +31,7 @@ struct {
 	GETCUBE_OPTIONS(NULL, NULL)
 };
 
-int
+long long
 parse_h48_solver(const char *buf, uint8_t h[static 1], uint8_t k[static 1])
 {
 	const char *fullbuf = buf;
@@ -39,7 +41,7 @@ parse_h48_solver(const char *buf, uint8_t h[static 1], uint8_t k[static 1])
 	if (!strcmp(buf, "stats")) {
 		*h = 0;
 		*k = 4;
-		return 0;
+		return NISSY_OK;
 	}
 
 	if (*buf != 'h')
@@ -65,7 +67,7 @@ parse_h48_solver_error:
 	*k = 0;
 	LOG("Error parsing solver: must be in \"h48h*k*\" format"
 	    " or \"h48stats\", but got %s\n", fullbuf);
-	return -1;
+	return NISSY_ERROR_INVALID_SOLVER;
 }
 
 STATIC bool
@@ -435,7 +437,7 @@ nissy_gendata_unsafe(
 	char *data
 )
 {
-	int p;
+	long long parse_ret;
 	gendata_h48_arg_t arg;
 
 	if (solver == NULL) {
@@ -446,10 +448,10 @@ nissy_gendata_unsafe(
 	arg.buf_size = data_size;
 	arg.buf = data;
 	if (!strncmp(solver, "h48", 3)) {
-		p = parse_h48_solver(solver, &arg.h, &arg.k);
+		parse_ret = parse_h48_solver(solver, &arg.h, &arg.k);
 		arg.maxdepth = 20;
-		if (p != 0)
-			return NISSY_ERROR_UNKNOWN;
+		if (parse_ret != NISSY_OK)
+			return parse_ret;
 		return gendata_h48(&arg);
 	} else {
 		LOG("gendata: unknown solver %s\n", solver);
@@ -501,7 +503,7 @@ nissy_solve(
 )
 {
 	cube_t c;
-	int p;
+	long long parse_ret;
 	uint8_t h, k;
 
 	if (solver == NULL) {
@@ -530,17 +532,12 @@ nissy_solve(
 		if (!strcmp(solver, "h48stats"))
 			return solve_h48stats(c, maxmoves, data, sols);
 
-		p = parse_h48_solver(solver, &h, &k);
-		if (p != 0) {
-			LOG("solve: unknown solver %s\n", solver);
-			return NISSY_ERROR_INVALID_SOLVER;
-		} else {
-			return THREADS > 1 ?
-			    solve_h48_multithread(c, minmoves, maxmoves,
-			        maxsols, data_size, data, sols_size, sols, stats) :
-			    solve_h48(c, minmoves, maxmoves, maxsols,
+		parse_ret = parse_h48_solver(solver, &h, &k);
+		if (parse_ret == NISSY_OK)
+			return solve_h48(c, minmoves, maxmoves, maxsols,
 			        data_size, data, sols_size, sols, stats);
-		}
+		else
+			return parse_ret;
 	} else {
 		LOG("solve: unknown solver '%s'\n", solver);
 		return NISSY_ERROR_INVALID_SOLVER;
