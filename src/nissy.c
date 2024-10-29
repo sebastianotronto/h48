@@ -38,12 +38,6 @@ parse_h48_solver(const char *buf, uint8_t h[static 1], uint8_t k[static 1])
 
 	buf += 3;
 
-	if (!strcmp(buf, "stats")) {
-		*h = 0;
-		*k = 4;
-		return NISSY_OK;
-	}
-
 	if (*buf != 'h')
 		goto parse_h48_solver_error;
 	buf++;
@@ -65,8 +59,8 @@ parse_h48_solver(const char *buf, uint8_t h[static 1], uint8_t k[static 1])
 parse_h48_solver_error:
 	*h = 0;
 	*k = 0;
-	LOG("Error parsing solver: must be in \"h48h*k*\" format"
-	    " or \"h48stats\", but got %s\n", fullbuf);
+	LOG("Error parsing solver: must be in \"h48h*k*\" format,"
+	    " but got %s\n", fullbuf);
 	return NISSY_ERROR_INVALID_SOLVER;
 }
 
@@ -529,9 +523,6 @@ nissy_solve(
 	}
 
 	if (!strncmp(solver, "h48", 3)) {
-		if (!strcmp(solver, "h48stats"))
-			return solve_h48stats(c, maxmoves, data, sols);
-
 		parse_ret = parse_h48_solver(solver, &h, &k);
 		if (parse_ret == NISSY_OK)
 			return solve_h48(c, minmoves, maxmoves, maxsols,

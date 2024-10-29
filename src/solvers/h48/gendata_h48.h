@@ -302,9 +302,8 @@ gendata_h48k2(gendata_h48_arg_t *arg)
 	 *
 	 * The following values for the base have been hand-picked. I first
 	 * performed some statistics on the frequency of these values, but
-	 * they turned out to be unreliable. I have not figured out why yet.
-	 * In the end I resorted to generating the same table with multiple
-	 * base value and see what was best.
+	 * they turned out to be unreliable. In the end I generated the same
+	 * table with multiple base value and see what was best.
 	 *
 	 * A curious case is h3, which has this distribution for base 8:
 	 *   [0] = 6686828
