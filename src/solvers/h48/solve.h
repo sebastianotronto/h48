@@ -40,7 +40,7 @@ STATIC bool solve_h48_checkonemove(dfsarg_solveh48_t *);
 STATIC bool solve_h48_gettask(dfsarg_solveh48_t *);
 STATIC void *solve_h48_runthread(void *);
 STATIC int64_t solve_h48_dfs(dfsarg_solveh48_t *);
-STATIC int64_t solve_h48(cube_t, int8_t, int8_t, int8_t, uint64_t,
+STATIC int64_t solve_h48(cube_t, int8_t, int8_t, uint64_t, uint64_t,
     const void *, uint64_t, char *, long long [static NISSY_SIZE_SOLVE_STATS]);
 
 STATIC void
@@ -324,7 +324,7 @@ solve_h48(
 	cube_t cube,
 	int8_t minmoves,
 	int8_t maxmoves,
-	int8_t maxsolutions,
+	uint64_t maxsolutions,
 	uint64_t data_size,
 	const void *data,
 	uint64_t solutions_size,
@@ -393,6 +393,18 @@ solve_h48(
 	pthread_mutex_init(&solutions_mutex, NULL);
 	pthread_mutex_init(&task_mutex, NULL);
 
+	if (issolved(cube)) {
+		LOG("Cube is already solved\n");
+		if (minmoves == 0) {
+			if (!solve_h48_appendchar(&arg[0], '\n'))
+				goto solve_h48_error_solutions_buffer;
+			if (!solve_h48_appendchar(&arg[0], '\0'))
+				goto solve_h48_error_solutions_buffer;
+			return 1;
+		} else {
+			return 0;
+		}
+	}
 	if (minmoves <= 1 && maxmoves >= 1)
 		if (!solve_h48_checkonemove(&arg[0]))
 			goto solve_h48_error_solutions_buffer;
