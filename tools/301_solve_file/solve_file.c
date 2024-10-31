@@ -61,8 +61,8 @@ int main(int argc, char **argv) {
 	}
 
 	printf("Reading scrambles from file '%s'.\n", scrfilename);
-
 	for (N = 0; fgets(scrambles[N], MAX_SCR_LEN, scrfile) != NULL; N++) ;
+	fclose(scrfile);
 
 	timerun(run);
 
