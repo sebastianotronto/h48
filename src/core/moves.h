@@ -4,7 +4,6 @@
 STATIC_INLINE bool allowednextmove(uint8_t *, uint8_t);
 STATIC_INLINE uint32_t allowednextmove_mask(uint8_t *, uint8_t);
 
-STATIC_INLINE uint8_t inverse_trans(uint8_t);
 STATIC_INLINE uint8_t movebase(uint8_t);
 STATIC_INLINE uint8_t moveaxis(uint8_t);
 STATIC_INLINE uint32_t disable_moves(uint32_t, uint8_t);
@@ -80,12 +79,6 @@ disable_moves(uint32_t current_result, uint8_t base_index)
 }
 
 STATIC_INLINE uint8_t
-inverse_trans(uint8_t t)
-{
-	return inverse_trans_table[t];
-}
-
-STATIC_INLINE uint8_t
 movebase(uint8_t move)
 {
 	return move / 3;
@@ -95,6 +88,12 @@ STATIC_INLINE uint8_t
 moveaxis(uint8_t move)
 {
 	return move / 6;
+}
+
+STATIC_INLINE uint8_t
+moveopposite(uint8_t move)
+{
+	return movebase(move) == 2 * moveaxis(move) ? move + 3 : move - 3;
 }
 
 STATIC cube_t
