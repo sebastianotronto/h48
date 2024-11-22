@@ -1,5 +1,20 @@
+/*
+TODO: implement symmetry filter; this requires writing
+      more utility functions with unit tests for
+      printing out symmtetric non-cancelling sequences
+*/
+
+#define STARTING_MOVES 4
+#define STARTING_CUBES 43254 /* Number of 4-move sequences */
+
 typedef struct {
-	cube_t startcube;
+	cube_t cube;
+	uint8_t moves[STARTING_MOVES];
+	uint64_t tmask[STARTING_MOVES];
+} solve_h48_task_t;
+
+typedef struct {
+	cube_t start_cube;
 	cube_t cube;
 	cube_t inverse;
 	int8_t depth;
@@ -27,60 +42,69 @@ typedef struct {
 	int64_t nodes_visited;
 	int64_t table_fallbacks;
 	int64_t table_lookups;
+	int ntasks;
+	int *itask;
+	solve_h48_task_t *tasks;
 	pthread_mutex_t *solutions_mutex;
 	pthread_mutex_t *task_mutex;
-	uint16_t *task_moves;
-} dfsarg_solveh48_t;
+} dfsarg_solve_h48_t;
 
-STATIC void solve_h48_appendsolution(dfsarg_solveh48_t *);
-STATIC bool solve_h48_appendmoves(dfsarg_solveh48_t *, int8_t, uint8_t *);
-STATIC bool solve_h48_appendchar(dfsarg_solveh48_t *, char);
-STATIC_INLINE bool solve_h48_stop(dfsarg_solveh48_t *);
-STATIC bool solve_h48_checkonemove(dfsarg_solveh48_t *);
-STATIC bool solve_h48_gettask(dfsarg_solveh48_t *);
+typedef struct {
+	cube_t cube;
+	int8_t nmoves;
+	uint8_t moves[STARTING_MOVES];
+	int8_t minmoves;
+	int8_t maxmoves;
+} dfsarg_solve_h48_maketasks_t;
+
+STATIC int64_t solve_h48_appendsolution(dfsarg_solve_h48_t *);
+STATIC bool solve_h48_appendmoves(dfsarg_solve_h48_t *, int8_t, uint8_t *);
+STATIC bool solve_h48_appendchar(dfsarg_solve_h48_t *, char);
+STATIC_INLINE bool solve_h48_stop(dfsarg_solve_h48_t *);
+STATIC int64_t solve_h48_maketasks(
+    dfsarg_solve_h48_t *, dfsarg_solve_h48_maketasks_t *,
+    solve_h48_task_t [static STARTING_CUBES], int *);
 STATIC void *solve_h48_runthread(void *);
-STATIC int64_t solve_h48_dfs(dfsarg_solveh48_t *);
+STATIC int64_t solve_h48_dfs(dfsarg_solve_h48_t *);
 STATIC int64_t solve_h48(cube_t, int8_t, int8_t, uint64_t, uint64_t,
     const void *, uint64_t, char *, long long [static NISSY_SIZE_SOLVE_STATS]);
 
-STATIC void
-solve_h48_appendsolution(dfsarg_solveh48_t *arg)
+STATIC int64_t
+solve_h48_appendsolution(dfsarg_solve_h48_t *arg)
 {
-	uint8_t invprem[MAXLEN];
 	uint64_t solstart;
 
 	if (*arg->nsols >= arg->maxsolutions)
-		return;
+		return 0;
 
 	solstart = *arg->solutions_used;
+	invertmoves(arg->premoves, arg->npremoves, arg->moves + arg->nmoves);
 
-	if (!solve_h48_appendmoves(arg, arg->nmoves, arg->moves))
+	/* Do not append the solution in case premoves cancel with normal */
+	if (arg->npremoves > 0 && !allowednextmove(arg->moves, arg->nmoves+1))
+		return 0;
+	if (arg->npremoves > 1 && !allowednextmove(arg->moves, arg->nmoves+2))
+		return 0;
+
+	if (!solve_h48_appendmoves(
+	    arg, arg->nmoves + arg->npremoves, arg->moves))
 		goto solve_h48_appendsolution_error;
 
-	if (arg->npremoves > 0) {
-		if (!solve_h48_appendchar(arg, ' '))
-			goto solve_h48_appendsolution_error;
-
-		invertmoves(arg->premoves, arg->npremoves, invprem);
-
-		if (!solve_h48_appendmoves(arg, arg->npremoves, invprem))
-			goto solve_h48_appendsolution_error;
-	}
 	LOG("Solution found: %s\n", *arg->solutions + solstart);
 
 	if (!solve_h48_appendchar(arg, '\n'))
 		goto solve_h48_appendsolution_error;
 	(*arg->nsols)++;
 
-	return;
+	return 1;
 
 solve_h48_appendsolution_error:
 	LOG("Could not append solution to buffer: size too small\n");
-	return;
+	return NISSY_ERROR_BUFFER_SIZE;
 }
 
 STATIC bool
-solve_h48_appendmoves(dfsarg_solveh48_t *arg, int8_t n, uint8_t *moves)
+solve_h48_appendmoves(dfsarg_solve_h48_t *arg, int8_t n, uint8_t *moves)
 {
 	int64_t strl;
 
@@ -95,7 +119,7 @@ solve_h48_appendmoves(dfsarg_solveh48_t *arg, int8_t n, uint8_t *moves)
 }
 
 STATIC bool
-solve_h48_appendchar(dfsarg_solveh48_t *arg, char c)
+solve_h48_appendchar(dfsarg_solve_h48_t *arg, char c)
 {
 	if (arg->solutions_size <= *arg->solutions_used)
 		return false;
@@ -107,7 +131,7 @@ solve_h48_appendchar(dfsarg_solveh48_t *arg, char c)
 }
 
 STATIC_INLINE bool
-solve_h48_stop(dfsarg_solveh48_t *arg)
+solve_h48_stop(dfsarg_solve_h48_t *arg)
 {
 	uint32_t data, data_inv;
 	int64_t coord;
@@ -184,9 +208,9 @@ solve_h48_stop(dfsarg_solveh48_t *arg)
 }
 
 STATIC int64_t
-solve_h48_dfs(dfsarg_solveh48_t *arg)
+solve_h48_dfs(dfsarg_solve_h48_t *arg)
 {
-	int64_t ret;
+	int64_t ret, n;
 	uint8_t m, lbn, lbi;
 	uint32_t mm_normal, mm_inverse;
 	bool ulbi, ulbn;
@@ -196,9 +220,9 @@ solve_h48_dfs(dfsarg_solveh48_t *arg)
 		if (arg->nmoves + arg->npremoves != arg->depth)
 			return 0;
 		pthread_mutex_lock(arg->solutions_mutex);
-		solve_h48_appendsolution(arg);
+		ret = solve_h48_appendsolution(arg);
 		pthread_mutex_unlock(arg->solutions_mutex);
-		return 1;
+		return ret;
 	}
 
 	if (solve_h48_stop(arg))
@@ -219,29 +243,35 @@ solve_h48_dfs(dfsarg_solveh48_t *arg)
 	if (popcount_u32(mm_normal) <= popcount_u32(mm_inverse)) {
 		arg->nmoves++;
 		for (m = 0; m < 18; m++) {
-			if (mm_normal & (1 << m)) {
-				arg->moves[arg->nmoves-1] = m;
-				arg->cube = move(backup_cube, m);
-				arg->inverse = premove(backup_inverse, m);
-				arg->lb_inverse = lbi;
-				arg->use_lb_normal = false;
-				arg->use_lb_inverse = ulbi && m % 3 == 1;
-				ret += solve_h48_dfs(arg);
-			}
+			if (!(mm_normal & (1 << m)))
+				continue;
+			arg->moves[arg->nmoves-1] = m;
+			arg->cube = move(backup_cube, m);
+			arg->inverse = premove(backup_inverse, m);
+			arg->lb_inverse = lbi;
+			arg->use_lb_normal = false;
+			arg->use_lb_inverse = ulbi && m % 3 == 1;
+			n = solve_h48_dfs(arg);
+			if (n < 0)
+				return n;
+			ret += n;
 		}
 		arg->nmoves--;
 	} else {
 		arg->npremoves++;
 		for (m = 0; m < 18; m++) {
-			if(mm_inverse & (1 << m)) {
-				arg->premoves[arg->npremoves-1] = m;
-				arg->inverse = move(backup_inverse, m);
-				arg->cube = premove(backup_cube, m);
-				arg->lb_normal = lbn;
-				arg->use_lb_inverse = false;
-				arg->use_lb_normal = ulbn && m % 3 == 1;
-				ret += solve_h48_dfs(arg);
-			}
+			if(!(mm_inverse & (1 << m)))
+				continue;
+			arg->premoves[arg->npremoves-1] = m;
+			arg->inverse = move(backup_inverse, m);
+			arg->cube = premove(backup_cube, m);
+			arg->lb_normal = lbn;
+			arg->use_lb_inverse = false;
+			arg->use_lb_normal = ulbn && m % 3 == 1;
+			n = solve_h48_dfs(arg);
+			if (n < 0)
+				return n;
+			ret += n;
 		}
 		arg->npremoves--;
 	}
@@ -252,71 +282,98 @@ solve_h48_dfs(dfsarg_solveh48_t *arg)
 	return ret;
 }
 
-STATIC bool
-solve_h48_gettask(dfsarg_solveh48_t *arg)
-{
-	uint8_t task_move[2];
-
-	pthread_mutex_lock(arg->task_mutex);
-
-	for ( ; *arg->task_moves < NMOVES * NMOVES; (*arg->task_moves)++) {
-		task_move[0] = (uint8_t)(*arg->task_moves / NMOVES);
-		task_move[1] = (uint8_t)(*arg->task_moves % NMOVES);
-		if (allowednextmove(task_move, 2))
-			goto solve_h48_gettask_found;
-	}
-
-	pthread_mutex_unlock(arg->task_mutex);
-	return false;
-
-solve_h48_gettask_found:
-	(*arg->task_moves)++;
-	arg->moves[0] = task_move[0];
-	arg->moves[1] = task_move[1];
-
-	pthread_mutex_unlock(arg->task_mutex);
-
-	arg->cube = move(arg->startcube, arg->moves[0]);
-	arg->cube = move(arg->cube, arg->moves[1]);
-	arg->inverse = inverse(arg->cube);
-	arg->nmoves = 2;
-	arg->npremoves = 0;
-	arg->lb_normal = 0;
-	arg->lb_inverse = 0;
-	arg->use_lb_normal = false;
-	arg->use_lb_inverse = false;
-	arg->movemask_normal = MM_ALLMOVES;
-	arg->movemask_inverse = MM_ALLMOVES;
-
-	return true;
-}
-
 STATIC void *
 solve_h48_runthread(void *arg)
 {
-	while (solve_h48_gettask((dfsarg_solveh48_t *)arg))
-		solve_h48_dfs((dfsarg_solveh48_t *)arg);
+	int i, j;
+	solve_h48_task_t task;
+	dfsarg_solve_h48_t * dfsarg;
+	cube_t cube;
+
+	dfsarg = (dfsarg_solve_h48_t *)arg;
+	cube = dfsarg->start_cube;
+
+	while (true) {
+		pthread_mutex_lock(dfsarg->task_mutex);
+		i = *dfsarg->itask;
+		(*dfsarg->itask)++;
+		pthread_mutex_unlock(dfsarg->task_mutex);
+
+		if (i >= dfsarg->ntasks)
+			break;
+
+		task = dfsarg->tasks[i];
+		memcpy(dfsarg->moves, task.moves, STARTING_MOVES);
+		dfsarg->cube = cube;
+		for (j = 0; j < STARTING_MOVES; j++)
+			dfsarg->cube = move(dfsarg->cube, dfsarg->moves[j]);
+		dfsarg->inverse = inverse(dfsarg->cube);
+		dfsarg->nmoves = STARTING_MOVES;
+		dfsarg->npremoves = 0;
+		dfsarg->lb_normal = 0;
+		dfsarg->lb_inverse = 0;
+		dfsarg->use_lb_normal = false;
+		dfsarg->use_lb_inverse = false;
+		dfsarg->movemask_normal = MM_ALLMOVES;
+		dfsarg->movemask_inverse = MM_ALLMOVES;
+
+		solve_h48_dfs(dfsarg);
+	}
 
 	return NULL;
 }
 
-STATIC bool
-solve_h48_checkonemove(dfsarg_solveh48_t *arg)
+STATIC int64_t
+solve_h48_maketasks(
+	dfsarg_solve_h48_t *solve_arg,
+	dfsarg_solve_h48_maketasks_t *maketasks_arg,
+	solve_h48_task_t tasks[static STARTING_CUBES],
+	int *ntasks
+)
 {
-	uint8_t i;
-	cube_t c;
+	int r;
+	int64_t appret;
+	uint8_t m;
+	uint32_t mm;
+	cube_t backup_cube;
 
-	for (i = 0; i <= MOVE_B3; i++) {
-		c = move(arg->startcube, i);
-		if (*arg->nsols < arg->maxsolutions && issolved(c)) {
-			if (!solve_h48_appendmoves(arg, 1, &i) ||
-			    !solve_h48_appendchar(arg, '\n'))
-				return false;
-			(*arg->nsols)++;
-		}
+	if (issolved(maketasks_arg->cube)) {
+		if (maketasks_arg->nmoves > maketasks_arg->maxmoves ||
+		    maketasks_arg->nmoves < maketasks_arg->minmoves ||
+		    *solve_arg->nsols >= solve_arg->maxsolutions)
+			return NISSY_OK;
+		memcpy(solve_arg->moves,
+		    maketasks_arg->moves, maketasks_arg->nmoves);
+		solve_arg->nmoves = maketasks_arg->nmoves;
+		appret = solve_h48_appendsolution(solve_arg);
+		return appret < 0 ? appret : NISSY_OK;
 	}
 
-	return true;
+	if (maketasks_arg->nmoves == STARTING_MOVES) {
+		tasks[*ntasks].cube = maketasks_arg->cube;
+		memcpy(tasks[*ntasks].moves,
+		    maketasks_arg->moves, STARTING_MOVES);
+		(*ntasks)++;
+		return NISSY_OK;
+	}
+
+	mm = allowednextmove_mask(maketasks_arg->moves, maketasks_arg->nmoves);
+	maketasks_arg->nmoves++;
+	backup_cube = maketasks_arg->cube;
+	for (m = 0; m < 18; m++) {
+		if (!(mm & (1 << m)))
+			continue;
+		maketasks_arg->moves[maketasks_arg->nmoves-1] = m;
+		maketasks_arg->cube = move(backup_cube, m);
+		r = solve_h48_maketasks(
+		    solve_arg, maketasks_arg, tasks, ntasks);
+		if (r < 0)
+			return r;
+	}
+	maketasks_arg->nmoves--;
+	maketasks_arg->cube = backup_cube;
+
+	return NISSY_OK;
 }
 
 STATIC int64_t
@@ -332,12 +389,13 @@ solve_h48(
 	long long stats[static NISSY_SIZE_SOLVE_STATS]
 )
 {
-	int i;
+	int i, ntasks, itask;
 	int8_t d;
 	_Atomic int64_t nsols;
-	dfsarg_solveh48_t arg[THREADS];
+	dfsarg_solve_h48_t arg[THREADS];
+	solve_h48_task_t tasks[STARTING_CUBES];
+	dfsarg_solve_h48_maketasks_t maketasks_arg;
 	long double fallback_rate, lookups_per_node;
-	uint16_t task_moves;
 	uint64_t solutions_used;
 	int64_t nodes_visited, table_lookups, table_fallbacks;
 	tableinfo_t info, fbinfo;
@@ -364,8 +422,9 @@ solve_h48(
 	}
 
 	for (i = 0; i < THREADS; i++) {
-		arg[i] = (dfsarg_solveh48_t) {
-			.startcube = cube,
+		arg[i] = (dfsarg_solve_h48_t) {
+			.start_cube = cube,
+			.cube = cube,
 			.nsols = &nsols,
 			.maxsolutions = maxsolutions,
 			.h = info.h48h,
@@ -382,7 +441,6 @@ solve_h48(
 			.table_lookups = 0,
 			.solutions_mutex = &solutions_mutex,
 			.task_mutex = &task_mutex,
-			.task_moves = &task_moves,
 		};
 
 	}
@@ -393,28 +451,34 @@ solve_h48(
 	pthread_mutex_init(&solutions_mutex, NULL);
 	pthread_mutex_init(&task_mutex, NULL);
 
-	if (issolved(cube)) {
-		LOG("Cube is already solved\n");
-		if (minmoves == 0) {
-			if (!solve_h48_appendchar(&arg[0], '\n'))
-				goto solve_h48_error_solutions_buffer;
-			if (!solve_h48_appendchar(&arg[0], '\0'))
-				goto solve_h48_error_solutions_buffer;
-			return 1;
-		} else {
-			return 0;
-		}
-	}
-	if (minmoves <= 1 && maxmoves >= 1)
-		if (!solve_h48_checkonemove(&arg[0]))
-			goto solve_h48_error_solutions_buffer;
+	maketasks_arg = (dfsarg_solve_h48_maketasks_t) {
+		.cube = cube,
+		.nmoves = 0,
+		.minmoves = minmoves,
+		.maxmoves = maxmoves,
+	};
+	ntasks = 0;
+	solve_h48_maketasks(&arg[0], &maketasks_arg, tasks, &ntasks);
+	if (ntasks < 0)
+		goto solve_h48_error_solutions_buffer;
+	if (*arg[0].nsols >= (int64_t)maxsolutions)
+		goto solve_h48_done;
 
-	for (d = MAX(minmoves, 2); d <= maxmoves && nsols < maxsolutions; d++)
-	{
+	for (i = 0; i < THREADS; i++) {
+		arg[i].itask = &itask;
+		arg[i].ntasks = ntasks;
+		arg[i].tasks = tasks;
+	}
+
+	for (
+	    d = MAX(minmoves, STARTING_MOVES + 1);
+	    d <= maxmoves && nsols < (int64_t)maxsolutions;
+	    d++
+	) {
+		itask = 0;
 		if (d >= 10)
 			LOG("Found %" PRId64 " solutions, searching at depth %"
 			    PRId8 "\n", nsols, d);
-		task_moves = 0;
 		for (i = 0; i < THREADS; i++) {
 			arg[i].depth = d;
 			pthread_create(
@@ -424,6 +488,7 @@ solve_h48(
 			pthread_join(thread[i], NULL);
 	}
 
+solve_h48_done:
 	if (!solve_h48_appendchar(&arg[0], '\0'))
 		goto solve_h48_error_solutions_buffer;
 
