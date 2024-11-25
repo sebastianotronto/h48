@@ -43,10 +43,9 @@ typedef struct {
 	int64_t table_fallbacks;
 	int64_t table_lookups;
 	int ntasks;
-	int *itask;
 	solve_h48_task_t *tasks;
+	int thread_id;
 	pthread_mutex_t *solutions_mutex;
-	pthread_mutex_t *task_mutex;
 } dfsarg_solve_h48_t;
 
 typedef struct {
@@ -293,20 +292,13 @@ solve_h48_runthread(void *arg)
 	dfsarg = (dfsarg_solve_h48_t *)arg;
 	cube = dfsarg->start_cube;
 
-	while (true) {
-		pthread_mutex_lock(dfsarg->task_mutex);
-		i = *dfsarg->itask;
-		(*dfsarg->itask)++;
-		pthread_mutex_unlock(dfsarg->task_mutex);
-
-		if (i >= dfsarg->ntasks)
-			break;
-
+	for (i = dfsarg->thread_id; i < dfsarg->ntasks; i += THREADS) {
 		task = dfsarg->tasks[i];
 		memcpy(dfsarg->moves, task.moves, STARTING_MOVES);
 		dfsarg->cube = cube;
 		for (j = 0; j < STARTING_MOVES; j++)
-			dfsarg->cube = move(dfsarg->cube, dfsarg->moves[j]);
+			dfsarg->cube = move(
+			    dfsarg->cube, dfsarg->moves[j]);
 		dfsarg->inverse = inverse(dfsarg->cube);
 		dfsarg->nmoves = STARTING_MOVES;
 		dfsarg->npremoves = 0;
@@ -389,7 +381,7 @@ solve_h48(
 	long long stats[static NISSY_SIZE_SOLVE_STATS]
 )
 {
-	int i, ntasks, itask;
+	int i, ntasks;
 	int8_t d;
 	_Atomic int64_t nsols;
 	dfsarg_solve_h48_t arg[THREADS];
@@ -402,7 +394,7 @@ solve_h48(
 	const uint32_t *cocsepdata;
 	const uint8_t *fallback, *h48data;
 	pthread_t thread[THREADS];
-	pthread_mutex_t solutions_mutex, task_mutex;
+	pthread_mutex_t solutions_mutex;
 
 	if(readtableinfo_n(data_size, data, 2, &info) != NISSY_OK)
 		goto solve_h48_error_data;
@@ -439,8 +431,8 @@ solve_h48(
 			.nodes_visited = 0,
 			.table_fallbacks = 0,
 			.table_lookups = 0,
+			.thread_id = i,
 			.solutions_mutex = &solutions_mutex,
-			.task_mutex = &task_mutex,
 		};
 
 	}
@@ -449,7 +441,6 @@ solve_h48(
 	solutions_used = 0;
 
 	pthread_mutex_init(&solutions_mutex, NULL);
-	pthread_mutex_init(&task_mutex, NULL);
 
 	maketasks_arg = (dfsarg_solve_h48_maketasks_t) {
 		.cube = cube,
@@ -465,7 +456,6 @@ solve_h48(
 		goto solve_h48_done;
 
 	for (i = 0; i < THREADS; i++) {
-		arg[i].itask = &itask;
 		arg[i].ntasks = ntasks;
 		arg[i].tasks = tasks;
 	}
@@ -475,7 +465,6 @@ solve_h48(
 	    d <= maxmoves && nsols < (int64_t)maxsolutions;
 	    d++
 	) {
-		itask = 0;
 		if (d >= 10)
 			LOG("Found %" PRId64 " solutions, searching at depth %"
 			    PRId8 "\n", nsols, d);
