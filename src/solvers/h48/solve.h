@@ -4,8 +4,17 @@ TODO: implement symmetry filter; this requires writing
       printing out symmtetric non-cancelling sequences
 */
 
+#if 0
+
 #define STARTING_MOVES 4
 #define STARTING_CUBES 43254 /* Number of 4-move sequences */
+
+#else
+
+#define STARTING_MOVES 3
+#define STARTING_CUBES 3240 /* Number of 3-move sequences */
+
+#endif
 
 typedef struct {
 	cube_t cube;
@@ -325,8 +334,8 @@ solve_h48_maketasks(
 {
 	int r;
 	int64_t appret;
-	uint8_t m;
-	uint32_t mm;
+	uint8_t m, t;
+	uint32_t mm, symmask;
 	cube_t backup_cube;
 
 	if (issolved(maketasks_arg->cube)) {
@@ -349,7 +358,20 @@ solve_h48_maketasks(
 		return NISSY_OK;
 	}
 
+	symmask = symmetry_mask(maketasks_arg->cube);
 	mm = allowednextmove_mask(maketasks_arg->moves, maketasks_arg->nmoves);
+
+/*
+if (symmask != 1) {
+LOG("Symmetric after moves:\n");
+for (int i = 0; i < maketasks_arg->nmoves; i++)
+LOG("%s ", movestr[maketasks_arg->moves[i]]);
+LOG(" with symmetries: ");
+for (uint64_t i = 0; i < 48; i++)
+if (symmask & (1 << i)) LOG("%" PRIu64 " %s\n", i, transstr[i]);
+}
+*/
+
 	maketasks_arg->nmoves++;
 	backup_cube = maketasks_arg->cube;
 	for (m = 0; m < 18; m++) {
@@ -361,6 +383,12 @@ solve_h48_maketasks(
 		    solve_arg, maketasks_arg, tasks, ntasks);
 		if (r < 0)
 			return r;
+
+		/* Avoid symmetry-equivalent moves */
+		for (t = 0; t < 48; t++)
+			if (symmask & (UINT64_C(1) << (uint64_t)t))
+				mm &= ~(UINT32_C(1) <<
+				    (uint32_t)transform_move(m, t));
 	}
 	maketasks_arg->nmoves--;
 	maketasks_arg->cube = backup_cube;
@@ -459,6 +487,8 @@ solve_h48(
 		arg[i].ntasks = ntasks;
 		arg[i].tasks = tasks;
 	}
+
+	LOG("Prepared %d tasks\n", ntasks);
 
 	for (
 	    d = MAX(minmoves, STARTING_MOVES + 1);

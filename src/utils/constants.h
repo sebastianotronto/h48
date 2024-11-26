@@ -68,9 +68,6 @@ STATIC int64_t binomial[12][12] = {
 #define TRANS_BDr UINT8_C(22)
 #define TRANS_BLr UINT8_C(23)
 
-#define NMOVES  (1+MOVE_B3)
-#define NTRANS  (1+TRANS_BLr)
-
 #define TRANS_UFm UINT8_C(24)
 #define TRANS_ULm UINT8_C(25)
 #define TRANS_UBm UINT8_C(26)
@@ -95,6 +92,9 @@ STATIC int64_t binomial[12][12] = {
 #define TRANS_BRm UINT8_C(45)
 #define TRANS_BDm UINT8_C(46)
 #define TRANS_BLm UINT8_C(47)
+
+#define NMOVES  (1+MOVE_B3)
+#define NTRANS  (1+TRANS_BLr)
 
 #define MM_ALLMOVES    UINT32_C(0x3FFFF)
 #define MM_NOHALFTURNS UINT32_C(0x2DB6D)
