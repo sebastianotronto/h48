@@ -4,26 +4,18 @@ TODO: implement symmetry filter; this requires writing
       printing out symmtetric non-cancelling sequences
 */
 
-#if 0
-
-#define STARTING_MOVES 4
-#define STARTING_CUBES 43254 /* Number of 4-move sequences */
-
-#else
-
 #define STARTING_MOVES 3
 #define STARTING_CUBES 3240 /* Number of 3-move sequences */
-
-#endif
 
 typedef struct {
 	cube_t cube;
 	uint8_t moves[STARTING_MOVES];
-	uint64_t tmask[STARTING_MOVES];
+	uint64_t symmask0;
 } solve_h48_task_t;
 
 typedef struct {
 	cube_t start_cube;
+	uint64_t symmask0;
 	cube_t cube;
 	cube_t inverse;
 	int8_t depth;
@@ -66,7 +58,8 @@ typedef struct {
 } dfsarg_solve_h48_maketasks_t;
 
 STATIC int64_t solve_h48_appendsolution(dfsarg_solve_h48_t *);
-STATIC bool solve_h48_appendmoves(dfsarg_solve_h48_t *, int8_t, uint8_t *);
+STATIC bool solve_h48_appendmoves(dfsarg_solve_h48_t *, int8_t,
+    uint8_t *, uint8_t);
 STATIC bool solve_h48_appendchar(dfsarg_solve_h48_t *, char);
 STATIC_INLINE bool solve_h48_stop(dfsarg_solve_h48_t *);
 STATIC int64_t solve_h48_maketasks(
@@ -80,6 +73,8 @@ STATIC int64_t solve_h48(cube_t, int8_t, int8_t, uint64_t, uint64_t,
 STATIC int64_t
 solve_h48_appendsolution(dfsarg_solve_h48_t *arg)
 {
+	uint8_t t;
+	int64_t ret;
 	uint64_t solstart;
 
 	if (*arg->nsols >= arg->maxsolutions)
@@ -94,17 +89,23 @@ solve_h48_appendsolution(dfsarg_solve_h48_t *arg)
 	if (arg->npremoves > 1 && !allowednextmove(arg->moves, arg->nmoves+2))
 		return 0;
 
-	if (!solve_h48_appendmoves(
-	    arg, arg->nmoves + arg->npremoves, arg->moves))
-		goto solve_h48_appendsolution_error;
+	for (t = 0, ret = 0; t < 48 && *arg->nsols < arg->maxsolutions; t++) {
+		if (!(arg->symmask0 & (UINT64_C(1) << (uint64_t)t)))
+			continue;
 
-	LOG("Solution found: %s\n", *arg->solutions + solstart);
+		if (!solve_h48_appendmoves(arg, arg->nmoves + arg->npremoves,
+		    arg->moves, t))
+			goto solve_h48_appendsolution_error;
 
-	if (!solve_h48_appendchar(arg, '\n'))
-		goto solve_h48_appendsolution_error;
-	(*arg->nsols)++;
+		LOG("Solution found: %s\n", *arg->solutions + solstart);
 
-	return 1;
+		if (!solve_h48_appendchar(arg, '\n'))
+			goto solve_h48_appendsolution_error;
+		(*arg->nsols)++;
+		ret++;
+	}
+
+	return ret;
 
 solve_h48_appendsolution_error:
 	LOG("Could not append solution to buffer: size too small\n");
@@ -112,11 +113,21 @@ solve_h48_appendsolution_error:
 }
 
 STATIC bool
-solve_h48_appendmoves(dfsarg_solve_h48_t *arg, int8_t n, uint8_t *moves)
+solve_h48_appendmoves(
+	dfsarg_solve_h48_t *arg,
+	int8_t n,
+	uint8_t *moves,
+	uint8_t t
+)
 {
+	int i;
 	int64_t strl;
+	uint8_t mm[MAXLEN];
 
-	strl = writemoves(moves, n, arg->solutions_size - *arg->solutions_used,
+	for (i = 0; i < n; i++)
+		mm[i] = transform_move(moves[i], t);
+
+	strl = writemoves(mm, n, arg->solutions_size - *arg->solutions_used,
 	    *arg->solutions + *arg->solutions_used);
 
 	if (strl < 0)
@@ -335,7 +346,7 @@ solve_h48_maketasks(
 	int r;
 	int64_t appret;
 	uint8_t m, t;
-	uint32_t mm, symmask;
+	uint32_t mm;
 	cube_t backup_cube;
 
 	if (issolved(maketasks_arg->cube)) {
@@ -358,19 +369,7 @@ solve_h48_maketasks(
 		return NISSY_OK;
 	}
 
-	symmask = symmetry_mask(maketasks_arg->cube);
 	mm = allowednextmove_mask(maketasks_arg->moves, maketasks_arg->nmoves);
-
-/*
-if (symmask != 1) {
-LOG("Symmetric after moves:\n");
-for (int i = 0; i < maketasks_arg->nmoves; i++)
-LOG("%s ", movestr[maketasks_arg->moves[i]]);
-LOG(" with symmetries: ");
-for (uint64_t i = 0; i < 48; i++)
-if (symmask & (1 << i)) LOG("%" PRIu64 " %s\n", i, transstr[i]);
-}
-*/
 
 	maketasks_arg->nmoves++;
 	backup_cube = maketasks_arg->cube;
@@ -384,11 +383,13 @@ if (symmask & (1 << i)) LOG("%" PRIu64 " %s\n", i, transstr[i]);
 		if (r < 0)
 			return r;
 
-		/* Avoid symmetry-equivalent moves */
-		for (t = 0; t < 48; t++)
-			if (symmask & (UINT64_C(1) << (uint64_t)t))
-				mm &= ~(UINT32_C(1) <<
-				    (uint32_t)transform_move(m, t));
+		/* Avoid symmetry-equivalent moves from the starting cube */
+		if (maketasks_arg->nmoves == 1)
+			for (t = 0; t < 48; t++)
+				if (solve_arg->symmask0 &
+				    (UINT64_C(1) << (uint64_t)t))
+					mm &= ~(UINT32_C(1) <<
+					    (uint32_t)transform_move(m, t));
 	}
 	maketasks_arg->nmoves--;
 	maketasks_arg->cube = backup_cube;
@@ -416,7 +417,7 @@ solve_h48(
 	solve_h48_task_t tasks[STARTING_CUBES];
 	dfsarg_solve_h48_maketasks_t maketasks_arg;
 	long double fallback_rate, lookups_per_node;
-	uint64_t solutions_used;
+	uint64_t solutions_used, symmask;
 	int64_t nodes_visited, table_lookups, table_fallbacks;
 	tableinfo_t info, fbinfo;
 	const uint32_t *cocsepdata;
@@ -441,10 +442,12 @@ solve_h48(
 		fallback = NULL;
 	}
 
+	symmask = symmetry_mask(cube);
 	for (i = 0; i < THREADS; i++) {
 		arg[i] = (dfsarg_solve_h48_t) {
 			.start_cube = cube,
 			.cube = cube,
+			.symmask0 = symmask,
 			.nsols = &nsols,
 			.maxsolutions = maxsolutions,
 			.h = info.h48h,
