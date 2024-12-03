@@ -1,6 +1,6 @@
 #include "../tool.h"
 
-#define SOL_BUFFER_LEN 1000
+#define SOL_BUFFER_LEN 10000
 
 int nsol;
 char *solver;
@@ -8,6 +8,7 @@ int64_t size = 0;
 char *buf;
 
 char *scrambles[] = {
+	"U2 D2 F2 B2 L2 R2",
 	"R' D R U R' D' R U'", /* Pure 8-move comm */
 	"R D' R2 D R U2 R' D' R U2 R D R'", /* 12 mover with sym */
 	NULL
