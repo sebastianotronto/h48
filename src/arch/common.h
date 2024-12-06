@@ -20,6 +20,7 @@ STATIC_INLINE void set_eo(cube_t *, int64_t);
 STATIC_INLINE cube_t invcoord_esep(int64_t);
 
 STATIC_INLINE void invcoord_esep_array(int64_t, int64_t, uint8_t[static 12]);
+STATIC_INLINE cube_t invcoord_eoesep(int64_t);
 
 STATIC_INLINE void
 invcoord_esep_array(int64_t set1, int64_t set2, uint8_t mem[static 12])
@@ -45,4 +46,18 @@ invcoord_esep_array(int64_t set1, int64_t set2, uint8_t mem[static 12])
 
 		mem[i] = (slice[s]++) | (uint8_t)(s << 2);
 	}
+}
+
+STATIC_INLINE cube_t
+invcoord_eoesep(int64_t i)
+{
+	cube_t c;
+	int64_t esep, eo;
+
+	esep = i >> INT64_C(11);
+	eo = i % POW_2_11;
+	c = invcoord_esep(esep);
+	set_eo(&c, eo);
+
+	return c;
 }
