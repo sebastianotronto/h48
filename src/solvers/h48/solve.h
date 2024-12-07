@@ -216,7 +216,7 @@ solve_h48_stop(dfsarg_solve_h48_t *arg)
 			    arg->h48data_fallback_eoesep, arg->cube);
 			arg->lb_normal = MAX(pval_cocsep, pval_eoesep);
 		} else {
-				arg->lb_normal += arg->base;
+			arg->lb_normal += arg->base;
 		}
 
 		arg->use_lb_normal = true;
