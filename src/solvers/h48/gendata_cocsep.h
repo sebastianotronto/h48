@@ -1,27 +1,16 @@
-STATIC_INLINE bool get_visited(const uint8_t *, int64_t);
-STATIC_INLINE void set_visited(uint8_t *, int64_t);
+STATIC_INLINE bool gendata_cocsep_get_visited(const uint8_t *, int64_t);
+STATIC_INLINE void gendata_cocsep_set_visited(uint8_t *, int64_t);
 
 STATIC size_t gendata_cocsep(
-    char [static COCSEP_FULLSIZE+INFOSIZE], uint64_t *, cube_t *);
+    char [static COCSEP_FULLSIZE], uint64_t *, cube_t *);
 STATIC uint32_t gendata_cocsep_dfs(cocsep_dfs_arg_t *);
 STATIC void getdistribution_cocsep(const uint32_t *, uint64_t [static 21]);
 
 STATIC_INLINE int8_t get_h48_cdata(cube_t, const uint32_t *, uint32_t *);
 
-/*
-Each element of the cocsep table is a uint32_t used as follows:
-  - Lowest 8-bit block: pruning value
-  - Second-lowest 8-bit block: "ttrep" (transformation to representative)
-  - Top 16-bit block: symcoord value
-After the data as described above, more auxiliary information is appended:
-  - A uint32_t representing the number of symmetry classes
-  - A uint32_t representing the highest value of the pruning table
-  - One uint32_t for each "line" of the pruning table, representing the number
-    of positions having that pruning value.
-*/
 STATIC size_t
 gendata_cocsep(
-	char buf[static COCSEP_FULLSIZE+INFOSIZE],
+	char buf[static COCSEP_FULLSIZE],
 	uint64_t *selfsim,
 	cube_t *rep
 )
@@ -36,7 +25,7 @@ gendata_cocsep(
 		goto gendata_cocsep_return_size;
 
 	memset(buf, 0xFF, COCSEP_FULLSIZE);
-	buf32 = (uint32_t *)((char *)buf + INFOSIZE);
+	buf32 = (uint32_t *)(buf + INFOSIZE);
 	if (selfsim != NULL)
 		memset(selfsim, 0, sizeof(uint64_t) * COCSEP_CLASSES);
 
@@ -69,7 +58,7 @@ gendata_cocsep(
 		info.distribution[i] = cc;
 	}
 
-	writetableinfo(&info, COCSEP_FULLSIZE+INFOSIZE, buf);
+	writetableinfo(&info, COCSEP_FULLSIZE, buf);
 
 	DBG_ASSERT(n == COCSEP_CLASSES, 0,
 	    "cocsep: computed %" PRIu16 " symmetry classes, "
@@ -101,9 +90,10 @@ gendata_cocsep_dfs(cocsep_dfs_arg_t *arg)
 
 	i = coord_cocsep(arg->cube);
 	olddepth = (uint8_t)(arg->buf32[i] & 0xFF);
-	if (olddepth < arg->depth || get_visited(arg->visited, i))
+	if (olddepth < arg->depth ||
+	    gendata_cocsep_get_visited(arg->visited, i))
 		return 0;
-	set_visited(arg->visited, i);
+	gendata_cocsep_set_visited(arg->visited, i);
 
 	if (arg->depth == arg->maxdepth) {
 		if ((arg->buf32[i] & 0xFF) != 0xFF)
@@ -118,7 +108,7 @@ gendata_cocsep_dfs(cocsep_dfs_arg_t *arg)
 				arg->selfsim[*arg->n] |= UINT64_C(1) << t;
 			if (COCLASS(arg->buf32[j]) != UINT32_C(0xFFFF))
 				continue;
-			set_visited(arg->visited, j);
+			gendata_cocsep_set_visited(arg->visited, j);
 			tinv = inverse_trans(t);
 			olddepth = arg->buf32[j] & 0xFF;
 			cc += olddepth == 0xFF;
@@ -155,13 +145,13 @@ getdistribution_cocsep(const uint32_t *table, uint64_t distr[static 21])
 }
 
 STATIC_INLINE bool
-get_visited(const uint8_t *a, int64_t i)
+gendata_cocsep_get_visited(const uint8_t *a, int64_t i)
 {
 	return a[VISITED_IND(i)] & VISITED_MASK(i);
 }
 
 STATIC_INLINE void
-set_visited(uint8_t *a, int64_t i)
+gendata_cocsep_set_visited(uint8_t *a, int64_t i)
 {
 	a[VISITED_IND(i)] |= VISITED_MASK(i);
 }

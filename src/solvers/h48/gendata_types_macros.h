@@ -3,13 +3,22 @@
 #define COCSEP_VISITEDSIZE  DIV_ROUND_UP(COCSEP_TABLESIZE, (size_t)8)
 #define COCSEP_FULLSIZE     (INFOSIZE + (size_t)4 * COCSEP_TABLESIZE)
 
+#define ESEP_MAX            (COMB_12_4 * COMB_8_4)
+#define ESEP_CLASSES        ((size_t)782)
+#define EOESEP_TABLESIZE    (ESEP_CLASSES << (size_t)11)
+#define EOESEP_BUF          DIV_ROUND_UP(EOESEP_TABLESIZE, 2)
+#define EOESEP_FULLSIZE     (INFOSIZE + EOESEP_BUF + (size_t)4 * ESEP_MAX)
+#define EOESEP_INDEX(i)     ((i)/2)
+#define EOESEP_SHIFT(i)     (UINT8_C(4) * (uint8_t)((i) % 2))
+#define EOESEP_MASK(i)      (UINT8_C(0xF) << EOESEP_SHIFT(i))
+
 #define VISITED_IND(i)      ((uint32_t)(i) / UINT32_C(8))
 #define VISITED_MASK(i)     (UINT32_C(1) << ((uint32_t)(i) % UINT32_C(8)))
 
 #define CBOUND_MASK         UINT32_C(0xFF)
 #define CBOUND(x)           ((x) & CBOUND_MASK)
 
-#define H48_COORDMAX_NOEO   ((int64_t)(COCSEP_CLASSES * COMB_12_4 * COMB_8_4))
+#define H48_COORDMAX_NOEO   ((int64_t)(COCSEP_CLASSES * ESEP_MAX))
 #define H48_COORDMAX(h)     (H48_COORDMAX_NOEO << (int64_t)(h))
 #define H48_DIV(k)          ((size_t)8 / (size_t)(k))
 #define H48_TABLESIZE(h, k) DIV_ROUND_UP((size_t)H48_COORDMAX((h)), H48_DIV(k))

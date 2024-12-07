@@ -2,8 +2,8 @@
 #define PREMOVE(M, c) compose(MOVE_CUBE_ ## M, c)
 
 STATIC_INLINE bool allowednextmove(uint8_t *, uint8_t);
+STATIC_INLINE uint32_t allowednextmove_mask(uint8_t *, uint8_t);
 
-STATIC_INLINE uint8_t inverse_trans(uint8_t);
 STATIC_INLINE uint8_t movebase(uint8_t);
 STATIC_INLINE uint8_t moveaxis(uint8_t);
 STATIC_INLINE uint32_t disable_moves(uint32_t, uint8_t);
@@ -38,38 +38,44 @@ STATIC cube_t applymoves(cube_t, const char *);
 STATIC bool
 allowednextmove(uint8_t *moves, uint8_t n)
 {
-	uint8_t base[3], axis[3];
+	return n == 0 ? true :
+	    allowednextmove_mask(moves, n-1) & (1 << moves[n-1]);
+}
 
-	if (n < 2)
-		return true;
+STATIC uint32_t
+allowednextmove_mask(uint8_t *moves, uint8_t n)
+{
+	uint32_t result;
+	uint8_t base1, base2, axis1, axis2;
 
-	base[0] = movebase(moves[n-1]);
-	axis[0] = moveaxis(moves[n-1]);
-	base[1] = movebase(moves[n-2]);
-	axis[1] = moveaxis(moves[n-2]);
+	result = MM_ALLMOVES;
 
-	if (base[0] == base[1] || (axis[0] == axis[1] && base[0] < base[1]))
-		return false;
+	if (n == 0)
+		return result;
 
-	if (n == 2)
-		return true;
+	base1 = movebase(moves[n-1]);
+	axis1 = moveaxis(moves[n-1]);
+	result = disable_moves(result, base1 * 3);
 
-	base[2] = movebase(moves[n-3]);
-	axis[2] = moveaxis(moves[n-3]);
+	if (base1 % 2)
+		result = disable_moves(result, (base1 - 1) * 3);
 
-	return axis[1] != axis[2] || base[0] != base[2];
+	if (n == 1)
+	return result;
+
+	base2 = movebase(moves[n-2]);
+	axis2 = moveaxis(moves[n-2]);
+
+	if(axis1 == axis2)
+		result = disable_moves(result, base2 * 3);
+
+	return result;
 }
 
 STATIC_INLINE uint32_t 
 disable_moves(uint32_t current_result, uint8_t base_index)
 {
 	return current_result & ~(7 << base_index);
-}
-
-STATIC_INLINE uint8_t
-inverse_trans(uint8_t t)
-{
-	return inverse_trans_table[t];
 }
 
 STATIC_INLINE uint8_t
@@ -82,6 +88,12 @@ STATIC_INLINE uint8_t
 moveaxis(uint8_t move)
 {
 	return move / 6;
+}
+
+STATIC_INLINE uint8_t
+moveopposite(uint8_t move)
+{
+	return movebase(move) == 2 * moveaxis(move) ? move + 3 : move - 3;
 }
 
 STATIC cube_t

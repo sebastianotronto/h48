@@ -21,6 +21,9 @@ STATIC cube_t transform_edges(cube_t, uint8_t);
 STATIC cube_t transform_corners(cube_t, uint8_t);
 STATIC cube_t transform(cube_t, uint8_t);
 STATIC cube_t applytrans(cube_t, const char *);
+STATIC_INLINE uint8_t inverse_trans(uint8_t);
+STATIC uint8_t transform_move(uint8_t, uint8_t);
+STATIC uint64_t symmetry_mask(cube_t);
 
 STATIC cube_t
 transform_edges(cube_t c, uint8_t t)
@@ -353,4 +356,41 @@ applytrans(cube_t cube, const char *buf)
 		LOG("Unknown transformation '%s'\n", buf);
 
 	return transform(cube, t);
+}
+
+STATIC_INLINE uint8_t
+inverse_trans(uint8_t t)
+{
+	return inverse_trans_table[t];
+}
+
+STATIC uint8_t
+transform_move(uint8_t m, uint8_t t)
+{
+	uint8_t a, base, modifier;
+
+	a = moveaxis(m);
+	base = trans_move_table[t][a];
+	if (movebase(m) != 2 * a)
+		base = moveopposite(base);
+
+	modifier = m % 3;
+	if (t >= TRANS_UFm)
+		modifier = 2 - modifier;
+
+	return base + modifier;
+}
+
+STATIC uint64_t
+symmetry_mask(cube_t cube)
+{
+	uint64_t t, ret;
+	cube_t transformed;
+
+	for (t = 0, ret = 0; t < 48; t++) {
+		transformed = transform(cube, t);
+		ret |= ((uint64_t)equal(cube, transformed)) << t;
+	}
+
+	return ret;
 }

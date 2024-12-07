@@ -93,12 +93,11 @@ STATIC int64_t binomial[12][12] = {
 #define TRANS_BDm UINT8_C(46)
 #define TRANS_BLm UINT8_C(47)
 
-#define MM_NORMAL         UINT8_C(0x00)
-#define MM_INVERSE        UINT8_C(0x01)
-#define MM_INVERSEBRANCH  UINT8_C(0x03)
-#define MM_NORMALBRANCH   UINT8_C(0x02)
-#define MM_ALLMOVES       UINT32_C(0x3FFFF)
-#define MM_NOHALFTURNS    UINT32_C(0x2DB6D)
+#define NMOVES  (1+MOVE_B3)
+#define NTRANS  (1+TRANS_BLr)
+
+#define MM_ALLMOVES    UINT32_C(0x3FFFF)
+#define MM_NOHALFTURNS UINT32_C(0x2DB6D)
 
 #define CORNER_UFR      UINT8_C(0)
 #define CORNER_UBL      UINT8_C(1)
@@ -295,4 +294,55 @@ static uint8_t inverse_trans_table[48] = {
 	[TRANS_BDm] = TRANS_BDm,
 	[TRANS_BLr] = TRANS_RDr,
 	[TRANS_BLm] = TRANS_LDm,
+};
+
+static uint8_t trans_move_table[48][3] = {
+	[TRANS_UFr] = { MOVE_U, MOVE_R, MOVE_F },
+	[TRANS_UFm] = { MOVE_U, MOVE_L, MOVE_F },
+	[TRANS_ULr] = { MOVE_U, MOVE_F, MOVE_L },
+	[TRANS_ULm] = { MOVE_U, MOVE_F, MOVE_R },
+	[TRANS_UBr] = { MOVE_U, MOVE_L, MOVE_B },
+	[TRANS_UBm] = { MOVE_U, MOVE_R, MOVE_B },
+	[TRANS_URr] = { MOVE_U, MOVE_B, MOVE_R },
+	[TRANS_URm] = { MOVE_U, MOVE_B, MOVE_L },
+	[TRANS_DFr] = { MOVE_D, MOVE_L, MOVE_F },
+	[TRANS_DFm] = { MOVE_D, MOVE_R, MOVE_F },
+	[TRANS_DLr] = { MOVE_D, MOVE_B, MOVE_L },
+	[TRANS_DLm] = { MOVE_D, MOVE_B, MOVE_R },
+	[TRANS_DBr] = { MOVE_D, MOVE_R, MOVE_B },
+	[TRANS_DBm] = { MOVE_D, MOVE_L, MOVE_B },
+	[TRANS_DRr] = { MOVE_D, MOVE_F, MOVE_R },
+	[TRANS_DRm] = { MOVE_D, MOVE_F, MOVE_L },
+	[TRANS_RUr] = { MOVE_R, MOVE_F, MOVE_U },
+	[TRANS_RUm] = { MOVE_L, MOVE_F, MOVE_U },
+	[TRANS_RFr] = { MOVE_R, MOVE_D, MOVE_F },
+	[TRANS_RFm] = { MOVE_L, MOVE_D, MOVE_F },
+	[TRANS_RDr] = { MOVE_R, MOVE_B, MOVE_D },
+	[TRANS_RDm] = { MOVE_L, MOVE_B, MOVE_D },
+	[TRANS_RBr] = { MOVE_R, MOVE_U, MOVE_B },
+	[TRANS_RBm] = { MOVE_L, MOVE_U, MOVE_B },
+	[TRANS_LUr] = { MOVE_L, MOVE_B, MOVE_U },
+	[TRANS_LUm] = { MOVE_R, MOVE_B, MOVE_U },
+	[TRANS_LFr] = { MOVE_L, MOVE_U, MOVE_F },
+	[TRANS_LFm] = { MOVE_R, MOVE_U, MOVE_F },
+	[TRANS_LDr] = { MOVE_L, MOVE_F, MOVE_D },
+	[TRANS_LDm] = { MOVE_R, MOVE_F, MOVE_D },
+	[TRANS_LBr] = { MOVE_L, MOVE_D, MOVE_B },
+	[TRANS_LBm] = { MOVE_R, MOVE_D, MOVE_B },
+	[TRANS_FUr] = { MOVE_F, MOVE_L, MOVE_U },
+	[TRANS_FUm] = { MOVE_F, MOVE_R, MOVE_U },
+	[TRANS_FRr] = { MOVE_F, MOVE_U, MOVE_R },
+	[TRANS_FRm] = { MOVE_F, MOVE_U, MOVE_L },
+	[TRANS_FDr] = { MOVE_F, MOVE_R, MOVE_D },
+	[TRANS_FDm] = { MOVE_F, MOVE_L, MOVE_D },
+	[TRANS_FLr] = { MOVE_F, MOVE_D, MOVE_L },
+	[TRANS_FLm] = { MOVE_F, MOVE_D, MOVE_R },
+	[TRANS_BUr] = { MOVE_B, MOVE_R, MOVE_U },
+	[TRANS_BUm] = { MOVE_B, MOVE_L, MOVE_U },
+	[TRANS_BRr] = { MOVE_B, MOVE_D, MOVE_R },
+	[TRANS_BRm] = { MOVE_B, MOVE_D, MOVE_L },
+	[TRANS_BDr] = { MOVE_B, MOVE_L, MOVE_D },
+	[TRANS_BDm] = { MOVE_B, MOVE_R, MOVE_D },
+	[TRANS_BLr] = { MOVE_B, MOVE_U, MOVE_L },
+	[TRANS_BLm] = { MOVE_B, MOVE_U, MOVE_R },
 };
