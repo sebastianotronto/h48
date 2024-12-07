@@ -1,9 +1,3 @@
-/*
-TODO: implement symmetry filter; this requires writing
-      more utility functions with unit tests for
-      printing out symmtetric non-cancelling sequences
-*/
-
 #define STARTING_MOVES 3
 #define STARTING_CUBES 3240 /* Number of 3-move sequences */
 
@@ -34,7 +28,8 @@ typedef struct {
 	uint8_t base;
 	const uint32_t *cocsepdata;
 	const uint8_t *h48data;
-	const uint8_t *h48data_fallback;
+	const uint8_t *h48data_fallback_h0k4;
+	const void *h48data_fallback_eoesep;
 	uint64_t solutions_size;
 	uint64_t *solutions_used;
 	char **solutions;
@@ -155,6 +150,7 @@ solve_h48_stop(dfsarg_solve_h48_t *arg)
 	uint32_t data, data_inv;
 	int64_t coord;
 	int8_t target, nh;
+	uint8_t pval_cocsep, pval_eoesep;
 
 	target = arg->depth - arg->nmoves - arg->npremoves;
 	if (target <= 0 || *arg->nsols == arg->maxsolutions)
@@ -185,8 +181,12 @@ solve_h48_stop(dfsarg_solve_h48_t *arg)
 
 		if (arg->k == 2 && arg->lb_inverse == 0) {
 			arg->table_fallbacks++;
-			arg->lb_inverse = get_h48_pval(
-			    arg->h48data_fallback, coord >> arg->h, 4);
+
+			pval_cocsep = get_h48_pval(
+			    arg->h48data_fallback_h0k4, coord >> arg->h, 4);
+			pval_eoesep = get_eoesep_pval_cube(
+			    arg->h48data_fallback_eoesep, arg->inverse);
+			arg->lb_inverse = MAX(pval_cocsep, pval_eoesep);
 		} else {
 			arg->lb_inverse += arg->base;
 		}
@@ -209,8 +209,12 @@ solve_h48_stop(dfsarg_solve_h48_t *arg)
 
 		if (arg->k == 2 && arg->lb_normal == 0) {
 			arg->table_fallbacks++;
-			arg->lb_normal = get_h48_pval(
-			    arg->h48data_fallback, coord >> arg->h, 4);
+
+			pval_cocsep = get_h48_pval(
+			    arg->h48data_fallback_h0k4, coord >> arg->h, 4);
+			pval_eoesep = get_eoesep_pval_cube(
+			    arg->h48data_fallback_eoesep, arg->cube);
+			arg->lb_normal = MAX(pval_cocsep, pval_eoesep);
 		} else {
 				arg->lb_normal += arg->base;
 		}
@@ -410,18 +414,19 @@ solve_h48(
 	long long stats[static NISSY_SIZE_SOLVE_STATS]
 )
 {
-	int i, ntasks;
+	int i, ntasks, eoesep_table_index;
 	int8_t d;
 	_Atomic int64_t nsols;
 	dfsarg_solve_h48_t arg[THREADS];
 	solve_h48_task_t tasks[STARTING_CUBES];
 	dfsarg_solve_h48_maketasks_t maketasks_arg;
 	long double fallback_rate, lookups_per_node;
-	uint64_t solutions_used, symmask;
+	uint64_t solutions_used, symmask, offset;
 	int64_t nodes_visited, table_lookups, table_fallbacks;
-	tableinfo_t info, fbinfo;
+	tableinfo_t info, fbinfo, fbinfo2;
 	const uint32_t *cocsepdata;
 	const uint8_t *fallback, *h48data;
+	const void *fallback2;
 	pthread_t thread[THREADS];
 	pthread_mutex_t solutions_mutex;
 
@@ -430,17 +435,30 @@ solve_h48(
 
 	cocsepdata = (uint32_t *)((char *)data + INFOSIZE);
 	h48data = (uint8_t *)data + COCSEP_FULLSIZE + INFOSIZE;
-	if (info.bits == 2) {
-		if (readtableinfo_n(data_size, data, 3, &fbinfo) != NISSY_OK)
-			goto solve_h48_error_data;
 
+	/* Read fallback table(s) */
+	fallback = NULL;
+	if (readtableinfo_n(data_size, data, 3, &fbinfo) != NISSY_OK)
+		goto solve_h48_error_data;
+	offset = info.next;
+	eoesep_table_index = 3;
+	if (info.bits == 2) {
 		/* We only support h0k4 as fallback table */
 		if (fbinfo.h48h != 0 || fbinfo.bits != 4)
 			goto solve_h48_error_data;
-		fallback = h48data + info.next;
-	} else {
-		fallback = NULL;
+		fallback = h48data + offset;
+		offset += fbinfo.next;
+		eoesep_table_index++;
 	}
+
+	if (readtableinfo_n(data_size, data, eoesep_table_index, &fbinfo2)
+	    != NISSY_OK)
+		goto solve_h48_error_data;
+
+	/* Some heuristic check to see that it is eoesep */
+	if (fbinfo2.bits != 4 || fbinfo2.type != TABLETYPE_SPECIAL)
+		goto solve_h48_error_data;
+	fallback2 = h48data + offset;
 
 	symmask = symmetry_mask(cube);
 	for (i = 0; i < THREADS; i++) {
@@ -455,7 +473,8 @@ solve_h48(
 			.base = info.base,
 			.cocsepdata = cocsepdata,
 			.h48data = h48data,
-			.h48data_fallback = fallback,
+			.h48data_fallback_h0k4 = fallback,
+			.h48data_fallback_eoesep = fallback2,
 			.solutions_size = solutions_size,
 			.solutions_used = &solutions_used,
 			.solutions = &solutions,

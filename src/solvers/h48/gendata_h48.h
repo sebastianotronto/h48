@@ -61,13 +61,13 @@ gendata_h48short(gendata_h48short_arg_t *arg)
 	return arg->map->n;
 }
 
-/* Generic function that dispatches to the data generators */
 STATIC int64_t
 gendata_h48(gendata_h48_arg_t *arg)
 {
-	uint64_t size, cocsepsize, h48size, fallbacksize;
+	uint64_t size, cocsepsize, h48size, fallbacksize, fallback2size, of;
+	long long r;
 	void *cocsepdata_offset;
-	tableinfo_t cocsepinfo, h48info;
+	tableinfo_t cocsepinfo, h48info, fallbackinfo;
 	gendata_h48_arg_t arg_h0k4;
 
 	if (arg == NULL) {
@@ -78,7 +78,8 @@ gendata_h48(gendata_h48_arg_t *arg)
 	cocsepsize = COCSEP_FULLSIZE;
 	h48size = INFOSIZE + H48_TABLESIZE(arg->h, arg->k);
 	fallbacksize = arg->k == 2 ? INFOSIZE + H48_TABLESIZE(0, 4) : 0;
-	size = cocsepsize + h48size + fallbacksize;
+	fallback2size = EOESEP_FULLSIZE;
+	size = cocsepsize + h48size + fallbacksize + fallback2size;
 
 	if (arg->buf == NULL)
 		return size; /* Dry-run */
@@ -110,17 +111,21 @@ gendata_h48(gendata_h48_arg_t *arg)
 		return NISSY_ERROR_INVALID_SOLVER;
 	}
 
-	if (readtableinfo(arg->buf_size, arg->buf, &cocsepinfo) != NISSY_OK) {
+	r = readtableinfo(arg->buf_size, arg->buf, &cocsepinfo);
+	if (r != NISSY_OK) {
 		LOG("gendata_h48: could not read info for cocsep table\n");
 		return NISSY_ERROR_UNKNOWN;
 	}
 
 	cocsepinfo.next = cocsepsize;
-	if (writetableinfo(&cocsepinfo, arg->buf_size, arg->buf) != NISSY_OK) {
+	r = writetableinfo(&cocsepinfo, arg->buf_size, arg->buf);
+	if (r != NISSY_OK) {
 		LOG("gendata_h48: could not write info for cocsep table"
 		    " with updated 'next' value\n");
 		return NISSY_ERROR_UNKNOWN;
 	}
+
+	/* Add h0k4 fallback table */
 
 	if (arg->k == 2) {
 		arg_h0k4 = *arg;
@@ -134,16 +139,42 @@ gendata_h48(gendata_h48_arg_t *arg)
 
 		gendata_h48h0k4(&arg_h0k4);
 
-		if (readtableinfo_n(arg->buf_size, arg->buf, 2, &h48info)
-		    != NISSY_OK) {
-			LOG("gendata_h48: could not read info for h48 table\n");
+	}
+
+	/* Add eoesep fallback table */
+
+	gendata_eoesep((char *)arg->buf + (size - fallback2size), 20);
+
+	/* Update tableinfo with correct next values */
+
+	r = readtableinfo_n(arg->buf_size, arg->buf, 2, &h48info);
+	if (r != NISSY_OK) {
+		LOG("gendata_h48: could not read info for h48 table\n");
+		return NISSY_ERROR_UNKNOWN;
+	}
+	h48info.next = h48size;
+	r = writetableinfo(&h48info,
+	     arg->buf_size - cocsepsize, (char *)arg->buf + cocsepsize);
+	if (r != NISSY_OK) {
+		LOG("gendata_h48: could not write info for h48 table\n");
+		return NISSY_ERROR_UNKNOWN;
+	}
+
+	if (arg->k == 2) {
+		r = readtableinfo_n(arg->buf_size, arg->buf, 3, &fallbackinfo);
+		if (r != NISSY_OK) {
+			LOG("gendata_h48: could not read info for h48 "
+			    "fallback table\n");
 			return NISSY_ERROR_UNKNOWN;
 		}
 
-		h48info.next = h48size;
-		if (writetableinfo(&h48info, arg->buf_size - cocsepsize,
-		    (char *)arg->buf + cocsepsize) != NISSY_OK) {
-			LOG("gendata_h48: could not write info for h48 table\n");
+		of = cocsepsize + h48size;
+		fallbackinfo.next = fallbacksize;
+		r = writetableinfo(&fallbackinfo,
+		    arg->buf_size - of, (char *)arg->buf + of);
+		if (r != NISSY_OK) {
+			LOG("gendata_h48: could not write info for h48 "
+			    "fallback table\n");
 			return NISSY_ERROR_UNKNOWN;
 		}
 	}

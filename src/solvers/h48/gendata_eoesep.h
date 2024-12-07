@@ -1,4 +1,4 @@
-STATIC int64_t coord_eoesep_sym(cube_t, uint32_t [static ESEP_MAX]);
+STATIC int64_t coord_eoesep_sym(cube_t, const uint32_t [static ESEP_MAX]);
 STATIC size_t gendata_esep_classes(
     uint32_t [static ESEP_MAX], uint16_t [static ESEP_CLASSES]);
 STATIC size_t gendata_eoesep(char [static EOESEP_FULLSIZE], uint8_t);
@@ -12,11 +12,12 @@ STATIC uint32_t gendata_eoesep_marksim(int64_t, uint8_t,
     uint8_t [static EOESEP_BUF], uint32_t [static ESEP_MAX]);
 STATIC bool gendata_eoesep_next(cube_t, uint8_t,
     uint8_t [static EOESEP_BUF], uint32_t [static ESEP_MAX]);
-STATIC uint8_t get_eoesep_pval(uint8_t *, int64_t);
+STATIC uint8_t get_eoesep_pval(const uint8_t *, int64_t);
+STATIC uint8_t get_eoesep_pval_cube(const void *, cube_t);
 STATIC void set_eoesep_pval(uint8_t *, int64_t, uint8_t);
 
 STATIC int64_t
-coord_eoesep_sym(cube_t c, uint32_t esep_classes[static ESEP_MAX])
+coord_eoesep_sym(cube_t c, const uint32_t esep_classes[static ESEP_MAX])
 {
 	uint8_t ttrep;
 	uint32_t edata, class;
@@ -75,6 +76,7 @@ gendata_eoesep(char buf[static EOESEP_FULLSIZE], uint8_t maxdepth)
 	if (buf == NULL)
 		goto gendata_eoesep_return_size;
 
+	LOG("Computing eoesep data\n");
 	memset(buf, 0xFF, EOESEP_FULLSIZE);
 	esep_classes = (uint32_t *)(buf + INFOSIZE);
 	buf8 = (uint8_t *)(buf + INFOSIZE + 4*ESEP_MAX);
@@ -245,9 +247,23 @@ gendata_eoesep_next(
 }
 
 STATIC uint8_t
-get_eoesep_pval(uint8_t *table, int64_t i)
+get_eoesep_pval(const uint8_t *table, int64_t i)
 {
 	return (table[EOESEP_INDEX(i)] & EOESEP_MASK(i)) >> EOESEP_SHIFT(i);
+}
+
+STATIC uint8_t
+get_eoesep_pval_cube(const void *data, cube_t c)
+{
+	int64_t coord;
+	const uint8_t *table;
+	const uint32_t *esep_classes;
+
+	esep_classes = (const uint32_t *)data;
+	table = (const uint8_t *)data + 4*ESEP_MAX;
+	coord = coord_eoesep_sym(c, esep_classes);
+
+	return get_eoesep_pval(table, coord);
 }
 
 STATIC void
