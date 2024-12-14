@@ -28,6 +28,7 @@
 #define FLAG_MAXMOVES     "-M"
 #define FLAG_OPTIMAL      "-O"
 #define FLAG_MAXSOLUTIONS "-n"
+#define FLAG_THREADS      "-t"
 
 #define INFO_CUBEFORMAT(cube) cube " must be given in B32 format."
 #define INFO_MOVESFORMAT "The accepted moves are U, D, R, L, F and B, " \
@@ -54,6 +55,7 @@ typedef struct {
 	unsigned maxmoves;
 	unsigned optimal;
 	unsigned maxsolutions;
+	unsigned threads;
 } args_t;
 
 static int64_t compose_exec(args_t *);
@@ -88,6 +90,7 @@ static bool set_minmoves(int, char **, args_t *);
 static bool set_maxmoves(int, char **, args_t *);
 static bool set_optimal(int, char **, args_t *);
 static bool set_maxsolutions(int, char **, args_t *);
+static bool set_threads(int, char **, args_t *);
 static bool set_id(int, char **, args_t *);
 
 static uint64_t rand64(void);
@@ -113,6 +116,7 @@ struct {
 	OPTION(FLAG_MAXMOVES, 1, set_maxmoves),
 	OPTION(FLAG_OPTIMAL, 1, set_optimal),
 	OPTION(FLAG_MAXSOLUTIONS, 1, set_maxsolutions),
+	OPTION(FLAG_THREADS, 1, set_threads),
 	OPTION(NULL, 0, NULL)
 };
  
@@ -193,9 +197,10 @@ struct {
 		"solve",
 		"solve " FLAG_SOLVER " SOLVER"
 		"[" FLAG_MINMOVES " n] [" FLAG_MAXMOVES " N] "
-		FLAG_CUBE " CUBE",
+		FLAG_CUBE " CUBE"
+		FLAG_THREADS " T",
 		"Solve the given CUBE using SOLVER, "
-		"using at least n and at most N moves. "
+		"using at least n and at most N moves, and T threads. "
 		INFO_CUBEFORMAT("CUBE"),
 		solve_exec
 	),
@@ -475,7 +480,7 @@ solve_exec(args_t *args)
 
 	ret = nissy_solve(
 	    args->cube, args->str_solver, nissflag, args->minmoves,
-	    args->maxmoves, args->maxsolutions, args->optimal,
+	    args->maxmoves, args->maxsolutions, args->optimal, args->threads,
 	    size, buf, SOLUTIONS_BUFFER_SIZE, solutions, stats);
 
 	free(buf);
@@ -557,6 +562,7 @@ parse_args(int argc, char **argv, args_t *args)
 		.maxmoves = 20,
 		.optimal = -1,
 		.maxsolutions = 1,
+		.threads = 0,
 	};
 
 	if (argc == 0) {
@@ -726,6 +732,12 @@ static bool
 set_maxsolutions(int argc, char **argv, args_t *args)
 {
 	return parse_uint(argv[0], &args->maxsolutions);
+}
+
+static bool
+set_threads(int argc, char **argv, args_t *args)
+{
+	return parse_uint(argv[0], &args->threads);
 }
 
 void

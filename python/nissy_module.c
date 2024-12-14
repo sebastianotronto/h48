@@ -306,7 +306,8 @@ checkdata(PyObject *self, PyObject *args)
 }
 
 PyDoc_STRVAR(solve_doc,
-"solve(cube, solver, nissflag, minmoves, maxmoves, maxsolutions, optimal, data)\n"
+"solve(cube, solver, nissflag, minmoves, maxmoves, maxsolutions,"
+" optimal, threads, data)\n"
 "--\n\n"
 "Solves the given 'cube' with the given 'solver' and other parameters."
 "See the documentation for libnissy (in nissy.h) for details.\n"
@@ -319,6 +320,7 @@ PyDoc_STRVAR(solve_doc,
 "  - maxsolution: the maximum number of solutions to return\n"
 "  - optimal: the largest number of moves from the shortest solution"
 "(set to -1 to ignore)\n"
+"  - threads: the number of threads to use (0 for default)\n"
 "  - data: a bytearray containing the data for the solver\n"
 "\n"
 "Returns: a list with the solutions found\n"
@@ -328,20 +330,20 @@ solve(PyObject *self, PyObject *args)
 {
 	long long result;
 	unsigned nissflag, minmoves, maxmoves, maxsolutions;
-	int optimal, i, j, k;
+	int optimal, i, j, k, threads;
 	const char *cube, *solver;
 	char solutions[MAX_SOLUTIONS_SIZE];
 	long long stats[NISSY_SIZE_SOLVE_STATS];
 	PyByteArrayObject *data;
 	PyObject *list, *item;
 
-	if (!PyArg_ParseTuple(args, "ssIIIIiY", &cube, &solver, &nissflag,
-	    &minmoves, &maxmoves, &maxsolutions, &optimal, &data))
+	if (!PyArg_ParseTuple(args, "ssIIIIiiY", &cube, &solver, &nissflag,
+	    &minmoves, &maxmoves, &maxsolutions, &optimal, &threads, &data))
 		return NULL;
 
 	Py_BEGIN_ALLOW_THREADS
 	result = nissy_solve(cube, solver, nissflag, minmoves, maxmoves,
-	    maxsolutions, optimal, data->ob_alloc, data->ob_bytes,
+	    maxsolutions, optimal, threads, data->ob_alloc, data->ob_bytes,
 	    MAX_SOLUTIONS_SIZE, solutions, stats);
 	Py_END_ALLOW_THREADS
 

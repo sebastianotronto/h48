@@ -489,6 +489,7 @@ nissy_solve(
 	unsigned maxmoves,
 	unsigned maxsols,
 	int optimal,
+	int threads,
 	unsigned long long data_size,
 	const char data[data_size],
 	unsigned sols_size,
@@ -499,6 +500,7 @@ nissy_solve(
 	cube_t c;
 	long long parse_ret;
 	uint8_t h, k;
+	int t;
 
 	if (solver == NULL) {
 		LOG("Error: 'solver' argument is NULL\n");
@@ -522,10 +524,22 @@ nissy_solve(
 		return 0;
 	}
 
+	t = threads == 0 ? THREADS : threads;
+	if (t < 0) {
+		LOG("solve: 'threads' is negative. Please provide a "
+		    "number of threads between 1 and %d\n", THREADS);
+		return NISSY_ERROR_OPTIONS;
+	} 
+	if (t > THREADS) {
+		LOG("solve: 'threads' is above the maximum value of %d\n",
+		    THREADS);
+		return NISSY_ERROR_OPTIONS;
+	}
+
 	if (!strncmp(solver, "h48", 3)) {
 		parse_ret = parse_h48_solver(solver, &h, &k);
 		if (parse_ret == NISSY_OK)
-			return solve_h48(c, minmoves, maxmoves, maxsols,
+			return solve_h48(c, minmoves, maxmoves, maxsols, t,
 			        data_size, data, sols_size, sols, stats);
 		else
 			return parse_ret;

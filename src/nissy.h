@@ -259,6 +259,9 @@ Parameters:
    maxsols   - The maximum number of solutions.
    optimal   - If set to a non-negative value, the maximum number of moves
                above the optimal solution length.
+   threads   - The number of threads to use. Must be less than or equalt to
+               the value of the compile-time constant THREADS. If set to 0,
+               the default value THREADS will be used.
    data_size - The size of the data buffer.
    data      - The data for the solver. Can be computed with gendata.
    sols_size - The size of the solutions buffer.
@@ -286,6 +289,7 @@ nissy_solve(
 	unsigned maxmoves,
 	unsigned maxsolutions,
 	int optimal,
+	int threads,
 	unsigned long long data_size,
 	const char data[data_size],
 	unsigned sols_size,

@@ -38,6 +38,7 @@ typedef struct {
 	int64_t nodes_visited;
 	int64_t table_fallbacks;
 	int64_t table_lookups;
+	int threads;
 	int ntasks;
 	solve_h48_task_t *tasks;
 	int thread_id;
@@ -62,7 +63,7 @@ STATIC int64_t solve_h48_maketasks(
     solve_h48_task_t [static STARTING_CUBES], int *);
 STATIC void *solve_h48_runthread(void *);
 STATIC int64_t solve_h48_dfs(dfsarg_solve_h48_t *);
-STATIC int64_t solve_h48(cube_t, int8_t, int8_t, uint64_t, uint64_t,
+STATIC int64_t solve_h48(cube_t, int8_t, int8_t, uint64_t, int, uint64_t,
     const void *, uint64_t, char *, long long [static NISSY_SIZE_SOLVE_STATS]);
 
 STATIC int64_t
@@ -316,7 +317,7 @@ solve_h48_runthread(void *arg)
 	dfsarg = (dfsarg_solve_h48_t *)arg;
 	cube = dfsarg->start_cube;
 
-	for (i = dfsarg->thread_id; i < dfsarg->ntasks; i += THREADS) {
+	for (i = dfsarg->thread_id; i < dfsarg->ntasks; i += dfsarg->threads) {
 		task = dfsarg->tasks[i];
 		memcpy(dfsarg->moves, task.moves, STARTING_MOVES);
 		dfsarg->cube = cube;
@@ -407,6 +408,7 @@ solve_h48(
 	int8_t minmoves,
 	int8_t maxmoves,
 	uint64_t maxsolutions,
+	int threads,
 	uint64_t data_size,
 	const void *data,
 	uint64_t solutions_size,
@@ -461,7 +463,7 @@ solve_h48(
 	fallback2 = h48data + offset;
 
 	symmask = symmetry_mask(cube);
-	for (i = 0; i < THREADS; i++) {
+	for (i = 0; i < threads; i++) {
 		arg[i] = (dfsarg_solve_h48_t) {
 			.start_cube = cube,
 			.cube = cube,
@@ -481,6 +483,7 @@ solve_h48(
 			.nodes_visited = 0,
 			.table_fallbacks = 0,
 			.table_lookups = 0,
+			.threads = threads,
 			.thread_id = i,
 			.solutions_mutex = &solutions_mutex,
 		};
@@ -505,7 +508,7 @@ solve_h48(
 	if (*arg[0].nsols >= (int64_t)maxsolutions)
 		goto solve_h48_done;
 
-	for (i = 0; i < THREADS; i++) {
+	for (i = 0; i < threads; i++) {
 		arg[i].ntasks = ntasks;
 		arg[i].tasks = tasks;
 	}
@@ -520,12 +523,12 @@ solve_h48(
 		if (d >= 10)
 			LOG("Found %" PRId64 " solutions, searching at depth %"
 			    PRId8 "\n", nsols, d);
-		for (i = 0; i < THREADS; i++) {
+		for (i = 0; i < threads; i++) {
 			arg[i].depth = d;
 			pthread_create(
 			    &thread[i], NULL, solve_h48_runthread, &arg[i]);
 		}
-		for (i = 0; i < THREADS; i++)
+		for (i = 0; i < threads; i++)
 			pthread_join(thread[i], NULL);
 	}
 
@@ -534,7 +537,7 @@ solve_h48_done:
 		goto solve_h48_error_solutions_buffer;
 
 	nodes_visited = table_lookups = table_fallbacks = 0;
-	for (i = 0; i < THREADS; i++) {
+	for (i = 0; i < threads; i++) {
 		nodes_visited += arg[i].nodes_visited;
 		table_fallbacks += arg[i].table_fallbacks;
 		table_lookups += arg[i].table_lookups;

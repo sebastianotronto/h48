@@ -14,7 +14,9 @@
 # The string "architecture" must be one of "AVX2", "NEON" or "PORTABLE".
 #
 # THREADS=n
-# Choose how many threads to use for multi-threaded oerations.
+# The maximum number of threads to use for multi-threaded operations.
+# This is also used as default value in case an operation allows
+# specifying how many threads to use.
 # By default, 8 threads will be used (TODO: in the future this will be
 # determined base on the system).
 # The number n must be between 1 and 128.
