@@ -14,8 +14,17 @@ char *buf;
 scramblesol_t s[] = {
 [0] = {
 	.scramble = "R' D R U R' D' R U'",
-	.solutions = "U R' D R U' R' D' R\n"
-	     "B' D2 B U' B' D2 B U\n",
+	.solutions =
+		"U R' D R U' R' D' R\n"
+		"B' D2 B U' B' D2 B U\n"
+},
+[1] = {
+	.scramble = "R' L U2 R L' B2",
+	.solutions =
+		"B2 R' L U2 R L'\n"
+		"R L' B2 R' L U2\n"
+		"R B2 R' L U2 L'\n"
+		"L' B2 R' L U2 R\n"
 },
 {
 	.scramble = "", /* End-of-list signal */
@@ -26,7 +35,7 @@ bool check_one(char *actual, char *expected) {
 	unsigned i;
 	size_t l_actual, l_expected;
 
-	l_actual = strlen(actual);
+	for (l_actual = 0; actual[l_actual] != '\n'; l_actual++) ;
 	l_expected = strlen(expected);
 	if (l_actual > l_expected)
 		return false;
@@ -42,15 +51,16 @@ bool check_all(char *actual, char *expected) {
 	unsigned i, found, n_expected;
 	size_t l_actual;
 
-	if (strlen(actual) != strlen(expected))
+	l_actual = strlen(actual);
+	if (l_actual != strlen(expected))
 		return false;
 
 	for (i = 0, n_expected = 0; expected[i]; i++)
 		n_expected += expected[i] == '\n';
 
-	l_actual = strlen(actual);
 	for (i = 0, found = 0; i < l_actual; i++)
-		found += check_one(&actual[i], expected);
+		if (i == 0 || actual[i-1] == '\n')
+			found += check_one(&actual[i], expected);
 
 	return found == n_expected;
 }
