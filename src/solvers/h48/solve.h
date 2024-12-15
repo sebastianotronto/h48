@@ -117,12 +117,14 @@ solve_h48_appendallsym(dfsarg_solve_h48_t *arg)
 			for (i = 0; i < n; i++)
 				if (all[k][i] != all[j][i])
 					eq = false;
+
 			/* If a solution was already found, we skip it */
-			if (eq)
-				continue;
+			if (eq) {
+				j--;
+				break;
+			}
 		}
 
-		/* If all is good, the solution is accepted */
 		j++;
 	}
 
