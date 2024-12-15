@@ -78,6 +78,9 @@ solve_h48_appendsolution(dfsarg_solve_h48_t *arg)
 
 	invertmoves(arg->premoves, arg->npremoves, arg->moves + arg->nmoves);
 
+	/* Sort parallel moves for consistency */
+	sortparallel(arg->moves, arg->nmoves + arg->npremoves);
+
 	/* Do not append the solution in case premoves cancel with normal */
 	if (arg->npremoves > 0 && !allowednextmove(arg->moves, arg->nmoves+1))
 		return 0;
@@ -106,10 +109,7 @@ solve_h48_appendallsym(dfsarg_solve_h48_t *arg)
 			all[j][i] = transform_move(arg->moves[i], t);
 
 		/* Sort parallel moves for consistency */
-		for (i = 0; i < n - 1; i++)
-			if (moveaxis(all[j][i]) == moveaxis(all[j][i+1]) &&
-			    movebase(all[j][i]) == movebase(all[j][i+1]) + 1)
-				SWAP(all[j][i], all[j][i+1]);
+		sortparallel(all[j], n);
 
 		/* Check for duplicate solutions */
 		for (k = 0; k < j; k++) {

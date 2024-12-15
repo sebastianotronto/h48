@@ -12,6 +12,7 @@ STATIC cube_t move(cube_t, uint8_t);
 STATIC cube_t premove(cube_t, uint8_t);
 STATIC uint8_t inverse_move(uint8_t);
 STATIC void invertmoves(uint8_t *, uint8_t, uint8_t *);
+STATIC void sortparallel(uint8_t *, uint8_t);
 
 STATIC int readmoves(const char *, int, uint8_t *);
 STATIC cube_t applymoves(cube_t, const char *);
@@ -228,6 +229,17 @@ invertmoves(uint8_t *moves, uint8_t nmoves, uint8_t *ret)
 		ret[i] = inverse_move(moves[nmoves - i - 1]);
 }
 #pragma GCC pop_options
+
+STATIC void
+sortparallel(uint8_t *moves, uint8_t n)
+{
+	uint8_t i;
+
+	for (i = 0; i < n-1; i++)
+		if (moveaxis(moves[i]) == moveaxis(moves[i+1]) &&
+		    movebase(moves[i]) == movebase(moves[i+1]) + 1)
+			SWAP(moves[i], moves[i+1]);
+}
 
 STATIC int
 readmoves(const char *buf, int max, uint8_t *ret)
