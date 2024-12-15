@@ -94,7 +94,7 @@ STATIC int64_t binomial[12][12] = {
 #define TRANS_BLm UINT8_C(47)
 
 #define NMOVES  (1+MOVE_B3)
-#define NTRANS  (1+TRANS_BLr)
+#define NTRANS  (1+TRANS_BLm)
 
 #define MM_ALLMOVES    UINT32_C(0x3FFFF)
 #define MM_NOHALFTURNS UINT32_C(0x2DB6D)
