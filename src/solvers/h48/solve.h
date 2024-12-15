@@ -23,6 +23,8 @@ typedef struct {
 	bool use_lb_inverse;
 	_Atomic int64_t *nsols;
 	int64_t maxsolutions;
+	int8_t *shortest_sol;
+	int8_t optimal;
 	uint8_t h;
 	uint8_t k;
 	uint8_t base;
@@ -38,7 +40,7 @@ typedef struct {
 	int64_t nodes_visited;
 	int64_t table_fallbacks;
 	int64_t table_lookups;
-	int threads;
+	int8_t threads;
 	int ntasks;
 	solve_h48_task_t *tasks;
 	int thread_id;
@@ -51,6 +53,7 @@ typedef struct {
 	uint8_t moves[STARTING_MOVES];
 	int8_t minmoves;
 	int8_t maxmoves;
+	int8_t *shortest_sol;
 } dfsarg_solve_h48_maketasks_t;
 
 STATIC int64_t solve_h48_appendsolution(dfsarg_solve_h48_t *);
@@ -63,8 +66,9 @@ STATIC int64_t solve_h48_maketasks(
     solve_h48_task_t [static STARTING_CUBES], int *);
 STATIC void *solve_h48_runthread(void *);
 STATIC int64_t solve_h48_dfs(dfsarg_solve_h48_t *);
-STATIC int64_t solve_h48(cube_t, int8_t, int8_t, uint64_t, int, uint64_t,
-    const void *, uint64_t, char *, long long [static NISSY_SIZE_SOLVE_STATS]);
+STATIC int64_t solve_h48(cube_t, int8_t, int8_t, uint64_t, int8_t, int8_t,
+    uint64_t, const void *, uint64_t, char *,
+    long long [static NISSY_SIZE_SOLVE_STATS]);
 
 STATIC int64_t
 solve_h48_appendsolution(dfsarg_solve_h48_t *arg)
@@ -73,7 +77,8 @@ solve_h48_appendsolution(dfsarg_solve_h48_t *arg)
 	int64_t ret;
 	uint64_t solstart;
 
-	if (*arg->nsols >= arg->maxsolutions)
+	if (*arg->nsols >= arg->maxsolutions ||
+	    arg->nmoves + arg->npremoves > *arg->shortest_sol + arg->optimal)
 		return 0;
 
 	solstart = *arg->solutions_used;
@@ -98,6 +103,8 @@ solve_h48_appendsolution(dfsarg_solve_h48_t *arg)
 		if (!solve_h48_appendchar(arg, '\n'))
 			goto solve_h48_appendsolution_error;
 		(*arg->nsols)++;
+		*arg->shortest_sol =
+		    MIN(*arg->shortest_sol, arg->nmoves + arg->npremoves);
 		ret++;
 	}
 
@@ -408,7 +415,8 @@ solve_h48(
 	int8_t minmoves,
 	int8_t maxmoves,
 	uint64_t maxsolutions,
-	int threads,
+	int8_t optimal,
+	int8_t threads,
 	uint64_t data_size,
 	const void *data,
 	uint64_t solutions_size,
@@ -417,7 +425,7 @@ solve_h48(
 )
 {
 	int i, ntasks, eoesep_table_index;
-	int8_t d;
+	int8_t d, shortest_sol;
 	_Atomic int64_t nsols;
 	dfsarg_solve_h48_t arg[THREADS];
 	solve_h48_task_t tasks[STARTING_CUBES];
@@ -463,12 +471,15 @@ solve_h48(
 	fallback2 = h48data + offset;
 
 	symmask = symmetry_mask(cube);
+	shortest_sol = MAXLEN+1;
 	for (i = 0; i < threads; i++) {
 		arg[i] = (dfsarg_solve_h48_t) {
 			.start_cube = cube,
 			.cube = cube,
 			.symmask0 = symmask,
 			.nsols = &nsols,
+			.shortest_sol = &shortest_sol,
+			.optimal = optimal,
 			.maxsolutions = maxsolutions,
 			.h = info.h48h,
 			.k = info.bits,
@@ -517,7 +528,8 @@ solve_h48(
 
 	for (
 	    d = MAX(minmoves, STARTING_MOVES + 1);
-	    d <= maxmoves && nsols < (int64_t)maxsolutions;
+	    d <= maxmoves && nsols < (int64_t)maxsolutions
+	        && !(nsols != 0 && d > shortest_sol + optimal);
 	    d++
 	) {
 		if (d >= 10)
