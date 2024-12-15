@@ -6,7 +6,7 @@ readtrans(const char buf[static NISSY_SIZE_TRANSFORMATION])
 {
 	uint8_t t;
 
-	for (t = 0; t < 48; t++)
+	for (t = 0; t < NTRANS; t++)
 		if (!strncmp(buf, transstr[t], 11))
 			return t;
 

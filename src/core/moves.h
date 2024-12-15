@@ -61,7 +61,7 @@ allowednextmove_mask(uint8_t *moves, uint8_t n)
 		result = disable_moves(result, (base1 - 1) * 3);
 
 	if (n == 1)
-	return result;
+		return result;
 
 	base2 = movebase(moves[n-2]);
 	axis2 = moveaxis(moves[n-2]);

@@ -101,7 +101,7 @@ gendata_cocsep_dfs(cocsep_dfs_arg_t *arg)
 
 		if (arg->rep != NULL)
 			arg->rep[*arg->n] = arg->cube;
-		for (t = 0, cc = 0; t < 48; t++) {
+		for (t = 0, cc = 0; t < NTRANS; t++) {
 			d = transform_corners(arg->cube, t);
 			j = coord_cocsep(d);
 			if (i == j && arg->selfsim != NULL)

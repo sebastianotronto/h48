@@ -50,7 +50,7 @@ gendata_esep_classes(
 		if (visited[i])
 			continue;
 		c = invcoord_esep(i);
-		for (t = 0; t < 48; t++) {
+		for (t = 0; t < NTRANS; t++) {
 			j = coord_esep(transform(c, t));
 			cl = class << UINT32_C(16);
 			ti = inverse_trans(t) << UINT32_C(8);
@@ -206,7 +206,7 @@ gendata_eoesep_marksim(
 	c = invcoord_eoesep(i);
 	for (m = 0; m < 18; m++) {
 		moved = move(c, m);
-		for (t = 0; t < 48; t++) {
+		for (t = 0; t < NTRANS; t++) {
 			transformed = transform(moved, t);
 			coord = coord_eoesep_sym(transformed, esep_classes);
 			pval = get_eoesep_pval(buf8, coord);
@@ -232,7 +232,7 @@ gendata_eoesep_next(
 	int64_t coord;
 	cube_t moved, transformed;
 
-	for (t = 0; t < 48; t++) {
+	for (t = 0; t < NTRANS; t++) {
 		transformed = transform(c, t);
 		for (m = 0; m < 18; m++) {
 			moved = move(transformed, m);

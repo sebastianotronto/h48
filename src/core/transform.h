@@ -387,7 +387,7 @@ symmetry_mask(cube_t cube)
 	uint64_t t, ret;
 	cube_t transformed;
 
-	for (t = 0, ret = 0; t < 48; t++) {
+	for (t = 0, ret = 0; t < NTRANS; t++) {
 		transformed = transform(cube, t);
 		ret |= ((uint64_t)equal(cube, transformed)) << t;
 	}

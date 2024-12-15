@@ -57,8 +57,7 @@ typedef struct {
 } dfsarg_solve_h48_maketasks_t;
 
 STATIC int64_t solve_h48_appendsolution(dfsarg_solve_h48_t *);
-STATIC bool solve_h48_appendmoves(dfsarg_solve_h48_t *, int8_t,
-    uint8_t *, uint8_t);
+STATIC int64_t solve_h48_appendallsym(dfsarg_solve_h48_t *);
 STATIC bool solve_h48_appendchar(dfsarg_solve_h48_t *, char);
 STATIC_INLINE bool solve_h48_stop(dfsarg_solve_h48_t *);
 STATIC int64_t solve_h48_maketasks(
@@ -73,15 +72,10 @@ STATIC int64_t solve_h48(cube_t, int8_t, int8_t, uint64_t, int8_t, int8_t,
 STATIC int64_t
 solve_h48_appendsolution(dfsarg_solve_h48_t *arg)
 {
-	uint8_t t;
-	int64_t ret;
-	uint64_t solstart;
-
 	if (*arg->nsols >= arg->maxsolutions ||
 	    arg->nmoves + arg->npremoves > *arg->shortest_sol + arg->optimal)
 		return 0;
 
-	solstart = *arg->solutions_used;
 	invertmoves(arg->premoves, arg->npremoves, arg->moves + arg->nmoves);
 
 	/* Do not append the solution in case premoves cancel with normal */
@@ -90,18 +84,63 @@ solve_h48_appendsolution(dfsarg_solve_h48_t *arg)
 	if (arg->npremoves > 1 && !allowednextmove(arg->moves, arg->nmoves+2))
 		return 0;
 
-	for (t = 0, ret = 0; t < 48 && *arg->nsols < arg->maxsolutions; t++) {
+	return solve_h48_appendallsym(arg);
+}
+
+STATIC int64_t
+solve_h48_appendallsym(dfsarg_solve_h48_t *arg)
+{
+	bool eq;
+	uint8_t t, i, j, k, n;
+	int64_t ret, strl, l;
+	char *m;
+	uint8_t all[NTRANS][MAXLEN];
+
+	n = arg->nmoves + arg->npremoves;
+
+	for (t = 0, j = 0; t < NTRANS; t++) {
 		if (!(arg->symmask0 & (UINT64_C(1) << (uint64_t)t)))
 			continue;
 
-		if (!solve_h48_appendmoves(arg, arg->nmoves + arg->npremoves,
-		    arg->moves, t))
-			goto solve_h48_appendsolution_error;
+		for (i = 0; i < n; i++)
+			all[j][i] = transform_move(arg->moves[i], t);
 
-		LOG("Solution found: %s\n", *arg->solutions + solstart);
+		/* Sort parallel moves for consistency */
+		for (i = 0; i < n - 1; i++)
+			if (moveaxis(all[j][i]) == moveaxis(all[j][i+1]) &&
+			    movebase(all[j][i]) == movebase(all[j][i+1]) + 1)
+				SWAP(all[j][i], all[j][i+1]);
+
+		/* Check for duplicate solutions */
+		for (k = 0; k < j; k++) {
+			eq = true;
+			for (i = 0; i < n; i++)
+				if (all[k][i] != all[j][i])
+					eq = false;
+			/* If a solution was already found, we skip it */
+			if (eq)
+				continue;
+		}
+
+		/* If all is good, the solution is accepted */
+		j++;
+	}
+
+	/* The solutions are appended */
+	for (k = 0; k < j && *arg->nsols < arg->maxsolutions; k++) {
+		l = arg->solutions_size - *arg->solutions_used;
+		m = *arg->solutions + *arg->solutions_used;
+		strl = writemoves(all[k], n, l, m);
+		if (strl < 0)
+			goto solve_h48_appendallsym_error;
+
+		LOG("Solution found: %s\n", m);
+
+		*arg->solutions_used += MAX(0, strl-1);
 
 		if (!solve_h48_appendchar(arg, '\n'))
-			goto solve_h48_appendsolution_error;
+			goto solve_h48_appendallsym_error;
+
 		(*arg->nsols)++;
 		*arg->shortest_sol =
 		    MIN(*arg->shortest_sol, arg->nmoves + arg->npremoves);
@@ -110,34 +149,9 @@ solve_h48_appendsolution(dfsarg_solve_h48_t *arg)
 
 	return ret;
 
-solve_h48_appendsolution_error:
+solve_h48_appendallsym_error:
 	LOG("Could not append solution to buffer: size too small\n");
 	return NISSY_ERROR_BUFFER_SIZE;
-}
-
-STATIC bool
-solve_h48_appendmoves(
-	dfsarg_solve_h48_t *arg,
-	int8_t n,
-	uint8_t *moves,
-	uint8_t t
-)
-{
-	int i;
-	int64_t strl;
-	uint8_t mm[MAXLEN];
-
-	for (i = 0; i < n; i++)
-		mm[i] = transform_move(moves[i], t);
-
-	strl = writemoves(mm, n, arg->solutions_size - *arg->solutions_used,
-	    *arg->solutions + *arg->solutions_used);
-
-	if (strl < 0)
-		return false;
-
-	*arg->solutions_used += MAX(0, strl-1);
-	return true;
 }
 
 STATIC bool
@@ -397,7 +411,7 @@ solve_h48_maketasks(
 
 		/* Avoid symmetry-equivalent moves from the starting cube */
 		if (maketasks_arg->nmoves == 1)
-			for (t = 0; t < 48; t++)
+			for (t = 0; t < NTRANS; t++)
 				if (solve_arg->symmask0 &
 				    (UINT64_C(1) << (uint64_t)t))
 					mm &= ~(UINT32_C(1) <<
