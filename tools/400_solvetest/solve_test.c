@@ -1,35 +1,12 @@
 #include "../tool.h"
+#include "scrambles.h"
 
-#define SOL_BUFFER_LEN 10000
-
-typedef struct {
-	char *scramble;
-	char *solutions;
-} scramblesol_t;
+#define SOL_BUFFER_LEN 100000
 
 char *solver;
 int64_t size = 0;
 char *buf;
 
-scramblesol_t s[] = {
-[0] = {
-	.scramble = "R' D R U R' D' R U'",
-	.solutions =
-		"U R' D R U' R' D' R\n"
-		"B' D2 B U' B' D2 B U\n"
-},
-[1] = {
-	.scramble = "R' L U2 R L' B2",
-	.solutions =
-		"B2 R' L U2 R L'\n"
-		"R L' B2 R' L U2\n"
-		"R B2 R' L U2 L'\n"
-		"L' B2 R' L U2 R\n"
-},
-{
-	.scramble = "", /* End-of-list signal */
-}
-};
 
 bool check_one(char *actual, char *expected) {
 	unsigned i;
@@ -83,14 +60,13 @@ void run(void) {
 		n = nissy_solve(cube, solver, NISSY_NISSFLAG_NORMAL,
 		    0, 20, 1, -1, 0, size, buf, SOL_BUFFER_LEN, sol, stats);
 		if (n == 0) {
-			printf("Error! No solution found for scramble %s\n",
-			    s[i].scramble);
+			printf("Error: no solution\n");
 			return;
 		}
 		if (check_one(sol, s[i].solutions)) {
-			printf("Single solution for scramble %d is correct\n", i);
+			printf("Single solution is correct\n");
 		} else {
-			printf("Error! Scramble %d: %s\n", i, s[i].scramble);
+			printf("Error!\n");
 			printf("Found solution(s):\n%s", sol);
 			printf("Valid solution(s):\n%s", s[i].solutions);
 			return;
@@ -105,9 +81,9 @@ void run(void) {
 		n = nissy_solve(cube, solver, NISSY_NISSFLAG_NORMAL,
 		    0, 20, 100, 0, 0, size, buf, SOL_BUFFER_LEN, sol, stats);
 		if (check_all(sol, s[i].solutions)) {
-			printf("All solutions for scramble %d are correct\n", i);
+			printf("All solutions are correct\n");
 		} else {
-			printf("Error! Scramble %s\n", s[i].scramble);
+			printf("Error!\n");
 			printf("Found solution(s):\n%s", sol);
 			printf("Valid solution(s):\n%s", s[i].solutions);
 			return;
