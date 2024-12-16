@@ -79,6 +79,12 @@ gendata_h48(gendata_h48_arg_t *arg)
 	h48size = INFOSIZE + H48_TABLESIZE(arg->h, arg->k);
 	fallbacksize = arg->k == 2 ? INFOSIZE + H48_TABLESIZE(0, 4) : 0;
 	fallback2size = EOESEP_FULLSIZE;
+
+	/* Add padding for 8-bit alignment */
+	h48size = 8 * DIV_ROUND_UP(h48size, 8);
+	fallbacksize = 8 * DIV_ROUND_UP(fallbacksize, 8);
+	fallback2size = 8 * DIV_ROUND_UP(fallback2size, 8);
+
 	size = cocsepsize + h48size + fallbacksize + fallback2size;
 
 	if (arg->buf == NULL)

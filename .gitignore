@@ -12,7 +12,7 @@ debugrun
 shell/lasttest.out
 shell/lasttest.err
 tables/*
-tables-old/*
+tables-old*/*
 test/*/runtest
 test/.DS_Store
 test/run

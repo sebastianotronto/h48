@@ -216,11 +216,14 @@ Parameters:
    data_size - The size of the data buffer. It is advised to use nissy_datasize
                to check how much memory is needed.
    data      - The return parameter for the generated data.
+               This buffer must have 8-byte alignment.
 
 Return values:
    NISSY_ERROR_INVALID_SOLVER - The given solver is not known.
    NISSY_ERROR_NULL_POINTER   - The 'solver' argument is null.
    NISSY_ERROR_UNKNOWN        - An error occurred while generating the data.
+   NISSY_ERROR_DATA           - The data buffer is invalid, for example because
+                                it is not 8-byte aligned.
    Any value >= 0             - The size of the data, in bytes.
 */
 long long
@@ -236,6 +239,7 @@ Check that the data is a valid data table for a solver.
 Parameters:
    data_size - The size of the data buffer.
    data      - The data for the solver. Can be computed with gendata.
+               This buffer must have 8-byte alignment.
 
 Return values:
    NISSY_OK         - The data is valid.
@@ -264,6 +268,7 @@ Parameters:
                the default value THREADS will be used.
    data_size - The size of the data buffer.
    data      - The data for the solver. Can be computed with gendata.
+               This buffer must have 8-byte alignment.
    sols_size - The size of the solutions buffer.
    sols      - The return parameter for the solutions. The solutions are
                separated by a '\n' (newline) and a '\0' (NULL character)
@@ -278,6 +283,7 @@ Return values:
    NISSY_ERROR_OPTIONS         - One or more of the given options are invalid.
    NISSY_ERROR_INVALID_SOLVER  - The given solver is not known.
    NISSY_ERROR_NULL_POINTER    - The 'solver' argument is null.
+   NISSY_ERROR_DATA            - The data buffer is invalid.
    Any value >= 0              - The number of solutions found.
 */
 long long

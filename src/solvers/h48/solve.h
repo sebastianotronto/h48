@@ -129,6 +129,7 @@ solve_h48_appendallsym(dfsarg_solve_h48_t *arg)
 	}
 
 	/* The solutions are appended */
+	ret = 0;
 	for (k = 0; k < j && *arg->nsols < arg->maxsolutions; k++) {
 		l = arg->solutions_size - *arg->solutions_used;
 		m = *arg->solutions + *arg->solutions_used;

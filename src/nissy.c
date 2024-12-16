@@ -79,6 +79,8 @@ checkdata(const char *buf, const tableinfo_t *info)
 	} else if (!strncmp(info->solver, "h48", 3)) {
 		getdistribution_h48((uint8_t *)buf + INFOSIZE, distr,
 		    info->h48h, info->bits);
+	} else if (!strncmp(info->solver, "eoesep data for h48", 19)) {
+		return true;
 	} else {
 		LOG("checkdata: unknown solver %s\n", info->solver);
 		return false;
@@ -367,6 +369,11 @@ nissy_datainfo(
 	tableinfo_t info;
 	long long ret;
 
+	if ((size_t)data % 8 != 0) {
+		LOG("nissy_datainfo: buffere is not 8-byte aligned\n");
+		return NISSY_ERROR_DATA;
+	}
+
 	ret = readtableinfo(data_size, data, &info);
 	if (ret != 0)
 		return ret;
@@ -439,6 +446,11 @@ nissy_gendata_unsafe(
 		return NISSY_ERROR_NULL_POINTER;
 	}
 
+	if ((size_t)data % 8 != 0) {
+		LOG("nissy_datainfo: buffere is not 8-byte aligned\n");
+		return NISSY_ERROR_DATA;
+	}
+
 	arg.buf_size = data_size;
 	arg.buf = data;
 	if (!strncmp(solver, "h48", 3)) {
@@ -462,6 +474,11 @@ nissy_checkdata(
 	char *buf;
 	tableinfo_t info;
 	int64_t err;
+
+	if ((size_t)data % 8 != 0) {
+		LOG("nissy_datainfo: buffere is not 8-byte aligned\n");
+		return NISSY_ERROR_DATA;
+	}
 
 	for (buf = (char *)data;
 	     (err = readtableinfo(data_size, buf, &info)) == NISSY_OK;
@@ -536,6 +553,11 @@ nissy_solve(
 		LOG("solve: 'threads' is above the maximum value of %d\n",
 		    THREADS);
 		return NISSY_ERROR_OPTIONS;
+	}
+
+	if ((size_t)data % 8 != 0) {
+		LOG("nissy_datainfo: buffere is not 8-byte aligned\n");
+		return NISSY_ERROR_DATA;
 	}
 
 	if (!strncmp(solver, "h48", 3)) {
