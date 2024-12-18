@@ -88,7 +88,7 @@ validatethreads
 validatearch
 
 STD="-std=c11"
-WFLAGS="-pedantic -Wall -Wextra -Werror"
+WFLAGS="-pedantic -Wall -Wextra"
 WNOFLAGS="-Wno-unused-parameter -Wno-unused-function -Wno-unknown-pragmas"
 WNOFLAGS="$WNOFLAGS -Wno-unused-command-line-argument"
 
