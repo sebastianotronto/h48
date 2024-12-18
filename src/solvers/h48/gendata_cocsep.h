@@ -1,8 +1,7 @@
 STATIC_INLINE bool gendata_cocsep_get_visited(const uint8_t *, int64_t);
 STATIC_INLINE void gendata_cocsep_set_visited(uint8_t *, int64_t);
 
-STATIC size_t gendata_cocsep(
-    char [static COCSEP_FULLSIZE], uint64_t *, cube_t *);
+STATIC size_t gendata_cocsep(char *, uint64_t *, cube_t *);
 STATIC uint32_t gendata_cocsep_dfs(cocsep_dfs_arg_t *);
 STATIC void getdistribution_cocsep(const uint32_t *, uint64_t [static 21]);
 
@@ -10,7 +9,7 @@ STATIC_INLINE int8_t get_h48_cdata(cube_t, const uint32_t *, uint32_t *);
 
 STATIC size_t
 gendata_cocsep(
-	char buf[static COCSEP_FULLSIZE],
+	char *buf,
 	uint64_t *selfsim,
 	cube_t *rep
 )

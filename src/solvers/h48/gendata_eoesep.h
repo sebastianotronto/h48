@@ -1,7 +1,7 @@
 STATIC int64_t coord_eoesep_sym(cube_t, const uint32_t [static ESEP_MAX]);
 STATIC size_t gendata_esep_classes(
     uint32_t [static ESEP_MAX], uint16_t [static ESEP_CLASSES]);
-STATIC size_t gendata_eoesep(char [static EOESEP_FULLSIZE], uint8_t);
+STATIC size_t gendata_eoesep(char *, uint8_t);
 STATIC uint32_t gendata_eoesep_bfs(uint8_t, uint8_t [static EOESEP_BUF],
     uint32_t [static ESEP_MAX], uint16_t [static ESEP_CLASSES]);
 STATIC uint32_t gendata_eoesep_fromnew(uint8_t, uint8_t [static EOESEP_BUF],
@@ -65,7 +65,7 @@ gendata_esep_classes(
 }
 
 STATIC size_t
-gendata_eoesep(char buf[static EOESEP_FULLSIZE], uint8_t maxdepth)
+gendata_eoesep(char *buf, uint8_t maxdepth)
 {
 	uint8_t *buf8, d;
 	uint16_t rep[ESEP_CLASSES];
