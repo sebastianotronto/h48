@@ -28,6 +28,7 @@ STATIC_INLINE uint8x8_t compose_corners_slim(uint8x8_t, uint8x8_t);
 
 /* TODO: optimize this (use intrinsics?) */
 STATIC_INLINE int
+popcount_u32(uint32_t x)
 {
 	int ret;
 
