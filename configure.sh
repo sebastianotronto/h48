@@ -24,10 +24,7 @@
 # SANITIZE="option1,option2,..."
 # Add the options "-fsanitize=option1", "-fsanitize=option2", ... to the
 # compilation command when compiling in debug mode.
-# By default, "-fsanitize=address" and "-fsanitize=undefined" will be used.
-# If this variable is set, the default is overridden. No check is performed
-# on the availability of any sanitizer used, make sure the ones you use are
-# available on your system.
+# By default, no sanitizer is used.
 #
 # Examples
 #
@@ -99,8 +96,6 @@ if [ -n "$SANITIZE" ]; then
 	for san in $(echo "$SANITIZE" | tr ',' '\n'); do
 		SAN="$SAN -fsanitize=$san"
 	done
-else
-	SAN="-fsanitize=address -fsanitize=undefined"
 fi
 LIBS="-lpthread"
 
