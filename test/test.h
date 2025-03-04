@@ -14,6 +14,7 @@
 #include "../src/solvers/h48/coordinate_macros.h"
 #include "../src/solvers/h48/map_types_macros.h"
 #include "../src/solvers/h48/gendata_types_macros.h"
+#include "../src/solvers/coord/coord_types_macros.h"
 
 #define STRLENMAX 10000
 

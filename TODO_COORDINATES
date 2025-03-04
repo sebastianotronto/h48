@@ -1,0 +1,7 @@
+- solver
+  - include NISS
+- test solver for EO
+- make solve parallelized
+- other coordinates
+  - gendata must handle symmetry
+- make gendata parallelized

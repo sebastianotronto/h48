@@ -99,6 +99,8 @@ STATIC int64_t binomial[12][12] = {
 #define MM_ALLMOVES    UINT32_C(0x3FFFF)
 #define MM_NOHALFTURNS UINT32_C(0x2DB6D)
 
+#define TM_ALLTRANS    UINT64_C(0xFFFFFFFFFFFF)
+
 #define CORNER_UFR      UINT8_C(0)
 #define CORNER_UBL      UINT8_C(1)
 #define CORNER_DFL      UINT8_C(2)
