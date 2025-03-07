@@ -10,6 +10,11 @@ STATIC coord_t coordinate_eo = {
 	.max = POW_2_11,
 	.trans_mask = TM_ALLTRANS,
 	.moves_mask = MM_ALLMOVES,
+	.axistrans = {
+		[AXIS_UD] = TRANS_FDr,
+		[AXIS_RL] = TRANS_URr,
+		[AXIS_FB] = TRANS_UFr,
+	},
 };
 
 STATIC uint64_t

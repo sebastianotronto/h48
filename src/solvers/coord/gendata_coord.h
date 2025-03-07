@@ -7,14 +7,16 @@ STATIC void set_coord_pval(const coord_t *, uint8_t *, uint64_t, uint8_t);
 STATIC size_t
 gendata_coordinate_name(const char *name, void *buf)
 {
-	int i;
+	coord_t *coord;
 
-	for (i = 0; all_coordinates[i] != NULL; i++)
-		if (strcmp(all_coordinates[i]->name, name) == 0)
-			return gendata_coordinate(all_coordinates[i], buf);
+	coord = parse_coord(name, strlen(name));
+	if (coord == NULL) {
+		LOG("Cannot generate data for coordinate '%s': not found\n",
+		    name);
+		return 0;
+	}
 
-	LOG("Cannot generate data for coordinate '%s': not found\n", name);
-	return 0;
+	return gendata_coordinate(coord, buf);
 }
 
 STATIC size_t

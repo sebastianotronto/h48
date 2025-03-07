@@ -10,4 +10,5 @@ typedef struct {
 	uint64_t max;
 	uint32_t moves_mask;
 	uint64_t trans_mask;
+	uint8_t axistrans[3];
 } coord_t;

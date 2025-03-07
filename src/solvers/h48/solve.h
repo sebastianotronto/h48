@@ -457,7 +457,7 @@ solve_h48(
 	pthread_t thread[THREADS];
 	pthread_mutex_t solutions_mutex;
 
-	if(readtableinfo_n(data_size, data, 2, &info) != NISSY_OK)
+	if (readtableinfo_n(data_size, data, 2, &info) != NISSY_OK)
 		goto solve_h48_error_data;
 
 	cocsepdata = (uint32_t *)((char *)data + INFOSIZE);
