@@ -23,9 +23,9 @@ typedef struct {
 } dfsarg_solve_coord_t;
 
 STATIC int64_t solve_coord(cube_t, coord_t *, uint8_t, uint8_t, uint8_t,
-    uint8_t, uint64_t, int, int, uint64_t, const void, uint64_t, char);
+    uint8_t, uint64_t, int, int, uint64_t, const void *, uint64_t, char *);
 STATIC int64_t solve_coord_dispatch(cube_t, const char *, uint8_t, uint8_t,
-    uint8_t, uint64_t, int, int, uint64_t, const void, uint64_t, char);
+    uint8_t, uint64_t, int, int, uint64_t, const void *, uint64_t, char *);
 STATIC bool solve_coord_appendchar(char *, uint64_t, uint64_t *, char);
 STATIC int64_t solve_coord_appendsolution(dfsarg_solve_coord_t *);
 STATIC int64_t solve_coord_dfs(dfsarg_solve_coord_t *);
@@ -138,7 +138,7 @@ solve_coord(
 	int optimal,
 	int threads,
 	uint64_t data_size,
-	const void data,
+	const void *data,
 	uint64_t sols_size,
 	char *sols
 )
@@ -162,7 +162,7 @@ solve_coord(
 		ptable = (uint8_t *)data + INFOSIZE;
 	} else {
 		/* Coordinate has extra data */
-		coord_data = data + INFOSIZE;
+		coord_data = (uint8_t *)data + INFOSIZE;
 		ptable = (uint8_t *)data + info.next + INFOSIZE;
 	}
 
