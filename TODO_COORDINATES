@@ -5,3 +5,5 @@
 - other coordinates
   - gendata must handle symmetry
 - make gendata parallelized
+
+- refactor common parts of coord and h48 solvers

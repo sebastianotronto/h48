@@ -1,7 +1,3 @@
-#include "coord_types_macros.h"
-#include "common.h"
-#include "gendata_coord.h"
-
 #define MAXLEN_COORDSOL 20
 
 typedef struct {

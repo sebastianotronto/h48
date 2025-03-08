@@ -1,3 +1,3 @@
 #include "tables.h"
 #include "h48/h48.h"
-#include "coord/coord_solve.h"
+#include "coord/coord.h"
