@@ -145,8 +145,7 @@ solve_h48_appendallsym(dfsarg_solve_h48_t *arg)
 			goto solve_h48_appendallsym_error;
 
 		(*arg->nsols)++;
-		*arg->shortest_sol =
-		    MIN(*arg->shortest_sol, arg->nmoves + arg->npremoves);
+		*arg->shortest_sol = MIN(*arg->shortest_sol, n);
 		ret++;
 	}
 
@@ -291,7 +290,7 @@ solve_h48_dfs(dfsarg_solve_h48_t *arg)
 	if (popcount_u32(mm_normal) <= popcount_u32(mm_inverse)) {
 		arg->nmoves++;
 		for (m = 0; m < 18; m++) {
-			if (!(mm_normal & (1 << m)))
+			if (!(mm_normal & (UINT32_C(1) << (uint32_t)m)))
 				continue;
 			arg->moves[arg->nmoves-1] = m;
 			arg->cube = move(backup_cube, m);
@@ -308,7 +307,7 @@ solve_h48_dfs(dfsarg_solve_h48_t *arg)
 	} else {
 		arg->npremoves++;
 		for (m = 0; m < 18; m++) {
-			if(!(mm_inverse & (1 << m)))
+			if(!(mm_inverse & (UINT32_C(1) << (uint32_t)m)))
 				continue;
 			arg->premoves[arg->npremoves-1] = m;
 			arg->inverse = move(backup_inverse, m);

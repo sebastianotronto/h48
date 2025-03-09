@@ -17,6 +17,7 @@
 #define FLAG_PERM         "-perm"
 #define FLAG_COMMAND      "-command"
 #define FLAG_STR_CUBE     "-cubestr"
+#define FLAG_SOLVE_OPTS   "-options"
 #define FLAG_FORMAT       "-format"
 #define FLAG_FORMAT_IN    "-fin"
 #define FLAG_FORMAT_OUT   "-fout"
@@ -44,6 +45,7 @@ typedef struct {
 	char cube_perm[22];
 	char *str_command;
 	char *str_cube;
+	char *str_options;
 	char *str_format;
 	char *str_format_in;
 	char *str_format_out;
@@ -79,6 +81,7 @@ static bool set_cube(int, char **, args_t *);
 static bool set_cube_perm(int, char **, args_t *);
 static bool set_str_command(int, char **, args_t *);
 static bool set_str_cube(int, char **, args_t *);
+static bool set_str_options(int, char **, args_t *);
 static bool set_str_format(int, char **, args_t *);
 static bool set_str_format_in(int, char **, args_t *);
 static bool set_str_format_out(int, char **, args_t *);
@@ -105,6 +108,7 @@ struct {
 	OPTION(FLAG_PERM, 1, set_cube_perm),
 	OPTION(FLAG_COMMAND, 1, set_str_command),
 	OPTION(FLAG_STR_CUBE, 1, set_str_cube),
+	OPTION(FLAG_SOLVE_OPTS, 1, set_str_options),
 	OPTION(FLAG_FORMAT, 1, set_str_format),
 	OPTION(FLAG_FORMAT_IN, 1, set_str_format_in),
 	OPTION(FLAG_FORMAT_OUT, 1, set_str_format_out),
@@ -197,6 +201,7 @@ struct {
 		"solve",
 		"solve " FLAG_SOLVER " SOLVER"
 		"[" FLAG_MINMOVES " n] [" FLAG_MAXMOVES " N] "
+		"[" FLAG_SOLVE_OPTS " options] "
 		FLAG_CUBE " CUBE"
 		FLAG_THREADS " T",
 		"Solve the given CUBE using SOLVER, "
@@ -208,6 +213,7 @@ struct {
 		"solve_scramble",
 		"solve_scramble " FLAG_SOLVER " SOLVER"
 		"[" FLAG_MINMOVES " n] [" FLAG_MAXMOVES " N] "
+		"[" FLAG_SOLVE_OPTS " options] "
 		FLAG_MOVES " MOVES",
 		"Solve the given SCRAMBLE using SOLVER, "
 		"using at least n and at most N moves. "
@@ -473,15 +479,15 @@ solve_exec(args_t *args)
 	fclose(file);
 	if (read != 1) {
   		fprintf(stderr, "Error reading data from file: "
-		    "fread() returned %zu instead of 1 when attempting to"
+		    "fread() returned %zu instead of 1 when attempting to "
 		    "read %" PRId64 " bytes from file %s\n", read, size, path);
-		return -2;
+		goto solve_exec_error;
 	}
 
 	ret = nissy_solve(
-	    args->cube, args->str_solver, nissflag, args->minmoves,
-	    args->maxmoves, args->maxsolutions, args->optimal, args->threads,
-	    size, buf, SOLUTIONS_BUFFER_SIZE, solutions, stats);
+	    args->cube, args->str_solver, args->str_options, nissflag,
+	    args->minmoves, args->maxmoves, args->maxsolutions, args->optimal,
+	    args->threads, size, buf, SOLUTIONS_BUFFER_SIZE, solutions, stats);
 
 	free(buf);
 
@@ -491,6 +497,10 @@ solve_exec(args_t *args)
 		printf("%s", solutions);
 
 	return 0;
+
+solve_exec_error:
+	free(buf);
+	return -2;
 }
 
 static int64_t
@@ -650,6 +660,14 @@ static bool
 set_str_cube(int argc, char **argv, args_t *args)
 {
 	args->str_cube = argv[0];
+
+	return true;
+}
+
+static bool
+set_str_options(int argc, char **argv, args_t *args)
+{
+	args->str_options = argv[0];
 
 	return true;
 }

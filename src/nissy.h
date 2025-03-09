@@ -257,6 +257,9 @@ Solve the given cube using the given solver and options.
 Parameters:
    cube      - The cube to solver, in B32 format.
    solver    - The name of the solver.
+   options   - Extra options for the solver. Some solver require additional
+               parameters, some do not. For example, a coordinate solver
+               may require an "axis" (UD, FB, RL) as a parameter.
    nissflag  - The flags for NISS (linear, inverse, mixed, or combinations).
    minmoves  - The minimum number of moves for a solution.
    maxmoves  - The maximum number of moves for a solution.
@@ -290,6 +293,7 @@ long long
 nissy_solve(
 	const char cube[static NISSY_SIZE_B32],
 	const char *solver, 
+	const char *options,
 	unsigned nissflag,
 	unsigned minmoves,
 	unsigned maxmoves,

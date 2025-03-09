@@ -451,14 +451,16 @@ nissy_gendata_unsafe(
 		return NISSY_ERROR_DATA;
 	}
 
-	arg.buf_size = data_size;
-	arg.buf = data;
 	if (!strncmp(solver, "h48", 3)) {
+		arg.buf_size = data_size;
+		arg.buf = data;
 		parse_ret = parse_h48_solver(solver, &arg.h, &arg.k);
 		arg.maxdepth = 20;
 		if (parse_ret != NISSY_OK)
 			return parse_ret;
 		return gendata_h48(&arg);
+	} else if (!strncmp(solver, "coord_", 6)) {
+		return gendata_coord_dispatch(solver+6, data);
 	} else {
 		LOG("gendata: unknown solver %s\n", solver);
 		return NISSY_ERROR_INVALID_SOLVER;
@@ -501,6 +503,7 @@ long long
 nissy_solve(
 	const char cube[static NISSY_SIZE_B32],
 	const char *solver, 
+	const char *options,
 	unsigned nissflag,
 	unsigned minmoves,
 	unsigned maxmoves,
@@ -536,6 +539,8 @@ nissy_solve(
 		return NISSY_ERROR_UNSOLVABLE_CUBE;
 	}
 
+/* TODO: checks for minmoves, maxmoves, nissflag */
+
 	if (maxsols == 0) {
 		LOG("solve: 'maxsols' is 0, returning no solution\n");
 		return 0;
@@ -562,11 +567,15 @@ nissy_solve(
 
 	if (!strncmp(solver, "h48", 3)) {
 		parse_ret = parse_h48_solver(solver, &h, &k);
-		if (parse_ret == NISSY_OK)
-			return solve_h48(c, minmoves, maxmoves, maxsols, opt,
-				t, data_size, data, sols_size, sols, stats);
-		else
+		if (parse_ret != NISSY_OK)
 			return parse_ret;
+/* TODO give warning if options is not NULL or empty? */
+		return solve_h48(c, minmoves, maxmoves, maxsols,
+		    opt, t, data_size, data, sols_size, sols, stats);
+	} else if (!strncmp(solver, "coord_", 6)) {
+		return solve_coord_dispatch(c, solver + 6, options, nissflag,
+		    minmoves, maxmoves, maxsols, opt, t, data_size, data,
+		    sols_size, sols);
 	} else {
 		LOG("solve: unknown solver '%s'\n", solver);
 		return NISSY_ERROR_INVALID_SOLVER;

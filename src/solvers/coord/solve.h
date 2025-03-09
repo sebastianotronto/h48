@@ -20,8 +20,9 @@ typedef struct {
 
 STATIC int64_t solve_coord(cube_t, coord_t *, uint8_t, uint8_t, uint8_t,
     uint8_t, uint64_t, int, int, uint64_t, const void *, uint64_t, char *);
-STATIC int64_t solve_coord_dispatch(cube_t, const char *, uint8_t, uint8_t,
-    uint8_t, uint64_t, int, int, uint64_t, const void *, uint64_t, char *);
+STATIC int64_t solve_coord_dispatch(cube_t, const char *, const char *,
+     uint8_t, uint8_t, uint8_t, uint64_t, int, int, uint64_t, const void *,
+     uint64_t, char *);
 STATIC bool solve_coord_appendchar(char *, uint64_t, uint64_t *, char);
 STATIC int64_t solve_coord_appendsolution(dfsarg_solve_coord_t *);
 STATIC int64_t solve_coord_dfs(dfsarg_solve_coord_t *);
@@ -29,7 +30,9 @@ STATIC int64_t solve_coord_dfs(dfsarg_solve_coord_t *);
 STATIC int64_t
 solve_coord_appendsolution(dfsarg_solve_coord_t *arg)
 {
-	uint8_t i, t, tmoves[MAXLEN_COORDSOL];
+	uint8_t i, t, l, tmoves[MAXLEN_COORDSOL];
+	char *m;
+	int64_t strl;
 
 	if (*arg->nsols >= arg->maxsolutions ||
 	    arg->nmoves > *arg->shortest_sol + arg->optimal)
@@ -41,9 +44,26 @@ solve_coord_appendsolution(dfsarg_solve_coord_t *arg)
 	for (i = 0; i < arg->nmoves; i++)
 		tmoves[i] = transform_move(arg->moves[i], t);
 
-	/* TODO append tmoves[] */
+	l = arg->solutions_size - *arg->solutions_used;
+	m = *arg->solutions + *arg->solutions_used;
+	strl = writemoves(tmoves, arg->nmoves, l, m);
+	if (strl < 0)
+		goto solve_coord_appendsolution_error;
+
+	*arg->solutions_used += MAX(0, strl-1);
+
+	if (!solve_coord_appendchar(
+	    *arg->solutions, arg->solutions_size, arg->solutions_used, '\n'))
+		goto solve_coord_appendsolution_error;
+
+	(*arg->nsols)++;
+	*arg->shortest_sol = MIN(*arg->shortest_sol, arg->nmoves);
 
 	return 1;
+
+solve_coord_appendsolution_error:
+	LOG("Could not append solution to buffer: size too small\n");
+	return NISSY_ERROR_BUFFER_SIZE;
 }
 
 STATIC bool
@@ -61,8 +81,11 @@ solve_coord_appendchar(char *s, uint64_t s_size, uint64_t *s_used, char c)
 STATIC int64_t
 solve_coord_dfs(dfsarg_solve_coord_t *arg)
 {
+	uint8_t m, pval;
+	uint32_t mm;
 	uint64_t coord;
-	uint8_t pval;
+	int64_t n, ret;
+	cube_t backup_cube;
 
 	coord = arg->coord->coord(arg->cube, arg->coord_data);
 
@@ -76,8 +99,23 @@ solve_coord_dfs(dfsarg_solve_coord_t *arg)
 	if (arg->nmoves + pval > arg->depth)
 		return 0;
 
-	/* TODO recursive call */
-	/* Is allowednextmove available here? */
+	backup_cube = arg->cube;
+
+	ret = 0;
+	mm = allowednextmove_mask(arg->moves, arg->nmoves);
+	arg->nmoves++;
+	for (m = 0; m < 18; m++) {
+		if (!(mm & (1 << m)))
+			continue;
+
+		arg->moves[arg->nmoves-1] = m;
+		arg->cube = move(backup_cube, m);
+		n = solve_coord_dfs(arg);
+		if (n < 0)
+			return n;
+		ret += n;
+	}
+	arg->nmoves--;
 
 	return 0;
 }
@@ -85,7 +123,8 @@ solve_coord_dfs(dfsarg_solve_coord_t *arg)
 STATIC int64_t
 solve_coord_dispatch(
 	cube_t cube,
-	const char *coord_axis,
+	const char *coordstr,
+	const char *options,
 	uint8_t nissflag,
 	uint8_t minmoves,
 	uint8_t maxmoves,
@@ -98,23 +137,19 @@ solve_coord_dispatch(
 	char *sols
 )
 {
-	int i, n;
 	coord_t *coord;
 	uint8_t axis;
 
-	n = strlen(coord_axis);
-	for (i = 0; coord_axis[i] != ' ' && coord_axis[i] != '\0'; i++) ;
-
-	coord = parse_coord(coord_axis, i);
-	axis = parse_axis(coord_axis + i + 1, n - i - 1);
+	coord = parse_coord(coordstr, strlen(coordstr));
+	axis = parse_axis(options, strlen(options));
 
 	if (coord == NULL) {
-		LOG("Could not parse coordinate '%s'\n", coord_axis);
+		LOG("Could not parse coordinate '%s'\n", coordstr);
 		return NISSY_ERROR_INVALID_SOLVER;
 	}
 
 	if (axis == UINT8_ERROR) {
-		LOG("Could not parse axis from '%s'\n", coord_axis);
+		LOG("Could not parse axis from options '%s'\n", options);
 		return NISSY_ERROR_INVALID_SOLVER;
 	}
 
@@ -165,8 +200,8 @@ solve_coord(
 	nsols = 0;
 	sols_used = 0;
 	shortest_sol = MAXLEN_COORDSOL + 1;
-	c = transform(cube, t);
 	t = coord->axistrans[axis];
+	c = transform(cube, t);
 
 	arg = (dfsarg_solve_coord_t) {
 		.cube = c,

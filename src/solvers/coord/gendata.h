@@ -1,26 +1,26 @@
-STATIC size_t gendata_coordinate(const coord_t *, void *);
-STATIC size_t gendata_coordinate_name(const char *, void *);
-STATIC tableinfo_t genptable_coordinate(const coord_t *, const void *, uint8_t *);
+STATIC size_t gendata_coord(const coord_t *, void *);
+STATIC int64_t gendata_coord_dispatch(const char *, void *);
+STATIC tableinfo_t genptable_coord(const coord_t *, const void *, uint8_t *);
 STATIC uint8_t get_coord_pval(const coord_t *, const uint8_t *, uint64_t);
 STATIC void set_coord_pval(const coord_t *, uint8_t *, uint64_t, uint8_t);
 
-STATIC size_t
-gendata_coordinate_name(const char *name, void *buf)
+STATIC int64_t
+gendata_coord_dispatch(const char *coordstr, void *buf)
 {
 	coord_t *coord;
 
-	coord = parse_coord(name, strlen(name));
+	coord = parse_coord(coordstr, strlen(coordstr));
+
 	if (coord == NULL) {
-		LOG("Cannot generate data for coordinate '%s': not found\n",
-		    name);
-		return 0;
+		LOG("Could not parse coordinate '%s'\n", coord);
+		return NISSY_ERROR_INVALID_SOLVER;
 	}
 
-	return gendata_coordinate(coord, buf);
+	return (int64_t)gendata_coord(coord, buf);
 }
 
 STATIC size_t
-gendata_coordinate(const coord_t *coord, void *buf)
+gendata_coord(const coord_t *coord, void *buf)
 {
 	uint64_t coord_dsize, tablesize, ninfo;
 	void *pruningbuf, *coord_data;
@@ -33,7 +33,7 @@ gendata_coordinate(const coord_t *coord, void *buf)
 	tablesize = DIV_ROUND_UP(coord->max, 2);
 
 	if (buf == NULL)
-		goto gendata_coordinate_return_size;
+		goto gendata_coord_return_size;
 
 	if (ninfo == 2) {
 		coord_data_info = (tableinfo_t) {
@@ -62,15 +62,15 @@ gendata_coordinate(const coord_t *coord, void *buf)
 	}
 
 	table = ((uint8_t *)pruningbuf) + INFOSIZE;
-	pruning_info = genptable_coordinate(coord, coord_data, table);
+	pruning_info = genptable_coord(coord, coord_data, table);
 	writetableinfo(&pruning_info, INFOSIZE + tablesize, pruningbuf);
 
-gendata_coordinate_return_size:
+gendata_coord_return_size:
 	return ninfo * INFOSIZE + coord_dsize + tablesize;
 }
 
 STATIC tableinfo_t
-genptable_coordinate(const coord_t *coord, const void *data, uint8_t *table)
+genptable_coord(const coord_t *coord, const void *data, uint8_t *table)
 {
 	uint64_t tablesize, i, j, d, tot;
 	tableinfo_t info;

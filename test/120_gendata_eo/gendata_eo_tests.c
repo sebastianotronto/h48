@@ -17,7 +17,7 @@ Pruning table values (from nissy):
 
 char buf[FULLSIZE];
 
-size_t gendata_coordinate_name(const char *, void *);
+size_t gendata_coord_dispatch(const char *, void *);
 bool readtableinfo(uint64_t, const char *, tableinfo_t *);
 
 void run(void) {
@@ -25,7 +25,7 @@ void run(void) {
 	size_t result;
 	tableinfo_t info;
 
-	result = gendata_coordinate_name("EO", buf);
+	result = gendata_coord_dispatch("EO", buf);
 	if (readtableinfo(FULLSIZE, buf, &info) != NISSY_OK) {
 		printf("Error reading info from table\n");
 		return;

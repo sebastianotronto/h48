@@ -1,4 +1,16 @@
-- solver (from TODOs in appending solution)
+- coord solver
+  - add new parameter to solve(): options (char *)
+    - fix all usages
+      x tests
+      x shell
+      - tools
+      - python bindings
+      - document what to do when changing interface?
+    - where do I document which solvers take which parameters?
+      now that I am implementing more solvers I need an extra
+      document in doc/
+  - in nissy.c, check for minmoves, maxmoves and nissflag (must be in range)
+  - add a dispatcher in solvers.h?
 - test solver for EO
 - add NISS (and add tests for NISS EO)
 - make solve parallelized
@@ -7,3 +19,4 @@
 - make gendata parallelized
 
 - refactor common parts of coord and h48 solvers
+- move parse_h48 to h48 module?
