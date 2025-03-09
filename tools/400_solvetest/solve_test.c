@@ -57,7 +57,7 @@ void run(void) {
 			printf("Invalid scramble\n");
 			continue;
 		}
-		n = nissy_solve(cube, solver, NISSY_NISSFLAG_NORMAL,
+		n = nissy_solve(cube, solver, "", NISSY_NISSFLAG_NORMAL,
 		    0, 20, 1, -1, 0, size, buf, SOL_BUFFER_LEN, sol, stats);
 		if (n == 0) {
 			printf("Error: no solution\n");
@@ -78,7 +78,7 @@ void run(void) {
 			printf("Invalid scramble\n");
 			continue;
 		}
-		n = nissy_solve(cube, solver, NISSY_NISSFLAG_NORMAL,
+		n = nissy_solve(cube, solver, "", NISSY_NISSFLAG_NORMAL,
 		    0, 20, 100, 0, 0, size, buf, SOL_BUFFER_LEN, sol, stats);
 		if (check_all(sol, s[i].solutions)) {
 			printf("All solutions are correct\n");
