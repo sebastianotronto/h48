@@ -4,12 +4,11 @@
     - fix
   - h48 solve dispatch: move "h7k2" part to "options"?
     - it makes sense, but breaks the rule "solver == table"
-    - if so, adjust tools that use nissy_solve()
   - add new parameter to solve(): options (char *)
     - fix all usages
       x tests
       x shell
-      x tools
+      - tools (after deciding if refactoring h48 solve dispatch)
       x python bindings
       - document what to do when changing interface?
     - where do I document which solvers take which parameters?
