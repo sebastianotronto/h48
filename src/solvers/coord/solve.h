@@ -20,9 +20,8 @@ typedef struct {
 
 STATIC int64_t solve_coord(cube_t, coord_t *, uint8_t, uint8_t, uint8_t,
     uint8_t, uint64_t, int, int, uint64_t, const void *, uint64_t, char *);
-STATIC int64_t solve_coord_dispatch(cube_t, const char *, const char *,
-     uint8_t, uint8_t, uint8_t, uint64_t, int, int, uint64_t, const void *,
-     uint64_t, char *);
+STATIC int64_t solve_coord_dispatch(cube_t, const char *, uint8_t, uint8_t,
+     uint8_t, uint64_t, int, int, uint64_t, const void *, uint64_t, char *);
 STATIC bool solve_coord_appendchar(char *, uint64_t, uint64_t *, char);
 STATIC int64_t solve_coord_appendsolution(dfsarg_solve_coord_t *);
 STATIC int64_t solve_coord_dfs(dfsarg_solve_coord_t *);
@@ -123,8 +122,7 @@ solve_coord_dfs(dfsarg_solve_coord_t *arg)
 STATIC int64_t
 solve_coord_dispatch(
 	cube_t cube,
-	const char *coordstr,
-	const char *options,
+	const char *coord_and_axis,
 	uint8_t nissflag,
 	uint8_t minmoves,
 	uint8_t maxmoves,
@@ -140,16 +138,16 @@ solve_coord_dispatch(
 	coord_t *coord;
 	uint8_t axis;
 
-	coord = parse_coord(coordstr, strlen(coordstr));
-	axis = parse_axis(options, strlen(options));
+	parse_coord_and_axis(
+	    coord_and_axis, strlen(coord_and_axis), &coord, &axis);
 
 	if (coord == NULL) {
-		LOG("Could not parse coordinate '%s'\n", coordstr);
+		LOG("Could not parse coordinate from '%s'\n", coord_and_axis);
 		return NISSY_ERROR_INVALID_SOLVER;
 	}
 
 	if (axis == UINT8_ERROR) {
-		LOG("Could not parse axis from options '%s'\n", options);
+		LOG("Could not parse axis from '%s'\n", coord_and_axis);
 		return NISSY_ERROR_INVALID_SOLVER;
 	}
 

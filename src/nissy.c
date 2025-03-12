@@ -503,7 +503,6 @@ long long
 nissy_solve(
 	const char cube[static NISSY_SIZE_B32],
 	const char *solver, 
-	const char *options,
 	unsigned nissflag,
 	unsigned minmoves,
 	unsigned maxmoves,
@@ -569,11 +568,10 @@ nissy_solve(
 		parse_ret = parse_h48_solver(solver, &h, &k);
 		if (parse_ret != NISSY_OK)
 			return parse_ret;
-/* TODO give warning if options is not NULL or empty? */
 		return solve_h48(c, minmoves, maxmoves, maxsols,
 		    opt, t, data_size, data, sols_size, sols, stats);
 	} else if (!strncmp(solver, "coord_", 6)) {
-		return solve_coord_dispatch(c, solver + 6, options, nissflag,
+		return solve_coord_dispatch(c, solver + 6, nissflag,
 		    minmoves, maxmoves, maxsols, opt, t, data_size, data,
 		    sols_size, sols);
 	} else {

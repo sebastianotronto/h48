@@ -9,7 +9,7 @@ gendata_coord_dispatch(const char *coordstr, void *buf)
 {
 	coord_t *coord;
 
-	coord = parse_coord(coordstr, strlen(coordstr));
+	parse_coord_and_axis(coordstr, strlen(coordstr), &coord, NULL);
 
 	if (coord == NULL) {
 		LOG("Could not parse coordinate '%s'\n", coord);
