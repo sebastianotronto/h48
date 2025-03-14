@@ -3,7 +3,7 @@
 #define COORD_MASK(i)  (UINT8_C(0xF) << COORD_SHIFT(i))
 
 typedef struct {
-	char name[255];
+	const char name[255];
 	uint64_t (*coord)(cube_t, const void *);
 	cube_t (*cube)(uint64_t, const void *);
 	size_t (*gendata)(void *);

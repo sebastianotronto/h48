@@ -7,6 +7,7 @@ STATIC void append_coord_name(const coord_t *, char *);
 STATIC coord_t *parse_coord(const char *, int);
 STATIC uint8_t parse_axis(const char *, int);
 STATIC void parse_coord_and_axis(const char *, int, coord_t **, uint8_t *);
+STATIC int64_t dataid_coord(const char *, char [static NISSY_DATAID_SIZE]);
 
 STATIC void
 append_coord_name(const coord_t *coord, char *str)
@@ -60,4 +61,21 @@ parse_coord_and_axis(const char *str, int n, coord_t **coord, uint8_t *axis)
 
 	if (axis != NULL)
 		*axis = i == n ? UINT8_ERROR : parse_axis(str+i+1, n-i-1);
+}
+
+STATIC int64_t
+dataid_coord(const char *ca, char dataid[static NISSY_DATAID_SIZE])
+{
+	coord_t *c;
+
+	parse_coord_and_axis(ca, strlen(ca), &c, NULL);
+
+	if (c == NULL) {
+		LOG("dataid_coord: cannot parse coordinate from '%s'\n", ca);
+		return NISSY_ERROR_INVALID_SOLVER;
+	}
+
+	strcpy(dataid, c->name);
+
+	return NISSY_OK;
 }

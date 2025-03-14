@@ -33,7 +33,7 @@ void run(void) {
 }
 
 int main(int argc, char **argv) {
-	char filename[255], *scrfilename;
+	char filename[255], dataid[NISSY_DATAID_SIZE], *scrfilename;
 	FILE *scrfile;
 
 	if (argc < 3) {
@@ -52,7 +52,7 @@ int main(int argc, char **argv) {
 	if (getdata(solver, &buf, filename) != 0)
 		return 1;
 
-	size = nissy_datasize(solver);
+	size = nissy_solverinfo(solver, dataid);
 
 	if ((scrfile = fopen(scrfilename, "r")) == NULL) {
 		printf("Error: could not read given file '%s'.\n",

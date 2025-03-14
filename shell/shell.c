@@ -65,7 +65,7 @@ static int64_t applytrans_exec(args_t *);
 static int64_t frommoves_exec(args_t *);
 static int64_t convert_exec(args_t *);
 static int64_t randomcube_exec(args_t *);
-static int64_t datasize_exec(args_t *);
+static int64_t solverinfo_exec(args_t *);
 static int64_t gendata_exec(args_t *);
 static int64_t solve_exec(args_t *);
 static int64_t solve_scramble_exec(args_t *);
@@ -180,11 +180,11 @@ struct {
 		randomcube_exec
 	),
 	COMMAND(
-		"datasize",
-		"datasize " FLAG_SOLVER " SOLVER",
-		"Return the size in bytes of the data table used by "
-		"SOLVER when called with the given OPTIONS.",
-		datasize_exec
+		"solverinfo",
+		"solverinfo " FLAG_SOLVER " SOLVER",
+		"Return the size in bytes and the id of the data table "
+		"used by SOLVER when called with the given OPTIONS.",
+		solverinfo_exec
 	),
 	COMMAND(
 		"gendata",
@@ -340,14 +340,15 @@ randomcube_exec(args_t *args)
 }
 
 static int64_t
-datasize_exec(args_t *args)
+solverinfo_exec(args_t *args)
 {
 	int64_t ret;
+	char buf[NISSY_DATAID_SIZE];
 
-	ret = nissy_datasize(args->str_solver);
+	ret = nissy_solverinfo(args->str_solver, buf);
 	if (ret < 0)
 		fprintf(stderr, "Unknown error (make sure solver is valid)\n");
-	printf("%" PRId64 "\n", ret);
+	printf("%" PRId64 "\n%s\n", ret, buf);
 
 	return ret;
 }
@@ -357,14 +358,22 @@ gendata_exec(args_t *args)
 {
 	int i;
 	FILE *file;
-	char *buf, path[MAX_PATH_LENGTH];
+	char *buf, path[MAX_PATH_LENGTH], dataid[NISSY_DATAID_SIZE];
 	int64_t ret, size;
 	size_t written;
+
+	size = nissy_solverinfo(args->str_solver, dataid);
+
+	if (size < 0) {
+		fprintf(stderr, "gendata: unknown solver %s\n",
+		    args->str_solver);
+		return -3;
+	}
 
 	/* TODO: should give warning if overwriting existing file */
 	for (i = 0; tablepaths[i] != NULL; i++) {
 		strcpy(path, tablepaths[i]);
-		strcat(path, args->str_solver);
+		strcat(path, dataid);
 		file = fopen(path, "wb");
 		if (file != NULL)
 			break;
@@ -374,16 +383,6 @@ gendata_exec(args_t *args)
 		fprintf(stderr, "Cannot write data to file\n");
 		fclose(file);
 		return -2;
-	}
-
-	size = nissy_datasize(args->str_solver);
-
-	if (size < 0) {
-		fprintf(stderr,
-		    "Unknown error in retrieving data size"
-		    "(make sure solver is valid)\n");
-		fclose(file);
-		return -3;
 	}
 
 	buf = malloc(size);
@@ -427,15 +426,24 @@ solve_exec(args_t *args)
 	uint8_t nissflag;
 	FILE *file;
 	char *buf, solutions[SOLUTIONS_BUFFER_SIZE], path[MAX_PATH_LENGTH];
+	char dataid[NISSY_DATAID_SIZE];
 	long long stats[NISSY_SIZE_SOLVE_STATS];
 	int64_t ret, gendata_ret, size;
 	size_t read;
 
 	nissflag = NISSY_NISSFLAG_NORMAL; /* TODO: parse str_nisstype */
 
+	size = nissy_solverinfo(args->str_solver, dataid);
+
+	if (size < 0) {
+		fprintf(stderr, "solve: unknown solver %s\n",
+		    args->str_solver);
+		return size;
+	}
+
 	for (i = 0; tablepaths[i] != NULL; i++) {
 		strcpy(path, tablepaths[i]);
-		strcat(path, args->str_solver);
+		strcat(path, dataid);
 		file = fopen(path, "rb");
 		if (file != NULL)
 			break;
@@ -454,7 +462,7 @@ solve_exec(args_t *args)
 	if (file == NULL) {
 		for (i = 0; tablepaths[i] != NULL; i++) {
 			strcpy(path, tablepaths[i]);
-			strcat(path, args->str_solver);
+			strcat(path, dataid);
 			file = fopen(path, "rb");
 			if (file != NULL)
 				break;
@@ -467,7 +475,6 @@ solve_exec(args_t *args)
 		return -1;
 	}
 
-	size = nissy_datasize(args->str_solver);
 	buf = malloc(size);
 	read = fread(buf, size, 1, file);
 	fclose(file);

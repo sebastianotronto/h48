@@ -13,7 +13,8 @@ static void log_stderr(const char *, ...);
 static void log_stdout(const char *, ...);
 static double timerun(void (*)(void));
 static void writetable(const char *, int64_t, const char *);
-static long long int generatetable(const char *, char **);
+static long long int generatetable(const char *, char **,
+    char [static NISSY_DATAID_SIZE]);
 static long long int derivetable(
     const char *, const char *, const char *, char **);
 static int getdata(const char *, char **, const char *);
@@ -86,11 +87,15 @@ writetable(const char *buf, int64_t size, const char *filename)
 }
 
 static long long int
-generatetable(const char *solver, char **buf)
+generatetable(
+	const char *solver,
+	char **buf,
+	char dataid[static NISSY_DATAID_SIZE]
+)
 {
 	long long int size, gensize;
 
-	size = nissy_datasize(solver);
+	size = nissy_solverinfo(solver, dataid);
 	if (size < 0) {
 		printf("Error getting table size.\n");
 		return -1;
@@ -120,7 +125,7 @@ derivetable(
 {
 	uint8_t h, k;
 	long long int size, gensize;
-	char *fulltable;
+	char *fulltable, dataid[NISSY_DATAID_SIZE];
 
 	if (getdata(solver_large, &fulltable, filename_large) != 0) {
 		printf("Error reading full table.\n");
@@ -128,7 +133,7 @@ derivetable(
 		goto derivetable_error_nofree;
 	}
 
-	size = nissy_datasize(solver_small);
+	size = nissy_solverinfo(solver_small, dataid);
 	if (size == -1) {
 		printf("Error getting table size.\n");
 		gensize = -2;
@@ -164,10 +169,11 @@ getdata(
 ) {
 	long long int size, sizeread;
 	FILE *f;
+	char dataid[NISSY_DATAID_SIZE];
 
 	if ((f = fopen(filename, "rb")) == NULL) {
 		printf("Table file not found, generating it.\n");
-		size = generatetable(solver, buf);
+		size = generatetable(solver, buf, dataid);
 		switch (size) {
 		case -1:
 			goto getdata_error_nofree;
@@ -179,7 +185,7 @@ getdata(
 		}
 	} else {
 		printf("Reading tables from file %s\n", filename);
-		size = nissy_datasize(solver);
+		size = nissy_solverinfo(solver, dataid);
 		*buf = malloc(size);
 		sizeread = fread(*buf, size, 1, f);
 		fclose(f);
@@ -203,10 +209,10 @@ gendata_run(
 	uint64_t expected[static 21]
 ) {
 	long long int size;
-	char *buf, filename[1024];
+	char *buf, filename[1024], dataid[NISSY_DATAID_SIZE];
 
-	sprintf(filename, "tables/%s", solver);
-	size = generatetable(solver, &buf);
+	size = generatetable(solver, &buf, dataid);
+	sprintf(filename, "tables/%s", dataid);
 	switch (size) {
 	case -1:
 		return;

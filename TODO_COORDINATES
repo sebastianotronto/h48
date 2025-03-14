@@ -1,4 +1,5 @@
 - coord solver
+  - add checkdata for coord
   - return to fully qualified solver name
     x undo chnages to API
     - add a parameter to gendata to get a shortname (filename) for the table
@@ -30,3 +31,4 @@
 
 - refactor common parts of coord and h48 solvers
 - move parse_h48 to h48 module?
+  then maybe do like for coordinate and exclude the "h48" part

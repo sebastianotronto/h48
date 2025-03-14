@@ -219,27 +219,33 @@ getcube(PyObject *self, PyObject *args)
 	return string_result(err, result);
 }
 
-PyDoc_STRVAR(datasize_doc,
-"datasize(solver)\n"
+PyDoc_STRVAR(solverinfo_doc,
+"solverinfo(solver)\n"
 "--\n\n"
-"Returns the size of the data (pruning table) for the given solver\n"
+"Returns the size and the short name of the data for the given solver\n"
 "\n"
 "Parameters:\n"
 "  - solver: the name of the solver\n"
 "\n"
-"Returns: the size of the data for the solver, in bytes\n"
+"Returns: a pair containing the size and the short name "
+"of the data for the solver, in bytes\n"
 );
 static PyObject *
-datasize(PyObject *self, PyObject *args)
+solverinfo(PyObject *self, PyObject *args)
 {
 	long long result;
 	const char *solver;
+	char buf[NISSY_DATAID_SIZE];
+	PyObject *py_result, *py_buf;
 
 	if (!PyArg_ParseTuple(args, "s", &solver))
 		return NULL;
 
-	result = nissy_datasize(solver);
-	return long_result(result);
+	result = nissy_solverinfo(solver, buf);
+	
+	py_result = PyLong_FromLong(result);
+	py_buf = PyUnicode_FromString(buf);
+	return PyTuple_Pack(2, py_result, py_buf);
 }
 
 PyDoc_STRVAR(gendata_doc,
@@ -257,12 +263,12 @@ gendata(PyObject *self, PyObject *args)
 {
 	long long size, err;
 	const char *solver;
-	char *buf;
+	char *buf, dataid[NISSY_DATAID_SIZE];
 
 	if (!PyArg_ParseTuple(args, "s", &solver))
 		return NULL;
 
-	size = nissy_datasize(solver);
+	size = nissy_solverinfo(solver, dataid);
 	if (!check_error(size))
 		return NULL;
 
@@ -394,7 +400,7 @@ static PyMethodDef nissy_methods[] = {
 	{ "applytrans", applytrans, METH_VARARGS, applytrans_doc },
 	{ "convert", convert, METH_VARARGS, convert_doc },
 	{ "getcube", getcube, METH_VARARGS, getcube_doc },
-	{ "datasize", datasize, METH_VARARGS, datasize_doc },
+	{ "solverinfo", solverinfo, METH_VARARGS, solverinfo_doc },
 	{ "gendata", gendata, METH_VARARGS, gendata_doc },
 	{ "checkdata", checkdata, METH_VARARGS, checkdata_doc },
 	{ "solve", solve, METH_VARARGS, solve_doc },

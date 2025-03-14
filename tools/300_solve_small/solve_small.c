@@ -46,7 +46,7 @@ void run(void) {
 }
 
 int main(int argc, char **argv) {
-	char filename[255];
+	char filename[255], dataid[NISSY_DATAID_SIZE];
 
 	if (argc < 2) {
 		printf("Error: not enough arguments. "
@@ -63,7 +63,7 @@ int main(int argc, char **argv) {
 	if (getdata(solver, &buf, filename) != 0)
 		return 1;
 
-	size = nissy_datasize(solver);
+	size = nissy_solverinfo(solver, dataid);
 
 	timerun(run);
 

@@ -8,9 +8,9 @@ static void
 run(void) {
 	int64_t size;
 	bool consistent, expected;
-	char *buf, filename[1024];
+	char *buf, filename[1024], dataid[NISSY_DATAID_SIZE];
 	
-	size = generatetable(solver, &buf);
+	size = generatetable(solver, &buf, dataid);
 	switch (size) {
 	case -1:
 		return;
@@ -23,7 +23,7 @@ run(void) {
 		if (consistent && expected) {
 			printf("\n");
 			printf("Generated %" PRId64 " bytes.\n", size);
-			sprintf(filename, "tables/%s", solver);
+			sprintf(filename, "tables/%s", dataid);
 			writetable(buf, size, filename);
 		}
 		if (!consistent)

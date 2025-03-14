@@ -19,6 +19,7 @@ STATIC bool distribution_equal(const uint64_t [static INFO_DISTRIBUTION_LEN],
     const uint64_t [static INFO_DISTRIBUTION_LEN], uint8_t);
 STATIC long long write_result(cube_t, char [static NISSY_SIZE_B32]);
 STATIC size_t my_strnlen(const char *, size_t); 
+STATIC long long nissy_dataid(const char *, char [static NISSY_DATAID_SIZE]);
 STATIC long long nissy_gendata_unsafe(
     const char *, unsigned long long, char *);
 
@@ -412,11 +413,37 @@ nissy_datainfo(
 	return NISSY_OK;
 }
 
+STATIC long long
+nissy_dataid(const char *solver, char dataid[static NISSY_DATAID_SIZE])
+{
+	if (!strncmp(solver, "h48", 3)) {
+		uint8_t h, k;
+		long long err;
+		if ((err = parse_h48_solver(solver, &h, &k)) != NISSY_OK)
+			return err;
+		/* TODO: also check that h and k are admissible */
+		else strcpy(dataid, solver);
+		return err;
+		/* TODO: do this when moved parser */
+		/* return dataid_h48(solver, dataid); */
+	} else if (!strncmp(solver, "coord_", 6)) {
+		return dataid_coord(solver+6, dataid);
+	} else {
+		LOG("gendata: unknown solver %s\n", solver);
+		return NISSY_ERROR_INVALID_SOLVER;
+	}
+}
+
 long long
-nissy_datasize(
-	const char *solver
+nissy_solverinfo(
+	const char *solver,
+	char dataid[static NISSY_DATAID_SIZE]
 )
 {
+	long long err;
+	if ((err = nissy_dataid(solver, dataid)) != NISSY_OK)
+		return err;
+
 	/* gendata() handles a NULL *data as a "dryrun" request */
 	return nissy_gendata_unsafe(solver, 0, NULL);
 }
@@ -447,7 +474,7 @@ nissy_gendata_unsafe(
 	}
 
 	if ((size_t)data % 8 != 0) {
-		LOG("nissy_datainfo: buffere is not 8-byte aligned\n");
+		LOG("nissy_gendata: buffere is not 8-byte aligned\n");
 		return NISSY_ERROR_DATA;
 	}
 
@@ -478,7 +505,7 @@ nissy_checkdata(
 	int64_t err;
 
 	if ((size_t)data % 8 != 0) {
-		LOG("nissy_datainfo: buffere is not 8-byte aligned\n");
+		LOG("nissy_checkdata: buffere is not 8-byte aligned\n");
 		return NISSY_ERROR_DATA;
 	}
 
@@ -560,7 +587,7 @@ nissy_solve(
 	}
 
 	if ((size_t)data % 8 != 0) {
-		LOG("nissy_datainfo: buffere is not 8-byte aligned\n");
+		LOG("nissy_solve: buffere is not 8-byte aligned\n");
 		return NISSY_ERROR_DATA;
 	}
 

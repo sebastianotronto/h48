@@ -6,13 +6,13 @@ char *solver, *filename;
 static void
 run(void) {
 	long long int size, result;
-	char *buf;
+	char *buf, dataid[NISSY_DATAID_SIZE];
 	FILE *f;
 	
-	size = nissy_datasize(solver);
+	size = nissy_solverinfo(solver, dataid);
 
 	if (size <= 0) {
-		printf("Error in datasize\n");
+		printf("Error in solverinfo\n");
 		return;
 	}
 
