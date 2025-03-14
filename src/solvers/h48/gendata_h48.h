@@ -682,6 +682,7 @@ getdistribution_h48(
 		distr[val]++;
 	}
 }
+
 STATIC const uint32_t *
 get_cocsepdata_constptr(const void *data)
 {

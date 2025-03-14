@@ -1,6 +1,8 @@
 STATIC size_t gendata_coord(const coord_t *, void *);
 STATIC int64_t gendata_coord_dispatch(const char *, void *);
 STATIC tableinfo_t genptable_coord(const coord_t *, const void *, uint8_t *);
+STATIC void getdistribution_coord(
+    const uint8_t *, const char *, uint64_t [static INFO_DISTRIBUTION_LEN]);
 STATIC uint8_t get_coord_pval(const coord_t *, const uint8_t *, uint64_t);
 STATIC void set_coord_pval(const coord_t *, uint8_t *, uint64_t, uint8_t);
 
@@ -120,6 +122,28 @@ genptable_coord(const coord_t *coord, const void *data, uint8_t *table)
 	info.maxvalue = d-1;
 
 	return info;
+}
+
+STATIC void
+getdistribution_coord(
+	const uint8_t *table,
+	const char *coord,
+	uint64_t distr[static INFO_DISTRIBUTION_LEN]
+)
+{
+	uint8_t v;
+	uint64_t i;
+	coord_t *c;
+
+	memset(distr, 0, INFO_DISTRIBUTION_LEN * sizeof(uint64_t));
+
+	if((c = parse_coord(coord, strlen(coord))) == NULL)
+		return;
+
+	for (i = 0; i < c->max; i++) {
+		v = get_coord_pval(c, table, i);
+		distr[v]++;
+	}
 }
 
 STATIC uint8_t

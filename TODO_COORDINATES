@@ -1,8 +1,4 @@
 - coord solver
-  - add checkdata for coord
-  - return to fully qualified solver name
-    x undo chnages to API
-    - add a parameter to gendata to get a shortname (filename) for the table
   - there is an error (try R B2 as scramble, EO on RL)
     - debug
     - fix

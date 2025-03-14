@@ -80,7 +80,12 @@ checkdata(const char *buf, const tableinfo_t *info)
 	} else if (!strncmp(info->solver, "h48", 3)) {
 		getdistribution_h48((uint8_t *)buf + INFOSIZE, distr,
 		    info->h48h, info->bits);
+	} else if (!strncmp(info->solver, "coordinate solver for ", 22)) {
+		getdistribution_coord((uint8_t *)buf + INFOSIZE,
+		    info->solver + 22, distr);
 	} else if (!strncmp(info->solver, "eoesep data for h48", 19)) {
+		return true;
+	} else if (!strncmp(info->solver, "coord helper table for ", 23)) {
 		return true;
 	} else {
 		LOG("checkdata: unknown solver %s\n", info->solver);

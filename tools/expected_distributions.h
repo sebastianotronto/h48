@@ -58,7 +58,6 @@ uint64_t expected_h48[12][9][21] = {
 			[2] = 392789689,
 			[3] = 477195231,
 		},
-
 	},
 	[4] = {
 		[2] = {
@@ -126,6 +125,17 @@ uint64_t expected_h48[12][9][21] = {
 	},
 };
 
+uint64_t expected_eo[21] = {
+	[0] = 1,
+	[1] = 2,
+	[2] = 25,
+	[3] = 202,
+	[4] = 620,
+	[5] = 900,
+	[6] = 285,
+	[7] = 13,
+};
+
 static bool
 distribution_equal(const uint64_t *expected, const uint64_t *actual, int n)
 {
@@ -142,6 +152,18 @@ distribution_equal(const uint64_t *expected, const uint64_t *actual, int n)
 	}
 
 	return equal;
+}
+
+STATIC bool
+check_table(uint64_t *exp, tableinfo_t *info)
+{
+	if (!distribution_equal(exp, info->distribution, info->maxvalue)) {
+		printf("ERROR! Distribution is incorrect\n");
+		return false;
+	}
+
+	printf("Distribution is correct\n");
+	return true;
 }
 
 static bool
@@ -169,6 +191,7 @@ unknown_h48(uint8_t h, uint8_t k)
 STATIC bool
 check_distribution(const char *solver, uint64_t data_size, const void *data)
 {
+	const char *str;
 	tableinfo_t info = {0};
 
 	if (!strncmp(solver, "h48", 3)) {
@@ -184,14 +207,20 @@ check_distribution(const char *solver, uint64_t data_size, const void *data)
 		if (unknown_h48(info.h48h, info.bits))
 			goto check_distribution_unknown;
 
-		if (!distribution_equal(expected_h48[info.h48h][info.bits],
-		    info.distribution, info.maxvalue)) {
-			printf("ERROR! h48 distribution is incorrect\n");
-			return false;
-		}
+		return check_table(expected_h48[info.h48h][info.bits], &info);
+	}
 
-		printf("h48 distribution is correct\n");
-		return true;
+	if (!strncmp(solver, "coord_", 6)) {
+		readtableinfo(data_size, data, &info);
+		if (!strncmp(info.solver, "coord helper table for ", 23))
+			readtableinfo_n(data_size, data, 2, &info);
+
+		str = info.solver + 22; /* "coordinate solver for COORD" */
+		if (!strcmp(str, "EO")) {
+			return check_table(expected_eo, &info);
+		} else {
+			goto check_distribution_unknown;
+		}
 	}
 
 check_distribution_unknown:
