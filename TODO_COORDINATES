@@ -1,25 +1,10 @@
-- coord solver
-  - there is an error (try R B2 as scramble, EO on RL)
-    - debug
-    - fix
-  - h48 solve dispatch: move "h7k2" part to "options"?
-    - it makes sense, but breaks the rule "solver == table"
-    - if so, adjust tools that use nissy_solve()
-  - add new parameter to solve(): options (char *)
-    - fix all usages
-      x tests
-      x shell
-      x tools
-      x python bindings
-      - document what to do when changing interface?
-    - where do I document which solvers take which parameters?
-      now that I am implementing more solvers I need an extra
-      document in doc/
-  - in nissy.c, check for minmoves, maxmoves and nissflag (must be in range)
-  - add a dispatcher in solvers.h?
-- test solver for EO
+- filter solutions
+  - allow not showing repeated solutions like R2 F and R2 F' for EO
+  - avoid B2 F as an EO
+- in nissy.c, check for minmoves, maxmoves and nissflag (must be in range)
+- add a dispatcher in solvers.h?
+- test solver for EO (with unit test or tool)
 - add NISS (and add tests for NISS EO)
-- allow not showing repeated solutions like R2 F and R2 F' for EO
 - make solve parallelized
 - other coordinates
   - gendata must handle symmetry

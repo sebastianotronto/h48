@@ -29,9 +29,10 @@ STATIC int64_t solve_coord_dfs(dfsarg_solve_coord_t *);
 STATIC int64_t
 solve_coord_appendsolution(dfsarg_solve_coord_t *arg)
 {
-	uint8_t i, t, l, tmoves[MAXLEN_COORDSOL];
-	char *m;
+	uint8_t i, t, tmoves[MAXLEN_COORDSOL];
 	int64_t strl;
+	uint64_t l;
+	char *m;
 
 	if (*arg->nsols >= arg->maxsolutions ||
 	    arg->nmoves > *arg->shortest_sol + arg->optimal)
@@ -114,6 +115,7 @@ solve_coord_dfs(dfsarg_solve_coord_t *arg)
 			return n;
 		ret += n;
 	}
+	arg->cube = backup_cube;
 	arg->nmoves--;
 
 	return 0;
@@ -174,7 +176,7 @@ solve_coord(
 {
 	int8_t d;
 	uint8_t t, shortest_sol;
-	int64_t nsols;
+	int64_t nsols, ndepth;
 	uint64_t sols_used;
 	cube_t c;
 	const void *coord_data;
@@ -238,7 +240,15 @@ solve_coord(
 
 		arg.depth = d;
 		arg.nmoves = 0;
-		nsols += solve_coord_dfs(&arg);
+		ndepth = solve_coord_dfs(&arg);
+
+		/* TODO: improve error handling? */
+		if (ndepth < 0) {
+			LOG("Error %" PRId64 "\n", ndepth);
+			return ndepth;
+		}
+
+		nsols += ndepth;
 	}
 
 solve_coord_done:
