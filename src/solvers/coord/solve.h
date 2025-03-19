@@ -35,14 +35,16 @@ solve_coord_appendsolution(dfsarg_solve_coord_t *arg)
 	char *m;
 
 	if (*arg->nsols >= arg->maxsolutions ||
-	    arg->nmoves > *arg->shortest_sol + arg->optimal)
+	    arg->nmoves > *arg->shortest_sol + arg->optimal ||
+	    (arg->coord->is_admissible != NULL &&
+	        !arg->coord->is_admissible(arg->nmoves, arg->moves)))
 		return 0;
-
-	sortparallel(arg->moves, arg->nmoves);
 
 	t = inverse_trans(arg->trans);
 	for (i = 0; i < arg->nmoves; i++)
 		tmoves[i] = transform_move(arg->moves[i], t);
+
+	sortparallel(tmoves, arg->nmoves);
 
 	l = arg->solutions_size - *arg->solutions_used;
 	m = *arg->solutions + *arg->solutions_used;

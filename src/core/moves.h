@@ -6,6 +6,8 @@ STATIC_INLINE uint32_t allowednextmove_mask(uint8_t *, uint8_t);
 
 STATIC_INLINE uint8_t movebase(uint8_t);
 STATIC_INLINE uint8_t moveaxis(uint8_t);
+STATIC_INLINE bool isbase(uint8_t);
+STATIC_INLINE bool parallel(uint8_t, uint8_t);
 STATIC_INLINE uint32_t disable_moves(uint32_t, uint8_t);
 
 STATIC cube_t move(cube_t, uint8_t);
@@ -13,6 +15,7 @@ STATIC cube_t premove(cube_t, uint8_t);
 STATIC uint8_t inverse_move(uint8_t);
 STATIC void invertmoves(uint8_t *, uint8_t, uint8_t *);
 STATIC void sortparallel(uint8_t *, uint8_t);
+STATIC bool are_lastmoves_singlecw(int n, uint8_t [n]);
 
 STATIC int readmoves(const char *, int, uint8_t *);
 STATIC cube_t applymoves(cube_t, const char *);
@@ -89,6 +92,18 @@ STATIC_INLINE uint8_t
 moveaxis(uint8_t move)
 {
 	return move / 6;
+}
+
+STATIC_INLINE bool
+isbase(uint8_t move)
+{
+	return move == 3 * movebase(move);
+}
+
+STATIC_INLINE bool
+parallel(uint8_t m1, uint8_t m2)
+{
+	return moveaxis(m1) == moveaxis(m2);
 }
 
 STATIC_INLINE uint8_t
@@ -239,6 +254,19 @@ sortparallel(uint8_t *moves, uint8_t n)
 		if (moveaxis(moves[i]) == moveaxis(moves[i+1]) &&
 		    movebase(moves[i]) == movebase(moves[i+1]) + 1)
 			SWAP(moves[i], moves[i+1]);
+}
+
+STATIC bool
+are_lastmoves_singlecw(int n, uint8_t moves[n])
+{
+	bool two;
+
+	if (n == 0)
+		return true;
+
+	two = n > 1 && parallel(moves[n-1], moves[n-2]);
+
+	return isbase(moves[n-1]) && (!two || isbase(moves[n-2]));
 }
 
 STATIC int
