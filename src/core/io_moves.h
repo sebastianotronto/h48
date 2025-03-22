@@ -1,6 +1,6 @@
 STATIC uint8_t readmove(char);
 STATIC uint8_t readmodifier(char);
-STATIC int64_t writemoves(uint8_t *, int, uint64_t, char *);
+STATIC int64_t writemoves(size_t n, uint8_t [n], size_t m, char [m]);
 
 STATIC uint8_t
 readmove(char c)
@@ -39,11 +39,14 @@ readmodifier(char c)
 }
 
 STATIC int64_t
-writemoves(uint8_t *m, int n, uint64_t buf_size, char *buf)
+writemoves(
+	size_t nmoves,
+	uint8_t m[nmoves],
+	size_t buf_size,
+	char buf[buf_size]
+)
 {
-	int i;
-	uint64_t len;
-	int64_t written;
+	size_t i, len, written;
 	const char *s;
 	char *b;
 
@@ -52,7 +55,7 @@ writemoves(uint8_t *m, int n, uint64_t buf_size, char *buf)
 		return NISSY_ERROR_BUFFER_SIZE;
 	}
 
-	for (i = 0, b = buf, written = 0; i < n; i++, b++, written++) {
+	for (i = 0, b = buf, written = 0; i < nmoves; i++, b++, written++) {
 		s = movestr[m[i]];
 		len = strlen(s);
 		if (len + written >= buf_size) {
@@ -70,7 +73,7 @@ writemoves(uint8_t *m, int n, uint64_t buf_size, char *buf)
 		b--; /* Remove last space */
 	*b = '\0';
 
-	return written;
+	return (int64_t)written;
 
 writemoves_error:
 	*buf = '\0';

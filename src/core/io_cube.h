@@ -1,5 +1,5 @@
 STATIC cube_t readcube(const char *, const char *);
-STATIC int64_t writecube(const char *, cube_t, uint64_t, char *);
+STATIC int64_t writecube(const char *, cube_t, size_t n, char [n]);
 STATIC void log_available_formats(void);
 STATIC uint8_t readco(const char *);
 STATIC uint8_t readcp(const char *);
@@ -10,10 +10,10 @@ STATIC cube_t readcube_H48(const char *);
 STATIC uint8_t readpiece_LST(const char **);
 STATIC cube_t readcube_LST(const char *);
 
-STATIC int64_t writepiece_LST(uint8_t, uint64_t, char *);
-STATIC int64_t writecube_B32(cube_t, uint64_t, char *);
-STATIC int64_t writecube_H48(cube_t, uint64_t, char *);
-STATIC int64_t writecube_LST(cube_t, uint64_t, char *);
+STATIC int64_t writepiece_LST(uint8_t, size_t n, char [n]);
+STATIC int64_t writecube_B32(cube_t, size_t n, char [n]);
+STATIC int64_t writecube_H48(cube_t, size_t n, char [n]);
+STATIC int64_t writecube_LST(cube_t, size_t n, char [n]);
 
 STATIC uint8_t b32toedge(char);
 STATIC uint8_t b32tocorner(char);
@@ -23,7 +23,7 @@ STATIC char cornertob32(uint8_t);
 STATIC struct {
 	const char *name;
 	cube_t (*read)(const char *);
-	int64_t (*write)(cube_t, uint64_t, char *);
+	int64_t (*write)(cube_t, size_t n, char [n]);
 } ioformat[] =
 {
 	{ .name = "B32", .read = readcube_B32, .write = writecube_B32 },
@@ -47,7 +47,7 @@ readcube(const char *format, const char *buf)
 }
 
 STATIC int64_t
-writecube(const char *format, cube_t cube, uint64_t buf_size, char *buf)
+writecube(const char *format, cube_t cube, size_t buf_size, char buf[buf_size])
 {
 	int i;
 
@@ -233,10 +233,10 @@ readcube_LST(const char *buf)
 }
 
 STATIC int64_t
-writepiece_LST(uint8_t piece, uint64_t buf_size, char *buf)
+writepiece_LST(uint8_t piece, size_t buf_size, char buf[buf_size])
 {
 	char digits[3];
-	uint64_t i, len;
+	size_t i, len;
 
 	if (piece > 99 || buf_size < 3)
 		return 0;
@@ -263,7 +263,7 @@ writepiece_LST(uint8_t piece, uint64_t buf_size, char *buf)
 }
 
 STATIC int64_t
-writecube_B32(cube_t cube, uint64_t buf_size, char *buf)
+writecube_B32(cube_t cube, size_t buf_size, char buf[buf_size])
 {
 	int i;
 	uint8_t corner[8], edge[12];
@@ -291,7 +291,7 @@ writecube_B32(cube_t cube, uint64_t buf_size, char *buf)
 }
 
 STATIC int64_t
-writecube_H48(cube_t cube, uint64_t buf_size, char *buf)
+writecube_H48(cube_t cube, size_t buf_size, char buf[buf_size])
 {
 	uint8_t piece, perm, orient, corner[8], edge[12];
 	int i;
@@ -331,7 +331,7 @@ writecube_H48(cube_t cube, uint64_t buf_size, char *buf)
 }
 
 STATIC int64_t
-writecube_LST(cube_t cube, uint64_t buf_size, char *buf)
+writecube_LST(cube_t cube, size_t buf_size, char buf[buf_size])
 {
 	int i;
 	uint64_t ptr;

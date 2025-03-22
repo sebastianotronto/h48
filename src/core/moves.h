@@ -1,8 +1,8 @@
 #define MOVE(M, c) compose(c, MOVE_CUBE_ ## M)
 #define PREMOVE(M, c) compose(MOVE_CUBE_ ## M, c)
 
-STATIC_INLINE bool allowednextmove(uint8_t *, uint8_t);
-STATIC_INLINE uint32_t allowednextmove_mask(uint8_t *, uint8_t);
+STATIC_INLINE bool allowednextmove(size_t n, const uint8_t [n]);
+STATIC_INLINE uint32_t allowednextmove_mask(size_t n, const uint8_t [n]);
 
 STATIC_INLINE uint8_t movebase(uint8_t);
 STATIC_INLINE uint8_t moveaxis(uint8_t);
@@ -13,9 +13,9 @@ STATIC_INLINE uint32_t disable_moves(uint32_t, uint8_t);
 STATIC cube_t move(cube_t, uint8_t);
 STATIC cube_t premove(cube_t, uint8_t);
 STATIC uint8_t inverse_move(uint8_t);
-STATIC void invertmoves(uint8_t *, uint8_t, uint8_t *);
-STATIC void sortparallel(uint8_t *, uint8_t);
-STATIC bool are_lastmoves_singlecw(int n, uint8_t [n]);
+STATIC void invertmoves(size_t n, const uint8_t [n], uint8_t [n]);
+STATIC void sortparallel(size_t n, uint8_t [n]);
+STATIC bool are_lastmoves_singlecw(size_t n, uint8_t [n]);
 
 STATIC int readmoves(const char *, int, uint8_t *);
 STATIC cube_t applymoves(cube_t, const char *);
@@ -40,14 +40,13 @@ STATIC cube_t applymoves(cube_t, const char *);
 	}
 
 STATIC bool
-allowednextmove(uint8_t *moves, uint8_t n)
+allowednextmove(size_t n, const uint8_t moves[n])
 {
-	return n == 0 ? true :
-	    allowednextmove_mask(moves, n-1) & (1 << moves[n-1]);
+	return n == 0 || allowednextmove_mask(n-1, moves) & (1 << moves[n-1]);
 }
 
 STATIC uint32_t
-allowednextmove_mask(uint8_t *moves, uint8_t n)
+allowednextmove_mask(size_t n, const uint8_t moves[n])
 {
 	uint32_t result;
 	uint8_t base1, base2, axis1, axis2;
@@ -79,7 +78,7 @@ allowednextmove_mask(uint8_t *moves, uint8_t n)
 STATIC_INLINE uint32_t 
 disable_moves(uint32_t current_result, uint8_t base_index)
 {
-	return current_result & ~(7 << base_index);
+	return current_result & ~MM_SIDE(base_index);
 }
 
 STATIC_INLINE uint8_t
@@ -236,17 +235,17 @@ TODO check if the issue is resolved
 #pragma GCC push_options
 #pragma GCC optimize ("O2")
 STATIC void
-invertmoves(uint8_t *moves, uint8_t nmoves, uint8_t *ret)
+invertmoves(size_t n, const uint8_t moves[n], uint8_t ret[n])
 {
 	uint8_t i;
 
-	for (i = 0; i < nmoves; i++)
-		ret[i] = inverse_move(moves[nmoves - i - 1]);
+	for (i = 0; i < n; i++)
+		ret[i] = inverse_move(moves[n - i - 1]);
 }
 #pragma GCC pop_options
 
 STATIC void
-sortparallel(uint8_t *moves, uint8_t n)
+sortparallel(size_t n, uint8_t moves[n])
 {
 	uint8_t i;
 
@@ -257,7 +256,7 @@ sortparallel(uint8_t *moves, uint8_t n)
 }
 
 STATIC bool
-are_lastmoves_singlecw(int n, uint8_t moves[n])
+are_lastmoves_singlecw(size_t n, uint8_t moves[n])
 {
 	bool two;
 

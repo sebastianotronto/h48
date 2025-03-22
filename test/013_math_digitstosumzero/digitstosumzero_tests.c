@@ -1,10 +1,11 @@
 #include "../test.h"
 
-int64_t digitstosumzero(uint8_t *, uint8_t, uint8_t);
+int64_t digitstosumzero(size_t n, uint8_t [n], uint8_t);
 
 void run(void) {
 	char str[STRLENMAX];
-	uint8_t i, n, b, a[100];
+	uint8_t i, b, a[100];
+	size_t n;
 	int64_t p;
 
 	fgets(str, STRLENMAX, stdin);
@@ -16,6 +17,6 @@ void run(void) {
 		a[i] = atoi(str);
 	}
 
-	p = digitstosumzero(a, n, b);
+	p = digitstosumzero(n, a, b);
 	printf("%" PRId64 "\n", p);
 }

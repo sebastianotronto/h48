@@ -3,8 +3,8 @@
 #define MAXMOVES 20
 
 int64_t readmoves(const char *, int, uint8_t *);
-void writemoves(uint8_t *, int, uint64_t, char *);
-void invertmoves(uint8_t *, uint8_t, uint8_t *);
+void writemoves(size_t n, uint8_t [n], size_t m, char [m]);
+void invertmoves(size_t n, const uint8_t [n], uint8_t [n]);
 
 void run(void) {
 	char movestr[STRLENMAX], outstr[STRLENMAX];
@@ -14,8 +14,8 @@ void run(void) {
 	fgets(movestr, STRLENMAX, stdin);
 	c = readmoves(movestr, MAXMOVES, moves);
 
-	invertmoves(moves, c, ret);
-	writemoves(ret, c, STRLENMAX, outstr);
+	invertmoves(c, moves, ret);
+	writemoves(c, ret, STRLENMAX, outstr);
 
 	printf("%s\n", outstr);
 }

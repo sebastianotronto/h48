@@ -533,7 +533,7 @@ gendata_h48k2_dfs(h48k2_dfs_arg_t *arg)
 			/* Depth d+3 */
 			for (m[2] = 0; m[2] < 18; m[2]++) {
 				markarg.depth = d+3;
-				if (!allowednextmove(m, 3)) {
+				if (!allowednextmove(3, m)) {
 					m[2] += 2;
 					continue;
 				}
@@ -548,7 +548,7 @@ gendata_h48k2_dfs(h48k2_dfs_arg_t *arg)
 				/* Depth d+4 */
 				for (m[3] = 0; m[3] < 18; m[3]++) {
 					markarg.depth = d+4;
-					if (!allowednextmove(m, 4)) {
+					if (!allowednextmove(4, m)) {
 						m[3] += 2;
 						continue;
 					}

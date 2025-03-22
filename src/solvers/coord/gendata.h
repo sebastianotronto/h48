@@ -11,7 +11,7 @@ gendata_coord_dispatch(const char *coordstr, void *buf)
 {
 	coord_t *coord;
 
-	parse_coord_and_axis(coordstr, strlen(coordstr), &coord, NULL);
+	parse_coord_and_axis(strlen(coordstr), coordstr, &coord, NULL);
 
 	if (coord == NULL) {
 		LOG("Could not parse coordinate '%s'\n", coord);
@@ -137,7 +137,7 @@ getdistribution_coord(
 
 	memset(distr, 0, INFO_DISTRIBUTION_LEN * sizeof(uint64_t));
 
-	if((c = parse_coord(coord, strlen(coord))) == NULL)
+	if((c = parse_coord(strlen(coord), coord)) == NULL)
 		return;
 
 	for (i = 0; i < c->max; i++) {

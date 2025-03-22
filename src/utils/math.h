@@ -4,12 +4,12 @@
 #define DIV_ROUND_UP(n, d) (((n) + (d) - 1) / (d))
 
 STATIC int64_t factorial(int64_t);
-STATIC bool isperm(uint8_t *, int64_t);
-STATIC int64_t permtoindex(uint8_t *, int64_t);
-STATIC void indextoperm(int64_t, int64_t, uint8_t *);
-STATIC int permsign(uint8_t *, int64_t);
-STATIC int64_t digitstosumzero(uint8_t *, uint8_t, uint8_t);
-STATIC void sumzerotodigits(int64_t, uint8_t, uint8_t, uint8_t *);
+STATIC bool isperm(size_t n, const uint8_t [n]);
+STATIC int64_t permtoindex(size_t n, const uint8_t [n]);
+STATIC void indextoperm(int64_t, size_t n, uint8_t [n]);
+STATIC int permsign(size_t n, const uint8_t [n]);
+STATIC int64_t digitstosumzero(size_t n, const uint8_t [n], uint8_t);
+STATIC void sumzerotodigits(int64_t, size_t n, uint8_t, uint8_t [n]);
 
 STATIC int64_t
 factorial(int64_t n)
@@ -32,13 +32,13 @@ factorial(int64_t n)
 }
 
 STATIC bool
-isperm(uint8_t *a, int64_t n)
+isperm(size_t n, const uint8_t a[n])
 {
-	int64_t i;
+	size_t i;
 	bool aux[FACTORIAL_MAX+1];
 
-	if (n > FACTORIAL_MAX) {
-		LOG("Error: won't compute 'isperm()' for n=%" PRId64 " because"
+	if (n > (size_t)FACTORIAL_MAX) {
+		LOG("Error: won't compute 'isperm()' for n=%zu because"
 		    " it is larger than %" PRId64 "\n", n, FACTORIAL_MAX);
 		return false;
 	}
@@ -60,18 +60,18 @@ isperm(uint8_t *a, int64_t n)
 }
 
 STATIC int64_t
-permtoindex(uint8_t *a, int64_t n)
+permtoindex(size_t n, const uint8_t a[n])
 {
-	int64_t i, j, c, ret;
+	size_t i, j;
+	int64_t c, ret;
 
-	if (n > FACTORIAL_MAX) {
-		LOG("Error: won't compute 'permtoindex()' for n=%" PRId64
-		    " because it is larger than %" PRId64 "\n",
-		    n, FACTORIAL_MAX);
+	if (n > (size_t)FACTORIAL_MAX) {
+		LOG("Error: won't compute 'permtoindex()' for n=%zu because "
+		    "it is larger than %" PRId64 "\n", n, FACTORIAL_MAX);
 		return -1;
 	}
 
-	if (!isperm(a, n))
+	if (!isperm(n, a))
 		return -1;
 
 	for (i = 0, ret = 0; i < n; i++) {
@@ -84,15 +84,15 @@ permtoindex(uint8_t *a, int64_t n)
 }
 
 STATIC void
-indextoperm(int64_t p, int64_t n, uint8_t *r)
+indextoperm(int64_t p, size_t n, uint8_t r[n])
 {
-	int64_t i, j, c;
+	int64_t c;
+	size_t i, j;
 	uint8_t a[FACTORIAL_MAX+1];
 
 	if (n > FACTORIAL_MAX) {
-		LOG("Error: won't compute 'permtoindex()' for n=%" PRId64
-		    " because it is larger than %" PRId64 "\n",
-		    n, FACTORIAL_MAX);
+		LOG("Error: won't compute 'indextoperm()' for n=%zu because "
+		    "it is larger than %" PRId64 "\n", n, FACTORIAL_MAX);
 		goto indextoperm_error;
 	}
 
@@ -109,7 +109,7 @@ indextoperm(int64_t p, int64_t n, uint8_t *r)
 		p %= factorial(n-i-1);
 	}
 
-	if (!isperm(r, n))
+	if (!isperm(n, r))
 		goto indextoperm_error;
 
 	return;
@@ -119,10 +119,9 @@ indextoperm_error:
 }
 
 STATIC int
-permsign(uint8_t *a, int64_t n)
+permsign(size_t n, const uint8_t a[n])
 {
-	int i, j;
-	uint8_t ret;
+	size_t i, j, ret;
 
 	for (i = 0, ret = 0; i < n; i++)
 		for (j = i+1; j < n; j++)
@@ -132,13 +131,13 @@ permsign(uint8_t *a, int64_t n)
 }
 
 STATIC int64_t
-digitstosumzero(uint8_t *a, uint8_t n, uint8_t b)
+digitstosumzero(size_t n, const uint8_t a[n], uint8_t b)
 {
 	int64_t ret, p;
-	uint8_t i, sum;
+	size_t i, sum;
 
 	if (!((n == 8 && b == 3 ) || (n == 12 && b == 2))) {
-		LOG("Won't compute 'sumzero' for n=%" PRIu8 "and b=%" PRIu8
+		LOG("Won't compute 'sumzero' for n=%zu and b=%" PRIu8
 		    " (use n=8 b=3 or n=12 b=2)\n", n, b);
 		return -1;
 	}
@@ -162,15 +161,15 @@ digitstosumzero(uint8_t *a, uint8_t n, uint8_t b)
 }
 
 STATIC void
-sumzerotodigits(int64_t d, uint8_t n, uint8_t b, uint8_t *a)
+sumzerotodigits(int64_t d, size_t n, uint8_t b, uint8_t a[n])
 {
 	uint8_t sum;
-	int64_t i;
+	size_t i;
 
 	if (!((n == 8 && b == 3 ) || (n == 12 && b == 2))) {
 		LOG("Won't compute 'digits' for n=%" PRIu8 "and b=%" PRIu8
 		    " (use n=8 b=3 or n=12 b=2)\n");
-		goto digitstosumzero_error;
+		goto sumzerotodigits_error;
 	}
 
 	for (i = 1, sum = 0; i < n; i++, d /= (int64_t)b) {
@@ -181,6 +180,6 @@ sumzerotodigits(int64_t d, uint8_t n, uint8_t b, uint8_t *a)
 
 	return;
 
-digitstosumzero_error:
+sumzerotodigits_error:
 	memset(a, UINT8_ERROR, n);
 }

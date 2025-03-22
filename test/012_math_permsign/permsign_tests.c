@@ -1,6 +1,6 @@
 #include "../test.h"
 
-int permsign(uint8_t *, int64_t);
+int permsign(size_t n, const uint8_t [n]);
 
 void run(void) {
 	char str[STRLENMAX];
@@ -16,6 +16,6 @@ void run(void) {
 		a[i] = atoi(str);
 	}
 
-	p = permsign(a, n);
+	p = permsign(n, a);
 	printf("%d\n", p);
 }

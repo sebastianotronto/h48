@@ -87,7 +87,7 @@ issolvable(cube_t cube)
 	for (i = 0; i < 8; i++)
 		cp[i] = corner[i] & PBITS;
 
-	if (permsign(ep, 12) != permsign(cp, 8))
+	if (permsign(12, ep) != permsign(8, cp))
 		goto issolvable_parity;
 
 	eo = 0;
@@ -139,13 +139,13 @@ getcube_fix(long long *ep, long long *eo, long long *cp, long long *co)
 
 	indextoperm(*ep, 12, e);
 	indextoperm(*cp, 8, c);
-	if (permsign(e, 12) != permsign(c, 8)) {
+	if (permsign(12, e) != permsign(8, c)) {
 		SWAP(c[0], c[1]);
-		*cp = permtoindex(c, 8);
+		*cp = permtoindex(8, c);
 
 		sumzerotodigits(*co, 8, 3, coarr);
 		SWAP(coarr[0], coarr[1]);
-		*co = digitstosumzero(coarr, 8, 3);
+		*co = digitstosumzero(8, coarr, 3);
 	}
 }
 

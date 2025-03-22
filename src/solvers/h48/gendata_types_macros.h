@@ -28,7 +28,6 @@
 #define H48_SHIFT(i, k)     ((uint8_t)(k) * (uint8_t)((i) % H48_COEFF(k)))
 #define H48_MASK(i, k)      ((UINT8_BIT(k) - UINT8_C(1)) << H48_SHIFT(i, k))
 
-#define MAXLEN 20
 #define CHUNKS COCSEP_CLASSES
 
 /*

@@ -1,6 +1,6 @@
 #include "../test.h"
 
-void indextoperm(int64_t, int64_t, uint8_t *);
+void indextoperm(int64_t, size_t n, uint8_t [n]);
 
 void run(void) {
 	char str[STRLENMAX];

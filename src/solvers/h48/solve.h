@@ -32,8 +32,8 @@ typedef struct {
 	const uint8_t *h48data;
 	const uint8_t *h48data_fallback_h0k4;
 	const void *h48data_fallback_eoesep;
-	uint64_t solutions_size;
-	uint64_t *solutions_used;
+	size_t solutions_size;
+	size_t *solutions_used;
 	char **solutions;
 	uint32_t movemask_normal;
 	uint32_t movemask_inverse;
@@ -58,7 +58,6 @@ typedef struct {
 
 STATIC int64_t solve_h48_appendsolution(dfsarg_solve_h48_t *);
 STATIC int64_t solve_h48_appendallsym(dfsarg_solve_h48_t *);
-STATIC bool solve_h48_appendchar(dfsarg_solve_h48_t *, char);
 STATIC_INLINE bool solve_h48_stop(dfsarg_solve_h48_t *);
 STATIC int64_t solve_h48_maketasks(
     dfsarg_solve_h48_t *, dfsarg_solve_h48_maketasks_t *,
@@ -66,7 +65,7 @@ STATIC int64_t solve_h48_maketasks(
 STATIC void *solve_h48_runthread(void *);
 STATIC int64_t solve_h48_dfs(dfsarg_solve_h48_t *);
 STATIC int64_t solve_h48(cube_t, int8_t, int8_t, uint64_t, int8_t, int8_t,
-    uint64_t, const void *, uint64_t, char *,
+    uint64_t, const void *, size_t, char *,
     long long [static NISSY_SIZE_SOLVE_STATS]);
 
 STATIC int64_t
@@ -76,15 +75,15 @@ solve_h48_appendsolution(dfsarg_solve_h48_t *arg)
 	    arg->nmoves + arg->npremoves > *arg->shortest_sol + arg->optimal)
 		return 0;
 
-	invertmoves(arg->premoves, arg->npremoves, arg->moves + arg->nmoves);
+	invertmoves(arg->npremoves, arg->premoves, arg->moves + arg->nmoves);
 
 	/* Sort parallel moves for consistency */
-	sortparallel(arg->moves, arg->nmoves + arg->npremoves);
+	sortparallel(arg->nmoves + arg->npremoves, arg->moves);
 
 	/* Do not append the solution in case premoves cancel with normal */
-	if (arg->npremoves > 0 && !allowednextmove(arg->moves, arg->nmoves+1))
+	if (arg->npremoves > 0 && !allowednextmove(arg->nmoves+1, arg->moves))
 		return 0;
-	if (arg->npremoves > 1 && !allowednextmove(arg->moves, arg->nmoves+2))
+	if (arg->npremoves > 1 && !allowednextmove(arg->nmoves+2, arg->moves))
 		return 0;
 
 	return solve_h48_appendallsym(arg);
@@ -109,7 +108,7 @@ solve_h48_appendallsym(dfsarg_solve_h48_t *arg)
 			all[j][i] = transform_move(arg->moves[i], t);
 
 		/* Sort parallel moves for consistency */
-		sortparallel(all[j], n);
+		sortparallel(n, all[j]);
 
 		/* Check for duplicate solutions */
 		for (k = 0; k < j; k++) {
@@ -133,7 +132,7 @@ solve_h48_appendallsym(dfsarg_solve_h48_t *arg)
 	for (k = 0; k < j && *arg->nsols < arg->maxsolutions; k++) {
 		l = arg->solutions_size - *arg->solutions_used;
 		m = *arg->solutions + *arg->solutions_used;
-		strl = writemoves(all[k], n, l, m);
+		strl = writemoves(n, all[k], l, m);
 		if (strl < 0)
 			goto solve_h48_appendallsym_error;
 
@@ -141,7 +140,8 @@ solve_h48_appendallsym(dfsarg_solve_h48_t *arg)
 
 		*arg->solutions_used += MAX(0, strl-1);
 
-		if (!solve_h48_appendchar(arg, '\n'))
+		if (!appendchar(arg->solutions_size,
+		    *arg->solutions, arg->solutions_used, '\n'))
 			goto solve_h48_appendallsym_error;
 
 		(*arg->nsols)++;
@@ -154,18 +154,6 @@ solve_h48_appendallsym(dfsarg_solve_h48_t *arg)
 solve_h48_appendallsym_error:
 	LOG("Could not append solution to buffer: size too small\n");
 	return NISSY_ERROR_BUFFER_SIZE;
-}
-
-STATIC bool
-solve_h48_appendchar(dfsarg_solve_h48_t *arg, char c)
-{
-	if (arg->solutions_size <= *arg->solutions_used)
-		return false;
-
-	*(*arg->solutions + *arg->solutions_used) = c;
-	(*arg->solutions_used)++;
-
-	return true;
 }
 
 STATIC_INLINE bool
@@ -283,9 +271,9 @@ solve_h48_dfs(dfsarg_solve_h48_t *arg)
 	ulbi = arg->use_lb_inverse;
 
 	ret = 0;
-	mm_normal = allowednextmove_mask(arg->moves, arg->nmoves) &
+	mm_normal = allowednextmove_mask(arg->nmoves, arg->moves) &
 	    arg->movemask_normal;
-	mm_inverse = allowednextmove_mask(arg->premoves, arg->npremoves) &
+	mm_inverse = allowednextmove_mask(arg->npremoves, arg->premoves) &
 	    arg->movemask_inverse;
 	if (popcount_u32(mm_normal) <= popcount_u32(mm_inverse)) {
 		arg->nmoves++;
@@ -397,7 +385,7 @@ solve_h48_maketasks(
 		return NISSY_OK;
 	}
 
-	mm = allowednextmove_mask(maketasks_arg->moves, maketasks_arg->nmoves);
+	mm = allowednextmove_mask(maketasks_arg->nmoves, maketasks_arg->moves);
 
 	maketasks_arg->nmoves++;
 	backup_cube = maketasks_arg->cube;
@@ -435,7 +423,7 @@ solve_h48(
 	int8_t threads,
 	uint64_t data_size,
 	const void *data,
-	uint64_t solutions_size,
+	size_t solutions_size,
 	char *solutions,
 	long long stats[static NISSY_SIZE_SOLVE_STATS]
 )
@@ -447,7 +435,8 @@ solve_h48(
 	solve_h48_task_t tasks[STARTING_CUBES];
 	dfsarg_solve_h48_maketasks_t maketasks_arg;
 	long double fallback_rate, lookups_per_node;
-	uint64_t solutions_used, symmask, offset;
+	uint64_t symmask, offset;
+	size_t solutions_used;
 	int64_t nodes_visited, table_lookups, table_fallbacks;
 	tableinfo_t info, fbinfo, fbinfo2;
 	const uint32_t *cocsepdata;
@@ -561,7 +550,8 @@ solve_h48(
 	}
 
 solve_h48_done:
-	if (!solve_h48_appendchar(&arg[0], '\0'))
+	if (!appendchar(arg[0].solutions_size, *arg[0].solutions,
+	    arg[0].solutions_used, '\0'))
 		goto solve_h48_error_solutions_buffer;
 
 	nodes_visited = table_lookups = table_fallbacks = 0;

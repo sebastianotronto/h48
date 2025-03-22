@@ -1,10 +1,8 @@
-#define MAXLEN_COORDSOL 20
-
 typedef struct {
 	cube_t cube;
 	uint8_t depth;
 	uint8_t nmoves;
-	uint8_t moves[MAXLEN_COORDSOL];
+	uint8_t moves[MAXLEN];
 	coord_t *coord;
 	const void *coord_data;
 	const uint8_t *ptable;
@@ -13,23 +11,22 @@ typedef struct {
 	int64_t maxsolutions;
 	int optimal;
 	uint8_t *shortest_sol;
-	uint64_t solutions_size;
-	uint64_t *solutions_used;
+	size_t solutions_size;
+	size_t *solutions_used;
 	char **solutions;
 } dfsarg_solve_coord_t;
 
 STATIC int64_t solve_coord(cube_t, coord_t *, uint8_t, uint8_t, uint8_t,
-    uint8_t, uint64_t, int, int, uint64_t, const void *, uint64_t, char *);
+    uint8_t, uint64_t, int, int, uint64_t, const void *, size_t, char *);
 STATIC int64_t solve_coord_dispatch(cube_t, const char *, uint8_t, uint8_t,
-     uint8_t, uint64_t, int, int, uint64_t, const void *, uint64_t, char *);
-STATIC bool solve_coord_appendchar(char *, uint64_t, uint64_t *, char);
+     uint8_t, uint64_t, int, int, uint64_t, const void *, size_t, char *);
 STATIC int64_t solve_coord_appendsolution(dfsarg_solve_coord_t *);
 STATIC int64_t solve_coord_dfs(dfsarg_solve_coord_t *);
 
 STATIC int64_t
 solve_coord_appendsolution(dfsarg_solve_coord_t *arg)
 {
-	uint8_t i, t, tmoves[MAXLEN_COORDSOL];
+	uint8_t i, t, tmoves[MAXLEN];
 	int64_t strl;
 	uint64_t l;
 	char *m;
@@ -44,18 +41,18 @@ solve_coord_appendsolution(dfsarg_solve_coord_t *arg)
 	for (i = 0; i < arg->nmoves; i++)
 		tmoves[i] = transform_move(arg->moves[i], t);
 
-	sortparallel(tmoves, arg->nmoves);
+	sortparallel(arg->nmoves, tmoves);
 
 	l = arg->solutions_size - *arg->solutions_used;
 	m = *arg->solutions + *arg->solutions_used;
-	strl = writemoves(tmoves, arg->nmoves, l, m);
+	strl = writemoves(arg->nmoves, tmoves, l, m);
 	if (strl < 0)
 		goto solve_coord_appendsolution_error;
 
 	*arg->solutions_used += MAX(0, strl-1);
 
-	if (!solve_coord_appendchar(
-	    *arg->solutions, arg->solutions_size, arg->solutions_used, '\n'))
+	if (!appendchar(
+	    arg->solutions_size, *arg->solutions, arg->solutions_used, '\n'))
 		goto solve_coord_appendsolution_error;
 
 	(*arg->nsols)++;
@@ -66,18 +63,6 @@ solve_coord_appendsolution(dfsarg_solve_coord_t *arg)
 solve_coord_appendsolution_error:
 	LOG("Could not append solution to buffer: size too small\n");
 	return NISSY_ERROR_BUFFER_SIZE;
-}
-
-STATIC bool
-solve_coord_appendchar(char *s, uint64_t s_size, uint64_t *s_used, char c)
-{
-	if (s_size == *s_used)
-		return false;
-
-	s[*s_used] = c;
-	(*s_used)++;
-
-	return true;
 }
 
 STATIC int64_t
@@ -104,7 +89,7 @@ solve_coord_dfs(dfsarg_solve_coord_t *arg)
 	backup_cube = arg->cube;
 
 	ret = 0;
-	mm = allowednextmove_mask(arg->moves, arg->nmoves);
+	mm = allowednextmove_mask(arg->nmoves, arg->moves);
 	arg->nmoves++;
 	for (m = 0; m < 18; m++) {
 		if (!(mm & (1 << m)))
@@ -135,7 +120,7 @@ solve_coord_dispatch(
 	int threads,
 	uint64_t data_size,
 	const void *data,
-	uint64_t sols_size,
+	size_t solutions_size,
 	char *sols
 )
 {
@@ -143,7 +128,7 @@ solve_coord_dispatch(
 	uint8_t axis;
 
 	parse_coord_and_axis(
-	    coord_and_axis, strlen(coord_and_axis), &coord, &axis);
+	    strlen(coord_and_axis), coord_and_axis, &coord, &axis);
 
 	if (coord == NULL) {
 		LOG("Could not parse coordinate from '%s'\n", coord_and_axis);
@@ -156,7 +141,8 @@ solve_coord_dispatch(
 	}
 
 	return solve_coord(cube, coord, axis, nissflag, minmoves, maxmoves,
-	    maxsolutions, optimal, threads, data_size, data, sols_size, sols);
+	    maxsolutions, optimal, threads, data_size, data,
+	    solutions_size, sols);
 }
 
 STATIC int64_t
@@ -172,14 +158,14 @@ solve_coord(
 	int threads,
 	uint64_t data_size,
 	const void *data,
-	uint64_t sols_size,
+	size_t solutions_size,
 	char *sols
 )
 {
 	int8_t d;
 	uint8_t t, shortest_sol;
 	int64_t nsols, ndepth;
-	uint64_t sols_used;
+	size_t solutions_used;
 	cube_t c;
 	const void *coord_data;
 	const uint8_t *ptable;
@@ -200,8 +186,8 @@ solve_coord(
 	}
 
 	nsols = 0;
-	sols_used = 0;
-	shortest_sol = MAXLEN_COORDSOL + 1;
+	solutions_used = 0;
+	shortest_sol = MAXLEN + 1;
 	t = coord->axistrans[axis];
 	c = transform(cube, t);
 
@@ -215,16 +201,15 @@ solve_coord(
 		.maxsolutions = (int64_t)maxsolutions,
 		.optimal = optimal,
 		.shortest_sol = &shortest_sol,
-		.solutions_size = sols_size,
-		.solutions_used = &sols_used,
+		.solutions_size = solutions_size,
+		.solutions_used = &solutions_used,
 		.solutions = &sols,
 	};
 
 	if (coord->coord(c, coord_data) == 0) {
 		if (minmoves == 0) {
 			nsols = 1;
-			if (!solve_coord_appendchar(
-			    sols, sols_size, &sols_used, '\n'))
+			if (!appendchar(solutions_size, sols, &solutions_used, '\n'))
 				goto solve_coord_error_buffer;
 		}
 		goto solve_coord_done;
@@ -254,7 +239,7 @@ solve_coord(
 	}
 
 solve_coord_done:
-	if (!solve_coord_appendchar(sols, sols_size, &sols_used, '\0'))
+	if (!appendchar(solutions_size, sols, &solutions_used, '\0'))
 		goto solve_coord_error_buffer;
 
 	return nsols;

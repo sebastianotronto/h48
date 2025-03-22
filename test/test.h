@@ -25,7 +25,7 @@ bool isconsistent(cube_t);
 bool issolvable(cube_t);
 bool issolved(cube_t);
 cube_t readcube(char *, char *);
-int64_t writecube(char *, cube_t, uint64_t, char *);
+int64_t writecube(char *, cube_t, size_t n, char [n]);
 
 /* Test function to be implemented by all tests */
 void run(void);
