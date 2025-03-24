@@ -6,6 +6,7 @@ for testing purposes only.
 #define STATIC static
 #define LOG printf
 
+#include "../src/solvers/tables_types_macros.h"
 #include "../src/solvers/tables.h"
 
 size_t gendata_h48_derive(uint8_t, const void *, void *);

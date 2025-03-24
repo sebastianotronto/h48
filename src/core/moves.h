@@ -3,6 +3,7 @@
 
 STATIC_INLINE bool allowednextmove(size_t n, const uint8_t [n]);
 STATIC_INLINE uint32_t allowednextmove_mask(size_t n, const uint8_t [n]);
+STATIC bool allowedmoves(size_t n, const uint8_t [n]);
 
 STATIC_INLINE uint8_t movebase(uint8_t);
 STATIC_INLINE uint8_t moveaxis(uint8_t);
@@ -13,11 +14,9 @@ STATIC_INLINE uint32_t disable_moves(uint32_t, uint8_t);
 STATIC cube_t move(cube_t, uint8_t);
 STATIC cube_t premove(cube_t, uint8_t);
 STATIC uint8_t inverse_move(uint8_t);
-STATIC void invertmoves(size_t n, const uint8_t [n], uint8_t [n]);
-STATIC void sortparallel(size_t n, uint8_t [n]);
+STATIC void sortparallel_moves(size_t n, uint8_t [n]);
 STATIC bool are_lastmoves_singlecw(size_t n, uint8_t [n]);
 
-STATIC int readmoves(const char *, int, uint8_t *);
 STATIC cube_t applymoves(cube_t, const char *);
 
 #define FOREACH_READMOVE(ARG_BUF, ARG_MOVE, ARG_C, ARG_MAX, \
@@ -73,6 +72,18 @@ allowednextmove_mask(size_t n, const uint8_t moves[n])
 		result = disable_moves(result, base2 * 3);
 
 	return result;
+}
+
+STATIC bool
+allowedmoves(size_t n, const uint8_t moves[n])
+{
+	uint8_t j;
+
+	for (j = 2; j < n; j++)
+		if (!allowednextmove(j, moves))
+			return false;
+
+	return true;
 }
 
 STATIC_INLINE uint32_t 
@@ -210,44 +221,13 @@ inverse_move(uint8_t m)
 	return m - 2 * (m % 3) + 2;	
 }
 
-/*
-GCC has issues when -Wstringop-overflow is used together with O3. It produces
-warnings like the following:
-
-In function 'invertmoves',
-    inlined from 'solve_h48_appendsolution' at src/solvers/h48/solve.h:81:3,
-    inlined from 'solve_h48_dfs.isra' at src/solvers/h48/solve.h:139:3:
-warning: writing 32 bytes into a region of size 0 [-Wstringop-overflow=]
-  197 |                 ret[i] = inverse_move(moves[nmoves - i - 1]);
-      |                 ~~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-In function 'solve_h48_dfs.isra':
-note: at offset 192 into destination object 'invertedpremoves' of size 20
-   71 |         uint8_t invertedpremoves[MAXLEN];
-
-Clang does not give any warning.
-Someone else complained here: https://access.redhat.com/solutions/6755371
-
-To solve this issue temporarily, we use a lower optimization setting for
-this function only.
-
-TODO check if the issue is resolved
-*/
-#pragma GCC push_options
-#pragma GCC optimize ("O2")
 STATIC void
-invertmoves(size_t n, const uint8_t moves[n], uint8_t ret[n])
+sortparallel_moves(size_t n, uint8_t moves[n])
 {
 	uint8_t i;
 
-	for (i = 0; i < n; i++)
-		ret[i] = inverse_move(moves[n - i - 1]);
-}
-#pragma GCC pop_options
-
-STATIC void
-sortparallel(size_t n, uint8_t moves[n])
-{
-	uint8_t i;
+	if (n < 2)
+		return;
 
 	for (i = 0; i < n-1; i++)
 		if (moveaxis(moves[i]) == moveaxis(moves[i+1]) &&
@@ -266,20 +246,6 @@ are_lastmoves_singlecw(size_t n, uint8_t moves[n])
 	two = n > 1 && parallel(moves[n-1], moves[n-2]);
 
 	return isbase(moves[n-1]) && (!two || isbase(moves[n-2]));
-}
-
-STATIC int
-readmoves(const char *buf, int max, uint8_t *ret)
-{
-	uint8_t m;
-	int c;
-
-	FOREACH_READMOVE(buf, m, c, max, NISSY_ERROR_INVALID_MOVES,
-		if (ret != NULL)
-			ret[c] = m;
-	)
-
-	return c;
 }
 
 STATIC cube_t

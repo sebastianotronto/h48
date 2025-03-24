@@ -1,6 +1,3 @@
-/* Type definitions and macros are in a separate file for easier testing */
-#include "tables_types_macros.h"
-
 STATIC uint64_t read_unaligned_u64(const char *);
 STATIC void write_unaligned_u64(char *, uint64_t);
 STATIC int64_t readtableinfo(uint64_t, const char *, tableinfo_t *);

@@ -1,6 +1,26 @@
 STATIC uint8_t readmove(char);
+STATIC int64_t readmoves(const char *, size_t n, uint8_t [n]);
 STATIC uint8_t readmodifier(char);
-STATIC int64_t writemoves(size_t n, uint8_t [n], size_t m, char [m]);
+STATIC int64_t writemoves(size_t n, const uint8_t [n], size_t m, char [m]);
+
+#define FOREACH_READMOVE(ARG_BUF, ARG_MOVE, ARG_C, ARG_MAX, \
+	RET_ERROR, ARG_ACTION) \
+	const char *VAR_B; \
+	uint8_t VAR_MOVE_NOMOD, VAR_MOD; \
+	for (VAR_B = ARG_BUF, ARG_C = 0; *VAR_B != '\0'; VAR_B++, ARG_C++) { \
+		while (*VAR_B == ' ' || *VAR_B == '\t' || *VAR_B == '\n') \
+			VAR_B++; \
+		if (*VAR_B == '\0' || ARG_C == ARG_MAX) \
+			break; \
+		if ((VAR_MOVE_NOMOD = readmove(*VAR_B)) == UINT8_ERROR) { \
+			LOG("Error: unknown move '%c'\n", *VAR_B); \
+			return RET_ERROR; \
+		} \
+		if ((VAR_MOD = readmodifier(*(VAR_B+1))) != 0) \
+			VAR_B++; \
+		ARG_MOVE = VAR_MOVE_NOMOD + VAR_MOD; \
+		ARG_ACTION \
+	}
 
 STATIC uint8_t
 readmove(char c)
@@ -39,9 +59,22 @@ readmodifier(char c)
 }
 
 STATIC int64_t
+readmoves(const char *buf, size_t n, uint8_t ret[n])
+{
+	uint8_t m;
+	uint64_t c;
+
+	FOREACH_READMOVE(buf, m, c, n, NISSY_ERROR_INVALID_MOVES,
+		ret[c] = m;
+	)
+
+	return (int64_t)c;
+}
+
+STATIC int64_t
 writemoves(
 	size_t nmoves,
-	uint8_t m[nmoves],
+	const uint8_t m[nmoves],
 	size_t buf_size,
 	char buf[buf_size]
 )
@@ -69,7 +102,9 @@ writemoves(
 		*b = ' ';
 	}
 
-	if (b != buf)
+	if (b == buf)
+		written = 1; /* Nothing written, only NULL-terminator */
+	else
 		b--; /* Remove last space */
 	*b = '\0';
 

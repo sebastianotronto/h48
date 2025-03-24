@@ -10,6 +10,7 @@
 
 #include "../src/nissy.h"
 #include "../src/arch/arch.h"
+#include "../src/solvers/solutions_types_macros.h"
 #include "../src/solvers/tables_types_macros.h"
 #include "../src/solvers/h48/coordinate_macros.h"
 #include "../src/solvers/h48/map_types_macros.h"

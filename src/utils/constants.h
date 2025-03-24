@@ -105,7 +105,7 @@ STATIC int64_t binomial[12][12] = {
 #define MM_SIDE(m)     (UINT32_C(7) << (uint32_t)(m))
 
 #define TM_ALLTRANS    UINT64_C(0xFFFFFFFFFFFF)
-#define TM_SINGLE_UFr  UINT64_C(1)
+#define TM_SINGLE(t)   (UINT64_C(1) << (uint64_t)(t))
 
 #define CORNER_UFR      UINT8_C(0)
 #define CORNER_UBL      UINT8_C(1)
@@ -142,7 +142,7 @@ STATIC int64_t binomial[12][12] = {
 #define CTWIST_CW   UINT8_C(0x20)
 #define CTWIST_CCW  UINT8_C(0x40)
 #define EFLIP       UINT8_C(0x10)
-#define UINT8_ERROR UINT8_C(0xFF)
+#define UINT8_ERROR UINT8_MAX
 
 STATIC const char *cornerstr[] = {
 	[CORNER_UFR] = "UFR",
