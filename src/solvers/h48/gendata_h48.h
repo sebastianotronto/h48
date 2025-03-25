@@ -1,17 +1,17 @@
-STATIC uint64_t gendata_h48short(gendata_h48short_arg_t *);
-STATIC int64_t gendata_h48(gendata_h48_arg_t *);
-STATIC void gendata_h48h0k4(gendata_h48_arg_t *);
-STATIC void gendata_h48k2(gendata_h48_arg_t *);
-STATIC void gendata_h48k2_realcoord(gendata_h48_arg_t *);
+STATIC uint64_t genddfggta_h48short(gendata_h48short_arg_t [static 1]);
+STATIC int64_t gendata_h48(gendata_h48_arg_t [static 1]);
+STATIC void gendata_h48h0k4(gendata_h48_arg_t [static 1]);
+STATIC void gendata_h48k2(gendata_h48_arg_t [static 1]);
 
 STATIC void * gendata_h48h0k4_runthread(void *);
 STATIC void * gendata_h48k2_runthread(void *);
 
-STATIC_INLINE void gendata_h48_mark_atomic(gendata_h48_mark_t *);
-STATIC_INLINE void gendata_h48_mark(gendata_h48_mark_t *);
-STATIC_INLINE bool gendata_h48k2_dfs_stop(cube_t, int8_t, h48k2_dfs_arg_t *);
-STATIC void gendata_h48k2_dfs(h48k2_dfs_arg_t *arg);
-STATIC tableinfo_t makeinfo_h48k2(gendata_h48_arg_t *);
+STATIC_INLINE void gendata_h48_mark_atomic(gendata_h48_mark_t [static 1]);
+STATIC_INLINE void gendata_h48_mark(gendata_h48_mark_t [static 1]);
+STATIC_INLINE bool gendata_h48k2_dfs_stop(
+    cube_t, int8_t, h48k2_dfs_arg_t [static 1]);
+STATIC void gendata_h48k2_dfs(h48k2_dfs_arg_t [static 1]);
+STATIC tableinfo_t makeinfo_h48k2(gendata_h48_arg_t [static 1]);
 STATIC void getdistribution_h48(const uint8_t *,
     uint64_t [static INFO_DISTRIBUTION_LEN], uint8_t, uint8_t);
 
@@ -28,7 +28,7 @@ STATIC_INLINE void set_h48_pval_atomic(
 size_t gendata_h48_derive(uint8_t, const void *, void *);
 
 STATIC uint64_t
-gendata_h48short(gendata_h48short_arg_t *arg)
+gendata_h48short(gendata_h48short_arg_t arg[static 1])
 {
 	uint8_t i, m;
 	int64_t coord;
@@ -62,18 +62,13 @@ gendata_h48short(gendata_h48short_arg_t *arg)
 }
 
 STATIC int64_t
-gendata_h48(gendata_h48_arg_t *arg)
+gendata_h48(gendata_h48_arg_t arg[static 1])
 {
 	uint64_t size, cocsepsize, h48size, fallbacksize, fallback2size, of;
 	long long r;
 	void *cocsepdata_offset;
 	tableinfo_t cocsepinfo, h48info, fallbackinfo;
 	gendata_h48_arg_t arg_h0k4;
-
-	if (arg == NULL) {
-		LOG("Error computing H48 data: arg is NULL.\n");
-		return NISSY_ERROR_UNKNOWN;
-	}
 
 	cocsepsize = COCSEP_FULLSIZE;
 	h48size = INFOSIZE + H48_TABLESIZE(arg->h, arg->k);
@@ -107,8 +102,6 @@ gendata_h48(gendata_h48_arg_t *arg)
 
 	if (arg->h == 0 && arg->k == 4) {
 		gendata_h48h0k4(arg);
-	} else if ((arg->h == 0 || arg->h == 11) && arg->k == 2) {
-		gendata_h48k2_realcoord(arg);
 	} else if (arg->k == 2) {
 		gendata_h48k2(arg);
 	} else {
@@ -189,7 +182,7 @@ gendata_h48(gendata_h48_arg_t *arg)
 }
 
 STATIC void
-gendata_h48h0k4(gendata_h48_arg_t *arg)
+gendata_h48h0k4(gendata_h48_arg_t arg[static 1])
 {
 	_Atomic uint8_t *table;
 	uint8_t val;
@@ -325,7 +318,7 @@ gendata_h48h0k4_runthread(void *arg)
 }
 
 STATIC void
-gendata_h48k2(gendata_h48_arg_t *arg)
+gendata_h48k2(gendata_h48_arg_t arg[static 1])
 {
 	static const uint8_t shortdepth = 8;
 	static const uint64_t capacity = 10000019;
@@ -483,7 +476,7 @@ gendata_h48k2_runthread(void *arg)
 }
 
 STATIC void
-gendata_h48k2_dfs(h48k2_dfs_arg_t *arg)
+gendata_h48k2_dfs(h48k2_dfs_arg_t arg[static 1])
 {
 	int8_t d;
 	uint8_t m[4];
@@ -562,7 +555,7 @@ gendata_h48k2_dfs(h48k2_dfs_arg_t *arg)
 }
 
 STATIC_INLINE void
-gendata_h48_mark_atomic(gendata_h48_mark_t *arg)
+gendata_h48_mark_atomic(gendata_h48_mark_t arg[static 1])
 {
 	uint8_t oldval, newval;
 	int64_t coord, mutex;
@@ -582,7 +575,7 @@ gendata_h48_mark_atomic(gendata_h48_mark_t *arg)
 }
 
 STATIC_INLINE void
-gendata_h48_mark(gendata_h48_mark_t *arg)
+gendata_h48_mark(gendata_h48_mark_t arg[static 1])
 {
 	uint8_t oldval, newval;
 	int64_t coord, mutex;
@@ -599,7 +592,7 @@ gendata_h48_mark(gendata_h48_mark_t *arg)
 }
 
 STATIC_INLINE bool
-gendata_h48k2_dfs_stop(cube_t cube, int8_t depth, h48k2_dfs_arg_t *arg)
+gendata_h48k2_dfs_stop(cube_t cube, int8_t d, h48k2_dfs_arg_t arg[static 1])
 {
 	uint64_t val;
 	int64_t coord, mutex;
@@ -613,7 +606,7 @@ gendata_h48k2_dfs_stop(cube_t cube, int8_t depth, h48k2_dfs_arg_t *arg)
 		pthread_mutex_lock(arg->table_mutex[mutex]);
 		oldval = get_h48_pval(arg->table, coord, arg->k);
 		pthread_mutex_unlock(arg->table_mutex[mutex]);
-		return oldval <= depth;
+		return oldval <= d;
 	} else {
 		/* With 0 < k < 11 we do not have a "real coordinate".
 		   The best we can do is checking if we backtracked to
@@ -624,22 +617,8 @@ gendata_h48k2_dfs_stop(cube_t cube, int8_t depth, h48k2_dfs_arg_t *arg)
 	}
 }
 
-STATIC void
-gendata_h48k2_realcoord(gendata_h48_arg_t *arg)
-{
-	/* TODO */
-	gendata_h48k2(arg);
-}
-
-STATIC void *
-gendata_h48k2_realcoord_runthread(void *arg)
-{
-	/* TODO */
-	return NULL;
-}
-
 STATIC tableinfo_t
-makeinfo_h48k2(gendata_h48_arg_t *arg)
+makeinfo_h48k2(gendata_h48_arg_t arg[static 1])
 {
 	tableinfo_t info;
 

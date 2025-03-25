@@ -1,16 +1,13 @@
-/* Type definitions and macros are in a separate file for easier testing */
-#include "map_types_macros.h"
-
-STATIC void h48map_create(h48map_t *, uint64_t, uint64_t);
-STATIC void h48map_clear(h48map_t *);
-STATIC void h48map_destroy(h48map_t *);
-STATIC uint64_t h48map_lookup(h48map_t *, uint64_t);
-STATIC void h48map_insertmin(h48map_t *, uint64_t, uint64_t);
-STATIC uint64_t h48map_value(h48map_t *, uint64_t);
-STATIC kvpair_t h48map_nextkvpair(h48map_t *, uint64_t *);
+STATIC void h48map_create(h48map_t [static 1], uint64_t, uint64_t);
+STATIC void h48map_clear(h48map_t [static 1]);
+STATIC void h48map_destroy(h48map_t [static 1]);
+STATIC uint64_t h48map_lookup(h48map_t [static 1], uint64_t);
+STATIC void h48map_insertmin(h48map_t [static 1], uint64_t, uint64_t);
+STATIC uint64_t h48map_value(h48map_t [static 1], uint64_t);
+STATIC kvpair_t h48map_nextkvpair(h48map_t [static 1], uint64_t [static 1]);
 
 STATIC void
-h48map_create(h48map_t *map, uint64_t capacity, uint64_t randomizer)
+h48map_create(h48map_t map[static 1], uint64_t capacity, uint64_t randomizer)
 {
 	map->capacity = capacity;
 	map->randomizer = randomizer;
@@ -20,20 +17,20 @@ h48map_create(h48map_t *map, uint64_t capacity, uint64_t randomizer)
 }
 
 STATIC void
-h48map_clear(h48map_t *map)
+h48map_clear(h48map_t map[static 1])
 {
 	memset(map->table, 0xFF, map->capacity * sizeof(uint64_t));
 	map->n = 0;
 }
 
 STATIC void
-h48map_destroy(h48map_t *map)
+h48map_destroy(h48map_t map[static 1])
 {
 	free(map->table);
 }
 
 STATIC_INLINE uint64_t
-h48map_lookup(h48map_t *map, uint64_t x)
+h48map_lookup(h48map_t map[static 1], uint64_t x)
 {
 	uint64_t hash, i;
 
@@ -47,7 +44,7 @@ h48map_lookup(h48map_t *map, uint64_t x)
 }
 
 STATIC_INLINE void
-h48map_insertmin(h48map_t *map, uint64_t key, uint64_t val)
+h48map_insertmin(h48map_t map[static 1], uint64_t key, uint64_t val)
 {
 	uint64_t i, oldval, min;
 
@@ -60,13 +57,13 @@ h48map_insertmin(h48map_t *map, uint64_t key, uint64_t val)
 }
 
 STATIC_INLINE uint64_t
-h48map_value(h48map_t *map, uint64_t key)
+h48map_value(h48map_t map[static 1], uint64_t key)
 {
 	return map->table[h48map_lookup(map, key)] >> MAP_KEYSHIFT;
 }
 
 STATIC kvpair_t
-h48map_nextkvpair(h48map_t *map, uint64_t *p)
+h48map_nextkvpair(h48map_t map[static 1], uint64_t p[static 1])
 {
 	kvpair_t kv;
 	uint64_t pair;

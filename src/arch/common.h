@@ -1,6 +1,6 @@
 STATIC_INLINE int popcount_u32(uint32_t);
 
-STATIC void pieces(cube_t *, uint8_t [static 8], uint8_t [static 12]);
+STATIC void pieces(cube_t [static 1], uint8_t [static 8], uint8_t [static 12]);
 STATIC_INLINE bool equal(cube_t, cube_t);
 STATIC_INLINE cube_t invertco(cube_t);
 STATIC_INLINE cube_t compose_edges(cube_t, cube_t);
@@ -14,9 +14,9 @@ STATIC_INLINE int64_t coord_cocsep(cube_t);
 STATIC_INLINE int64_t coord_eo(cube_t);
 STATIC_INLINE int64_t coord_esep(cube_t);
 
-STATIC_INLINE void copy_corners(cube_t *, cube_t);
-STATIC_INLINE void copy_edges(cube_t *, cube_t);
-STATIC_INLINE void set_eo(cube_t *, int64_t);
+STATIC_INLINE void copy_corners(cube_t [static 1], cube_t);
+STATIC_INLINE void copy_edges(cube_t [static 1], cube_t);
+STATIC_INLINE void set_eo(cube_t [static 1], int64_t);
 STATIC_INLINE cube_t invcoord_esep(int64_t);
 
 STATIC_INLINE void invcoord_esep_array(int64_t, int64_t, uint8_t[static 12]);

@@ -1,4 +1,4 @@
-STATIC cube_t solvecube(void);
+STATIC cube_t solvedcube(void);
 STATIC cube_t cubefromarray(uint8_t [static 8], uint8_t [static 12]);
 STATIC bool isconsistent(cube_t);
 STATIC bool issolvable(cube_t);

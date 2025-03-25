@@ -1,11 +1,15 @@
-STATIC_INLINE bool gendata_cocsep_get_visited(const uint8_t *, int64_t);
-STATIC_INLINE void gendata_cocsep_set_visited(uint8_t *, int64_t);
-
 STATIC size_t gendata_cocsep(char *, uint64_t *, cube_t *);
-STATIC uint32_t gendata_cocsep_dfs(cocsep_dfs_arg_t *);
-STATIC void getdistribution_cocsep(const uint32_t *, uint64_t [static 21]);
+STATIC uint32_t gendata_cocsep_dfs(cocsep_dfs_arg_t [static 1]);
+STATIC void getdistribution_cocsep(
+    const uint32_t [static COCSEP_TABLESIZE], uint64_t [static 21]);
 
-STATIC_INLINE int8_t get_h48_cdata(cube_t, const uint32_t *, uint32_t *);
+STATIC_INLINE bool gendata_cocsep_get_visited(
+    const uint8_t [static COCSEP_VISITEDSIZE], int64_t);
+STATIC_INLINE void gendata_cocsep_set_visited(
+    uint8_t [static COCSEP_VISITEDSIZE], int64_t);
+
+STATIC_INLINE int8_t get_h48_cdata(
+    cube_t, const uint32_t [static COCSEP_TABLESIZE], uint32_t *);
 
 STATIC size_t
 gendata_cocsep(
@@ -78,7 +82,7 @@ gendata_cocsep_return_size:
 }
 
 STATIC uint32_t
-gendata_cocsep_dfs(cocsep_dfs_arg_t *arg)
+gendata_cocsep_dfs(cocsep_dfs_arg_t arg[static 1])
 {
 	uint8_t m;
 	uint32_t cc, class, ttrep, depth, olddepth, tinv;
@@ -133,7 +137,10 @@ gendata_cocsep_dfs(cocsep_dfs_arg_t *arg)
 }
 
 STATIC void
-getdistribution_cocsep(const uint32_t *table, uint64_t distr[static 21])
+getdistribution_cocsep(
+    const uint32_t table[static COCSEP_TABLESIZE],
+    uint64_t distr[static 21]
+)
 {
 	size_t i;
 
@@ -144,19 +151,29 @@ getdistribution_cocsep(const uint32_t *table, uint64_t distr[static 21])
 }
 
 STATIC_INLINE bool
-gendata_cocsep_get_visited(const uint8_t *a, int64_t i)
+gendata_cocsep_get_visited(
+	const uint8_t a[static COCSEP_VISITEDSIZE],
+	int64_t i
+)
 {
 	return a[VISITED_IND(i)] & VISITED_MASK(i);
 }
 
 STATIC_INLINE void
-gendata_cocsep_set_visited(uint8_t *a, int64_t i)
+gendata_cocsep_set_visited(
+	uint8_t a[static COCSEP_VISITEDSIZE],
+	int64_t i
+)
 {
 	a[VISITED_IND(i)] |= VISITED_MASK(i);
 }
 
 STATIC_INLINE int8_t
-get_h48_cdata(cube_t cube, const uint32_t *cocsepdata, uint32_t *cdata)
+get_h48_cdata(
+	cube_t cube,
+	const uint32_t cocsepdata[static COCSEP_TABLESIZE],
+	uint32_t *cdata
+)
 {
 	int64_t coord;
 

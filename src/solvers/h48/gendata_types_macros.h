@@ -33,7 +33,7 @@
 /*
 TODO: This loop over similar h48 coordinates can be improved by only
 transforming edges, but we need to compose transformations (i.e. conjugate
-_t by _ttrep).
+VAR_T by VAR_TTREP).
 */
 #define FOREACH_H48SIM(ARG_CUBE, ARG_COCSEPDATA, ARG_SELFSIM, ARG_ACTION) \
 	int64_t VAR_COCSEP = coord_cocsep(ARG_CUBE); \

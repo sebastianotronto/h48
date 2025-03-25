@@ -12,9 +12,11 @@ STATIC uint32_t gendata_eoesep_marksim(int64_t, uint8_t,
     uint8_t [static EOESEP_BUF], uint32_t [static ESEP_MAX]);
 STATIC bool gendata_eoesep_next(cube_t, uint8_t,
     uint8_t [static EOESEP_BUF], uint32_t [static ESEP_MAX]);
-STATIC uint8_t get_eoesep_pval(const uint8_t *, int64_t);
+STATIC uint8_t get_eoesep_pval(
+    const uint8_t [static DIV_ROUND_UP(EOESEP_TABLESIZE, 2)], int64_t);
 STATIC uint8_t get_eoesep_pval_cube(const void *, cube_t);
-STATIC void set_eoesep_pval(uint8_t *, int64_t, uint8_t);
+STATIC void set_eoesep_pval(
+    uint8_t [static DIV_ROUND_UP(EOESEP_TABLESIZE, 2)], int64_t, uint8_t);
 
 STATIC int64_t
 coord_eoesep_sym(cube_t c, const uint32_t esep_classes[static ESEP_MAX])
@@ -247,7 +249,10 @@ gendata_eoesep_next(
 }
 
 STATIC uint8_t
-get_eoesep_pval(const uint8_t *table, int64_t i)
+get_eoesep_pval(
+	const uint8_t table[static DIV_ROUND_UP(EOESEP_TABLESIZE, 2)],
+	int64_t i
+)
 {
 	return (table[EOESEP_INDEX(i)] & EOESEP_MASK(i)) >> EOESEP_SHIFT(i);
 }
@@ -267,7 +272,11 @@ get_eoesep_pval_cube(const void *data, cube_t c)
 }
 
 STATIC void
-set_eoesep_pval(uint8_t *table, int64_t i, uint8_t val)
+set_eoesep_pval(
+	uint8_t table[static DIV_ROUND_UP(EOESEP_TABLESIZE, 2)],
+	int64_t i,
+	uint8_t val
+)
 {
 	table[EOESEP_INDEX(i)] = (table[EOESEP_INDEX(i)] & (~EOESEP_MASK(i)))
 	    | (val << EOESEP_SHIFT(i));

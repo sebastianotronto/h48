@@ -1,11 +1,13 @@
-STATIC uint64_t read_unaligned_u64(const char *);
-STATIC void write_unaligned_u64(char *, uint64_t);
-STATIC int64_t readtableinfo(uint64_t, const char *, tableinfo_t *);
-STATIC int64_t readtableinfo_n(uint64_t, const char *, uint8_t, tableinfo_t *);
-STATIC int64_t writetableinfo(const tableinfo_t *, uint64_t, char *);
+STATIC uint64_t read_unaligned_u64(const char [static sizeof(uint64_t)]);
+STATIC void write_unaligned_u64(char [static sizeof(uint64_t)], uint64_t);
+STATIC int64_t readtableinfo(size_t n, const char [n], tableinfo_t [static 1]);
+STATIC int64_t readtableinfo_n(
+    size_t n, const char [n], uint8_t, tableinfo_t [static 1]);
+STATIC int64_t writetableinfo(
+    const tableinfo_t [static 1], size_t n, char [n]);
 
 STATIC uint64_t
-read_unaligned_u64(const char *buf)
+read_unaligned_u64(const char buf[static sizeof(uint64_t)])
 {
 	uint64_t ret;
 
@@ -15,13 +17,17 @@ read_unaligned_u64(const char *buf)
 }
 
 STATIC void
-write_unaligned_u64(char *buf, uint64_t x)
+write_unaligned_u64(char buf[static sizeof(uint64_t)], uint64_t x)
 {
 	memcpy(buf, &x, sizeof(uint64_t));
 }
 
 STATIC int64_t
-readtableinfo(uint64_t buf_size, const char *buf, tableinfo_t *info)
+readtableinfo(
+	size_t buf_size,
+	const char buf[buf_size],
+	tableinfo_t info[static 1]
+)
 {
 	size_t i;
 
@@ -35,11 +41,6 @@ readtableinfo(uint64_t buf_size, const char *buf, tableinfo_t *info)
 		    "(given size %" PRIu64 " is smaller than INFOSIZE = %"
 		    PRId64 ")\n", buf_size, INFOSIZE);
 		return NISSY_ERROR_BUFFER_SIZE;
-	}
-
-	if (info == NULL) {
-		LOG("Error reading table info: info struct is NULL\n");
-		return NISSY_ERROR_UNKNOWN;
 	}
 
 	for (i = 0; i < INFO_DISTRIBUTION_LEN; i++)
@@ -67,10 +68,10 @@ readtableinfo(uint64_t buf_size, const char *buf, tableinfo_t *info)
 
 STATIC int64_t
 readtableinfo_n(
-	uint64_t buf_size,
-	const char *buf,
+	size_t buf_size,
+	const char buf[buf_size],
 	uint8_t n,
-	tableinfo_t *info
+	tableinfo_t info[static 1]
 )
 {
 	int64_t ret;
@@ -83,21 +84,15 @@ readtableinfo_n(
 }
 
 STATIC int64_t
-writetableinfo(const tableinfo_t *info, uint64_t data_size, char *buf)
+writetableinfo(
+	const tableinfo_t info[static 1],
+	size_t data_size,
+	char buf[data_size]
+)
 {
 	size_t i;
 	bool end;
 	char *c;
-
-	if (buf == NULL) {
-		LOG("Error writing table: buffer is NULL\n");
-		return NISSY_ERROR_NULL_POINTER;
-	}
-
-	if (info == NULL) {
-		LOG("Error writing table info: provided info is NULL\n");
-		return NISSY_ERROR_UNKNOWN;
-	}
 
 	if (data_size < info->fullsize) {
 		LOG("Error writing table: buffer size is too small "

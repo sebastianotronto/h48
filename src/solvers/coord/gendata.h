@@ -1,10 +1,13 @@
-STATIC size_t gendata_coord(const coord_t *, void *);
+STATIC size_t gendata_coord(const coord_t [static 1], void *);
 STATIC int64_t gendata_coord_dispatch(const char *, void *);
-STATIC tableinfo_t genptable_coord(const coord_t *, const void *, uint8_t *);
+STATIC tableinfo_t genptable_coord(
+    const coord_t [static 1], const void *, uint8_t *);
 STATIC void getdistribution_coord(
     const uint8_t *, const char *, uint64_t [static INFO_DISTRIBUTION_LEN]);
-STATIC uint8_t get_coord_pval(const coord_t *, const uint8_t *, uint64_t);
-STATIC void set_coord_pval(const coord_t *, uint8_t *, uint64_t, uint8_t);
+STATIC uint8_t get_coord_pval(
+    const coord_t [static 1], const uint8_t *, uint64_t);
+STATIC void set_coord_pval(
+    const coord_t [static 1], uint8_t *, uint64_t, uint8_t);
 
 STATIC int64_t
 gendata_coord_dispatch(const char *coordstr, void *buf)
@@ -22,7 +25,7 @@ gendata_coord_dispatch(const char *coordstr, void *buf)
 }
 
 STATIC size_t
-gendata_coord(const coord_t *coord, void *buf)
+gendata_coord(const coord_t coord[static 1], void *buf)
 {
 	uint64_t coord_dsize, tablesize, ninfo;
 	void *pruningbuf, *coord_data;
@@ -72,7 +75,11 @@ gendata_coord_return_size:
 }
 
 STATIC tableinfo_t
-genptable_coord(const coord_t *coord, const void *data, uint8_t *table)
+genptable_coord(
+	const coord_t coord[static 1],
+	const void *data,
+	uint8_t *table
+)
 {
 	uint64_t tablesize, i, j, d, tot;
 	tableinfo_t info;
@@ -147,13 +154,22 @@ getdistribution_coord(
 }
 
 STATIC uint8_t
-get_coord_pval(const coord_t *coord, const uint8_t *table, uint64_t i)
+get_coord_pval(
+	const coord_t coord[static 1],
+	const uint8_t *table,
+	uint64_t i
+)
 {
 	return (table[COORD_INDEX(i)] & COORD_MASK(i)) >> COORD_SHIFT(i);
 }
 
 STATIC void
-set_coord_pval(const coord_t *coord, uint8_t *table, uint64_t i, uint8_t val)
+set_coord_pval(
+	const coord_t coord[static 1],
+	uint8_t *table,
+	uint64_t i,
+	uint8_t val
+)
 {
 	table[COORD_INDEX(i)] = (table[COORD_INDEX(i)] & (~COORD_MASK(i)))
 	    | (val << COORD_SHIFT(i));

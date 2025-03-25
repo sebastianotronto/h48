@@ -14,7 +14,7 @@
 
 long long parse_h48_solver(
     const char *, uint8_t [static 1], uint8_t [static 1]);
-STATIC bool checkdata(const char *, const tableinfo_t *);
+STATIC bool checkdata(const char *, const tableinfo_t [static 1]);
 STATIC bool distribution_equal(const uint64_t [static INFO_DISTRIBUTION_LEN],
     const uint64_t [static INFO_DISTRIBUTION_LEN], uint8_t);
 STATIC long long write_result(cube_t, char [static NISSY_SIZE_B32]);
@@ -66,11 +66,11 @@ parse_h48_solver_error:
 }
 
 STATIC bool
-checkdata(const char *buf, const tableinfo_t *info)
+checkdata(const char *buf, const tableinfo_t info[static 1])
 {
 	uint64_t distr[INFO_DISTRIBUTION_LEN];
 
-	if (info == NULL || my_strnlen(info->solver, INFO_SOLVER_STRLEN)
+	if (my_strnlen(info->solver, INFO_SOLVER_STRLEN)
 	    == INFO_SOLVER_STRLEN) {
 		LOG("checkdata: error reading table info\n");
 		return false;

@@ -2,11 +2,11 @@
 
 #define MAXPOS 1000
 
-void h48map_create(h48map_t *, uint64_t, uint64_t);
-void h48map_destroy(h48map_t *);
-void h48map_insertmin(h48map_t *, uint64_t, uint64_t);
-uint64_t h48map_value(h48map_t *, uint64_t);
-kvpair_t h48map_nextkvpair(h48map_t *, uint64_t *);
+void h48map_create(h48map_t [static 1], uint64_t, uint64_t);
+void h48map_destroy(h48map_t [static 1]);
+void h48map_insertmin(h48map_t [static 1], uint64_t, uint64_t);
+uint64_t h48map_value(h48map_t [static 1], uint64_t);
+kvpair_t h48map_nextkvpair(h48map_t [static 1], uint64_t [static 1]);
 
 char str[STRLENMAX];
 

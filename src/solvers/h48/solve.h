@@ -46,18 +46,18 @@ typedef struct {
 	int8_t *shortest_sol;
 } dfsarg_solve_h48_maketasks_t;
 
-STATIC_INLINE bool solve_h48_stop(dfsarg_solve_h48_t *);
+STATIC_INLINE bool solve_h48_stop(dfsarg_solve_h48_t [static 1]);
 STATIC int64_t solve_h48_maketasks(
-    dfsarg_solve_h48_t *, dfsarg_solve_h48_maketasks_t *,
-    solve_h48_task_t [static STARTING_CUBES], int *);
+    dfsarg_solve_h48_t [static 1], dfsarg_solve_h48_maketasks_t [static 1],
+    solve_h48_task_t [static STARTING_CUBES], int [static 1]);
 STATIC void *solve_h48_runthread(void *);
-STATIC int64_t solve_h48_dfs(dfsarg_solve_h48_t *);
+STATIC int64_t solve_h48_dfs(dfsarg_solve_h48_t [static 1]);
 STATIC int64_t solve_h48(cube_t, int8_t, int8_t, uint64_t, int8_t, int8_t,
     uint64_t, const void *, size_t n, char [n],
     long long [static NISSY_SIZE_SOLVE_STATS]);
 
 STATIC_INLINE bool
-solve_h48_stop(dfsarg_solve_h48_t *arg)
+solve_h48_stop(dfsarg_solve_h48_t arg[static 1])
 {
 	uint32_t data, data_inv;
 	int64_t coord;
@@ -145,7 +145,7 @@ solve_h48_stop(dfsarg_solve_h48_t *arg)
 }
 
 STATIC int64_t
-solve_h48_dfs(dfsarg_solve_h48_t *arg)
+solve_h48_dfs(dfsarg_solve_h48_t arg[static 1])
 {
 	int64_t ret, n;
 	uint8_t m, nm, lbn, lbi;
@@ -261,10 +261,10 @@ solve_h48_runthread(void *arg)
 
 STATIC int64_t
 solve_h48_maketasks(
-	dfsarg_solve_h48_t *solve_arg,
-	dfsarg_solve_h48_maketasks_t *maketasks_arg,
+	dfsarg_solve_h48_t solve_arg[static 1],
+	dfsarg_solve_h48_maketasks_t maketasks_arg[static 1],
 	solve_h48_task_t tasks[static STARTING_CUBES],
-	int *ntasks
+	int ntasks[static 1]
 )
 {
 	int r;
