@@ -1,13 +1,7 @@
-coord_t *all_coordinates[] = {
-	&coordinate_eo,
-	NULL
-};
-
 STATIC void append_coord_name(const coord_t *, char *);
-STATIC coord_t *parse_coord(size_t n, const char [n]);
-STATIC uint8_t parse_axis(size_t n, const char [n]);
-STATIC void parse_coord_and_axis(size_t n, const char [n], coord_t **, uint8_t *);
-STATIC int64_t dataid_coord(const char *, char [static NISSY_DATAID_SIZE]);
+STATIC bool solution_lastqt_cw(const solution_moves_t [static 1]);
+STATIC bool coord_can_switch(
+    const coord_t [static 1], const void *, size_t n, const uint8_t [n]);
 
 STATIC void
 append_coord_name(const coord_t *coord, char *str)
@@ -21,66 +15,40 @@ append_coord_name(const coord_t *coord, char *str)
 	str[j] = '\0';
 }
 
-STATIC coord_t *
-parse_coord(size_t n, const char coord[n])
+STATIC bool
+solution_lastqt_cw(const solution_moves_t s[static 1])
 {
-	int i;
-
-	for (i = 0; all_coordinates[i] != NULL; i++)
-		if (!strncmp(all_coordinates[i]->name, coord, n))
-			return all_coordinates[i];
-
-	return NULL;
+	return are_lastmoves_singlecw(s->nmoves, s->moves) &&
+	    are_lastmoves_singlecw(s->npremoves, s->premoves);
 }
 
-STATIC uint8_t
-parse_axis(size_t n, const char axis[n])
-{
-	if (!strncmp(axis, "UD", n) || !strncmp(axis, "DU", n)) {
-		return AXIS_UD;
-	} else if (!strncmp(axis, "RL", n) || !strncmp(axis, "LR", n)) {
-		return AXIS_RL;
-	} else if (!strncmp(axis, "FB", n) || !strncmp(axis, "BF", n)) {
-		return AXIS_FB;
-	}
-
-	return UINT8_ERROR;
-}
-
-STATIC void
-parse_coord_and_axis(
+STATIC bool
+coord_can_switch(
+	const coord_t coord[static 1],
+	const void *data,
 	size_t n,
-	const char str[n],
-	coord_t **coord,
-	uint8_t *axis
+	const uint8_t moves[n]
 )
 {
-	size_t i;
+	/*
+	This function checks that the last move (or two moves, if parallel)
+	have a non-trivial effect on the coordinate of the solved cube. This
+	works in general for all coordinates that have been used so far, but
+	in more general cases that have not been considered yet it may fail.
+	*/
 
-	for (i = 0; i < n; i++)
-		if (str[i] == '_')
-			break;
+	uint64_t i;
 
-	if (coord != NULL)
-		*coord = parse_coord(i, str);
+	if (n == 0)
+		return true;
 
-	if (axis != NULL)
-		*axis = i == n ? UINT8_ERROR : parse_axis(n-i-1, str+i+1);
-}
+	i = coord->coord(move(SOLVED_CUBE, moves[n-1]), data);
+	if (i == 0)
+		return false;
 
-STATIC int64_t
-dataid_coord(const char *ca, char dataid[static NISSY_DATAID_SIZE])
-{
-	coord_t *c;
+	if (n == 1 || !parallel(moves[n-1], moves[n-2]))
+		return true;
 
-	parse_coord_and_axis(strlen(ca), ca, &c, NULL);
-
-	if (c == NULL) {
-		LOG("dataid_coord: cannot parse coordinate from '%s'\n", ca);
-		return NISSY_ERROR_INVALID_SOLVER;
-	}
-
-	strcpy(dataid, c->name);
-
-	return NISSY_OK;
+	i = coord->coord(move(SOLVED_CUBE, moves[n-1]), data);
+	return i != 0;
 }

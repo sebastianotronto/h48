@@ -15,7 +15,7 @@ STATIC coord_t coordinate_eo = {
 		[AXIS_RL] = TRANS_URr,
 		[AXIS_FB] = TRANS_UFr,
 	},
-	.is_admissible = &are_lastmoves_singlecw,
+	.is_admissible = &solution_lastqt_cw,
 };
 
 STATIC uint64_t

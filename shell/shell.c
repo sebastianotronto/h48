@@ -73,7 +73,8 @@ static int64_t countmoves_exec(args_t *);
 static int64_t help_exec(args_t *);
 
 static int parse_args(int, char **, args_t *);
-static bool parse_uint(char *, unsigned *);
+static bool parse_uint(const char *, unsigned *);
+static uint8_t parse_nisstype(const char *);
 
 static bool set_cube(int, char **, args_t *);
 static bool set_cube_perm(int, char **, args_t *);
@@ -111,7 +112,7 @@ struct {
 	OPTION(FLAG_MOVES, 1, set_str_moves),
 	OPTION(FLAG_TRANS, 1, set_str_trans),
 	OPTION(FLAG_SOLVER, 1, set_str_solver),
-	OPTION(FLAG_NISSTYPE, 1, set_str_nisstype), /* TODO: more args ? */
+	OPTION(FLAG_NISSTYPE, 1, set_str_nisstype),
 	OPTION(FLAG_MINMOVES, 1, set_minmoves),
 	OPTION(FLAG_MAXMOVES, 1, set_maxmoves),
 	OPTION(FLAG_OPTIMAL, 1, set_optimal),
@@ -431,12 +432,18 @@ solve_exec(args_t *args)
 	int64_t ret, gendata_ret, size;
 	size_t read;
 
-	nissflag = NISSY_NISSFLAG_NORMAL; /* TODO: parse str_nisstype */
+	nissflag = parse_nisstype(args->str_nisstype);
+	if (nissflag == UINT8_MAX) {
+		fprintf(stderr, "solve: unknown niss type '%s', use one "
+		    "of the following:\nnormal\ninverse\nlinear\nmixed\nall",
+		    args->str_nisstype);
+		return -1;
+	}
 
 	size = nissy_solverinfo(args->str_solver, dataid);
 
 	if (size < 0) {
-		fprintf(stderr, "solve: unknown solver %s\n",
+		fprintf(stderr, "solve: unknown solver '%s'\n",
 		    args->str_solver);
 		return size;
 	}
@@ -622,13 +629,34 @@ parse_args(int argc, char **argv, args_t *args)
 	return 0;
 }
 
-bool
-parse_uint(char *argv, unsigned *result)
+static bool
+parse_uint(const char *argv, unsigned *result)
 {
 	*result = strtol(argv, NULL, 10);
 
 	/* TODO: figure out how errno works and use it */
 	return true;
+}
+
+static uint8_t
+parse_nisstype(const char *arg)
+{
+	if (!strcmp("normal", arg))
+		return NISSY_NISSFLAG_NORMAL;
+
+	if (!strcmp("inverse", arg))
+		return NISSY_NISSFLAG_INVERSE;
+
+	if (!strcmp("linear", arg))
+		return NISSY_NISSFLAG_LINEAR;
+
+	if (!strcmp("mixed", arg))
+		return NISSY_NISSFLAG_MIXED;
+
+	if (!strcmp("all", arg))
+		return NISSY_NISSFLAG_ALL;
+
+	return UINT8_MAX;
 }
 
 static bool

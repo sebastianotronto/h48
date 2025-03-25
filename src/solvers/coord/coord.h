@@ -1,5 +1,7 @@
 #include "types_macros.h"
-#include "eo.h"
 #include "common.h"
+#include "eo.h"
+#include "list.h"
+#include "utils.h"
 #include "gendata.h"
 #include "solve.h"

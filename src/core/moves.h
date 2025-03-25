@@ -15,7 +15,7 @@ STATIC cube_t move(cube_t, uint8_t);
 STATIC cube_t premove(cube_t, uint8_t);
 STATIC uint8_t inverse_move(uint8_t);
 STATIC void sortparallel_moves(size_t n, uint8_t [n]);
-STATIC bool are_lastmoves_singlecw(size_t n, uint8_t [n]);
+STATIC bool are_lastmoves_singlecw(size_t n, const uint8_t [n]);
 
 STATIC cube_t applymoves(cube_t, const char *);
 
@@ -236,7 +236,7 @@ sortparallel_moves(size_t n, uint8_t moves[n])
 }
 
 STATIC bool
-are_lastmoves_singlecw(size_t n, uint8_t moves[n])
+are_lastmoves_singlecw(size_t n, const uint8_t moves[n])
 {
 	bool two;
 
