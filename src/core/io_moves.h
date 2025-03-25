@@ -79,36 +79,31 @@ writemoves(
 	char buf[buf_size]
 )
 {
-	size_t i, len, written;
+	size_t i, len, w;
 	const char *s;
-	char *b;
 
 	if (buf_size == 0) {
 		LOG("Error: cannot write moves to buffer of size 0.\n");
 		return NISSY_ERROR_BUFFER_SIZE;
 	}
 
-	for (i = 0, b = buf, written = 0; i < nmoves; i++, b++, written++) {
+	for (i = 0, w = 0; i < nmoves; i++, w++) {
 		s = movestr[m[i]];
 		len = strlen(s);
-		if (len + written >= buf_size) {
+		if (len + w >= buf_size) {
 			LOG("Error: the given buffer is too small for "
 			     "writing the given moves.\n");
 			goto writemoves_error;
 		}
-		memcpy(b, s, len);
-		written += len;
-		b += len;	
-		*b = ' ';
+		memcpy(buf+w, s, len);
+		w += len;
+		buf[w] = ' ';
 	}
 
-	if (b == buf)
-		written = 1; /* Nothing written, only NULL-terminator */
-	else
-		b--; /* Remove last space */
-	*b = '\0';
+	if (w > 0) w--; /* Remove last space */
+	buf[w] = '\0';
 
-	return (int64_t)written;
+	return (int64_t)w;
 
 writemoves_error:
 	*buf = '\0';

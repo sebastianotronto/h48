@@ -152,12 +152,13 @@ appendsolution(
 		    list->size - list->used, list->buf + list->used);
 		if (strl < 0)
 			goto appendsolution_error_buffer;
-		list->used += (size_t)(strl-1);
+		list->used += strl;
 
 		/* Write moves on inverse with NISS notation */
 		if (tsol[r].npremoves > 0) {
-			if (!appendchar(list, ' '))
-				goto appendsolution_error_buffer;
+			if (strl > 0)
+				if (!appendchar(list, ' '))
+					goto appendsolution_error_buffer;
 			if (!appendchar(list, '('))
 				goto appendsolution_error_buffer;
 
@@ -165,7 +166,7 @@ appendsolution(
 			    list->size - list->used, list->buf + list->used);
 			if (strl < 0)
 				goto appendsolution_error_buffer;
-			list->used += (size_t)(strl-1);
+			list->used += strl;
 
 			if (!appendchar(list, ')'))
 				goto appendsolution_error_buffer;
