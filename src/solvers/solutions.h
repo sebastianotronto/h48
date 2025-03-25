@@ -4,7 +4,7 @@ STATIC bool solution_list_init(
     solution_list_t [static 1], size_t n, char [n]);
 STATIC bool solution_moves_equal(
     const solution_moves_t [static 1], const solution_moves_t [static 1]);
-STATIC bool solution_moves_is_duplicate(size_t n, const solution_moves_t[n]);
+STATIC bool solution_moves_is_duplicate(size_t n, const solution_moves_t[n+1]);
 STATIC bool appendchar(solution_list_t [static 1], char);
 STATIC int64_t appendsolution(const solution_moves_t [static 1],
     const solution_settings_t [static 1], solution_list_t [static 1]);
@@ -73,12 +73,12 @@ solution_moves_equal(
 }
 
 STATIC bool
-solution_moves_is_duplicate(size_t r, const solution_moves_t s[r])
+solution_moves_is_duplicate(size_t n, const solution_moves_t s[n+1])
 {
 	size_t i;
 
-	for (i = 0; i < r; i++)
-		if (solution_moves_equal(&s[i], &s[r]))
+	for (i = 0; i < n; i++)
+		if (solution_moves_equal(&s[i], &s[n]))
 			return true;
 
 	return false;
