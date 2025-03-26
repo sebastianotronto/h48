@@ -144,13 +144,29 @@ inverse(cube_t cube)
 STATIC_INLINE int64_t
 coord_co(cube_t c)
 {
-	int i, p;
-	int64_t ret;
+	int i, p, ret;
 
 	for (ret = 0, i = 0, p = 1; i < 7; i++, p *= 3)
 		ret += p * (c.corner[i] >> COSHIFT);
 
 	return ret;
+}
+
+STATIC_INLINE cube_t
+invcoord_co(int64_t coord)
+{
+	int64_t i, c, p;
+	cube_t cube;
+
+	cube = SOLVED_CUBE;
+	for (i = 0, p = 0, c = coord; i < 7; i++, c /= 3) {
+		p += c % 3;
+		cube.corner[i] |= (c % 3) << COSHIFT;
+	}
+
+	cube.corner[7] |= ((3 - (p % 3)) % 3) << COSHIFT;
+
+	return cube;
 }
 
 /*
@@ -226,6 +242,17 @@ coord_esep(cube_t c)
 	return ret1 * 70 + ret2;
 }
 
+STATIC_INLINE cube_t
+invcoord_esep(int64_t esep)
+{
+	cube_t ret;
+
+	ret = SOLVED_CUBE;
+	invcoord_esep_array(esep % 70, esep / 70, ret.edge);
+
+	return ret;
+}
+
 STATIC_INLINE void
 copy_corners(cube_t dest[static 1], cube_t src)
 {
@@ -249,15 +276,4 @@ set_eo(cube_t cube[static 1], int64_t eo)
 		cube->edge[i] = (cube->edge[i] & ~EOBIT) | (EOBIT * flip);
 	}
 	cube->edge[0] = (cube->edge[0] & ~EOBIT) | (EOBIT * (sum % 2));
-}
-
-STATIC_INLINE cube_t
-invcoord_esep(int64_t esep)
-{
-	cube_t ret;
-
-	ret = SOLVED_CUBE;
-	invcoord_esep_array(esep % 70, esep / 70, ret.edge);
-
-	return ret;
 }

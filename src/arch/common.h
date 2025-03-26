@@ -9,15 +9,16 @@ STATIC_INLINE cube_t compose(cube_t, cube_t);
 STATIC_INLINE cube_t inverse(cube_t);
 
 STATIC_INLINE int64_t coord_co(cube_t);
+STATIC_INLINE cube_t invcoord_co(int64_t);
 STATIC_INLINE int64_t coord_csep(cube_t);
 STATIC_INLINE int64_t coord_cocsep(cube_t);
 STATIC_INLINE int64_t coord_eo(cube_t);
 STATIC_INLINE int64_t coord_esep(cube_t);
+STATIC_INLINE cube_t invcoord_esep(int64_t);
 
 STATIC_INLINE void copy_corners(cube_t [static 1], cube_t);
 STATIC_INLINE void copy_edges(cube_t [static 1], cube_t);
 STATIC_INLINE void set_eo(cube_t [static 1], int64_t);
-STATIC_INLINE cube_t invcoord_esep(int64_t);
 
 STATIC_INLINE void invcoord_esep_array(int64_t, int64_t, uint8_t[static 12]);
 STATIC_INLINE cube_t invcoord_eoesep(int64_t);

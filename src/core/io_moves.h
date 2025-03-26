@@ -1,5 +1,6 @@
 STATIC uint8_t readmove(char);
 STATIC int64_t readmoves(const char *, size_t n, uint8_t [n]);
+STATIC int64_t countmoves(const char *);
 STATIC uint8_t readmodifier(char);
 STATIC int64_t writemoves(size_t n, const uint8_t [n], size_t m, char [m]);
 
@@ -67,6 +68,21 @@ readmoves(const char *buf, size_t n, uint8_t ret[n])
 	FOREACH_READMOVE(buf, m, c, n, NISSY_ERROR_INVALID_MOVES,
 		ret[c] = m;
 	)
+
+	return (int64_t)c;
+}
+
+STATIC int64_t
+countmoves(const char *buf)
+{
+	uint8_t m;
+	uint64_t c;
+
+	FOREACH_READMOVE(buf, m, c, INT_MAX, NISSY_ERROR_INVALID_MOVES,
+		{}
+	)
+
+	(void)m; /* Ignore "variable set but not used" warning */
 
 	return (int64_t)c;
 }

@@ -188,6 +188,25 @@ coord_co(cube_t c)
 	return ret;
 }
 
+STATIC_INLINE cube_t
+invcoord_co(int64_t coord)
+{
+	int64_t i, c, p, co, mem[4] = {0};
+	cube_t cube, cc;
+
+	for (i = 0, p = 0, c = coord; i < 8; i++, c /= 3) {
+		co = i == 7 ? ((3 - (p % 3)) % 3) : (c % 3);
+		p += co;
+		mem[0] |= (int64_t)(i + (co << COSHIFT)) << (int64_t)(8 * i);
+	}
+
+	cc = _mm256_loadu_si256((const __m256i *)mem);
+	cube = SOLVED_CUBE;
+	copy_corners(&cube, cc);
+
+	return cube;
+}
+
 STATIC_INLINE int64_t
 coord_csep(cube_t c)
 {
@@ -251,6 +270,21 @@ coord_esep(cube_t c)
 	return ret1 * 70 + ret2;
 }
 
+STATIC_INLINE cube_t
+invcoord_esep(int64_t esep)
+{
+	cube_t eee, ret;
+	uint8_t mem[32] = {0};
+
+	invcoord_esep_array(esep % 70, esep / 70, mem+16);
+
+	ret = SOLVED_CUBE;
+	eee = _mm256_loadu_si256((__m256i_u *)&mem);
+	copy_edges(&ret, eee);
+
+	return ret;
+}
+
 STATIC_INLINE void
 copy_corners(cube_t dest[static 1], cube_t src)
 {
@@ -286,19 +320,4 @@ set_eo(cube_t cube[static 1], int64_t eo)
 
 	*cube = _mm256_andnot_si256(EO_AVX2, *cube);
 	*cube = _mm256_or_si256(*cube, veo);
-}
-
-STATIC_INLINE cube_t
-invcoord_esep(int64_t esep)
-{
-	cube_t eee, ret;
-	uint8_t mem[32] = {0};
-
-	invcoord_esep_array(esep % 70, esep / 70, mem+16);
-
-	ret = SOLVED_CUBE;
-	eee = _mm256_loadu_si256((__m256i_u *)&mem);
-	copy_edges(&ret, eee);
-
-	return ret;
 }

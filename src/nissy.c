@@ -620,7 +620,7 @@ nissy_countmoves(
 	if (moves == NULL)
 		return NISSY_ERROR_NULL_POINTER;
 
-	return readmoves(moves, INT_MAX, NULL);
+	return countmoves(moves);
 }
 
 long long

@@ -219,6 +219,25 @@ coord_co(cube_t c)
 	return ret;
 }
 
+STATIC_INLINE cube_t
+invcoord_co(int64_t coord)
+{
+	int64_t co, c, i, p;
+	uint8_t mem[8];
+	cube_t cube;
+
+	for (i = 0, p = 0, c = coord; i < 8; i++, c /= 3) {
+		co = i == 7 ? ((3 - (p % 3)) % 3) : (c % 3);
+		p += co;
+		mem[i] = i + (co << COSHIFT);
+	}
+
+	cube.corner = vld1_u8(mem);
+	cube.edge = SOLVED_CUBE.edge;
+
+	return cube;
+}
+
 STATIC_INLINE int64_t
 coord_csep(cube_t c)
 {

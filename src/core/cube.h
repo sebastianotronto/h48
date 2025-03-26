@@ -61,7 +61,7 @@ isconsistent(cube_t cube)
 	}
 	for (i = 0; i < 8; i++)
 		if (!found[i])
-			goto inconsistent_co;
+			goto inconsistent_cp;
 
 	return true;
 
