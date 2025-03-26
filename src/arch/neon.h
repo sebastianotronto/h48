@@ -7,23 +7,27 @@
 STATIC_INLINE uint8x16_t compose_edges_slim(uint8x16_t, uint8x16_t);
 STATIC_INLINE uint8x8_t compose_corners_slim(uint8x8_t, uint8x8_t);
 
-// static cube
-#define STATIC_CUBE(c_ufr, c_ubl, c_dfl, c_dbr, c_ufl, c_ubr, c_dfr, c_dbl, \
-					e_uf, e_ub, e_db, e_df, e_ur, e_ul, e_dl, e_dr, e_fr, e_fl, e_bl, e_br) \
+#define STATIC_CUBE( \
+    c_ufr, c_ubl, c_dfl, c_dbr, c_ufl, c_ubr, c_dfr, c_dbl, \
+    e_uf, e_ub, e_db, e_df, e_ur, e_ul, e_dl, e_dr, e_fr, e_fl, e_bl, e_br) \
 	((cube_t){ \
-		.corner = {c_ufr, c_ubl, c_dfl, c_dbr, c_ufl, c_ubr, c_dfr, c_dbl}, \
-		.edge = {e_uf, e_ub, e_db, e_df, e_ur, e_ul, e_dl, e_dr, e_fr, e_fl, e_bl, e_br, 0, 0, 0, 0}})
+		.corner = { \
+			c_ufr, c_ubl, c_dfl, c_dbr, \
+			c_ufl, c_ubr, c_dfr, c_dbl \
+		}, \
+		.edge = { \
+			e_uf, e_ub, e_db, e_df, e_ur, e_ul, \
+			e_dl, e_dr, e_fr, e_fl, e_bl, e_br, 0, 0, 0, 0 \
+		} \
+	})
 
-// zero cube
 #define ZERO_CUBE \
-	(cube_t) \
-	{ \
+	((cube_t){ \
 		.corner = vdup_n_u8(0), \
 		.edge = vdupq_n_u8(0) \
-	}
+	})
 
-// solved cube
-#define SOLVED_CUBE STATIC_CUBE(	\
+#define SOLVED_CUBE STATIC_CUBE( \
 	0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)
 
 /* TODO: optimize this (use intrinsics?) */
@@ -48,7 +52,8 @@ pieces(cube_t cube[static 1], uint8_t c[static 8], uint8_t e[static 12])
 	// First 8 bytes
 	vst1_u8(e, vget_low_u8(cube->edge));
 	// Next 4 bytes
-	vst1_lane_u32((uint32_t *)(e + 8), vreinterpret_u32_u8(vget_high_u8(cube->edge)), 0);
+	vst1_lane_u32((uint32_t *)(e + 8),
+	    vreinterpret_u32_u8(vget_high_u8(cube->edge)), 0);
 }
 
 STATIC_INLINE bool
@@ -63,12 +68,14 @@ equal(cube_t c1, cube_t c2)
 	cmp_edge = vceqq_u8(c1.edge, c2.edge);
 
 	// convert the comparison vectors to 64-bit vectors and combine them
-	cmp_corner_u64 = vreinterpretq_u64_u8(vcombine_u64(cmp_corner, cmp_corner));
+	cmp_corner_u64 = vreinterpretq_u64_u8(
+	    vcombine_u64(cmp_corner, cmp_corner));
 	cmp_edge_u64 = vreinterpretq_u64_u8(cmp_edge);
 	cmp_result = vandq_u64(cmp_corner_u64, cmp_edge_u64);
 
 	// check if all the bits are set
-	return vgetq_lane_u64(cmp_result, 0) == ~0ULL && vgetq_lane_u64(cmp_result, 1) == ~0ULL;
+	return vgetq_lane_u64(cmp_result, 0) == ~0ULL &&
+	    vgetq_lane_u64(cmp_result, 1) == ~0ULL;
 }
 
 STATIC_INLINE cube_t
@@ -123,7 +130,8 @@ compose_edges_slim(uint8x16_t edge1, uint8x16_t edge2)
 	uint8x16_t ret = vorrq_u8(vandq_u8(piece1, p_bits), orien);
 
 	// Mask to clear the last 32 bits of the result
-	uint8x16_t mask_last_32 = vsetq_lane_u32(0, vreinterpretq_u32_u8(ret), 3);
+	uint8x16_t mask_last_32 =
+	    vsetq_lane_u32(0, vreinterpretq_u32_u8(ret), 3);
 	ret = vreinterpretq_u8_u32(mask_last_32);
 
 	return ret;
@@ -143,7 +151,8 @@ compose_corners_slim(uint8x8_t corner1, uint8x8_t corner2)
 	uint8x8_t piece1 = vtbl1_u8(corner1, p);
 
 	// Calculate the orientation
-	uint8x8_t aux = vadd_u8(vand_u8(corner2, cobits), vand_u8(piece1, cobits));
+	uint8x8_t aux =
+	    vadd_u8(vand_u8(corner2, cobits), vand_u8(piece1, cobits));
 	uint8x8_t auy = vshr_n_u8(vadd_u8(aux, twist_cw), 2);
 	uint8x8_t orien = vand_u8(vadd_u8(aux, auy), cobits2);
 
