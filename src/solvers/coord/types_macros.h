@@ -6,6 +6,7 @@ typedef struct {
 	const char name[255];
 	uint64_t (*coord)(cube_t, const void *);
 	cube_t (*cube)(uint64_t, const void *);
+	bool (*isnasty)(uint64_t, const void *);
 	size_t (*gendata)(void *);
 	uint64_t max;
 	uint32_t moves_mask;

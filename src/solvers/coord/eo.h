@@ -1,14 +1,16 @@
 STATIC uint64_t coordinate_eo_coord(cube_t, const void *);
 STATIC cube_t coordinate_eo_cube(uint64_t, const void *);
+STATIC bool coordinate_eo_isnasty(uint64_t, const void *);
 STATIC uint64_t coordinate_eo_gendata(void *);
 
 STATIC coord_t coordinate_eo = {
 	.name = "EO",
 	.coord = &coordinate_eo_coord,
 	.cube = &coordinate_eo_cube,
+	.isnasty = &coordinate_eo_isnasty,
 	.gendata = coordinate_eo_gendata,
 	.max = POW_2_11,
-	.trans_mask = TM_ALLTRANS,
+	.trans_mask = TM_SINGLE(TRANS_UFr),
 	.moves_mask = MM_ALLMOVES,
 	.axistrans = {
 		[AXIS_UD] = TRANS_FDr,
@@ -30,6 +32,12 @@ coordinate_eo_cube(uint64_t c, const void *data)
 	cube_t cube = SOLVED_CUBE;
 	set_eo(&cube, (int64_t)c);
 	return cube;
+}
+
+STATIC bool
+coordinate_eo_isnasty(uint64_t c, const void *data)
+{
+	return false;
 }
 
 STATIC size_t

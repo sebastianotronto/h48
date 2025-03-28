@@ -2,6 +2,8 @@ STATIC size_t gendata_coord(const coord_t [static 1], void *);
 STATIC int64_t gendata_coord_dispatch(const char *, void *);
 STATIC tableinfo_t genptable_coord(
     const coord_t [static 1], const void *, uint8_t *);
+STATIC uint64_t genptable_coord_fillneighbors(
+    const coord_t [static 1], const void *, uint64_t, uint8_t, uint8_t *);
 STATIC void getdistribution_coord(
     const uint8_t *, const char *, uint64_t [static INFO_DISTRIBUTION_LEN]);
 STATIC uint8_t get_coord_pval(
@@ -81,10 +83,8 @@ genptable_coord(
 	uint8_t *table
 )
 {
-	uint64_t tablesize, i, j, d, tot;
+	uint64_t tablesize, i, d, tot, t;
 	tableinfo_t info;
-	uint8_t m;
-	cube_t c, cc;
 
 	tablesize = DIV_ROUND_UP(coord->max, 2);
 
@@ -113,22 +113,50 @@ genptable_coord(
 	for (d = 1, tot = 1; tot < coord->max; d++) {
 		for (i = 0; i < coord->max; i++) {
 			if (get_coord_pval(coord, table, i) == d-1) {
-				c = coord->cube(i, data);
-				for (m = 0; m < 18; m++) {
-					cc = move(c, m);
-					j = coord->coord(cc, data);
-					if (get_coord_pval(coord, table, j) > d) {
-						set_coord_pval(coord, table, j, d);
-						tot++;
-						info.distribution[d]++;
-					}
-				}
+				t = genptable_coord_fillneighbors(
+				    coord, data, i, d, table);
+				tot += t;
+				info.distribution[d] += t;
 			}
 		}
+		LOG("Depth %" PRIu64 ": %" PRIu64 " of %" PRIu64 "\n",
+		    d, tot, coord->max);
 	}
 	info.maxvalue = d-1;
 
 	return info;
+}
+
+STATIC uint64_t
+genptable_coord_fillneighbors(
+	const coord_t coord[static 1],
+	const void *data,
+	uint64_t i, 
+	uint8_t d,
+	uint8_t *table
+)
+{
+	uint8_t m;
+	uint64_t j, t, tot;
+	cube_t c, moved;
+
+	c = coord->cube(i, data);
+	tot = 0;
+	for (m = 0; m < NMOVES; m++) {
+		moved = move(c, m);
+		for (t = 0; t < NTRANS; t++) {
+			if (!((UINT64_C(1) << t) & coord->trans_mask))
+				continue;
+
+			j = coord->coord(transform(moved, t), data);
+			if (get_coord_pval(coord, table, j) > d) {
+				set_coord_pval(coord, table, j, d);
+				tot++;
+			}
+		}
+	}
+
+	return tot;
 }
 
 STATIC void
