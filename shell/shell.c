@@ -641,7 +641,7 @@ parse_uint(const char *argv, unsigned *result)
 static uint8_t
 parse_nisstype(const char *arg)
 {
-	if (!strcmp("normal", arg))
+	if (!strcmp("normal", arg) || !strcmp("", arg))
 		return NISSY_NISSFLAG_NORMAL;
 
 	if (!strcmp("inverse", arg))

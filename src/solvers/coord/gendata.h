@@ -2,7 +2,10 @@ STATIC size_t gendata_coord(const coord_t [static 1], void *);
 STATIC int64_t gendata_coord_dispatch(const char *, void *);
 STATIC tableinfo_t genptable_coord(
     const coord_t [static 1], const void *, uint8_t *);
+STATIC bool switch_to_fromnew(uint64_t, uint64_t, uint64_t);
 STATIC uint64_t genptable_coord_fillneighbors(
+    const coord_t [static 1], const void *, uint64_t, uint8_t, uint8_t *);
+STATIC uint64_t genptable_coord_fillfromnew(
     const coord_t [static 1], const void *, uint64_t, uint8_t, uint8_t *);
 STATIC void getdistribution_coord(
     const uint8_t *, const char *, uint64_t [static INFO_DISTRIBUTION_LEN]);
@@ -83,7 +86,7 @@ genptable_coord(
 	uint8_t *table
 )
 {
-	uint64_t tablesize, i, d, tot, t;
+	uint64_t tablesize, i, d, tot, t, nm;
 	tableinfo_t info;
 
 	tablesize = DIV_ROUND_UP(coord->max, 2);
@@ -107,24 +110,44 @@ genptable_coord(
 	memset(info.distribution, 0, INFO_DISTRIBUTION_LEN * sizeof(uint64_t));
 	append_coord_name(coord, info.solver);
 
+	nm = popcount_u32(coord->moves_mask);
 	i = coord->coord(SOLVED_CUBE, data);
 	set_coord_pval(coord, table, i, 0);
 	info.distribution[0] = 1;
-	for (d = 1, tot = 1; tot < coord->max; d++) {
-		for (i = 0; i < coord->max; i++) {
-			if (get_coord_pval(coord, table, i) == d-1) {
-				t = genptable_coord_fillneighbors(
-				    coord, data, i, d, table);
-				tot += t;
-				info.distribution[d] += t;
-			}
+	for (d = 1, tot = 1; tot < coord->max && d < 20; d++) {
+		t = 0;
+		if (switch_to_fromnew(tot, coord->max, nm)) {
+			for (i = 0; i < coord->max; i++)
+				if (get_coord_pval(coord, table, i) > d)
+					t += genptable_coord_fillfromnew(
+					    coord, data, i, d, table);
+		} else {
+			for (i = 0; i < coord->max; i++)
+				if (get_coord_pval(coord, table, i) == d-1)
+					t += genptable_coord_fillneighbors(
+					    coord, data, i, d, table);
 		}
-		LOG("Depth %" PRIu64 ": %" PRIu64 " of %" PRIu64 "\n",
-		    d, tot, coord->max);
+		tot += t;
+		info.distribution[d] = t;
+		LOG("Depth %" PRIu64 ": found %" PRIu64 " (%" PRIu64 " of %"
+		    PRIu64 ")\n", d, t, tot, coord->max);
 	}
 	info.maxvalue = d-1;
 
 	return info;
+}
+
+STATIC bool
+switch_to_fromnew(uint64_t done, uint64_t max, uint64_t nm)
+{
+	/*
+	Heuristic to determine if it is more conveniente to loop over
+      	done coordinates and fill the new discovered, or to loop from new
+	coordinates and fill them if they have a done neighbor.
+	*/
+
+	double r = (double)done / (double)max;
+	return 1.0 - intpow(1.0-r, nm) > nm * (1.0-r);
 }
 
 STATIC uint64_t
@@ -136,21 +159,76 @@ genptable_coord_fillneighbors(
 	uint8_t *table
 )
 {
+	bool isnasty;
 	uint8_t m;
-	uint64_t j, t, tot;
+	uint64_t ii, j, t, tot;
 	cube_t c, moved;
 
 	c = coord->cube(i, data);
 	tot = 0;
 	for (m = 0; m < NMOVES; m++) {
 		moved = move(c, m);
-		for (t = 0; t < NTRANS; t++) {
+		ii = coord->coord(moved, data);
+		isnasty = coord->isnasty(ii, data);
+		for (t = 0; t < NTRANS && (t == 0 || isnasty); t++) {
 			if (!((UINT64_C(1) << t) & coord->trans_mask))
 				continue;
 
 			j = coord->coord(transform(moved, t), data);
 			if (get_coord_pval(coord, table, j) > d) {
 				set_coord_pval(coord, table, j, d);
+				tot++;
+			}
+		}
+	}
+
+	return tot;
+}
+
+STATIC uint64_t
+genptable_coord_fillfromnew(
+	const coord_t coord[static 1],
+	const void *data,
+	uint64_t i,
+	uint8_t d,
+	uint8_t *table
+)
+{
+	bool found;
+	uint8_t m;
+	uint64_t tot, t, ii, j, nsim, sim[NTRANS];
+	cube_t c;
+
+	tot = 0;
+	c = coord->cube(i, data);
+
+	for (t = 0, nsim = 0; t < NTRANS; t++) {
+		if (!((UINT64_C(1) << t) & coord->trans_mask))
+			continue;
+
+		ii = coord->coord(transform(c, t), data);
+		for (j = 0, found = false; j < nsim && !found; j++)
+			found = sim[j] == ii;
+		if (!found)
+			sim[nsim++] = ii;
+	}
+
+	for (j = 0, found = false; j < nsim && !found; j++) {
+		c = coord->cube(sim[j], data);
+		for (m = 0; m < NMOVES; m++) {
+			ii = coord->coord(move(c, m), data);
+			if (get_coord_pval(coord, table, ii) < d) {
+				found = true;
+				break;
+			}
+		}
+	}
+
+	tot = 0;
+	if (found) {
+		for (j = 0; j < nsim; j++) {
+			if (get_coord_pval(coord, table, sim[j]) > d) {
+				set_coord_pval(coord, table, sim[j], d);
 				tot++;
 			}
 		}

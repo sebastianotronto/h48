@@ -10,6 +10,7 @@ STATIC void indextoperm(int64_t, size_t n, uint8_t [n]);
 STATIC int permsign(size_t n, const uint8_t [n]);
 STATIC int64_t digitstosumzero(size_t n, const uint8_t [n], uint8_t);
 STATIC void sumzerotodigits(int64_t, size_t n, uint8_t, uint8_t [n]);
+STATIC double intpow(double, uint64_t);
 
 STATIC int64_t
 factorial(int64_t n)
@@ -182,4 +183,17 @@ sumzerotodigits(int64_t d, size_t n, uint8_t b, uint8_t a[n])
 
 sumzerotodigits_error:
 	memset(a, UINT8_ERROR, n);
+}
+
+STATIC double
+intpow(double b, uint64_t e)
+{
+	double r;
+
+	if (e == 0)
+		return 1;
+
+	r = intpow(b, e/2);
+
+	return e % 2 == 0 ? r * r : b * r * r;
 }

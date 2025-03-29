@@ -102,18 +102,21 @@ STATIC bool
 coordinate_dr_isnasty(uint64_t coord, const void *data)
 {
 	const char *datanoinfo;
-	const uint32_t *classttrep;
+	const uint32_t *classttrep, *rep32;
+	uint32_t r;
 
 	datanoinfo = (const char *)data + INFOSIZE;
 	classttrep = (const uint32_t *)datanoinfo;
+	rep32 = (const uint32_t *)(datanoinfo + DR_CLASS_TABLESIZE);
+	r = rep32[coord / POW_3_7];
 
-	return DR_ISNASTY(classttrep[coord]);
+	return DR_ISNASTY(classttrep[r]);
 }
 
 STATIC size_t
 coordinate_dr_gendata(void *data)
 {
-	uint64_t i, ii, j, n, t, nasty;
+	uint64_t i, j, n, t, nasty;
 	char *datanoinfo;
 	uint32_t *classttrep, *rep;
 	cube_t c;
@@ -146,12 +149,11 @@ coordinate_dr_gendata(void *data)
 			continue;
 
 		c = invcoord_dreoesep_nosym(i);
-		ii = coord_dreoesep_nosym(c);
-		for (t = 0, nasty = 0; t < NTRANS && !nasty; t++) {
+		for (t = 1, nasty = 0; t < NTRANS && !nasty; t++) {
 			if (!((UINT64_C(1) << t) & coordinate_dr.trans_mask))
 				continue;
 
-			nasty = ii == coord_dreoesep_nosym(transform(c, t));
+			nasty = i == coord_dreoesep_nosym(transform(c, t));
 		}
 
 		for (t = 0; t < NTRANS; t++) {

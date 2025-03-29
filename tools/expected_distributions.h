@@ -136,6 +136,22 @@ uint64_t expected_eo[21] = {
 	[7] = 13,
 };
 
+uint64_t expected_dr[21] = {
+	[0] = 1,
+	[1] = 1,
+	[2] = 5,
+	[3] = 44,
+	[4] = 487,
+	[5] = 5841,
+	[6] = 68364,
+	[7] = 776568,
+	[8] = 7950748,
+	[9] = 52098876,
+	[10] = 76236234,
+	[11] = 3771112,
+	[12] = 129,
+};
+
 static bool
 distribution_equal(const uint64_t *expected, const uint64_t *actual, int n)
 {
@@ -218,6 +234,8 @@ check_distribution(const char *solver, size_t data_size, const void *data)
 		str = info.solver + 22; /* "coordinate solver for COORD" */
 		if (!strcmp(str, "EO")) {
 			return check_table(expected_eo, &info);
+		} else if (!strcmp(str, "DR")) {
+			return check_table(expected_dr, &info);
 		} else {
 			goto check_distribution_unknown;
 		}
