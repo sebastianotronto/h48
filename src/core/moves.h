@@ -1,15 +1,13 @@
 #define MOVE(M, c) compose(c, MOVE_CUBE_ ## M)
 #define PREMOVE(M, c) compose(MOVE_CUBE_ ## M, c)
 
-STATIC_INLINE bool allowednextmove(size_t n, const uint8_t [n]);
-STATIC_INLINE uint32_t allowednextmove_mask(size_t n, const uint8_t [n]);
+STATIC_INLINE bool allowednextmove(uint8_t, uint8_t);
 STATIC bool allowedmoves(size_t n, const uint8_t [n]);
 
 STATIC_INLINE uint8_t movebase(uint8_t);
 STATIC_INLINE uint8_t moveaxis(uint8_t);
 STATIC_INLINE bool isbase(uint8_t);
 STATIC_INLINE bool parallel(uint8_t, uint8_t);
-STATIC_INLINE uint32_t disable_moves(uint32_t, uint8_t);
 
 STATIC cube_t move(cube_t, uint8_t);
 STATIC cube_t premove(cube_t, uint8_t);
@@ -38,58 +36,22 @@ STATIC cube_t applymoves(cube_t, const char *);
 		ARG_ACTION \
 	}
 
-STATIC bool
-allowednextmove(size_t n, const uint8_t moves[n])
+STATIC_INLINE bool
+allowednextmove(uint8_t m1, uint8_t m2)
 {
-	return n == 0 || allowednextmove_mask(n-1, moves) & (1 << moves[n-1]);
-}
-
-STATIC uint32_t
-allowednextmove_mask(size_t n, const uint8_t moves[n])
-{
-	uint32_t result;
-	uint8_t base1, base2, axis1, axis2;
-
-	result = MM_ALLMOVES;
-
-	if (n == 0)
-		return result;
-
-	base1 = movebase(moves[n-1]);
-	axis1 = moveaxis(moves[n-1]);
-	result = disable_moves(result, base1 * 3);
-
-	if (base1 % 2)
-		result = disable_moves(result, (base1 - 1) * 3);
-
-	if (n == 1)
-		return result;
-
-	base2 = movebase(moves[n-2]);
-	axis2 = moveaxis(moves[n-2]);
-
-	if(axis1 == axis2)
-		result = disable_moves(result, base2 * 3);
-
-	return result;
+	return allowedmask[movebase(m1)] & (UINT32_C(1) << m2);
 }
 
 STATIC bool
-allowedmoves(size_t n, const uint8_t moves[n])
+allowedmoves(size_t n, const uint8_t m[n])
 {
 	uint8_t j;
 
-	for (j = 2; j < n; j++)
-		if (!allowednextmove(j, moves))
+	for (j = 1; j < n; j++)
+		if (!allowednextmove(m[j-1], m[j]))
 			return false;
 
 	return true;
-}
-
-STATIC_INLINE uint32_t 
-disable_moves(uint32_t current_result, uint8_t base_index)
-{
-	return current_result & ~MM_SIDE(base_index);
 }
 
 STATIC_INLINE uint8_t

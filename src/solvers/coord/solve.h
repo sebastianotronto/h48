@@ -135,7 +135,12 @@ solve_coord_dfs(dfsarg_solve_coord_t arg[static 1])
 	ret = 0;
 	if (coord_continue_onnormal(arg)) {
 		l = arg->solution_moves->nmoves;
-		mm = allowednextmove_mask(l, arg->solution_moves->moves);
+		if (l == 0) {
+			mm = MM_ALLMOVES;
+		} else {
+			m = arg->solution_moves->moves[l-1];
+			mm = allowedmask[movebase(m)];
+		}
 		arg->solution_moves->nmoves++;
 		arg->lastisnormal = true;
 
@@ -160,7 +165,12 @@ solve_coord_dfs(dfsarg_solve_coord_t arg[static 1])
 
 	if (coord_continue_oninverse(arg)) {
 		l = arg->solution_moves->npremoves;
-		mm = allowednextmove_mask(l, arg->solution_moves->premoves);
+		if (l == 0) {
+			mm = MM_ALLMOVES;
+		} else {
+			m = arg->solution_moves->premoves[l-1];
+			mm = allowedmask[movebase(m)];
+		}
 		arg->solution_moves->npremoves++;
 		arg->lastisnormal = false;
 		

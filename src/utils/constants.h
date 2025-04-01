@@ -102,7 +102,17 @@ STATIC int64_t binomial[12][12] = {
 
 #define MM_ALLMOVES    UINT32_C(0x3FFFF)
 #define MM_NOHALFTURNS UINT32_C(0x2DB6D)
-#define MM_SIDE(m)     (UINT32_C(7) << (uint32_t)(m))
+#define MM_SINGLE(m)   (UINT32_C(1) << (uint32_t)(m))
+#define MM_FACE(m)     (UINT32_C(7) << (uint32_t)(m))
+#define MM_EO          (\
+    MM_FACE(MOVE_U) | MM_FACE(MOVE_D) |\
+    MM_FACE(MOVE_R) | MM_FACE(MOVE_L) |\
+    MM_SINGLE(MOVE_F2) | MM_SINGLE(MOVE_B2))
+#define MM_DR          (\
+    MM_FACE(MOVE_U) | MM_FACE(MOVE_D) |\
+    MM_SINGLE(MOVE_R2) | MM_SINGLE(MOVE_L2) |\
+    MM_SINGLE(MOVE_F2) | MM_SINGLE(MOVE_B2))
+#define MM_HTR (MM_ALLMOVES & ~MM_NOHALFTURNS)
 
 #define TM_ALLTRANS    UINT64_C(0xFFFFFFFFFFFF)
 #define TM_SINGLE(t)   (UINT64_C(1) << (uint64_t)(t))
@@ -150,6 +160,15 @@ STATIC int64_t binomial[12][12] = {
 #define CTWIST_CCW  UINT8_C(0x40)
 #define EFLIP       UINT8_C(0x10)
 #define UINT8_ERROR UINT8_MAX
+
+STATIC const uint32_t allowedmask[] = {
+	UINT32_C(0x3FFF8),
+	UINT32_C(0x3FFC0),
+	UINT32_C(0x3FE3F),
+	UINT32_C(0x3F03F),
+	UINT32_C(0x38FFF),
+	UINT32_C(0x00FFF)
+};
 
 STATIC const char *cornerstr[] = {
 	[CORNER_UFR] = "UFR",

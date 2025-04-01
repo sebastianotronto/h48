@@ -128,7 +128,7 @@ appendsolution(
 
 			/*
 			This is a bit ugly: we have to sort now and then again
-			later, because the allowednext check would fail with
+			later, because the allowedmoves check would fail with
 			improperly sorted parallel moves, but then transforming
 			could swap the pairs the wrong way around.
 			TODO: maybe fix this

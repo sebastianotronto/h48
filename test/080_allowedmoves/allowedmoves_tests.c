@@ -1,6 +1,6 @@
 #include "../test.h"
 
-bool allowednextmove(size_t n, const uint8_t [n]);
+bool allowedmoves(size_t n, const uint8_t [n]);
 
 static char *moves[] = {
 	"U", "U2", "U'",
@@ -27,9 +27,5 @@ void run(void) {
 				m[i] = j;
 	}
 
-	fprintf(stderr, "Last two: %s, %s\nNext: %s\n",
-	    n > 2 ? moves[m[n-3]] : "-",
-	    n > 1 ? moves[m[n-2]] : "-",
-	    n > 0 ? moves[m[n-1]] : "-");
-	printf("%s\n", allowednextmove(n, m) ? "true" : "false");
+	printf("%s\n", allowedmoves(n, m) ? "true" : "false");
 }

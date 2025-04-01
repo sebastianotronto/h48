@@ -176,10 +176,16 @@ solve_h48_dfs(dfsarg_solve_h48_t arg[static 1])
 	ulbi = arg->use_lb_inverse;
 
 	ret = 0;
-	mm_normal = allowednextmove_mask(arg->solution_moves->nmoves,
-	    arg->solution_moves->moves) & arg->movemask_normal;
-	mm_inverse = allowednextmove_mask(arg->solution_moves->npremoves,
-	    arg->solution_moves->premoves) & arg->movemask_inverse;
+	mm_normal = arg->movemask_normal;
+	if (arg->solution_moves->nmoves > 0) {
+		m = arg->solution_moves->moves[arg->solution_moves->nmoves-1];
+		mm_normal &= allowedmask[movebase(m)];
+	}
+	mm_inverse = arg->movemask_inverse;
+	if (arg->solution_moves->npremoves > 0) {
+		m = arg->solution_moves->premoves[arg->solution_moves->npremoves-1];
+		mm_inverse &= allowedmask[movebase(m)];
+	}
 	if (popcount_u32(mm_normal) <= popcount_u32(mm_inverse)) {
 		arg->solution_moves->nmoves++;
 		for (m = 0; m < 18; m++) {
@@ -299,7 +305,12 @@ solve_h48_maketasks(
 		return NISSY_OK;
 	}
 
-	mm = allowednextmove_mask(maketasks_arg->nmoves, maketasks_arg->moves);
+	if (maketasks_arg->nmoves == 0) {
+		mm = MM_ALLMOVES;
+	} else {
+		m = maketasks_arg->moves[maketasks_arg->nmoves-1];
+		mm = allowedmask[movebase(m)];
+	}
 
 	maketasks_arg->nmoves++;
 	backup_cube = maketasks_arg->cube;
