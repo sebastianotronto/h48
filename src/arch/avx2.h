@@ -1,10 +1,16 @@
 #define CO2_AVX2 _mm256_set_epi64x(0, 0, 0, INT64_C(0x6060606060606060))
 #define COCW_AVX2 _mm256_set_epi64x(0, 0, 0, INT64_C(0x2020202020202020))
 #define CP_AVX2 _mm256_set_epi64x(0, 0, 0, INT64_C(0x0707070707070707))
-#define EP_AVX2 \
-    _mm256_set_epi64x(INT64_C(0x0F0F0F0F), INT64_C(0x0F0F0F0F0F0F0F0F), 0, 0)
-#define EO_AVX2 \
-    _mm256_set_epi64x(INT64_C(0x10101010), INT64_C(0x1010101010101010), 0, 0)
+#define EP_AVX2 _mm256_set_epi64x(\
+    INT64_C(0x0F0F0F0F), INT64_C(0x0F0F0F0F0F0F0F0F), 0, 0)
+#define EO_AVX2 _mm256_set_epi64x(\
+    INT64_C(0x10101010), INT64_C(0x1010101010101010), 0, 0)
+#define ORIENT_AVX2 _mm256_set_epi64x(INT64_C(0x10101010), \
+    INT64_C(0x1010101010101010), 0, INT64_C(0x6060606060606060))
+#define USED_AVX2 _mm256_set_epi64x(INT64_C(0x00000000FFFFFFFF), \
+    INT64_C(0xFFFFFFFFFFFFFFFF), 0, INT64_C(0xFFFFFFFFFFFFFFFF))
+#define CARRY_AVX2 _mm256_set_epi64x(INT64_C(0x20202020), \
+    INT64_C(0x2020202020202020), 0, INT64_C(0x6060606060606060))
 
 #define STATIC_CUBE(c_ufr, c_ubl, c_dfl, c_dbr, c_ufl, c_ubr, c_dfr, c_dbl, \
     e_uf, e_ub, e_db, e_df, e_ur, e_ul, e_dl, e_dr, e_fr, e_fl, e_bl, e_br) \
@@ -61,76 +67,36 @@ invertco(cube_t c)
 }
 
 STATIC_INLINE cube_t
-compose_epcpeo(cube_t c1, cube_t c2)
-{
-	cube_t b, s, eo2;
-
-	/* Permute and clean unused bits */
-	s = _mm256_shuffle_epi8(c1, c2);
-	b = _mm256_set_epi8(
-		~0, ~0, ~0, ~0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, 0, 0, 0, 0, 0, 0, 0, 0
-	);
-	s = _mm256_andnot_si256(b, s);
-
-	/* Change EO */
-	eo2 = _mm256_and_si256(c2, EO_AVX2);
-	s = _mm256_xor_si256(s, eo2);
-
-	return s;
-}
-
-STATIC_INLINE cube_t
 compose_edges(cube_t c1, cube_t c2)
 {
-	return compose_epcpeo(c1, c2);
+	return compose(c1, c2);
 }
 
 STATIC_INLINE cube_t
 compose_corners(cube_t c1, cube_t c2)
 {
-	/*
-	 * We do a full compose. Minor optimizations are possible, like
-	 * saving one instruction by not doing EO, but it should not
-	 * be significant.
-	 */
 	return compose(c1, c2);
 }
 
 STATIC_INLINE cube_t
 compose(cube_t c1, cube_t c2)
 {
-	cube_t s, co1, co2, aux, auy1, auy2, auz1, auz2;
+	/*
+	 * Method taken from Andrew Skalski's vcube (thanks to Arhan Chaudhary
+	 * for pointing this out)
+	 */
+	cube_t ss, so, su;
 
-	s = compose_epcpeo(c1, c2);
+	/* Permute */
+	ss = _mm256_shuffle_epi8(c1, c2);
 
-	/* Change CO */
-	co1 = _mm256_and_si256(s, CO2_AVX2);
-	co2 = _mm256_and_si256(c2, CO2_AVX2);
-	aux = _mm256_add_epi8(co1, co2);
-	auy1 = _mm256_add_epi8(aux, COCW_AVX2);
-	auy2 = _mm256_srli_epi32(auy1, 2);
-	auz1 = _mm256_add_epi8(aux, auy2);
-	auz2 = _mm256_and_si256(auz1, CO2_AVX2);
+	/* Orient */
+	so = _mm256_and_si256(c2, ORIENT_AVX2);
+	ss = _mm256_add_epi8(ss, so);
+	su = _mm256_sub_epi8(ss, CARRY_AVX2);
+	ss = _mm256_min_epu8(ss, su);
 
-	/* Put together */
-	s = _mm256_andnot_si256(CO2_AVX2, s);
-	s = _mm256_or_si256(s, auz2);
-
-	return s;
-}
-
-STATIC_INLINE cube_t
-cleanaftershuffle(cube_t c)
-{
-	__m256i b;
-
-	b = _mm256_set_epi8(
-		~0, ~0, ~0, ~0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-		~0, ~0, ~0, ~0, ~0, ~0, ~0, ~0, 0, 0, 0, 0, 0, 0, 0, 0
-	);
-
-	return _mm256_andnot_si256(b, c);
+	return _mm256_and_si256(ss, USED_AVX2);
 }
 
 STATIC_INLINE cube_t
@@ -163,11 +129,11 @@ inverse(cube_t c)
 	vi = _mm256_shuffle_epi8(vi, vi);
 	vi = _mm256_shuffle_epi8(vi, c);
 
-	vo = _mm256_and_si256(c, _mm256_or_si256(EO_AVX2, CO2_AVX2));
+	vo = _mm256_and_si256(c, ORIENT_AVX2);
 	vo = _mm256_shuffle_epi8(vo, vi);
-	vp = _mm256_andnot_si256(_mm256_or_si256(EO_AVX2, CO2_AVX2), vi);
+	vp = _mm256_andnot_si256(ORIENT_AVX2, vi);
 	ret = _mm256_or_si256(vp, vo);
-	ret = cleanaftershuffle(ret);
+	ret = _mm256_and_si256(ret, USED_AVX2);
 	
 	return invertco(ret);
 }

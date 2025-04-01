@@ -109,9 +109,13 @@ issolvable(cube_t cube)
 	return true;
 
 issolvable_parity:
+	LOG("There is parity\n");
+	return false;
 issolvable_eo:
+	LOG("EO is not solvable\n");
+	return false;
 issolvable_co:
-	/* We used to do more logging here, hence the 3 different labels */
+	LOG("CO is not solvable\n");
 	return false;
 }
 
