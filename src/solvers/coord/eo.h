@@ -18,6 +18,7 @@ STATIC coord_t coordinate_eo = {
 		[AXIS_FB] = TRANS_UFr,
 	},
 	.is_admissible = &solution_lastqt_cw,
+	.sym = {0},
 };
 
 STATIC uint64_t
