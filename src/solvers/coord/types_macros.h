@@ -15,17 +15,6 @@
 #define COORD_ISNASTY(d)    (((d) & COORD_ISNASTY_MASK) >> COORD_ISNASTY_SHIFT)
 
 typedef struct {
-	size_t classes;
-	uint64_t max;
-	uint64_t (*coord)(cube_t);
-	cube_t (*cube)(uint64_t);
-	uint64_t max2;
-	uint64_t (*coord2)(cube_t);
-	cube_t (*cube2)(uint64_t);
-	cube_t (*merge)(cube_t, cube_t);
-} symcoord_t;
-
-typedef struct {
 	const char name[255];
 	uint64_t (*coord)(cube_t, const void *);
 	cube_t (*cube)(uint64_t, const void *);
@@ -36,5 +25,14 @@ typedef struct {
 	uint64_t trans_mask;
 	uint8_t axistrans[3];
 	bool (*is_admissible)(const solution_moves_t[static 1]);
-	symcoord_t sym;
+	struct {
+		size_t classes;
+		uint64_t max;
+		uint64_t (*coord)(cube_t);
+		cube_t (*cube)(uint64_t);
+		uint64_t max2;
+		uint64_t (*coord2)(cube_t);
+		cube_t (*cube2)(uint64_t);
+		cube_t (*merge)(cube_t, cube_t);
+	} sym;
 } coord_t;
