@@ -23,7 +23,7 @@ STATIC cube_t invcoord_dreoesep_nosym(uint64_t);
 STATIC uint64_t coordinate_dr_coord(cube_t, const void *);
 STATIC cube_t coordinate_dr_cube(uint64_t, const void *);
 STATIC bool coordinate_dr_isnasty(uint64_t, const void *);
-STATIC uint64_t coordinate_dr_gendata(void *);
+STATIC size_t coordinate_dr_gendata(void *);
 
 STATIC coord_t coordinate_dr = {
 	.name = "DR",

@@ -1,7 +1,7 @@
 STATIC uint64_t coordinate_eo_coord(cube_t, const void *);
 STATIC cube_t coordinate_eo_cube(uint64_t, const void *);
 STATIC bool coordinate_eo_isnasty(uint64_t, const void *);
-STATIC uint64_t coordinate_eo_gendata(void *);
+STATIC size_t coordinate_eo_gendata(void *);
 
 STATIC coord_t coordinate_eo = {
 	.name = "EO",
