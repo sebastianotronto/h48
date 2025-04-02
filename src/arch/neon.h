@@ -69,7 +69,7 @@ equal(cube_t c1, cube_t c2)
 
 	// convert the comparison vectors to 64-bit vectors and combine them
 	cmp_corner_u64 = vreinterpretq_u64_u8(
-	    vcombine_u64(cmp_corner, cmp_corner));
+	    vcombine_u8(cmp_corner, cmp_corner));
 	cmp_edge_u64 = vreinterpretq_u64_u8(cmp_edge);
 	cmp_result = vandq_u64(cmp_corner_u64, cmp_edge_u64);
 
@@ -130,7 +130,7 @@ compose_edges_slim(uint8x16_t edge1, uint8x16_t edge2)
 	uint8x16_t ret = vorrq_u8(vandq_u8(piece1, p_bits), orien);
 
 	// Mask to clear the last 32 bits of the result
-	uint8x16_t mask_last_32 =
+	uint32x4_t mask_last_32 =
 	    vsetq_lane_u32(0, vreinterpretq_u32_u8(ret), 3);
 	ret = vreinterpretq_u8_u32(mask_last_32);
 
