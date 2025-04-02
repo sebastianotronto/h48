@@ -566,6 +566,7 @@ nissy_solve(
 	}
 
 	if (!issolvable(c)) {
+/* TODO: this is step-dependent */
 		LOG("solve: cube is not solvable\n");
 		return NISSY_ERROR_UNSOLVABLE_CUBE;
 	}

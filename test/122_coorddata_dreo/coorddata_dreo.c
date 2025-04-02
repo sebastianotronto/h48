@@ -1,13 +1,13 @@
 #include "../test.h"
 
 #define POW_3_7 2187
-#define BOUND   (64430 * POW_3_7 / 100)
+#define BOUND   45 * POW_3_7
 #define TGROUP  UINT64_C(4278190335)
 
 cube_t transform(cube_t, uint8_t);
-uint64_t coordinate_dr_coord(cube_t, const void *);
-cube_t coordinate_dr_cube(uint64_t, const void *);
-uint64_t coordinate_dr_gendata(void *);
+uint64_t coordinate_dreo_coord(cube_t, const void *);
+cube_t coordinate_dreo_cube(uint64_t, const void *);
+uint64_t coordinate_dreo_gendata(void *);
 
 void run(void) {
 	bool found;
@@ -18,12 +18,12 @@ void run(void) {
 	cube_t cube;
 	uint64_t coord, coord2;
 
-	size = coordinate_dr_gendata(NULL);
+	size = coordinate_dreo_gendata(NULL);
 	data = malloc(size);
-	coordinate_dr_gendata(data);
+	coordinate_dreo_gendata(data);
 
 	for (coord = 0; coord < BOUND; coord++) {
-		cube = coordinate_dr_cube(coord, data);
+		cube = coordinate_dreo_cube(coord, data);
 
 		if (!isconsistent(cube)) {
 			printf("Error: invcoord of %" PRId64
@@ -35,7 +35,7 @@ void run(void) {
 			if (!((UINT64_C(1) << t) & TGROUP))
 				continue;
 
-			coord2 = coordinate_dr_coord(transform(cube, t), data);
+			coord2 = coordinate_dreo_coord(transform(cube, t), data);
 			if (coord == coord2) {
 				found = true;
 				break;

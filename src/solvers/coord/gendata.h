@@ -39,6 +39,9 @@ gendata_coord(const coord_t coord[static 1], void *buf)
 
 	coord_data = buf == NULL ? NULL : ((uint8_t *)buf) + INFOSIZE;
 	coord_dsize = coord->gendata(coord_data);
+	if (coord_dsize == SIZE_MAX)
+		goto gendata_coord_error;
+
 	ninfo = coord_dsize == 0 ? 1 : 2;
 	tablesize = DIV_ROUND_UP(coord->max, 2);
 
@@ -77,6 +80,10 @@ gendata_coord(const coord_t coord[static 1], void *buf)
 
 gendata_coord_return_size:
 	return ninfo * INFOSIZE + coord_dsize + tablesize;
+
+gendata_coord_error:
+	LOG("An unexpected error occurred when generating the data.\n");
+	return 0;
 }
 
 STATIC tableinfo_t
@@ -167,6 +174,8 @@ genptable_coord_fillneighbors(
 	c = coord->cube(i, data);
 	tot = 0;
 	for (m = 0; m < NMOVES; m++) {
+		if (!((UINT32_C(1) << (uint32_t)m) & coord->moves_mask))
+			continue;
 		moved = move(c, m);
 		ii = coord->coord(moved, data);
 		isnasty = coord->isnasty(ii, data);
@@ -216,6 +225,8 @@ genptable_coord_fillfromnew(
 	for (j = 0, found = false; j < nsim && !found; j++) {
 		c = coord->cube(sim[j], data);
 		for (m = 0; m < NMOVES; m++) {
+			if (!((UINT32_C(1) << (uint32_t)m) & coord->moves_mask))
+				continue;
 			ii = coord->coord(move(c, m), data);
 			if (get_coord_pval(coord, table, ii) < d) {
 				found = true;

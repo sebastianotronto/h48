@@ -2,6 +2,7 @@
 #include "common.h"
 #include "eo.h"
 #include "dr.h"
+#include "dreo.h"
 #include "list.h"
 #include "utils.h"
 #include "gendata.h"

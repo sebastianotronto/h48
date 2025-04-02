@@ -152,6 +152,20 @@ uint64_t expected_dr[21] = {
 	[12] = 129,
 };
 
+uint64_t expected_dreo[21] = {
+	[0] = 1,
+	[1] = 1,
+	[2] = 4,
+	[3] = 22,
+	[4] = 160,
+	[5] = 1286,
+	[6] = 8550,
+	[7] = 42512,
+	[8] = 90748,
+	[9] = 33466,
+	[10] = 757,
+};
+
 static bool
 distribution_equal(const uint64_t *expected, const uint64_t *actual, int n)
 {
@@ -236,6 +250,8 @@ check_distribution(const char *solver, size_t data_size, const void *data)
 			return check_table(expected_eo, &info);
 		} else if (!strcmp(str, "DR")) {
 			return check_table(expected_dr, &info);
+		} else if (!strcmp(str, "DREO")) {
+			return check_table(expected_dreo, &info);
 		} else {
 			goto check_distribution_unknown;
 		}

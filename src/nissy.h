@@ -363,8 +363,11 @@ different from what specified, or simply ill-formed.
 #define NISSY_ERROR_INVALID_CUBE -10LL
 
 /*
-The value NISSY_ERROR_UNSOLVABLE_CUBE means that the provided cube is
-in an unsolvable state.
+The value NISSY_ERROR_UNSOLVABLE_CUBE means that the provided cube is in
+an unsolvable state for the given solver. This could mean either that the
+cube is not solvable at all (for example in case it has a single twisted
+corner), or that it is not ready for the given step (for example if the
+caller wants to solve a DR finish without the cube being in DR state).
 */
 #define NISSY_ERROR_UNSOLVABLE_CUBE -11LL
 

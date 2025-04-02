@@ -2,6 +2,7 @@ STATIC uint64_t coordinate_eo_coord(cube_t, const void *);
 STATIC cube_t coordinate_eo_cube(uint64_t, const void *);
 STATIC bool coordinate_eo_isnasty(uint64_t, const void *);
 STATIC size_t coordinate_eo_gendata(void *);
+STATIC bool is_eo_even(cube_t);
 
 STATIC coord_t coordinate_eo = {
 	.name = "EO",
@@ -18,6 +19,7 @@ STATIC coord_t coordinate_eo = {
 		[AXIS_FB] = TRANS_UFr,
 	},
 	.is_admissible = &solution_lastqt_cw,
+	.is_solvable = &is_eo_even,
 	.sym = {0},
 };
 
@@ -45,4 +47,17 @@ STATIC size_t
 coordinate_eo_gendata(void *data)
 {
 	return 0;
+}
+
+STATIC bool
+is_eo_even(cube_t cube)
+{
+	uint8_t c[8], e[12], i, count;
+
+	pieces(&cube, c, e);
+
+	for (i = 0, count = 0; i < 12; i++)
+		count += (e[i] & EOBIT) >> EOSHIFT;
+
+	return count % 2 == 0;
 }

@@ -135,11 +135,10 @@ solve_coord_dfs(dfsarg_solve_coord_t arg[static 1])
 	ret = 0;
 	if (coord_continue_onnormal(arg)) {
 		l = arg->solution_moves->nmoves;
-		if (l == 0) {
-			mm = MM_ALLMOVES;
-		} else {
+		mm = arg->coord->moves_mask;
+		if (l != 0) {
 			m = arg->solution_moves->moves[l-1];
-			mm = allowedmask[movebase(m)];
+			mm &= allowedmask[movebase(m)];
 		}
 		arg->solution_moves->nmoves++;
 		arg->lastisnormal = true;
@@ -165,11 +164,10 @@ solve_coord_dfs(dfsarg_solve_coord_t arg[static 1])
 
 	if (coord_continue_oninverse(arg)) {
 		l = arg->solution_moves->npremoves;
-		if (l == 0) {
-			mm = MM_ALLMOVES;
-		} else {
+		mm = arg->coord->moves_mask;
+		if (l != 0) {
 			m = arg->solution_moves->premoves[l-1];
-			mm = allowedmask[movebase(m)];
+			mm &= allowedmask[movebase(m)];
 		}
 		arg->solution_moves->npremoves++;
 		arg->lastisnormal = false;
@@ -264,6 +262,12 @@ solve_coord(
 	solution_settings_t solution_settings;
 	solution_list_t solution_list;
 
+	t = coord->axistrans[axis];
+	c = transform(cube, t);
+
+	if (!coord->is_solvable(c))
+		goto solve_coord_error_unsolvable;
+
 	if (!solution_list_init(&solution_list, solutions_size, sols))
 		goto solve_coord_error_buffer;
 
@@ -279,9 +283,6 @@ solve_coord(
 		coord_data = (uint8_t *)data + INFOSIZE;
 		ptable = (uint8_t *)data + info.next + INFOSIZE;
 	}
-
-	t = coord->axistrans[axis];
-	c = transform(cube, t);
 
 	solution_moves_reset(&solution_moves);
 
@@ -351,4 +352,8 @@ solve_coord_error_data:
 solve_coord_error_buffer:
 	LOG("Could not append solution to buffer: size too small\n");
 	return NISSY_ERROR_BUFFER_SIZE;
+
+solve_coord_error_unsolvable:
+	LOG("Cube not ready for solving %s\n", coord->name);
+	return NISSY_ERROR_UNSOLVABLE_CUBE;
 }

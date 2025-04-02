@@ -25,6 +25,7 @@ typedef struct {
 	uint64_t trans_mask;
 	uint8_t axistrans[3];
 	bool (*is_admissible)(const solution_moves_t[static 1]);
+	bool (*is_solvable)(cube_t);
 	struct {
 		size_t classes;
 		uint64_t max;

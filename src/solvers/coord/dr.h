@@ -1,5 +1,5 @@
-#define DREOESEP_CLASSES   UINT64_C(64430)
-#define DREOESEP_MAX       (POW_2_11 * COMB_12_4)
+#define DREOESEP_CLASSES UINT64_C(64430)
+#define DREOESEP_MAX     (POW_2_11 * COMB_12_4)
 
 STATIC uint64_t coord_dreoesep_nosym(cube_t);
 STATIC cube_t invcoord_dreoesep_nosym(uint64_t);
@@ -9,6 +9,8 @@ STATIC uint64_t coordinate_dr_coord(cube_t, const void *);
 STATIC cube_t coordinate_dr_cube(uint64_t, const void *);
 STATIC bool coordinate_dr_isnasty(uint64_t, const void *);
 STATIC size_t coordinate_dr_gendata(void *);
+
+STATIC bool is_eoco_solvable(cube_t);
 
 /* TODO: remove the following two when all coordinates are converted to unsigned */
 STATIC uint64_t coord_co_u(cube_t c) { return (uint64_t)coord_co(c); }
@@ -29,6 +31,7 @@ STATIC coord_t coordinate_dr = {
 		[AXIS_FB] = TRANS_FDr,
 	},
 	.is_admissible = &solution_lastqt_cw,
+	.is_solvable = &is_eoco_solvable,
 	.sym = {
 		.classes = DREOESEP_CLASSES,
 		.max = DREOESEP_MAX,
@@ -99,4 +102,19 @@ STATIC size_t
 coordinate_dr_gendata(void *data)
 {
 	return coord_gendata_generic(&coordinate_dr, data);
+}
+
+STATIC bool
+is_eoco_solvable(cube_t cube) {
+	uint8_t c[8], e[12], i, cocount, eocount;
+
+	pieces(&cube, c, e);
+
+	for (i = 0, cocount = 0; i < 8; i++)
+		cocount += (c[i] & COBITS_2) >> COSHIFT;
+
+	for (i = 0, eocount = 0; i < 12; i++)
+		eocount += (e[i] & EOBIT) >> EOSHIFT;
+
+	return cocount % 3 == 0 && eocount % 2 == 0;
 }
