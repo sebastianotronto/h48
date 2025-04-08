@@ -2,7 +2,7 @@ STATIC coord_t *parse_coord(size_t n, const char [n]);
 STATIC uint8_t parse_axis(size_t n, const char [n]);
 STATIC void parse_coord_and_axis(
     size_t n, const char [n], coord_t **, uint8_t *);
-STATIC int64_t dataid_coord(const char *, char [static NISSY_DATAID_SIZE]);
+STATIC int64_t dataid_coord(const char *, char [static NISSY_SIZE_DATAID]);
 
 STATIC coord_t *
 parse_coord(size_t n, const char coord[n])
@@ -52,7 +52,7 @@ parse_coord_and_axis(
 }
 
 STATIC int64_t
-dataid_coord(const char *ca, char dataid[static NISSY_DATAID_SIZE])
+dataid_coord(const char *ca, char dataid[static NISSY_SIZE_DATAID])
 {
 	coord_t *c;
 

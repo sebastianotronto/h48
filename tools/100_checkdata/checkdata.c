@@ -6,7 +6,7 @@ char *solver, *filename;
 static void
 run(void) {
 	long long int size, result;
-	char *buf, dataid[NISSY_DATAID_SIZE];
+	char *buf, dataid[NISSY_SIZE_DATAID];
 	FILE *f;
 	
 	size = nissy_solverinfo(solver, dataid);

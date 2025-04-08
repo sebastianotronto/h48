@@ -269,9 +269,9 @@ writecube_B32(cube_t cube, size_t buf_size, char buf[buf_size])
 	uint8_t corner[8], edge[12];
 
 	if (buf_size < NISSY_SIZE_B32) {
-		LOG("Cannot write cube in B32 format: buffer size must be "
-		    "at least %" PRIu64 " bytes, but the provided one is %"
-		    PRIu64 " bytes.\n", NISSY_SIZE_B32, buf_size);
+		LOG("Cannot write cube in B32 format: buffer size must be at "
+		    "least %u bytes, but the provided one is %zu bytes.\n",
+		    NISSY_SIZE_B32, buf_size);
 		return NISSY_ERROR_BUFFER_SIZE;
 	}
 
@@ -298,8 +298,8 @@ writecube_H48(cube_t cube, size_t buf_size, char buf[buf_size])
 
 	if (buf_size < NISSY_SIZE_H48) {
 		LOG("Cannot write cube in H48 format: buffer size must be "
-		    "at least %" PRIu64 " bytes, but the provided one is %"
-		    PRIu64 " bytes.\n", NISSY_SIZE_H48, buf_size);
+		    "at least %u bytes, but the provided one is %zu bytes.\n",
+		    NISSY_SIZE_H48, buf_size);
 		return NISSY_ERROR_BUFFER_SIZE;
 	}
 

@@ -33,7 +33,7 @@ void run(void) {
 }
 
 int main(int argc, char **argv) {
-	char filename[255], dataid[NISSY_DATAID_SIZE], *scrfilename;
+	char filename[255], dataid[NISSY_SIZE_DATAID], *scrfilename;
 	FILE *scrfile;
 
 	if (argc < 3) {

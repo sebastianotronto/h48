@@ -232,7 +232,7 @@ gendata_h48h0k4(gendata_h48_arg_t arg[static 1])
 			bfsarg[t].table_mutex[tt] = &table_mutex[tt];
 	}
 	for (done = 1, d = 1; done < h48max && d <= arg->maxdepth; d++) {
-		LOG("h48: generating depth %" PRIu8 "\n", d);
+		LOG("h48: generating depth %" PRId64 "\n", d);
 
 		for (t = 0; t < THREADS; t++) {
 			bfsarg[t].depth = d;

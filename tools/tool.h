@@ -9,12 +9,12 @@
 #include "../src/nissy.h"
 #include "nissy_extra.h"
 
-static void log_stderr(const char *, ...);
-static void log_stdout(const char *, ...);
+static void log_stderr(const char *);
+static void log_stdout(const char *);
 static double timerun(void (*)(void));
 static void writetable(const char *, int64_t, const char *);
 static long long int generatetable(const char *, char **,
-    char [static NISSY_DATAID_SIZE]);
+    char [static NISSY_SIZE_DATAID]);
 static long long int derivetable(
     const char *, const char *, const char *, char **);
 static int getdata(const char *, char **, const char *);
@@ -23,23 +23,15 @@ static void derivedata_run(
     const char *, const char *, const char *, const char *);
 
 static void
-log_stderr(const char *str, ...)
+log_stderr(const char *str)
 {
-	va_list args;
-
-	va_start(args, str);
-	vfprintf(stderr, str, args);
-	va_end(args);
+	fprintf(stderr, "%s", str);
 }
 
 static void
-write_stdout(const char *str, ...)
+write_stdout(const char *str)
 {
-	va_list args;
-
-	va_start(args, str);
-	vfprintf(stdout, str, args);
-	va_end(args);
+	fprintf(stdout, "%s", str);
 }
 
 static double
@@ -90,7 +82,7 @@ static long long int
 generatetable(
 	const char *solver,
 	char **buf,
-	char dataid[static NISSY_DATAID_SIZE]
+	char dataid[static NISSY_SIZE_DATAID]
 )
 {
 	long long int size, gensize;
@@ -125,7 +117,7 @@ derivetable(
 {
 	uint8_t h, k;
 	long long int size, gensize;
-	char *fulltable, dataid[NISSY_DATAID_SIZE];
+	char *fulltable, dataid[NISSY_SIZE_DATAID];
 
 	if (getdata(solver_large, &fulltable, filename_large) != 0) {
 		printf("Error reading full table.\n");
@@ -169,7 +161,7 @@ getdata(
 ) {
 	long long int size, sizeread;
 	FILE *f;
-	char dataid[NISSY_DATAID_SIZE];
+	char dataid[NISSY_SIZE_DATAID];
 
 	if ((f = fopen(filename, "rb")) == NULL) {
 		printf("Table file not found, generating it.\n");
@@ -209,7 +201,7 @@ gendata_run(
 	uint64_t expected[static 21]
 ) {
 	long long int size;
-	char *buf, filename[1024], dataid[NISSY_DATAID_SIZE];
+	char *buf, filename[1024], dataid[NISSY_SIZE_DATAID];
 
 	size = generatetable(solver, &buf, dataid);
 	sprintf(filename, "tables/%s", dataid);

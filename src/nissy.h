@@ -25,7 +25,7 @@ for example 'rotation UF' or 'mirrored BL'.
 #define NISSY_SIZE_H48            88U
 #define NISSY_SIZE_TRANSFORMATION 12U
 #define NISSY_SIZE_SOLVE_STATS    10U
-#define NISSY_DATAID_SIZE         255U
+#define NISSY_SIZE_DATAID         255U
 
 /* Flags for NISS options */
 #define NISSY_NISSFLAG_NORMAL  1U
@@ -141,7 +141,7 @@ Parameters:
    format_in   - The input format.
    format_out  - The output format.
    cube_string - The cube, in format_in format.
-   retult_size - The allocated size of the result array.
+   result_size - The allocated size of the result array.
    result      - Return parameter for the cube in format_out format.
 
 Return values:
@@ -198,7 +198,7 @@ the given solver, and other useful information.
 Parameters:
    solver - The name of the solver.
    dataid - An identifier for the data computed for the solver. Different
-            solver may use equivalent data. This identifier can be used
+            solvers may use equivalent data. This identifier can be used
             e.g. as a filename or database key to save and retrieve the
             correct data for each solver, without duplication.
 
@@ -211,7 +211,7 @@ Return values:
 long long
 nissy_solverinfo(
 	const char *solver,
-	char dataid[static NISSY_DATAID_SIZE]
+	char dataid[static NISSY_SIZE_DATAID]
 );
 
 /*
@@ -219,8 +219,8 @@ Compute the data for the given solver and store it in generated_data.
 
 Parameters:
    solver    - The name of the solver.
-   data_size - The size of the data buffer. It is advised to use nissy_datasize
-               to check how much memory is needed.
+   data_size - The size of the data buffer. It is advised to use
+               nissy_solverinfo to check how much memory is needed.
    data      - The return parameter for the generated data.
                This buffer must have 8-byte alignment.
 
@@ -324,18 +324,19 @@ nissy_countmoves(
 );
 
 /*
-Set a global logger function used by this library.
+Set a global logger function used by this library. Setting the logger to NULL
+disables logging.
 
 Parameters:
    write - A callback writer with the same signature as printf(3).
 
 Return values:
-   NISSY_OK - Logger set succesfully. No warning or error is goind to be given
-              if the logger is NULL or invalid.
+   NISSY_OK - Logger set succesfully. No warning or error is going to be given
+              if the logger is invalid.
 */
 long long
 nissy_setlogger(
-	void (*logger_function)(const char *, ...)
+	void (*logger_function)(const char *)
 );
 
 

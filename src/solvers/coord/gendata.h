@@ -22,7 +22,7 @@ gendata_coord_dispatch(const char *coordstr, void *buf)
 	parse_coord_and_axis(strlen(coordstr), coordstr, &coord, NULL);
 
 	if (coord == NULL) {
-		LOG("Could not parse coordinate '%s'\n", coord);
+		LOG("Could not parse coordinate '%s'\n", coordstr);
 		return NISSY_ERROR_INVALID_SOLVER;
 	}
 

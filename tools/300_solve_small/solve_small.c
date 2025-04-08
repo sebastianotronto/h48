@@ -46,7 +46,7 @@ void run(void) {
 }
 
 int main(int argc, char **argv) {
-	char filename[255], dataid[NISSY_DATAID_SIZE];
+	char filename[255], dataid[NISSY_SIZE_DATAID];
 
 	if (argc < 2) {
 		printf("Error: not enough arguments. "

@@ -235,7 +235,7 @@ solverinfo(PyObject *self, PyObject *args)
 {
 	long long result;
 	const char *solver;
-	char buf[NISSY_DATAID_SIZE];
+	char buf[NISSY_SIZE_DATAID];
 	PyObject *py_result, *py_buf;
 
 	if (!PyArg_ParseTuple(args, "s", &solver))
@@ -263,7 +263,7 @@ gendata(PyObject *self, PyObject *args)
 {
 	long long size, err;
 	const char *solver;
-	char *buf, dataid[NISSY_DATAID_SIZE];
+	char *buf, dataid[NISSY_SIZE_DATAID];
 
 	if (!PyArg_ParseTuple(args, "s", &solver))
 		return NULL;
@@ -421,13 +421,9 @@ static struct PyModuleDef nissy_python_module = {
 };
 
 static void
-log_stdout(const char *str, ...)
+log_stdout(const char *str)
 {
-	va_list args;
-
-	va_start(args, str);
-	vfprintf(stderr, str, args);
-	va_end(args);
+	fprintf(stderr, "%s", str);
 }
 
 PyMODINIT_FUNC PyInit_nissy_python_module(void) {

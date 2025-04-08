@@ -8,7 +8,7 @@ static void
 run(void) {
 	int64_t size;
 	bool consistent, expected;
-	char *buf, filename[1024], dataid[NISSY_DATAID_SIZE];
+	char *buf, filename[1024], dataid[NISSY_SIZE_DATAID];
 	
 	size = generatetable(solver, &buf, dataid);
 	switch (size) {

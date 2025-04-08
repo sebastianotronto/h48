@@ -31,13 +31,9 @@ int64_t writecube(const char *, cube_t, size_t n, char [n]);
 /* Test function to be implemented by all tests */
 void run(void);
 
-void log_stderr(const char *str, ...)
+void log_stderr(const char *str)
 {
-	va_list args;
-
-	va_start(args, str);
-	vfprintf(stderr, str, args);
-	va_end(args);
+	fprintf(stderr, "%s", str);
 }
 
 int main(void) {

@@ -168,8 +168,8 @@ sumzerotodigits(int64_t d, size_t n, uint8_t b, uint8_t a[n])
 	size_t i;
 
 	if (!((n == 8 && b == 3 ) || (n == 12 && b == 2))) {
-		LOG("Won't compute 'digits' for n=%" PRIu8 "and b=%" PRIu8
-		    " (use n=8 b=3 or n=12 b=2)\n");
+		LOG("Won't compute 'digits' for n=%zu and b=%" PRIu8
+		    " (use n=8 b=3 or n=12 b=2)\n", n, b);
 		goto sumzerotodigits_error;
 	}
 

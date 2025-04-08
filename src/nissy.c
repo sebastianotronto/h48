@@ -19,7 +19,7 @@ STATIC bool distribution_equal(const uint64_t [static INFO_DISTRIBUTION_LEN],
     const uint64_t [static INFO_DISTRIBUTION_LEN], uint8_t);
 STATIC long long write_result(cube_t, char [static NISSY_SIZE_B32]);
 STATIC size_t my_strnlen(const char *, size_t); 
-STATIC long long nissy_dataid(const char *, char [static NISSY_DATAID_SIZE]);
+STATIC long long nissy_dataid(const char *, char [static NISSY_SIZE_DATAID]);
 STATIC long long nissy_gendata_unsafe(
     const char *, unsigned long long, char *);
 
@@ -355,9 +355,8 @@ nissy_getcube(
 	c = getcube(ep, eo, cp, co);
 
 	if (!isconsistent(c)) {
-		LOG("Error: could not get cube with ep=%" PRId64 ", eo=%"
-		    PRId64 ", cp=%" PRId64 ", co=%" PRId64 ".\n",
-		    ep, eo, cp, co);
+		LOG("Error: could not get cube with ep=%lld, eo=%lld, "
+		    "cp=%lld, co=%lld.\n", ep, eo, cp, co);
 		return NISSY_ERROR_OPTIONS;
 	}
 
@@ -368,7 +367,7 @@ long long
 nissy_datainfo(
         uint64_t data_size,
 	const char data[data_size],
-	void (*write)(const char *, ...)
+	void (*write)(const char *)
 )
 {
 	uint8_t i;
@@ -384,25 +383,24 @@ nissy_datainfo(
 	if (ret != 0)
 		return ret;
 
-	write("\n---------\n\n");
-	write("Table information for '%s'\n", info.solver);
-	write("\n");
-	write("Size:      %" PRIu64 " bytes\n", info.fullsize);
-	write("Entries:   %" PRIu64 " (%" PRIu8 " bits per entry)",
-	    info.entries, info.bits);
-	write("\n");
+	write_wrapper(write,
+	    "\n---------\n\n"
+	    "Table information for '%s'\n\n"
+	    "Size:      %" PRIu64 " bytes\n"
+	    "Entries:   %" PRIu64 " (%" PRIu8 " bits per entry)\n",
+	    info.solver, info.fullsize, info.entries, info.bits);
 
 	switch (info.type) {
 	case TABLETYPE_PRUNING:
-		write("\n");
-		write("Table distribution:\nValue\tPositions\n");
+		write_wrapper(write, "\nTable distribution:\n"
+		    "Value\tPositions\n");
 		for (i = 0; i <= info.maxvalue; i++) {
-			write("%" PRIu8 "\t%" PRIu64 "\n",
+			write_wrapper(write, "%" PRIu8 "\t%" PRIu64 "\n",
 			    i + info.base, info.distribution[i]);
 		}
 		break;
 	case TABLETYPE_SPECIAL:
-		write("This is an ad-hoc table\n");
+		write_wrapper(write, "This is an ad-hoc table\n");
 		break;
 	default:
 		LOG("datainfo: unknown table type\n");
@@ -413,13 +411,13 @@ nissy_datainfo(
 		return nissy_datainfo(
 		    data_size - info.next, (char *)data + info.next, write);
 
-	write("\n---------\n");
+	write_wrapper(write, "\n---------\n");
 
 	return NISSY_OK;
 }
 
 STATIC long long
-nissy_dataid(const char *solver, char dataid[static NISSY_DATAID_SIZE])
+nissy_dataid(const char *solver, char dataid[static NISSY_SIZE_DATAID])
 {
 	if (!strncmp(solver, "h48", 3)) {
 		uint8_t h, k;
@@ -442,7 +440,7 @@ nissy_dataid(const char *solver, char dataid[static NISSY_DATAID_SIZE])
 long long
 nissy_solverinfo(
 	const char *solver,
-	char dataid[static NISSY_DATAID_SIZE]
+	char dataid[static NISSY_SIZE_DATAID]
 )
 {
 	long long err;
@@ -626,7 +624,7 @@ nissy_countmoves(
 
 long long
 nissy_setlogger(
-	void (*log)(const char *, ...)
+	void (*log)(const char *)
 )
 {
 	nissy_log = log;

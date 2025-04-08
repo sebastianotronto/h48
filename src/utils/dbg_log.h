@@ -1,6 +1,23 @@
-void (*nissy_log)(const char *, ...);
+#include <stdio.h>
 
-#define LOG(...) if (nissy_log != NULL) nissy_log(__VA_ARGS__);
+void (*nissy_log)(const char *);
+void write_wrapper(void (*)(const char *), const char *, ...);
+
+void
+write_wrapper(void (*write)(const char *), const char *str, ...)
+{
+	static const size_t len = 1000;
+	char message[len];
+	va_list args;
+
+	va_start(args, str);
+	sprintf(message, str, args);
+	va_end(args);
+
+	write(message);
+}
+
+#define LOG(...) if (nissy_log != NULL) write_wrapper(nissy_log, __VA_ARGS__);
 
 #ifdef DEBUG
 #define STATIC
