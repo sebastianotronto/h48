@@ -344,7 +344,7 @@ static int64_t
 solverinfo_exec(args_t *args)
 {
 	int64_t ret;
-	char buf[NISSY_DATAID_SIZE];
+	char buf[NISSY_SIZE_DATAID];
 
 	ret = nissy_solverinfo(args->str_solver, buf);
 	if (ret < 0)
@@ -359,7 +359,7 @@ gendata_exec(args_t *args)
 {
 	int i;
 	FILE *file;
-	char *buf, path[MAX_PATH_LENGTH], dataid[NISSY_DATAID_SIZE];
+	char *buf, path[MAX_PATH_LENGTH], dataid[NISSY_SIZE_DATAID];
 	int64_t ret, size;
 	size_t written;
 
@@ -427,7 +427,7 @@ solve_exec(args_t *args)
 	uint8_t nissflag;
 	FILE *file;
 	char *buf, solutions[SOLUTIONS_BUFFER_SIZE], path[MAX_PATH_LENGTH];
-	char dataid[NISSY_DATAID_SIZE];
+	char dataid[NISSY_SIZE_DATAID];
 	long long stats[NISSY_SIZE_SOLVE_STATS];
 	int64_t ret, gendata_ret, size;
 	size_t read;
@@ -780,13 +780,9 @@ set_threads(int argc, char **argv, args_t *args)
 }
 
 void
-log_stderr(const char *str, ...)
+log_stderr(const char *str)
 {
-	va_list args;
-
-	va_start(args, str);
-	vfprintf(stderr, str, args);
-	va_end(args);
+	fprintf(stderr, "%s", str);
 }
 
 int
