@@ -23,6 +23,7 @@ for example 'rotation UF' or 'mirrored BL'.
 /* Some constants for size for I/O buffers */
 #define NISSY_SIZE_B32            22U
 #define NISSY_SIZE_H48            88U
+#define NISSY_SIZE_CUBE_MAX       NISSY_SIZE_H48
 #define NISSY_SIZE_TRANSFORMATION 12U
 #define NISSY_SIZE_SOLVE_STATS    10U
 #define NISSY_SIZE_DATAID         255U
@@ -38,7 +39,6 @@ for example 'rotation UF' or 'mirrored BL'.
 
 /* The solved cube in B32 format */
 #define NISSY_SOLVED_CUBE "ABCDEFGH=ABCDEFGHIJKL"
-
 
 /* Error codes ***************************************************************/
 
