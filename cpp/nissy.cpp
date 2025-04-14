@@ -196,12 +196,6 @@ namespace nissy {
 		if (err < 0)
 			return result;
 
-		// TODO: is this special case actually needed? Remove if not
-		if (err == 0) {
-			result.solutions = {};
-			return result;
-		}
-
 		std::string_view strsols(csols.data());
 		for (auto r : strsols | std::views::split('\n'))
 			if (r.begin() != r.end())
