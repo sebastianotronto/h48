@@ -139,22 +139,61 @@ UL1 UB0 BL0 FR1 DF0 UR1 DB0 FL0 DR1 DL1 UF0 BR1 DFR2 DBR0 DFL2 UFR2 UBL2 UFL0 UB
 To solve a cube you can use:
 
 ```
-$ ./run solve -solver "h48h0k4" -n 1 -M 4 -cube "JLQWSVUH=ZLCUABGIVTKH"
-Found 0 solutions, searching at depth 0
-Found 0 solutions, searching at depth 1
-Found 0 solutions, searching at depth 2
-Found 0 solutions, searching at depth 3
-Solution found: F' U R
-F' U R
+$ ./run solve -solver h48h0k4 -n 1 -M 4 -cube "JLQWSVUH=ZLCUABGIVTKH"
+F' U' R
+```
+
+Or alternatively:
+
+```
+$ ./run solve_scramble -solver h48h0k4 -n 1 -M 4 -moves "R' U' F"
+F' U' R
 ```
 
 For a full list of available command, use `run help`.
 
-## Running commands from a Python shell
+## Using this software as a library
 
-There is a work-in-progress python module available. To build it you need
-the Python development headers installed. You can check this from the output
-of `./configure.sh`:
+This tool has been developed as a library, so it can be easily included
+in other programs. For this reason, some bindings for languages other
+than C are available.
+
+The API is documented in the public header file `src/nissy.h`.
+
+### C
+
+To use this in a C project, simly include `src/nissy.h`. The tools
+in the `tools/` folder are a good example for how to use this.
+
+NOTE: this project is developed using the C11 standard. If you are using
+an older version of C, you can write your own header file.
+
+### C++
+
+The `cpp` folder contains a C++ header `nissy.h` (C++20 standard) and an
+implementation file `nissy.cpp`. This interface wraps the calls to the
+C functions in an object-oriented C++ interface for more convenient use.
+
+The `cpp/examples` folder contains some examples for how to use this
+interface. You can build them with e.g.
+
+```
+g++ -std=c++20 cpp/nissy.cpp cpp/examples/solve_h48h3k2.cpp nissy.o
+```
+
+NOTE: If you prefer to use a C-style API, you'll have to write
+your own header, similar to the `extern "C" {}` block at the top of
+`cpp/nissy.cpp`. The C header `src/nissy.h` cannot be compiled as C++,
+as it uses features of C that are not compatible with it.
+
+### Python
+
+The `python` folder contains a Python module. The API provided by
+this module follows the C API quite closely, except its functions
+sometimes return strings instead of writing to `char *` buffers.
+
+To build the Python module you need the Python development headers
+installed. You can check this from the output of `./configure.sh`:
 
 ```
 $ ./configure.sh
@@ -182,14 +221,18 @@ From here you can call the library functions directly, for example:
 'ASTUGFBH=DACXEZGBLIKF'
 ```
 
-Some methods have a different signature in the Pythn module than in
-libnissy: for example `solve()` returns the solutions as a list of
-strings instead of writing them to a return parameter buffer.
+The `python/examples` folder contains some examples, that you
+can run for example with:
+
+```
+$ python python/examples/solve.py
+```
+
 You can access the documentation for the Python module from within
 a Python interpreter with `help(nissy)`. Cross-check this documentation
 with the comments in nissy.h for more details.
 
-Please note: the support for the Python module is still rudimentary.
+NOTE: Support for the Python module is still rudimentary.
 
 ## Cube formats
 

@@ -15,119 +15,91 @@ C++20 header file for nissy.
 #include <vector>
 
 namespace nissy {
-	/* Some constants for size for I/O buffers */
-	namespace size {
-		constexpr size_t B32 = 22;
-		constexpr size_t H48 = 88;
-		constexpr size_t CUBE_MAX = H48;
-		constexpr size_t TRANSFORMATION = 12;
-		constexpr size_t SOLVE_STATS = 10;
-		constexpr size_t DATAID = 255;
-	}
 
-	/* Some structs definitions for better type safety */
-	struct nissflag_t { unsigned value; };
-	struct error_t { long long value; };
-	struct cube_t { std::string value; };
-	struct moves_t { std::string value; };
-	struct trans_t { std::string value; };
-	struct cube_format_t { std::string value; };
-	struct solver_t { std::string value; };
-	struct solver_data_t { std::vector<std::byte> value; };
-	struct solve_result_t {
-		std::vector<std::string> solutions;
-		std::array<long long, size::SOLVE_STATS> stats;
+	class nissflag {
+	public:
+		unsigned value;
+
+		static const nissflag NORMAL;
+		static const nissflag INVERSE;
+		static const nissflag MIXED;
+		static const nissflag LINEAR;
+		static const nissflag ALL;
 	};
 
-	/* Flags for NISS options */
-	namespace nissflag {
-		constexpr nissflag_t NORMAL{1};
-		constexpr nissflag_t INVERSE{2};
-		constexpr nissflag_t MIXED{4};
-		constexpr nissflag_t LINEAR{NORMAL.value | INVERSE.value};
-		constexpr nissflag_t ALL{LINEAR.value | MIXED.value};
-	}
+	class error {
+	public:
+		long long value;
+		bool ok() const;
 
-	/* Error codes */
-	namespace error {
-		constexpr error_t UNSOLVABLE{-1};
-		constexpr error_t INVALID_CUBE{-10};
-		constexpr error_t UNSOLVABLE_CUBE{-11};
-		constexpr error_t INVALID_MOVES{-20};
-		constexpr error_t INVALID_TRANS{-30};
-		constexpr error_t INVALID_FORMAT{-40};
-		constexpr error_t INVALID_SOLVER{-50};
-		constexpr error_t NULL_POINTER{-60};
-		constexpr error_t BUFFER_SIZE{-61};
-		constexpr error_t DATA{-70};
-		constexpr error_t OPTIONS{-80};
-		constexpr error_t UNKNOWN{-999};
-	}
+		static const error OK;
+		static const error UNSOLVABLE;
+		static const error INVALID_CUBE;
+		static const error UNSOLVABLE_CUBE;
+		static const error INVALID_MOVES;
+		static const error INVALID_TRANS;
+		static const error INVALID_FORMAT;
+		static const error INVALID_SOLVER;
+		static const error NULL_POINTER;
+		static const error BUFFER_SIZE;
+		static const error DATA;
+		static const error OPTIONS;
+		static const error UNKNOWN;
+	};
 
-	/* Cube constants */
-	namespace cube {
-		const cube_t SOLVED{"ABCDEFGH=ABCDEFGHIJKL"};
-	}
+	class cube {
+	public:
+		cube();
+		error move(const std::string&);
+		error transform(const std::string&);
+		void invert();
+		void compose(const cube&);
+		std::string to_string() const;
+		std::variant<std::string, error> to_string(
+		    const std::string& format) const;
 
-	std::variant<cube_t, error_t> inverse(
-		const cube_t& cube
-	);
+		static std::variant<cube, error> from_string(
+		    const std::string&);
+		static std::variant<cube, error> from_string(
+		    const std::string& str, const std::string& format);
+		static std::variant<cube, error> get(
+		    long long ep, long long eo, long long cp, long long co);
+		static std::variant<cube, error> get(
+		    long long ep, long long eo, long long cp, long long co,
+		    const std::string& options);
 
-	std::variant<cube_t, error_t> applymoves(
-		const cube_t& cube,
-		const moves_t& moves
-	);
+	private:
+		std::string m_b32{"ABCDEFGH=ABCDEFGHIJKL"};
+	};
 
-	std::variant<cube_t, error_t> applytrans(
-		const cube_t& cube,
-		const trans_t& trans
-	);
+	class solver {
+	public:
+		struct solve_result {
+			error err;
+			std::vector<std::string> solutions;
+			std::array<long long, 10> stats;
+		};
 
-	std::variant<std::string, error_t> convert(
-		const cube_format_t& format_in,
-		const cube_format_t& format_out,
-		const std::string& cube_string
-	);
+		const std::string name;
+		size_t size;
+		std::string id;
+		std::vector<std::byte> data;
 
-	std::variant<cube_t, error_t> getcube(
-		long long ep,
-		long long eo,
-		long long cp,
-		long long co,
-		const std::string& options
-	);
+		error generate_data();
+		void read_data(std::ifstream&);
+		error check_data() const;
+		void unload_data();
+		solve_result solve(const cube&, nissflag, unsigned minmoves,
+		    unsigned maxmoves, unsigned maxsols, int optimal,
+		    int threads);
 
-	std::variant<std::pair<size_t, std::string>, error_t> solverinfo(
-		const solver_t& solver
-	);
+		static std::variant<solver, error> get(const std::string&);
+	private:
+		solver(const std::string& name);
+	};
 
-	std::variant<solver_data_t, error_t> gendata(
-		const solver_t& solver
-	);
-
-	std::optional<error_t> checkdata(
-		const solver_data_t& data
-	);
-
-	std::variant<solve_result_t, error_t> solve(
-		const cube_t& cube,
-		const solver_t& solver,
-		nissflag_t niss,
-		unsigned minmoves,
-		unsigned maxmoves,
-		unsigned maxsolutions,
-		int optimal,
-		int threads,
-		const solver_data_t& data
-	);
-
-	std::variant<unsigned, error_t> countmoves(
-		const moves_t& moves
-	);
-
-	void setlogger(
-		std::function<void(std::string&)> log
-	);
+	std::variant<unsigned, error> count_moves(const std::string&);
+	void set_logger(const std::function<void(const char*)>&);
 }
 
 #endif
