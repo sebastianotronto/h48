@@ -11,7 +11,7 @@ write_wrapper(void (*write)(const char *), const char *str, ...)
 	va_list args;
 
 	va_start(args, str);
-	sprintf(message, str, args);
+	vsprintf(message, str, args);
 	va_end(args);
 
 	write(message);
