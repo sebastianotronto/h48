@@ -8,14 +8,17 @@ nissy.s:
 nissy.o:
 	${CC} ${MACROS} ${CFLAGS} -c -o nissy.o src/nissy.c
 
-nissy.so:
-	${CC} ${MACROS} ${CFLAGS} -c -shared -o nissy.so src/nissy.c
+libnissy.a: nissy.o
+	ar rcs libnissy.a nissy.o
+
+libnissy.so:
+	${CC} ${MACROS} ${CFLAGS} -c -shared -o libnissy.so src/nissy.c
 
 debugnissy.o:
 	${CC} ${MACROS} ${DBGFLAGS} -c -o debugnissy.o src/nissy.c
 
 clean:
-	rm -rf *.o *.s *.so run debugrun
+	rm -rf *.out *.o *.s *.so run debugrun
 
 test: debugnissy.o
 	CC="${CC} ${MACROS} ${DBGFLAGS}" OBJ=debugnissy.o ./test/test.sh

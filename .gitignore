@@ -1,3 +1,4 @@
+a.out
 .DS_Store
 cachegrind.out.*
 config.mk
@@ -23,6 +24,7 @@ run.core
 test/last.*
 tools/results
 .vscode
+*.a
 *.o
 *.so
 *.s
