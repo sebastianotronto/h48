@@ -100,7 +100,7 @@ namespace nissy {
 	};
 
 	error count_moves(const std::string&);
-	void set_logger(const std::function<void(const char*)>&);
+	void set_logger(void (*)(const char*));
 }
 
 #endif

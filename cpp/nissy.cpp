@@ -227,8 +227,5 @@ namespace nissy {
 		return error{err};
 	}
 
-	void set_logger(const std::function<void(const char *)>& log)
-	{
-		nissy_setlogger(log.target<void(const char *)>());
-	}
+	void set_logger(void (*log)(const char *)) { nissy_setlogger(log); }
 }

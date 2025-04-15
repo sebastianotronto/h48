@@ -6,13 +6,9 @@
 #include <iostream>
 #include <string>
 
-extern "C" {
-	long long nissy_setlogger(void (*)(const char *));
-}
-
 int main() {
 	// Get verbose output
-	nissy_setlogger([](const char* s) { std::cout << s; });
+	nissy::set_logger([](const char* s) { std::cout << s; });
 
 	// Get the scramble from the user
 	std::cout << "Enter scramble: ";
