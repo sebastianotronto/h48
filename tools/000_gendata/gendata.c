@@ -17,7 +17,7 @@ run(void) {
 	case -2:
 		goto gendata_run_finish;
 	default:
-		nissy_datainfo(size, buf, write_stdout);
+		nissy_datainfo(size, buf);
 		consistent = nissy_checkdata(size, buf) == 0;
 		expected = check_distribution(solver, size, buf);
 		if (consistent && expected) {
@@ -51,7 +51,7 @@ int main(int argc, char **argv) {
 	parse_h48_solver(solver, &h, &k);
 	expected = expected_h48[h][k];
 
-	nissy_setlogger(log_stderr);
+	nissy_setlogger(log_stdout, NULL);
 
 	timerun(run);
 

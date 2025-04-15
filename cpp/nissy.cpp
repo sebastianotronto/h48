@@ -24,7 +24,7 @@ extern "C" {
 	    unsigned, unsigned, int, int, unsigned long long, const char *,
 	    unsigned, char *, long long *);
 	long long nissy_countmoves(const char *);
-	long long nissy_setlogger(void (*)(const char *));
+	long long nissy_setlogger(void (*)(const char *, void *), void *);
 }
 
 namespace nissy {
@@ -227,5 +227,8 @@ namespace nissy {
 		return error{err};
 	}
 
-	void set_logger(void (*log)(const char *)) { nissy_setlogger(log); }
+	void set_logger(void (*log)(const char *, void *), void *data)
+	{
+		nissy_setlogger(log, data);
+	}
 }

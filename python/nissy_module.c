@@ -421,7 +421,7 @@ static struct PyModuleDef nissy_python_module = {
 };
 
 static void
-log_stdout(const char *str)
+log_stdout(const char *str, void *unused)
 {
 	fprintf(stderr, "%s", str);
 }
@@ -429,7 +429,7 @@ log_stdout(const char *str)
 PyMODINIT_FUNC PyInit_nissy_python_module(void) {
 	PyObject *module;
 
-	nissy_setlogger(log_stdout);
+	nissy_setlogger(log_stdout, NULL);
 	module = PyModule_Create(&nissy_python_module);
 
 	PyModule_AddStringConstant(module, "solved_cube", NISSY_SOLVED_CUBE);

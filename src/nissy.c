@@ -366,8 +366,7 @@ nissy_getcube(
 long long
 nissy_datainfo(
         uint64_t data_size,
-	const char data[data_size],
-	void (*write)(const char *)
+	const char data[data_size]
 )
 {
 	uint8_t i;
@@ -383,8 +382,7 @@ nissy_datainfo(
 	if (ret != 0)
 		return ret;
 
-	write_wrapper(write,
-	    "\n---------\n\n"
+	LOG("\n---------\n\n"
 	    "Table information for '%s'\n\n"
 	    "Size:      %" PRIu64 " bytes\n"
 	    "Entries:   %" PRIu64 " (%" PRIu8 " bits per entry)\n",
@@ -392,15 +390,14 @@ nissy_datainfo(
 
 	switch (info.type) {
 	case TABLETYPE_PRUNING:
-		write_wrapper(write, "\nTable distribution:\n"
-		    "Value\tPositions\n");
+		LOG("\nTable distribution:\nValue\tPositions\n");
 		for (i = 0; i <= info.maxvalue; i++) {
-			write_wrapper(write, "%" PRIu8 "\t%" PRIu64 "\n",
+			LOG("%" PRIu8 "\t%" PRIu64 "\n",
 			    i + info.base, info.distribution[i]);
 		}
 		break;
 	case TABLETYPE_SPECIAL:
-		write_wrapper(write, "This is an ad-hoc table\n");
+		LOG("This is an ad-hoc table\n");
 		break;
 	default:
 		LOG("datainfo: unknown table type\n");
@@ -409,9 +406,9 @@ nissy_datainfo(
 
 	if (info.next != 0)
 		return nissy_datainfo(
-		    data_size - info.next, (char *)data + info.next, write);
+		    data_size - info.next, (char *)data + info.next);
 
-	write_wrapper(write, "\n---------\n");
+	LOG("\n---------\n");
 
 	return NISSY_OK;
 }
@@ -624,9 +621,11 @@ nissy_countmoves(
 
 long long
 nissy_setlogger(
-	void (*log)(const char *)
+	void (*log)(const char *, void *),
+	void *user_data
 )
 {
 	nissy_log = log;
+	nissy_log_data = user_data;
 	return NISSY_OK;
 }

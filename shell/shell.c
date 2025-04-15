@@ -780,7 +780,7 @@ set_threads(int argc, char **argv, args_t *args)
 }
 
 void
-log_stderr(const char *str)
+log_stderr(const char *str, void *unused)
 {
 	fprintf(stderr, "%s", str);
 }
@@ -792,7 +792,7 @@ main(int argc, char **argv)
 	args_t args;
 
 	srand(time(NULL));
-	nissy_setlogger(log_stderr);
+	nissy_setlogger(log_stderr, NULL);
 
 	parse_error = parse_args(argc-1, argv+1, &args);
 	if (parse_error)

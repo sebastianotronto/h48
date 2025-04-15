@@ -421,7 +421,11 @@ Set a global logger function used by this library. Setting the logger to NULL
 disables logging.
 
 Parameters:
-   write - A callback writer with the same signature as printf(3).
+   logger_function - A pointer to a function that takes two parameters:
+                     * A C string, the string to be printed.
+                     * Any other data via a void pointer.
+   user_data       - Any data that will be provided by the logger when
+                     calling logger_function.
 
 Return values:
    NISSY_OK - Logger set succesfully. No warning or error is going to be given
@@ -429,5 +433,6 @@ Return values:
 */
 long long
 nissy_setlogger(
-	void (*logger_function)(const char *)
+	void (*logger_function)(const char *, void *),
+	void *user_data
 );

@@ -9,8 +9,7 @@
 #include "../src/nissy.h"
 #include "nissy_extra.h"
 
-static void log_stderr(const char *);
-static void log_stdout(const char *);
+static void log_stdout(const char *, void *);
 static double timerun(void (*)(void));
 static void writetable(const char *, int64_t, const char *);
 static long long int generatetable(const char *, char **,
@@ -23,13 +22,7 @@ static void derivedata_run(
     const char *, const char *, const char *, const char *);
 
 static void
-log_stderr(const char *str)
-{
-	fprintf(stderr, "%s", str);
-}
-
-static void
-write_stdout(const char *str)
+log_stdout(const char *str, void *unused)
 {
 	fprintf(stdout, "%s", str);
 }
@@ -211,7 +204,7 @@ gendata_run(
 	case -2:
 		goto gendata_run_finish;
 	default:
-		nissy_datainfo(size, buf, write_stdout);
+		nissy_datainfo(size, buf);
 		printf("\n");
 		printf("Succesfully generated %lld bytes. "
 		       "See above for details on the tables.\n", size);
@@ -244,7 +237,7 @@ derivedata_run(
 	case -2:
 		goto derivedata_run_finish;
 	default:
-		nissy_datainfo(size, buf, write_stdout);
+		nissy_datainfo(size, buf);
 		printf("\n");
 		printf("Succesfully generated %lld bytes. "
 		       "See above for details on the tables.\n", size);

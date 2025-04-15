@@ -31,13 +31,13 @@ int64_t writecube(const char *, cube_t, size_t n, char [n]);
 /* Test function to be implemented by all tests */
 void run(void);
 
-void log_stderr(const char *str)
+void log_stderr(const char *str, void *unused)
 {
 	fprintf(stderr, "%s", str);
 }
 
 int main(void) {
-	nissy_setlogger(log_stderr);
+	nissy_setlogger(log_stderr, NULL);
 	run();
 	return 0;
 }

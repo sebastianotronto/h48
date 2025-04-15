@@ -1,10 +1,11 @@
 #include <stdio.h>
 
-void (*nissy_log)(const char *);
-void write_wrapper(void (*)(const char *), const char *, ...);
+void (*nissy_log)(const char *, void *);
+void *nissy_log_data;
+void write_wrapper(void (*)(const char *, void *), const char *, ...);
 
 void
-write_wrapper(void (*write)(const char *), const char *str, ...)
+write_wrapper(void (*write)(const char *, void *), const char *str, ...)
 {
 	static const size_t len = 1000;
 	char message[len];
@@ -14,7 +15,7 @@ write_wrapper(void (*write)(const char *), const char *str, ...)
 	vsprintf(message, str, args);
 	va_end(args);
 
-	write(message);
+	write(message, nissy_log_data);
 }
 
 #define LOG(...) if (nissy_log != NULL) write_wrapper(nissy_log, __VA_ARGS__);

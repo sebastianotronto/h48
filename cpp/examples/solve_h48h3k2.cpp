@@ -8,7 +8,7 @@
 
 int main() {
 	// Get verbose output
-	nissy::set_logger([](const char* s) { std::cout << s; });
+	nissy::set_logger([](const char* s, void *u) { std::cout << s; }, NULL);
 
 	// Get the scramble from the user
 	std::cout << "Enter scramble: ";

@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
 
 	solver = argv[1];
 	srand(time(NULL));
-	nissy_setlogger(log_stderr);
+	nissy_setlogger(log_stdout, NULL);
 
 	sprintf(filename, "tables/%s", solver);
 	if (getdata(solver, &buf, filename) != 0)
