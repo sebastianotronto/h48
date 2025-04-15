@@ -84,7 +84,7 @@ namespace nissy {
 		size_t size;
 		std::string id;
 		std::vector<std::byte> data;
-		bool data_checked;
+		bool data_checked{false};
 
 		error generate_data();
 		void read_data(std::ifstream&);
