@@ -160,7 +160,7 @@ solve_h48_dfs(dfsarg_solve_h48_t arg[static 1])
 			return 0;
 		pthread_mutex_lock(arg->solutions_mutex);
 		ret = appendsolution(arg->solution_moves,
-		    arg->solution_settings, arg->solution_list);
+		    arg->solution_settings, arg->solution_list, true);
 		pthread_mutex_unlock(arg->solutions_mutex);
 		return ret;
 	}
@@ -292,8 +292,8 @@ solve_h48_maketasks(
 		memcpy(moves.moves,
 		    maketasks_arg->moves, maketasks_arg->nmoves);
 
-		appret = appendsolution(&moves,
-		    solve_arg->solution_settings, solve_arg->solution_list);
+		appret = appendsolution(&moves, solve_arg->solution_settings,
+		    solve_arg->solution_list, true);
 		return appret < 0 ? appret : NISSY_OK;
 	}
 

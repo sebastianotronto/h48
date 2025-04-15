@@ -120,7 +120,7 @@ solve_coord_dfs(dfsarg_solve_coord_t arg[static 1])
 		if (!coord_solution_admissible(arg))
 			return 0;
 		return appendsolution(arg->solution_moves,
-		    arg->solution_settings, arg->solution_list);
+		    arg->solution_settings, arg->solution_list, true);
 	}
 
 	if (solve_coord_dfs_stop(arg))
@@ -316,7 +316,7 @@ solve_coord(
 
 	if (coord->coord(c, coord_data) == 0) {
 		if (minmoves == 0 && !appendsolution(
-		    &solution_moves, &solution_settings, &solution_list))
+		    &solution_moves, &solution_settings, &solution_list, true))
 				goto solve_coord_error_buffer;
 		goto solve_coord_done;
 	}

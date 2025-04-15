@@ -7,7 +7,7 @@ STATIC bool solution_moves_equal(
 STATIC bool solution_moves_is_duplicate(size_t n, const solution_moves_t[n+1]);
 STATIC bool appendchar(solution_list_t [static 1], char);
 STATIC int64_t appendsolution(const solution_moves_t [static 1],
-    const solution_settings_t [static 1], solution_list_t [static 1]);
+    const solution_settings_t [static 1], solution_list_t [static 1], bool);
 STATIC bool solutions_done(const solution_list_t [static 1],
     const solution_settings_t [static 1], int8_t depth);
 
@@ -99,13 +99,15 @@ STATIC int64_t
 appendsolution(
 	const solution_moves_t moves[static 1],
 	const solution_settings_t settings[static 1],
-	solution_list_t list[static 1]
+	solution_list_t list[static 1],
+	bool log
 )
 {
 	int64_t r, strl;
 	int i;
 	uint8_t t;
 	solution_moves_t tsol[NTRANS];
+	char *last_start;
 
 	if (moves->nmoves + moves->npremoves > MAXLEN)
 		goto appendsolution_error_solution_length;
@@ -147,6 +149,8 @@ appendsolution(
 		if (solution_moves_is_duplicate(r, tsol))
 			continue;
 
+		last_start = list->buf + list->used;
+
 		/* Write moves on normal */
 		strl = writemoves(tsol[r].nmoves, tsol[r].moves,
 		    list->size - list->used, list->buf + list->used);
@@ -179,6 +183,13 @@ appendsolution(
 		list->shortest_sol = MIN(
 		    list->shortest_sol, tsol[r].nmoves + tsol[r].npremoves);
 		r++;
+
+		if (log) {
+			list->buf[list->used-1] = '\0';
+			LOG("Found solution #%" PRIu64 ": %s\n",
+			    list->nsols, last_start);
+			list->buf[list->used-1] = '\n';
+		}
 	}
 
 	list->buf[list->used] = '\0';
