@@ -84,10 +84,11 @@ namespace nissy {
 		size_t size;
 		std::string id;
 		std::vector<std::byte> data;
+		bool data_checked;
 
 		error generate_data();
 		void read_data(std::ifstream&);
-		error check_data() const;
+		error check_data();
 		void unload_data();
 		solve_result solve(const cube&, nissflag, unsigned minmoves,
 		    unsigned maxmoves, unsigned maxsols, int optimal,

@@ -166,11 +166,13 @@ namespace nissy {
 		ifs.read(reinterpret_cast<char *>(data.data()), size);
 	}
 
-	error solver::check_data() const
+	error solver::check_data()
 	{
-		auto err = nissy_checkdata(data.size(),
+		auto err_value = nissy_checkdata(data.size(),
 		    reinterpret_cast<const char *>(data.data()));
-		return error{err};
+		error err{err_value};
+		data_checked = err.ok();
+		return err;
 	}
 
 	void solver::unload_data()
