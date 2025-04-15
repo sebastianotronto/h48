@@ -221,13 +221,10 @@ namespace nissy {
 
 	solver::solver(const std::string& str) : name{str} {}
 
-	std::variant<unsigned, error>
-	count_moves(const std::string& moves)
+	error count_moves(const std::string& moves)
 	{
 		auto err = nissy_countmoves(moves.c_str());
-		if (err < 0)
-			return error{err};
-		return (unsigned)err;
+		return error{err};
 	}
 
 	void set_logger(const std::function<void(const char *)>& log)

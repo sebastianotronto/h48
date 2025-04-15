@@ -99,7 +99,7 @@ namespace nissy {
 		solver(const std::string& name);
 	};
 
-	std::variant<unsigned, error> count_moves(const std::string&);
+	error count_moves(const std::string&);
 	void set_logger(const std::function<void(const char*)>&);
 }
 

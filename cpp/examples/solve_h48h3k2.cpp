@@ -81,11 +81,14 @@ int main() {
 		return 1;
 	}
 
-	if (solve_result.solutions.size() == 0)
+	if (solve_result.solutions.size() == 0) {
 		std::cout << "No solution found!" << std::endl;
-	else
-		std::cout << "Solution: " <<
-		    solve_result.solutions[0] << std::endl;
+	} else {
+		auto& sol = solve_result.solutions[0];
+		auto len = nissy::count_moves(sol).value;
+		std::cout << "Solution (" << len << " moves): "
+		    << sol << std::endl;
+	}
 
 	return 0;
 }
