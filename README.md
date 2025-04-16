@@ -99,10 +99,20 @@ file in the tools/results folder.
 
 To build and run a tool in debug mode, use `make debugtool`.
 
-## Running commands manually
+## User interfaces
 
-This project also includes a rudimentary shell that can be used to run
-commands manually. To build the shell use:
+User interfaces for this software are in an experimental stage. Some
+examples are included in this repository, but they are not polished.
+If you are a developer and you are interested in contributing, have a
+look at the examples and let me know!
+
+## Command-line interface
+
+The `shell` folder contains the code for a rudimentary shell that can
+be used to run commands manually. The user experience in not amazing,
+as the commands require quite verbose options.
+
+To build the shell run:
 
 ```
 $ make shell
@@ -150,7 +160,24 @@ $ ./run solve_scramble -solver h48h0k4 -n 1 -M 4 -moves "R' U' F"
 F' U' R
 ```
 
-For a full list of available command, use `run help`.
+For a full list of available command, use `./run help`.
+
+### QT
+
+A draft for a QT-based GUI is contained in the `qt` folder. In order
+to build it you need QT libraries and headers (for QML / QT Quick
+development) and CMake. If your environment is set up, you can
+build the QT GUI with
+
+```
+$ make qt
+```
+
+And then run it with
+
+```
+$ ./nissyqt
+```
 
 ## Using this software as a library
 
