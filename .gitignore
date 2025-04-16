@@ -9,11 +9,12 @@ utils/.DS_Store
 perf.data
 perf.data.old
 run
+nissyqt
+qt/build
 debugrun
 shell/lasttest.out
 shell/lasttest.err
 tables/*
-tables-old*/*
 test/*/runtest
 test/.DS_Store
 test/run
