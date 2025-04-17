@@ -23,7 +23,7 @@ data = bytearray(open("tables/" + solver, "rb").read())
 cube = nissy.applymoves(nissy.solved_cube, "U F R2");
 
 # Solve!
-solutions = nissy.solve(cube, solver, nissy.nissflag_normal, 0, 9, 3, -1, 4, data)
+solutions = nissy.solve(cube, solver, nissy.nissflag_normal, 0, 9, 3, 20, 4, data)
 
 # Print the solutions, one per line
 print("Found ", len(solutions), " solutions:")

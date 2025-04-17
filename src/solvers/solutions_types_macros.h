@@ -12,7 +12,7 @@ typedef struct {
 	bool unniss;
 	uint8_t maxmoves;
 	uint64_t maxsolutions;
-	int8_t optimal;
+	uint8_t optimal;
 } solution_settings_t;
 
 typedef struct {

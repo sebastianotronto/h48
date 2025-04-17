@@ -1,4 +1,5 @@
 #include <inttypes.h>
+#include <limits.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <stdbool.h>
@@ -482,6 +483,9 @@ solve_exec(args_t *args)
 		return -1;
 	}
 
+	if (args->maxsolutions == 0)
+		args->maxsolutions = args->optimal >= 0 ? UINT_MAX : 1;
+
 	buf = malloc(size);
 	read = fread(buf, size, 1, file);
 	fclose(file);
@@ -578,8 +582,8 @@ parse_args(int argc, char **argv, args_t *args)
 		.str_nisstype = "",
 		.minmoves = 0,
 		.maxmoves = 20,
-		.optimal = -1,
-		.maxsolutions = 1,
+		.optimal = 20,
+		.maxsolutions = 0,
 		.threads = 0,
 	};
 

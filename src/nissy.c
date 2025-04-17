@@ -534,8 +534,8 @@ nissy_solve(
 	unsigned minmoves,
 	unsigned maxmoves,
 	unsigned maxsols,
-	int optimal,
-	int threads,
+	unsigned optimal,
+	unsigned threads,
 	unsigned long long data_size,
 	const char data[data_size],
 	unsigned sols_size,
@@ -546,7 +546,7 @@ nissy_solve(
 	cube_t c;
 	long long parse_ret;
 	uint8_t h, k;
-	int t, opt;
+	int t;
 
 	if (solver == NULL) {
 		LOG("Error: 'solver' argument is NULL\n");
@@ -573,8 +573,6 @@ nissy_solve(
 		return 0;
 	}
 
-	opt = optimal < 0 ? MAXLEN : optimal;
-
 	t = threads == 0 ? THREADS : threads;
 	if (t < 0) {
 		LOG("solve: 'threads' is negative. Please provide a "
@@ -597,10 +595,10 @@ nissy_solve(
 		if (parse_ret != NISSY_OK)
 			return parse_ret;
 		return solve_h48(c, minmoves, maxmoves, maxsols,
-		    opt, t, data_size, data, sols_size, sols, stats);
+		    optimal, t, data_size, data, sols_size, sols, stats);
 	} else if (!strncmp(solver, "coord_", 6)) {
 		return solve_coord_dispatch(c, solver + 6, nissflag,
-		    minmoves, maxmoves, maxsols, opt, t, data_size, data,
+		    minmoves, maxmoves, maxsols, optimal, t, data_size, data,
 		    sols_size, sols);
 	} else {
 		LOG("solve: unknown solver '%s'\n", solver);

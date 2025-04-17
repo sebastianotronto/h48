@@ -360,8 +360,7 @@ Parameters:
    minmoves  - The minimum number of moves for a solution.
    maxmoves  - The maximum number of moves for a solution.
    maxsols   - The maximum number of solutions.
-   optimal   - If set to a non-negative value, the maximum number of moves
-               above the optimal solution length.
+   optimal   - The maximum number of moves above the optimal solution length.
    threads   - The number of threads to use. Must be less than or equalt to
                the value of the compile-time constant THREADS. If set to 0,
                the default value THREADS will be used.
@@ -393,8 +392,8 @@ nissy_solve(
 	unsigned minmoves,
 	unsigned maxmoves,
 	unsigned maxsolutions,
-	int optimal,
-	int threads,
+	unsigned optimal,
+	unsigned threads,
 	unsigned long long data_size,
 	const char data[data_size],
 	unsigned sols_size,

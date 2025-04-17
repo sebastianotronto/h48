@@ -13,10 +13,11 @@ typedef struct {
 } dfsarg_solve_coord_t;
 
 STATIC int64_t solve_coord(cube_t, coord_t [static 1], uint8_t, uint8_t,
-    uint8_t, uint8_t, uint64_t, int8_t, int, uint64_t, const void *,
+    uint8_t, uint8_t, uint64_t, uint8_t, uint8_t, uint64_t, const void *,
     size_t n, char [n]);
 STATIC int64_t solve_coord_dispatch(cube_t, const char *, uint8_t, uint8_t,
-    uint8_t, uint64_t, int8_t, int, uint64_t, const void *, size_t n, char [n]);
+    uint8_t, uint64_t, uint8_t, uint8_t, uint64_t, const void *, size_t n,
+    char [n]);
 STATIC bool coord_solution_admissible(const dfsarg_solve_coord_t [static 1]);
 STATIC bool solve_coord_dfs_stop(const dfsarg_solve_coord_t [static 1]);
 STATIC bool coord_continue_onnormal(const dfsarg_solve_coord_t [static 1]);
@@ -204,8 +205,8 @@ solve_coord_dispatch(
 	uint8_t minmoves,
 	uint8_t maxmoves,
 	uint64_t maxsolutions,
-	int8_t optimal,
-	int threads,
+	uint8_t optimal,
+	uint8_t threads,
 	uint64_t data_size,
 	const void *data,
 	size_t solutions_size,
@@ -242,8 +243,8 @@ solve_coord(
 	uint8_t minmoves,
 	uint8_t maxmoves,
 	uint64_t maxsolutions,
-	int8_t optimal,
-	int threads,
+	uint8_t optimal,
+	uint8_t threads,
 	uint64_t data_size,
 	const void *data,
 	size_t solutions_size,

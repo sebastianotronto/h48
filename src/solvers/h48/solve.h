@@ -52,7 +52,7 @@ STATIC int64_t solve_h48_maketasks(
     solve_h48_task_t [static STARTING_CUBES], int [static 1]);
 STATIC void *solve_h48_runthread(void *);
 STATIC int64_t solve_h48_dfs(dfsarg_solve_h48_t [static 1]);
-STATIC int64_t solve_h48(cube_t, int8_t, int8_t, uint64_t, int8_t, int8_t,
+STATIC int64_t solve_h48(cube_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t,
     uint64_t, const void *, size_t n, char [n],
     long long [static NISSY_SIZE_SOLVE_STATS]);
 
@@ -67,7 +67,9 @@ solve_h48_stop(dfsarg_solve_h48_t arg[static 1])
 	n = arg->solution_moves->nmoves + arg->solution_moves->npremoves;
 	target = arg->target_depth - n;
 	if (target <= 0 ||
-	    arg->solution_list->nsols == arg->solution_settings->maxsolutions)
+	    arg->solution_list->nsols >= arg->solution_settings->maxsolutions ||
+	    n > arg->solution_list->shortest_sol +
+	        arg->solution_settings->optimal)
 		return true;
 
 	arg->movemask_normal = arg->movemask_inverse = MM_ALLMOVES;
@@ -283,8 +285,8 @@ solve_h48_maketasks(
 	if (issolved(maketasks_arg->cube)) {
 		if (maketasks_arg->nmoves > maketasks_arg->maxmoves ||
 		    maketasks_arg->nmoves < maketasks_arg->minmoves ||
-		    solve_arg->solution_list->nsols >=
-		        solve_arg->solution_settings->maxsolutions)
+		    solutions_done(solve_arg->solution_list,
+		        solve_arg->solution_settings, maketasks_arg->nmoves))
 			return NISSY_OK;
 
 		solution_moves_reset(&moves);
@@ -341,11 +343,11 @@ solve_h48_maketasks(
 STATIC int64_t
 solve_h48(
 	cube_t cube,
-	int8_t minmoves,
-	int8_t maxmoves,
-	uint64_t maxsolutions,
-	int8_t optimal,
-	int8_t threads,
+	uint8_t minmoves,
+	uint8_t maxmoves,
+	uint8_t maxsolutions,
+	uint8_t optimal,
+	uint8_t threads,
 	uint64_t data_size,
 	const void *data,
 	size_t solutions_size,
@@ -448,7 +450,7 @@ solve_h48(
 	solve_h48_maketasks(&arg[0], &maketasks_arg, tasks, &ntasks);
 	if (ntasks < 0)
 		goto solve_h48_error_solutions_buffer;
-	if (sollist.nsols >= maxsolutions)
+	if (solutions_done(&sollist, &settings, MAX(minmoves, STARTING_MOVES)))
 		goto solve_h48_done;
 
 	for (i = 0; i < threads; i++) {

@@ -324,8 +324,7 @@ PyDoc_STRVAR(solve_doc,
 "  - minmoves: the minimum number of moves to use\n"
 "  - maxmoves: the maximum number of moves to use\n"
 "  - maxsolution: the maximum number of solutions to return\n"
-"  - optimal: the largest number of moves from the shortest solution"
-"(set to -1 to ignore)\n"
+"  - optimal: the largest number of moves from the shortest solution\n"
 "  - threads: the number of threads to use (0 for default)\n"
 "  - data: a bytearray containing the data for the solver\n"
 "\n"
@@ -343,7 +342,7 @@ solve(PyObject *self, PyObject *args)
 	PyByteArrayObject *data;
 	PyObject *list, *item;
 
-	if (!PyArg_ParseTuple(args, "ssIIIIiiY", &cube, &solver, &nissflag,
+	if (!PyArg_ParseTuple(args, "ssIIIIIIY", &cube, &solver, &nissflag,
 	     &minmoves, &maxmoves, &maxsolutions, &optimal, &threads, &data))
 		return NULL;
 

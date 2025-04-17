@@ -91,8 +91,8 @@ namespace nissy {
 		error check_data();
 		void unload_data();
 		solve_result solve(const cube&, nissflag, unsigned minmoves,
-		    unsigned maxmoves, unsigned maxsols, int optimal,
-		    int threads);
+		    unsigned maxmoves, unsigned maxsols, unsigned optimal,
+		    unsigned threads);
 
 		static std::variant<solver, error> get(const std::string&);
 	private:

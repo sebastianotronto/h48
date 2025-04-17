@@ -43,8 +43,6 @@ solution_list_init(solution_list_t sols[static 1], size_t n, char buf[n])
 	sols->size = n;
 	sols->used = 0;
 	sols->buf = buf;
-
-	/* Ensure string buffer is NULL-terminated */
 	sols->buf[0] = '\0';
 
 	return true;
@@ -215,15 +213,8 @@ solutions_done(
 	int8_t depth
 )
 {
-	if (list->nsols >= settings->maxsolutions)
-		return true;
 
-	if (depth > settings->maxmoves)
-		return true;
-
-	if (list->nsols > 0 && settings->optimal >= 0 &&
-	    depth > list->shortest_sol + settings->optimal)
-		return true;
-
-	return false;
+	return depth > settings->maxmoves ||
+	    depth > list->shortest_sol + settings->optimal ||
+	    list->nsols >= settings->maxsolutions;
 }

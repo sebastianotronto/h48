@@ -21,8 +21,8 @@ extern "C" {
 	long long nissy_gendata(const char *, unsigned long long, char *);
 	long long nissy_checkdata(unsigned long long, const char *);
 	long long nissy_solve(const char *, const char *, unsigned, unsigned,
-	    unsigned, unsigned, int, int, unsigned long long, const char *,
-	    unsigned, char *, long long *);
+	    unsigned, unsigned, unsigned, unsigned, unsigned long long,
+	    const char *, unsigned, char *, long long *);
 	long long nissy_countmoves(const char *);
 	long long nissy_setlogger(void (*)(const char *, void *), void *);
 }
@@ -182,11 +182,19 @@ namespace nissy {
 
 	solver::solve_result
 	solver::solve(const cube& cube, nissflag niss, unsigned minmoves,
-	    unsigned maxmoves, unsigned maxsols, int optimal, int threads)
+	    unsigned maxmoves, unsigned maxsols, unsigned optimal,
+	    unsigned threads)
 	{
+		solver::solve_result result;
+
+		if (maxsols == 0) {
+			result.solutions = {};
+			result.err = error::OK;
+			return result;
+		}
+
 		const size_t len = 3 * (maxmoves+1) * maxsols;
 		std::vector<char> csols(len);
-		solver::solve_result result;
 
 		auto err = nissy_solve(cube.to_string().c_str(),
 		    name.c_str(), niss.value, minmoves, maxmoves, maxsols,
