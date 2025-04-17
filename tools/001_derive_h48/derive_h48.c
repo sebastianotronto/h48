@@ -32,7 +32,7 @@ int main(int argc, char **argv) {
 	filename_large = argv[3];
 	filename_small = argv[4];
 
-	nissy_setlogger(log_stdout, NULL);
+	nissy_setlogger(log_stderr, NULL);
 
 	timerun(run);
 

@@ -9,7 +9,7 @@
 #include "../src/nissy.h"
 #include "nissy_extra.h"
 
-static void log_stdout(const char *, void *);
+static void log_stderr(const char *, void *);
 static double timerun(void (*)(void));
 static void writetable(const char *, int64_t, const char *);
 static long long int generatetable(const char *, char **,
@@ -22,9 +22,9 @@ static void derivedata_run(
     const char *, const char *, const char *, const char *);
 
 static void
-log_stdout(const char *str, void *unused)
+log_stderr(const char *str, void *unused)
 {
-	fprintf(stdout, "%s", str);
+	fprintf(stderr, "%s", str);
 }
 
 static double

@@ -41,7 +41,7 @@ int main(int argc, char **argv) {
 
 	solver = argv[1];
 	filename = argv[2];
-	nissy_setlogger(log_stdout, NULL);
+	nissy_setlogger(log_stderr, NULL);
 
 	timerun(run);
 

@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
 	solver = argv[1];
 	nsol = atoi(argv[2]);
 	srand(time(NULL));
-	nissy_setlogger(log_stdout, NULL);
+	nissy_setlogger(log_stderr, NULL);
 
 
 	sprintf(filename, "tables/%s", solver);

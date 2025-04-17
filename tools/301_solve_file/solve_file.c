@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
 	scrfilename = argv[2];
 
 	srand(time(NULL));
-	nissy_setlogger(log_stdout, NULL);
+	nissy_setlogger(log_stderr, NULL);
 
 	sprintf(filename, "tables/%s", solver);
 	if (getdata(solver, &buf, filename) != 0)
