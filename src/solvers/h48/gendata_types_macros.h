@@ -121,3 +121,11 @@ typedef struct {
 	_Atomic uint8_t *table_atomic;
 	pthread_mutex_t **table_mutex;
 } gendata_h48_mark_t;
+
+typedef struct {
+	int64_t min;
+	int64_t max;
+	uint8_t k;
+	uint64_t *distr;
+	const uint8_t *table;
+} getdistribution_h48_data_t;

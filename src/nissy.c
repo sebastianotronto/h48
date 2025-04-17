@@ -105,7 +105,7 @@ distribution_equal(
 	int wrong;
 	uint8_t i;
 
-	for (i = 0, wrong = 0; i <= MAX(maxvalue, 20); i++) {
+	for (i = 0, wrong = 0; i <= MIN(maxvalue, 20); i++) {
 		if (expected[i] != actual[i]) {
 			wrong++;
 			LOG("Value %" PRIu8 ": expected %" PRIu64 ", found %"

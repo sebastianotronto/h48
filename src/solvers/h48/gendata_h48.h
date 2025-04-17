@@ -3,8 +3,8 @@ STATIC int64_t gendata_h48(gendata_h48_arg_t [static 1]);
 STATIC void gendata_h48h0k4(gendata_h48_arg_t [static 1]);
 STATIC void gendata_h48k2(gendata_h48_arg_t [static 1]);
 
-STATIC void * gendata_h48h0k4_runthread(void *);
-STATIC void * gendata_h48k2_runthread(void *);
+STATIC void *gendata_h48h0k4_runthread(void *);
+STATIC void *gendata_h48k2_runthread(void *);
 
 STATIC_INLINE void gendata_h48_mark_atomic(gendata_h48_mark_t [static 1]);
 STATIC_INLINE void gendata_h48_mark(gendata_h48_mark_t [static 1]);
@@ -12,6 +12,7 @@ STATIC_INLINE bool gendata_h48k2_dfs_stop(
     cube_t, int8_t, h48k2_dfs_arg_t [static 1]);
 STATIC void gendata_h48k2_dfs(h48k2_dfs_arg_t [static 1]);
 STATIC tableinfo_t makeinfo_h48k2(gendata_h48_arg_t [static 1]);
+STATIC void *getdistribution_h48_runthread(void *);
 STATIC void getdistribution_h48(const uint8_t *,
     uint64_t [static INFO_DISTRIBUTION_LEN], uint8_t, uint8_t);
 
@@ -643,6 +644,26 @@ makeinfo_h48k2(gendata_h48_arg_t arg[static 1])
 	return info;
 }
 
+STATIC void *
+getdistribution_h48_runthread(void *arg)
+{
+	getdistribution_h48_data_t *data = (getdistribution_h48_data_t *)arg;
+	const uint8_t *table;
+	uint8_t j, k, m;
+	int64_t i;
+
+	memset(data->distr, 0, INFO_DISTRIBUTION_LEN * sizeof(uint64_t));
+
+	k = data->k;
+	table = data->table;
+	m = H48_MASK(0, k);
+	for (i = data->min; i < data->max; i++)
+		for (j = 0; j < H48_DIV(k); j++)
+			data->distr[(table[i] & (m << (j*k))) >> (j*k)]++;
+
+	return NULL;
+}
+
 STATIC void
 getdistribution_h48(
 	const uint8_t *table,
@@ -650,16 +671,35 @@ getdistribution_h48(
 	uint8_t h,
 	uint8_t k
 ) {
-	uint8_t val;
-	int64_t i, h48max;
+	getdistribution_h48_data_t targ[THREADS];
+	pthread_t thread[THREADS];
+	uint64_t local_distr[THREADS][INFO_DISTRIBUTION_LEN];
+	int64_t i, j, nbytes, sz;
+
+	nbytes = H48_COORDMAX(h) / H48_DIV(k);
+	sz = nbytes / THREADS;
+	for (i = 0; i < THREADS; i++) {
+		targ[i] = (getdistribution_h48_data_t) {
+			.min = i * sz,
+			.max = i == THREADS - 1 ? nbytes : (i+1) * sz,
+			.k = k,
+			.distr = local_distr[i],
+			.table = table,
+		};
+		pthread_create(&thread[i], NULL,
+		    getdistribution_h48_runthread, &targ[i]);
+	}
+
+	for (i = 0; i < THREADS; i++)
+		pthread_join(thread[i], NULL);
 
 	memset(distr, 0, INFO_DISTRIBUTION_LEN * sizeof(uint64_t));
+	for (i = 0; i < THREADS; i++)
+		for (j = 0; j < INFO_DISTRIBUTION_LEN; j++)
+			distr[j] += local_distr[i][j];
 
-	h48max = H48_COORDMAX(h);
-	for (i = 0; i < h48max; i++) {
-		val = get_h48_pval(table, i, k);
-		distr[val]++;
-	}
+	for (i = nbytes * H48_DIV(k); i < H48_COORDMAX(h); i++)
+		distr[get_h48_pval(table, i, k)]++;
 }
 
 STATIC const uint32_t *
