@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
 	QObject::connect(&engine, &QQmlApplicationEngine::objectCreationFailed,
 	    &app, []() { QCoreApplication::exit(-1); }, Qt::QueuedConnection);
 
-	engine.loadFromModule("nissyqt", "NissyMain");
+	engine.loadFromModule("nissyqt", "Main");
 
 	return app.exec();
 }

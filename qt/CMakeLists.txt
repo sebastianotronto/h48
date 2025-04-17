@@ -19,7 +19,7 @@ qt_add_executable(appnissyqt
 qt_add_qml_module(appnissyqt
 	URI nissyqt
 	VERSION 1.0
-	QML_FILES NissyMain.qml
+	QML_FILES Main.qml
 )
 
 target_link_libraries(appnissyqt

@@ -9,20 +9,25 @@
 
 void logWrapper(const char *str, void *data)
 {
-	auto f = *reinterpret_cast<std::function<void(const char*)>*>(data);
-	f(str);
+	auto f = *reinterpret_cast<std::function<void(std::string)>*>(data);
+	f(std::string{str});
 }
 
 NissyAdapter::NissyAdapter()
 {
+	// TODO: this list must be kept in sync with UI code, it is a bit ugly
 	std::vector<std::string> solverNames {
-		"h48h3k2"
+		"h48h0k4",
+		"h48h1k2",
+		"h48h2k2",
+		"h48h3k2",
+		"h48h7k2",
 	};
 
 	for (auto s : solverNames)
 		initSolver(s);
 
-	writeLog = [&](const char *str) {
+	writeLog = [&](std::string str) {
 		emit appendLog(QString::fromStdString(str));
 	};
 
@@ -45,6 +50,8 @@ bool NissyAdapter::loadSolverData(nissy::solver& solver) {
 
 	std::filesystem::path filePath("./tables/" + solver.id);
 	if (!std::filesystem::exists(filePath)) {
+		logLine("Data file for solver " + solver.name + " not found, "
+		    "generating it...");
 		auto err = solver.generate_data();
 		if (!err.ok()) {
 			emit solverError(QString("Error generating data!"));
@@ -55,16 +62,23 @@ bool NissyAdapter::loadSolverData(nissy::solver& solver) {
 		ofs.write(reinterpret_cast<char *>(solver.data.data()),
 		    solver.size);
 		ofs.close();
+		logLine("Data generated succesfully");
 	} else {
+		logLine("Reading data for solver " + solver.name +
+		    " from file");
 		std::ifstream ifs(filePath, std::ios::binary);
 		solver.read_data(ifs);
 		ifs.close();
+		logLine("Data loaded");
 	}
 
+	logLine("Checking data integrity "
+	    "(this is done only once per solver per session)...");
 	if (!solver.check_data().ok()) {
 		emit solverError(QString("Error reading data!"));
 		return false;
 	}
+	logLine("Data checked");
 
 	return true;
 }
@@ -102,7 +116,7 @@ Q_INVOKABLE void NissyAdapter::requestSolve(
 	}
 
 	SolveOptions opts{c, ss, (unsigned)minmoves, (unsigned)maxmoves,
-	    (unsigned)maxsolutions, optimal};
+	    (unsigned)maxsolutions, (unsigned)optimal};
 	auto _ = QtConcurrent::run(&NissyAdapter::startSolve, this, opts);
 	return;
 }
@@ -132,9 +146,16 @@ void NissyAdapter::startSolve(SolveOptions opts)
 		std::stringstream ss;
 		for (auto s : sols) {
 			auto n = nissy::count_moves(s).value;
-			ss << s << "(" << n << ")" << std::endl; // TODO: remove last newline
+			ss << s << " (" << n << ")" << std::endl; // TODO: remove last newline
 		}
 		emit solutionsReady(QString::fromStdString(hs.str()),
 		   QString::fromStdString(ss.str()));
 	}
+}
+
+void NissyAdapter::logLine(std::string str)
+{
+	std::stringstream ss;
+	ss << str << std::endl;
+	writeLog(ss.str());
 }

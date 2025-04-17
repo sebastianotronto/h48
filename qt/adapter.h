@@ -14,7 +14,7 @@ struct SolveOptions {
 	unsigned minmoves;
 	unsigned maxmoves;
 	unsigned maxsolutions;
-	int optimal;
+	unsigned optimal;
 };
 
 class NissyAdapter : public QObject {
@@ -23,6 +23,8 @@ class NissyAdapter : public QObject {
 	QML_ELEMENT
 	
 public:
+	static constexpr int maxSolutionsHardLimit = 9999;
+
 	NissyAdapter();
 
 	Q_INVOKABLE bool isValidScramble(QString);
@@ -42,11 +44,12 @@ signals:
 
 private:
 	std::vector<nissy::solver> solvers;
-	std::function<void(const char*)> writeLog;
+	std::function<void(std::string)> writeLog;
 
 	void initSolver(const std::string&);
 	void startSolve(SolveOptions);
 	bool loadSolverData(nissy::solver&);
+	void logLine(std::string);
 };
 
 #endif

@@ -43,9 +43,11 @@ Window {
       id: mainArea
 
       property alias scramble: scrambleRow.scramble
+      property alias solver: solverCfg.solver
       property alias minmoves: solverCfg.minmoves
       property alias maxmoves: solverCfg.maxmoves
       property alias maxsolutions: solverCfg.maxsolutions
+      property alias optimal: solverCfg.optimal
       property alias sols: sols.text
       property alias solsHeader: solsHeader.text
 
@@ -59,12 +61,56 @@ Window {
       spacing: 10
 
       SplitView.minimumHeight: 180
-      SplitView.preferredHeight: 300
+      SplitView.preferredHeight: 500
 
       component Separator: Rectangle {
         height: 1
         Layout.fillWidth: true
         color: "black"
+      }
+
+      component OptionalValue: RowLayout {
+        property alias currentValue: valueRect.value
+        property alias from: spinBox.from
+        property alias to: spinBox.to
+        property alias defaultValue: spinBox.value
+        property alias defaultEnabled: sw.checked
+        property alias label: sw.text
+        property int defaultSavedValue: 1
+        property int savedValue: defaultSavedValue
+
+        Switch {
+          id: sw
+
+          checked: true
+
+          onToggled: () => {
+            if (checked) {
+              currentValue = savedValue
+            } else {
+              savedValue = currentValue
+              currentValue = spinBox.to
+            }
+          }
+        }
+
+        Rectangle {
+          id: valueRect
+
+          property alias enabled: sw.checked
+          property alias value: spinBox.value
+
+          width: 65
+          height: 20
+
+          SpinBox {
+            id: spinBox
+
+            width: parent.width
+            editable: true
+            enabled: parent.enabled
+          }
+        }
       }
 
       ColumnLayout {
@@ -114,9 +160,36 @@ Window {
 
       ColumnLayout {
         id: solverCfg
+
         property alias minmoves: minMaxRow.min
         property alias maxmoves: minMaxRow.max
-        property alias maxsolutions: maxOptimal.maxsolutions
+        property alias maxsolutions: maxSols.currentValue
+        property alias optimal: optimal.currentValue
+        property alias solver: solverRow.solver
+
+        RowLayout {
+          id: solverRow
+
+          property alias solver: comboBox.currentValue
+
+          Label { text: "Solver" }
+          ComboBox {
+            id: comboBox
+
+            currentIndex: 3
+            textRole: "text"
+            valueRole: "name"
+            implicitContentWidthPolicy: ComboBox.WidestTextWhenCompleted
+
+            model: ListModel {
+              ListElement { text: "h48 h=0, k=4 (59 Mb)"; name: "h48h0k4" }
+              ListElement { text: "h48 h=1, k=2 (115 Mb)"; name: "h48h1k2" }
+              ListElement { text: "h48 h=2, k=2 (171 Mb)"; name: "h48h2k2" }
+              ListElement { text: "h48 h=3, k=2 (283 Mb)"; name: "h48h3k2" }
+              ListElement { text: "h48 h=7, k=2 (3.6 Gb)"; name: "h48h7k2" }
+            }
+          }
+        }
 
         RowLayout {
           id: minMaxRow
@@ -148,40 +221,38 @@ Window {
           }
         }
 
-        RowLayout {
-          id: maxOptimal
+        OptionalValue {
+          id: optimal
 
-          property alias maxsolutions: maxSolsRect.maxsolutions
+          label: "Above optimal by at most"
+          from: 0
+          to: 20
+          defaultValue: 20
+          defaultEnabled: false
+          defaultSavedValue: 0
+        }
 
-          Rectangle {
-            width: 220
-            height: 20
-            Label { text: "Maximum number of solutions:" }
-          }
-          Rectangle {
-            id: maxSolsRect
+        OptionalValue {
+          id: maxSols
 
-            property int maxsolutions: parseInt(textField.text)
-
-            width: 35
-            height: 20
-
-            TextField {
-              id: textField
-
-              width: parent.width
-              text: "1"
-              validator: IntValidator{ bottom: 1; top: 999; }
-
-              onAccepted: submitScramble()
-            }
-          }
+          label: "Limit number of solutions to"
+          from: 1
+          to: 999
+          defaultValue: 1
+          defaultEnabled: true
+          defaultSavedValue: 1
         }
       }
 
       Separator {}
 
-      Label { id: solsHeader }
+      StackLayout {
+        Layout.maximumHeight: 30
+        currentIndex: mainArea.solutionsLoading ? 0 : 1
+
+        BusyIndicator { running: mainArea.solutionsLoading }
+        Label { id: solsHeader }
+      }
 
       ScrollView {
         Layout.fillHeight: true
@@ -229,16 +300,16 @@ Window {
 
   function submitScramble() {
     mainArea.solutionsLoading = true;
-    mainArea.solsHeader = "Loading solutions..."
+    mainArea.solsHeader = ""
     mainArea.sols = ""
     logView.text = ""
     NissyAdapter.requestSolve(
         mainArea.scramble,
-        "h48h3k2",
+        mainArea.solver,
         mainArea.minmoves,
         mainArea.maxmoves,
         mainArea.maxsolutions,
-        -1
+        mainArea.optimal
     )
   }
 
@@ -251,7 +322,7 @@ Window {
     }
     function onSolverError(msg) {
       mainArea.solutionsLoading = false
-      mainArea.solusHeader = msg
+      mainArea.solsHeader = msg
       mainArea.sols = ""
     }
     function onAppendLog(msg) {
