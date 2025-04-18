@@ -99,9 +99,10 @@ if [ -n "$SANITIZE" ]; then
 fi
 LIBS="-lpthread"
 
-CFLAGS="$STD $LIBS $WFLAGS $WNOFLAGS $AVX -O3 -fPIC"
-DBGFLAGS="$STD $LIBS $WFLAGS $WNOFLAGS $SAN $AVX -g3 -DDEBUG -fPIC"
-MACROS="-DTHREADS=$THREADS -D$ARCH"
+CFLAGS="$STD $LIBS $WFLAGS $WNOFLAGS $AVX -O3 -fPIC -D$ARCH"
+DBGFLAGS="$STD $LIBS $WFLAGS $WNOFLAGS $SAN $AVX -g3 -DDEBUG -fPIC -D$ARCH"
+WASMFLAGS="$STD $LIBS $WFLAGS $WNOFLAGS -O3 -fPIC"
+MACROS="-DTHREADS=$THREADS"
 
 if (command -v "python3-config" >/dev/null 2>&1) ; then
 	PYTHON3_INCLUDES="$(python3-config --includes)"
@@ -124,8 +125,11 @@ echo "CFLAGS = $CFLAGS";
 echo "";
 echo "DBGFLAGS = $DBGFLAGS";
 echo "";
+echo "WASMFLAGS = $WASMFLAGS";
+echo "";
 echo "MACROS = $MACROS"
 echo "";
 echo "PYTHON3_INCLUDES = $PYTHON3_INCLUDES"
 echo "CC = $CC"
+echo "EMCC = emcc"
 } > config.mk

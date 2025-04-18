@@ -17,6 +17,9 @@ libnissy.so:
 debugnissy.o:
 	${CC} ${MACROS} ${DBGFLAGS} -c -o debugnissy.o src/nissy.c
 
+wasmnissy.o:
+	${EMCC} ${MACROS} ${WASMFLAGS} -c -o wasmnissy.o src/nissy.c
+
 clean:
 	rm -rf *.out *.o *.s *.so run debugrun nissyqt qt/build
 
