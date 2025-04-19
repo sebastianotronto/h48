@@ -162,7 +162,7 @@ solve_h48_dfs(dfsarg_solve_h48_t arg[static 1])
 			return 0;
 		pthread_mutex_lock(arg->solutions_mutex);
 		ret = appendsolution(arg->solution_moves,
-		    arg->solution_settings, arg->solution_list, true);
+		    arg->solution_settings, arg->solution_list, true, "H48");
 		pthread_mutex_unlock(arg->solutions_mutex);
 		return ret;
 	}
@@ -295,7 +295,7 @@ solve_h48_maketasks(
 		    maketasks_arg->moves, maketasks_arg->nmoves);
 
 		appret = appendsolution(&moves, solve_arg->solution_settings,
-		    solve_arg->solution_list, true);
+		    solve_arg->solution_list, true, "H48");
 		return appret < 0 ? appret : NISSY_OK;
 	}
 
@@ -458,16 +458,17 @@ solve_h48(
 		arg[i].tasks = tasks;
 	}
 
-	LOG("Prepared %d tasks\n", ntasks);
+	LOG("[H48 solve] Prepared %d tasks\n", ntasks);
 
 	for (
 	    d = MAX(minmoves, STARTING_MOVES + 1);
 	    !solutions_done(&sollist, &settings, d);
 	    d++
 	) {
-		if (d >= 10)
-			LOG("Found %" PRId64 " solutions, searching at depth %"
-			    PRId8 "\n", sollist.nsols, d);
+		if (d >= 15)
+			LOG("[H48 solve] Found %" PRId64 " solutions, "
+			    "searching at depth %" PRId8 "\n",
+			    sollist.nsols, d);
 		for (i = 0; i < threads; i++) {
 			arg[i].target_depth = d;
 			pthread_create(
@@ -491,16 +492,16 @@ solve_h48_done:
 	lookups_per_node = table_lookups / (long double)nodes_visited;
 	fallback_rate = nodes_visited == 0 ? 0.0 :
 	    (table_fallbacks * 100) / (long double)table_lookups;
-	LOG("Nodes visited: %" PRId64 "\n", nodes_visited);
-	LOG("Lookups: %" PRId64 " (%.3Lf per node)\n",
+	LOG("[H48 solve] Nodes visited: %" PRId64 "\n", nodes_visited);
+	LOG("[H48 solve] Lookups: %" PRId64 " (%.3Lf per node)\n",
 	    table_lookups, lookups_per_node);
-	LOG("Table fallbacks: %" PRId64 " (%.3Lf%%)\n",
+	LOG("[H48 solve] Table fallbacks: %" PRId64 " (%.3Lf%%)\n",
 	    table_fallbacks, fallback_rate);
 
 	return sollist.nsols;
 
 solve_h48_error_data:
-	LOG("solve_h48: error reading table\n");
+	LOG("[H48 solve] Error reading data table\n");
 	return NISSY_ERROR_DATA;
 
 solve_h48_error_solutions_buffer:

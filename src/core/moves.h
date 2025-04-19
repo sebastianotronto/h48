@@ -17,25 +17,6 @@ STATIC bool are_lastmoves_singlecw(size_t n, const uint8_t [n]);
 
 STATIC cube_t applymoves(cube_t, const char *);
 
-#define FOREACH_READMOVE(ARG_BUF, ARG_MOVE, ARG_C, ARG_MAX, \
-	RET_ERROR, ARG_ACTION) \
-	const char *VAR_B; \
-	uint8_t VAR_MOVE_NOMOD, VAR_MOD; \
-	for (VAR_B = ARG_BUF, ARG_C = 0; *VAR_B != '\0'; VAR_B++, ARG_C++) { \
-		while (*VAR_B == ' ' || *VAR_B == '\t' || *VAR_B == '\n') \
-			VAR_B++; \
-		if (*VAR_B == '\0' || ARG_C == ARG_MAX) \
-			break; \
-		if ((VAR_MOVE_NOMOD = readmove(*VAR_B)) == UINT8_ERROR) { \
-			LOG("Error: unknown move '%c'\n", *VAR_B); \
-			return RET_ERROR; \
-		} \
-		if ((VAR_MOD = readmodifier(*(VAR_B+1))) != 0) \
-			VAR_B++; \
-		ARG_MOVE = VAR_MOVE_NOMOD + VAR_MOD; \
-		ARG_ACTION \
-	}
-
 STATIC_INLINE bool
 allowednextmove(uint8_t m1, uint8_t m2)
 {

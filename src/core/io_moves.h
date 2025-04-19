@@ -14,7 +14,7 @@ STATIC int64_t writemoves(size_t n, const uint8_t [n], size_t m, char [m]);
 		if (*VAR_B == '\0' || ARG_C == ARG_MAX) \
 			break; \
 		if ((VAR_MOVE_NOMOD = readmove(*VAR_B)) == UINT8_ERROR) { \
-			LOG("Error: unknown move '%c'\n", *VAR_B); \
+			LOG("Unknown move: %c\n", *VAR_B); \
 			return RET_ERROR; \
 		} \
 		if ((VAR_MOD = readmodifier(*(VAR_B+1))) != 0) \

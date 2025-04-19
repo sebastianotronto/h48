@@ -87,7 +87,7 @@ gendata_h48(gendata_h48_arg_t arg[static 1])
 		return size; /* Dry-run */
 
 	if (arg->buf_size < size) {
-		LOG("Error computing H48 data: buffer is too small "
+		LOG("[H48 gendata] Error data: buffer is too small "
 		    "(needed %" PRId64 " bytes but received %" PRId64 ")\n",
 		    size, arg->buf_size);
 		return NISSY_ERROR_BUFFER_SIZE;
@@ -106,22 +106,24 @@ gendata_h48(gendata_h48_arg_t arg[static 1])
 	} else if (arg->k == 2) {
 		gendata_h48k2(arg);
 	} else {
-		LOG("Cannot generate data for h = %" PRIu8 " and k = %" PRIu8
-		    " (not implemented yet)\n", arg->h, arg->k);
+		LOG("[H48 gendata] Error: cannot generate data for h = %" PRIu8
+		    " and k = %" PRIu8 " (not implemented yet)\n",
+		    arg->h, arg->k);
 		return NISSY_ERROR_INVALID_SOLVER;
 	}
 
 	r = readtableinfo(arg->buf_size, arg->buf, &cocsepinfo);
 	if (r != NISSY_OK) {
-		LOG("gendata_h48: could not read info for cocsep table\n");
+		LOG("[H48 gendata] Error: could not read info "
+		    "for cocsep table\n");
 		return NISSY_ERROR_UNKNOWN;
 	}
 
 	cocsepinfo.next = cocsepsize;
 	r = writetableinfo(&cocsepinfo, arg->buf_size, arg->buf);
 	if (r != NISSY_OK) {
-		LOG("gendata_h48: could not write info for cocsep table"
-		    " with updated 'next' value\n");
+		LOG("[H48 gendata] Error: could not write info for "
+		    "cocsep table with updated 'next' value\n");
 		return NISSY_ERROR_UNKNOWN;
 	}
 
@@ -149,21 +151,23 @@ gendata_h48(gendata_h48_arg_t arg[static 1])
 
 	r = readtableinfo_n(arg->buf_size, arg->buf, 2, &h48info);
 	if (r != NISSY_OK) {
-		LOG("gendata_h48: could not read info for h48 table\n");
+		LOG("[H48 gendata] Error: could not read info "
+		    "for h48 table\n");
 		return NISSY_ERROR_UNKNOWN;
 	}
 	h48info.next = h48size;
 	r = writetableinfo(&h48info,
 	     arg->buf_size - cocsepsize, (char *)arg->buf + cocsepsize);
 	if (r != NISSY_OK) {
-		LOG("gendata_h48: could not write info for h48 table\n");
+		LOG("[H48 gendata] Error: could not write info "
+		    "for h48 table\n");
 		return NISSY_ERROR_UNKNOWN;
 	}
 
 	if (arg->k == 2) {
 		r = readtableinfo_n(arg->buf_size, arg->buf, 3, &fallbackinfo);
 		if (r != NISSY_OK) {
-			LOG("gendata_h48: could not read info for h48 "
+			LOG("[H48 gendata] Error: could not read info for h48 "
 			    "fallback table\n");
 			return NISSY_ERROR_UNKNOWN;
 		}
@@ -173,8 +177,8 @@ gendata_h48(gendata_h48_arg_t arg[static 1])
 		r = writetableinfo(&fallbackinfo,
 		    arg->buf_size - of, (char *)arg->buf + of);
 		if (r != NISSY_OK) {
-			LOG("gendata_h48: could not write info for h48 "
-			    "fallback table\n");
+			LOG("[H48 gendata] Error: could not write info for "
+			    "h48 fallback table\n");
 			return NISSY_ERROR_UNKNOWN;
 		}
 	}
@@ -233,7 +237,7 @@ gendata_h48h0k4(gendata_h48_arg_t arg[static 1])
 			bfsarg[t].table_mutex[tt] = &table_mutex[tt];
 	}
 	for (done = 1, d = 1; done < h48max && d <= arg->maxdepth; d++) {
-		LOG("h48: generating depth %" PRId64 "\n", d);
+		LOG("[H48 gendata] Generating depth %" PRId64 "\n", d);
 
 		for (t = 0; t < THREADS; t++) {
 			bfsarg[t].depth = d;
@@ -252,7 +256,7 @@ gendata_h48h0k4(gendata_h48_arg_t arg[static 1])
 		done += cc;
 		arg->info.distribution[d] = cc;
 
-		LOG("found %" PRId64 "\n", cc);
+		LOG("[H48 gendata] Found %" PRId64 "\n", cc);
 	}
 
 	arg->info.maxvalue = d - 1;
@@ -382,7 +386,7 @@ gendata_h48k2(gendata_h48_arg_t arg[static 1])
 	table = (uint8_t *)arg->h48buf + INFOSIZE;
 	memset(table, 0xFF, H48_TABLESIZE(arg->h, arg->k));
 
-	LOG("Computing depth <=%" PRIu8 "\n", shortdepth)
+	LOG("[H48 gendata] Computing depth <=%" PRIu8 "\n", shortdepth)
 	h48map_create(&shortcubes, capacity, randomizer);
 	shortarg = (gendata_h48short_arg_t) {
 		.maxdepth = shortdepth,
@@ -392,7 +396,7 @@ gendata_h48k2(gendata_h48_arg_t arg[static 1])
 		.map = &shortcubes
 	};
 	gendata_h48short(&shortarg);
-	LOG("Computed %" PRIu64 " positions\n", shortarg.map->n);
+	LOG("[H48 gendata] Computed %" PRIu64 " positions\n", shortarg.map->n);
 
 	if (arg->base >= 20)
 		arg->base = base[arg->h];
@@ -459,7 +463,8 @@ gendata_h48k2_runthread(void *arg)
 		pthread_mutex_unlock(dfsarg->shortcubes_mutex);
 
 		if (count % UINT64_C(1000000) == 0)
-			LOG("Processing %" PRIu64 "th short cube\n", count);
+			LOG("[H48 gendata] Processing %" PRIu64
+			    "th short cube\n", count);
 
 		if (kv.val < dfsarg->shortdepth) {
 			coord = kv.key >> (int64_t)(11 - dfsarg->h);
@@ -780,15 +785,16 @@ gendata_h48_derive(uint8_t h, const void *fulltable, void *buf)
 
 	bufsize = COCSEP_FULLSIZE + INFOSIZE;
 	if (readtableinfo(bufsize, buf, &cocsepinfo) != NISSY_OK) {
-		LOG("gendata_h48: could not read info for cocsep table\n");
+		LOG("[H48 derive gendata] Error: could not read info for "
+		    "cocsep table\n");
 		goto gendata_h48_derive_error;
 	}
 
 	cocsepinfo.next = cocsepsize;
 	bufsize = COCSEP_FULLSIZE + INFOSIZE;
 	if (writetableinfo(&cocsepinfo, bufsize, buf) != NISSY_OK) {
-		LOG("gendata_h48_derive: could not write info for cocsep table"
-		    " with updated 'next' value\n");
+		LOG("[H48 derive gendata] Error: could not write info for "
+		    "cocsep table with updated 'next' value\n");
 		goto gendata_h48_derive_error;
 	}
 
@@ -801,7 +807,8 @@ gendata_h48_derive(uint8_t h, const void *fulltable, void *buf)
 	h48max = H48_COORDMAX(fulltableinfo.h48h);
 	for (i = 0; i < h48max; i++) {
 		if (i % INT64_C(1000000000) == 0 && i > 0)
-			LOG("Processing %" PRId64 "th coordinate\n", i);
+			LOG("[H48 derive gendata] Processing %" PRId64
+			    "th coordinate\n", i);
 		j = i >> (int64_t)(fulltableinfo.h48h - h);
 		val_full = get_h48_pval(h48full, i, arg.k);
 		val_derive = get_h48_pval(h48derive, j, arg.k);
@@ -813,7 +820,8 @@ gendata_h48_derive(uint8_t h, const void *fulltable, void *buf)
 
 	bufsize = arg.buf_size - COCSEP_FULLSIZE - INFOSIZE;
 	if (writetableinfo(&arg.info, bufsize, arg.h48buf) != NISSY_OK) {
-		LOG("gendata_h48_derive: could not write info for table\n");
+		LOG("H48 derive gendata] Error: could not write info "
+		    "for table\n");
 		goto gendata_h48_derive_error;
 	}
 

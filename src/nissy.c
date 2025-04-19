@@ -60,7 +60,7 @@ parse_h48_solver(const char *buf, uint8_t h[static 1], uint8_t k[static 1])
 parse_h48_solver_error:
 	*h = 0;
 	*k = 0;
-	LOG("Error parsing solver: must be in \"h48h*k*\" format,"
+	LOG("Error parsing H48 solver: must be in \"h48h*k*\" format,"
 	    " but got %s\n", fullbuf);
 	return NISSY_ERROR_INVALID_SOLVER;
 }
@@ -72,7 +72,7 @@ checkdata(const char *buf, const tableinfo_t info[static 1])
 
 	if (my_strnlen(info->solver, INFO_SOLVER_STRLEN)
 	    == INFO_SOLVER_STRLEN) {
-		LOG("checkdata: error reading table info\n");
+		LOG("[checkdata] Error reading table info\n");
 		return false;
 	} else if (!strncmp(info->solver, "cocsep", 6)) {
 		getdistribution_cocsep(
@@ -88,7 +88,7 @@ checkdata(const char *buf, const tableinfo_t info[static 1])
 	} else if (!strncmp(info->solver, "coord helper table for ", 23)) {
 		return true;
 	} else {
-		LOG("checkdata: unknown solver %s\n", info->solver);
+		LOG("[checkdata] unknown solver %s\n", info->solver);
 		return false;
 	}
 
@@ -154,7 +154,7 @@ nissy_compose(
 	c = readcube("B32", cube);
 
 	if (!isconsistent(c)) {
-		LOG("Error in nissy_compose: given cube is invalid\n");
+		LOG("[compose] Error: the given cube is invalid\n");
 		err = NISSY_ERROR_INVALID_CUBE;
 		goto nissy_compose_error;
 	}
@@ -162,7 +162,7 @@ nissy_compose(
 	p = readcube("B32", permutation);
 
 	if (!isconsistent(p)) {
-		LOG("Error in nissy_compose: given permutation is invalid\n");
+		LOG("[compose] Error: given permutation is invalid\n");
 		err = NISSY_ERROR_INVALID_CUBE;
 		goto nissy_compose_error;
 	}
@@ -170,7 +170,7 @@ nissy_compose(
 	res = compose(c, p);
 
 	if (!isconsistent(res)) {
-		LOG("Unknown error: resulting cube is invalid\n");
+		LOG("[compose] Unknown error: resulting cube is invalid\n");
 		err = NISSY_ERROR_UNKNOWN;
 		goto nissy_compose_error;
 	}
@@ -194,7 +194,7 @@ nissy_inverse(
 	c = readcube("B32", cube);
 
 	if (iserror(c)) {
-		LOG("Error in nissy_inverse: given cube is invalid\n");
+		LOG("[inverse] Error: the given cube is invalid\n");
 		err = NISSY_ERROR_INVALID_CUBE;
 		goto nissy_inverse_error;
 	}
@@ -202,7 +202,7 @@ nissy_inverse(
 	res = inverse(c);
 
 	if (!isconsistent(res)) {
-		LOG("Unknown error: inverted cube is invalid\n");
+		LOG("[inverse] Unknown error: inverted cube is invalid\n");
 		err = NISSY_ERROR_UNKNOWN;
 		goto nissy_inverse_error;
 	}
@@ -225,7 +225,7 @@ nissy_applymoves(
 	long long err;
 
 	if (moves == NULL) {
-		LOG("Error: 'moves' argument is NULL\n");
+		LOG("[applymoves] Error: 'moves' argument is NULL\n");
 		err = NISSY_ERROR_NULL_POINTER;
 		goto nissy_applymoves_error;
 	}
@@ -233,7 +233,7 @@ nissy_applymoves(
 	c = readcube("B32", cube);
 
 	if (!isconsistent(c)) {
-		LOG("Error in nissy_applymoves: given cube is invalid\n");
+		LOG("[applymoves] Error: given cube is invalid\n");
 		err = NISSY_ERROR_INVALID_CUBE;
 		goto nissy_applymoves_error;
 	}
@@ -266,7 +266,7 @@ nissy_applytrans(
 	c = readcube("B32", cube);
 
 	if (!isconsistent(c)) {
-		LOG("Error in nissy_applytrans: given cube is invalid\n");
+		LOG("[applytrans] Error: given cube is invalid\n");
 		err = NISSY_ERROR_INVALID_CUBE;
 		goto nissy_applytrans_error;
 	}
@@ -299,19 +299,19 @@ nissy_convert(
 	long long err;
 
 	if (format_in == NULL) {
-		LOG("Error: 'format_in' argument is NULL\n");
+		LOG("[convert] Error: 'format_in' argument is NULL\n");
 		err = NISSY_ERROR_NULL_POINTER;
 		goto nissy_convert_error;
 	}
 
 	if (format_out == NULL) {
-		LOG("Error: 'format_out' argument is NULL\n");
+		LOG("[convert] Error: 'format_out' argument is NULL\n");
 		err = NISSY_ERROR_NULL_POINTER;
 		goto nissy_convert_error;
 	}
 
 	if (cube_string == NULL) {
-		LOG("Error: 'cube_string' argument is NULL\n");
+		LOG("[convert] Error: 'cube_string' argument is NULL\n");
 		err = NISSY_ERROR_NULL_POINTER;
 		goto nissy_convert_error;
 	}
@@ -344,7 +344,7 @@ nissy_getcube(
 	cube_t c;
 
 	if (options == NULL) {
-		LOG("Error: 'options' argument is NULL\n");
+		LOG("[getcube] Error: 'options' argument is NULL\n");
 		return NISSY_ERROR_NULL_POINTER;
 	}
 
@@ -355,8 +355,8 @@ nissy_getcube(
 	c = getcube(ep, eo, cp, co);
 
 	if (!isconsistent(c)) {
-		LOG("Error: could not get cube with ep=%lld, eo=%lld, "
-		    "cp=%lld, co=%lld.\n", ep, eo, cp, co);
+		LOG("[getcube] Error: could not get cube with ep=%lld, "
+		    "eo=%lld, cp=%lld, co=%lld.\n", ep, eo, cp, co);
 		return NISSY_ERROR_OPTIONS;
 	}
 
@@ -374,7 +374,7 @@ nissy_datainfo(
 	long long ret;
 
 	if ((size_t)data % 8 != 0) {
-		LOG("nissy_datainfo: buffere is not 8-byte aligned\n");
+		LOG("[datainfo] Error: buffer is not 8-byte aligned\n");
 		return NISSY_ERROR_DATA;
 	}
 
@@ -429,7 +429,7 @@ nissy_dataid(const char *solver, char dataid[static NISSY_SIZE_DATAID])
 	} else if (!strncmp(solver, "coord_", 6)) {
 		return dataid_coord(solver+6, dataid);
 	} else {
-		LOG("gendata: unknown solver %s\n", solver);
+		LOG("[gendata] Unknown solver %s\n", solver);
 		return NISSY_ERROR_INVALID_SOLVER;
 	}
 }
@@ -469,12 +469,12 @@ nissy_gendata_unsafe(
 	gendata_h48_arg_t arg;
 
 	if (solver == NULL) {
-		LOG("Error: 'solver' argument is NULL\n");
+		LOG("[gendata] Error: 'solver' argument is NULL\n");
 		return NISSY_ERROR_NULL_POINTER;
 	}
 
 	if ((size_t)data % 8 != 0) {
-		LOG("nissy_gendata: buffere is not 8-byte aligned\n");
+		LOG("[gendata] Error: buffer is not 8-byte aligned\n");
 		return NISSY_ERROR_DATA;
 	}
 
@@ -489,7 +489,7 @@ nissy_gendata_unsafe(
 	} else if (!strncmp(solver, "coord_", 6)) {
 		return gendata_coord_dispatch(solver+6, data);
 	} else {
-		LOG("gendata: unknown solver %s\n", solver);
+		LOG("[gendata] Unknown solver %s\n", solver);
 		return NISSY_ERROR_INVALID_SOLVER;
 	}
 }
@@ -505,7 +505,7 @@ nissy_checkdata(
 	int64_t err;
 
 	if ((size_t)data % 8 != 0) {
-		LOG("nissy_checkdata: buffere is not 8-byte aligned\n");
+		LOG("[checkdata] Error: buffer is not 8-byte aligned\n");
 		return NISSY_ERROR_DATA;
 	}
 
@@ -514,8 +514,8 @@ nissy_checkdata(
 	     buf += info.next, data_size -= info.next)
 	{
 		if (!checkdata(buf, &info)) {
-			LOG("Error: data for solver '%s' is corrupted!\n",
-			    info.solver);
+			LOG("[checkdata] Error: data for solver '%s' is "
+			    "corrupted!\n", info.solver);
 			return NISSY_ERROR_DATA;
 		}
 
@@ -549,44 +549,38 @@ nissy_solve(
 	int t;
 
 	if (solver == NULL) {
-		LOG("Error: 'solver' argument is NULL\n");
+		LOG("[solve] Error: 'solver' argument is NULL\n");
 		return NISSY_ERROR_NULL_POINTER;
 	}
 
 	c = readcube_B32(cube);
 
 	if (!isconsistent(c)) {
-		LOG("solve: cube is invalid\n");
+		LOG("[solve] Error: cube is invalid\n");
 		return NISSY_ERROR_INVALID_CUBE;
 	}
 
 	if (!issolvable(c)) {
 /* TODO: this is step-dependent */
-		LOG("solve: cube is not solvable\n");
+		LOG("[solve] Error: cube is not solvable\n");
 		return NISSY_ERROR_UNSOLVABLE_CUBE;
 	}
 
 /* TODO: checks for minmoves, maxmoves, nissflag */
 
 	if (maxsols == 0) {
-		LOG("solve: 'maxsols' is 0, returning no solution\n");
+		LOG("[solve] 'maxsols' is 0, returning no solution\n");
 		return 0;
 	}
 
-	t = threads == 0 ? THREADS : threads;
-	if (t < 0) {
-		LOG("solve: 'threads' is negative. Please provide a "
-		    "number of threads between 1 and %d\n", THREADS);
-		return NISSY_ERROR_OPTIONS;
-	} 
-	if (t > THREADS) {
-		LOG("solve: 'threads' is above the maximum value of %d\n",
-		    THREADS);
-		return NISSY_ERROR_OPTIONS;
-	}
+	if (threads > THREADS)
+		LOG("[solve] Selected number of threads (%u) is above the "
+		    "maximum value (%d), using %d threads instead\n",
+		    threads, THREADS, THREADS);
+	t = threads == 0 ? THREADS : MIN(THREADS, threads);
 
 	if ((size_t)data % 8 != 0) {
-		LOG("nissy_solve: buffere is not 8-byte aligned\n");
+		LOG("[solve] Error: data buffer is not 8-byte aligned\n");
 		return NISSY_ERROR_DATA;
 	}
 
@@ -601,7 +595,7 @@ nissy_solve(
 		    minmoves, maxmoves, maxsols, optimal, t, data_size, data,
 		    sols_size, sols);
 	} else {
-		LOG("solve: unknown solver '%s'\n", solver);
+		LOG("[solve] Error: unknown solver '%s'\n", solver);
 		return NISSY_ERROR_INVALID_SOLVER;
 	}
 }

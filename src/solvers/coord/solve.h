@@ -121,7 +121,8 @@ solve_coord_dfs(dfsarg_solve_coord_t arg[static 1])
 		if (!coord_solution_admissible(arg))
 			return 0;
 		return appendsolution(arg->solution_moves,
-		    arg->solution_settings, arg->solution_list, true);
+		    arg->solution_settings, arg->solution_list, true,
+		    arg->coord->name);
 	}
 
 	if (solve_coord_dfs_stop(arg))
@@ -220,12 +221,13 @@ solve_coord_dispatch(
 	    strlen(coord_and_axis), coord_and_axis, &coord, &axis);
 
 	if (coord == NULL) {
-		LOG("Could not parse coordinate from '%s'\n", coord_and_axis);
+		LOG("Error: could not parse coordinate from '%s'\n",
+		    coord_and_axis);
 		return NISSY_ERROR_INVALID_SOLVER;
 	}
 
 	if (axis == UINT8_ERROR) {
-		LOG("Could not parse axis from '%s'\n", coord_and_axis);
+		LOG("Error: could not parse axis from '%s'\n", coord_and_axis);
 		return NISSY_ERROR_INVALID_SOLVER;
 	}
 
@@ -316,8 +318,8 @@ solve_coord(
 	};
 
 	if (coord->coord(c, coord_data) == 0) {
-		if (minmoves == 0 && !appendsolution(
-		    &solution_moves, &solution_settings, &solution_list, true))
+		if (minmoves == 0 && !appendsolution(&solution_moves,
+		    &solution_settings, &solution_list, true, coord->name))
 				goto solve_coord_error_buffer;
 		goto solve_coord_done;
 	}
@@ -327,18 +329,17 @@ solve_coord(
 	    !solutions_done(&solution_list, &solution_settings, d);
 	    d++
 	) {
-		if (d >= 10)
-			LOG("Found %" PRIu64 " solutions, searching at depth %"
-			    PRId8 "\n", solution_list.nsols, d);
+		if (d >= 12)
+			LOG("[%s solve] Found %" PRIu64 " solutions, "
+			    "searching at depth %" PRId8 "\n",
+			    coord->name, solution_list.nsols, d);
 
 		arg.target_depth = d;
 		solution_moves_reset(arg.solution_moves);
 		ndepth = solve_coord_dfs(&arg);
 
-		if (ndepth < 0) {
-			LOG("Error %" PRId64 "\n", ndepth);
+		if (ndepth < 0)
 			return ndepth;
-		}
 
 		solution_list.nsols += (uint64_t)ndepth;
 	}
@@ -347,14 +348,15 @@ solve_coord_done:
 	return (int64_t)solution_list.nsols;
 
 solve_coord_error_data:
-	LOG("solve_coord: error reading table\n");
+	LOG("[%s solve] Error reading table\n", coord->name);
 	return NISSY_ERROR_DATA;
 
 solve_coord_error_buffer:
-	LOG("Could not append solution to buffer: size too small\n");
+	LOG("[%s solve] Error appending solution to buffer: size too small\n",
+	    coord->name);
 	return NISSY_ERROR_BUFFER_SIZE;
 
 solve_coord_error_unsolvable:
-	LOG("Cube not ready for solving %s\n", coord->name);
+	LOG("[%s solve] Error: cube not ready\n", coord->name);
 	return NISSY_ERROR_UNSOLVABLE_CUBE;
 }

@@ -126,7 +126,7 @@ transform_edges(cube_t c, uint8_t t)
 	case TRANS_BLm:
 		return TRANS_EDGES_MIRRORED(BLm, c);
 	default:
-		LOG("transform error, unknown transformation %" PRIu8 "\n", t);
+		LOG("transform error: unknown transformation %" PRIu8 "\n", t);
 		return ZERO_CUBE;
 	}
 }
@@ -353,7 +353,7 @@ applytrans(cube_t cube, const char *buf)
 	t = readtrans(buf);
 
 	if (t == UINT8_ERROR)
-		LOG("Unknown transformation '%s'\n", buf);
+		LOG("Unknown transformation: %s\n", buf);
 
 	return transform(cube, t);
 }

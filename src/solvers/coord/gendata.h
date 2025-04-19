@@ -22,7 +22,7 @@ gendata_coord_dispatch(const char *coordstr, void *buf)
 	parse_coord_and_axis(strlen(coordstr), coordstr, &coord, NULL);
 
 	if (coord == NULL) {
-		LOG("Could not parse coordinate '%s'\n", coordstr);
+		LOG("Error: could not parse coordinate '%s'\n", coordstr);
 		return NISSY_ERROR_INVALID_SOLVER;
 	}
 
@@ -82,7 +82,7 @@ gendata_coord_return_size:
 	return ninfo * INFOSIZE + coord_dsize + tablesize;
 
 gendata_coord_error:
-	LOG("An unexpected error occurred when generating the data.\n");
+	LOG("Unexpected error generating coordinate data\n");
 	return 0;
 }
 
@@ -136,8 +136,9 @@ genptable_coord(
 		}
 		tot += t;
 		info.distribution[d] = t;
-		LOG("Depth %" PRIu64 ": found %" PRIu64 " (%" PRIu64 " of %"
-		    PRIu64 ")\n", d, t, tot, coord->max);
+		LOG("[%s gendata] Depth %" PRIu64 ": found %" PRIu64 " (%"
+		    PRIu64 " of %" PRIu64 ")\n",
+		    coord->name, d, t, tot, coord->max);
 	}
 	info.maxvalue = d-1;
 

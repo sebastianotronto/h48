@@ -67,7 +67,7 @@ gendata_cocsep(
 	    "cocsep: computed %" PRIu16 " symmetry classes, "
 	    "expected %zu\n", n, COCSEP_CLASSES);
 
-	LOG("cocsep data computed\n");
+	LOG("[H48 gendata] cocsep data computed\n");
 
 	/* The following output is just noise
 

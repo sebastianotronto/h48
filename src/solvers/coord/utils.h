@@ -59,7 +59,7 @@ dataid_coord(const char *ca, char dataid[static NISSY_SIZE_DATAID])
 	parse_coord_and_axis(strlen(ca), ca, &c, NULL);
 
 	if (c == NULL) {
-		LOG("dataid_coord: cannot parse coordinate from '%s'\n", ca);
+		LOG("Error: cannot parse coordinate from '%s'\n", ca);
 		return NISSY_ERROR_INVALID_SOLVER;
 	}
 
