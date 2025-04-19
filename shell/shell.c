@@ -484,7 +484,7 @@ solve_exec(args_t *args)
 	}
 
 	if (args->maxsolutions == 0)
-		args->maxsolutions = args->optimal >= 0 ? UINT_MAX : 1;
+		args->maxsolutions = args->optimal == 20 ? 1 : UINT_MAX;
 
 	buf = malloc(size);
 	read = fread(buf, size, 1, file);
