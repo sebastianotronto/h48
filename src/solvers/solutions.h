@@ -6,6 +6,10 @@ STATIC bool solution_moves_equal(
     const solution_moves_t [static 1], const solution_moves_t [static 1]);
 STATIC bool solution_moves_is_duplicate(size_t n, const solution_moves_t[n+1]);
 STATIC bool appendchar(solution_list_t [static 1], char);
+STATIC bool appendnormal(
+    const solution_moves_t [static 1], solution_list_t [static 1]);
+STATIC bool appendinverse(
+    const solution_moves_t [static 1], solution_list_t [static 1]);
 STATIC int64_t appendsolution(const solution_moves_t [static 1],
     const solution_settings_t [static 1], solution_list_t [static 1], bool,
     const char *);
@@ -94,6 +98,47 @@ appendchar(solution_list_t solutions[static 1], char c)
 	return true;
 }
 
+STATIC bool
+appendnormal(
+	const solution_moves_t moves[static 1],
+	solution_list_t list[static 1]
+)
+{
+	int64_t strl;
+
+	if (moves->nmoves == 0)
+		return true;
+
+	if ((strl = writemoves(moves->nmoves, moves->moves,
+	    list->size - list->used, list->buf + list->used)) < 0)
+		return false;
+	list->used += strl;
+
+	return true;
+}
+
+STATIC bool
+appendinverse(
+	const solution_moves_t moves[static 1],
+	solution_list_t list[static 1]
+)
+{
+	int64_t strl;
+
+	if (moves->npremoves == 0)
+		return true;
+
+	if (!appendchar(list, '('))
+		return false;
+
+	if ((strl = writemoves(moves->npremoves, moves->premoves,
+	    list->size - list->used, list->buf + list->used)) < 0)
+		return false;
+	list->used += strl;
+
+	return appendchar(list, ')');
+}
+
 STATIC int64_t
 appendsolution(
 	const solution_moves_t moves[static 1],
@@ -103,7 +148,7 @@ appendsolution(
 	const char *solver_name
 )
 {
-	int64_t r, strl;
+	int64_t r;
 	int i;
 	uint8_t t;
 	solution_moves_t tsol[NTRANS];
@@ -151,28 +196,27 @@ appendsolution(
 
 		last_start = list->buf + list->used;
 
-		/* Write moves on normal */
-		strl = writemoves(tsol[r].nmoves, tsol[r].moves,
-		    list->size - list->used, list->buf + list->used);
-		if (strl < 0)
-			goto appendsolution_error_buffer;
-		list->used += strl;
+		/* Append first the moves on the side that has more */
+		/* E.g. write (U L F) B instead of B (U L F) */
+		if (tsol[r].nmoves >= tsol[r].npremoves) {
+			if (!appendnormal(&tsol[r], list))
+				goto appendsolution_error_buffer;
 
-		/* Write moves on inverse with NISS notation */
-		if (tsol[r].npremoves > 0) {
-			if (strl > 0)
+			if (tsol[r].nmoves > 0 && tsol[r].npremoves > 0)
 				if (!appendchar(list, ' '))
-					goto appendsolution_error_buffer;
-			if (!appendchar(list, '('))
+					return false;
+
+			if (!appendinverse(&tsol[r], list))
+				goto appendsolution_error_buffer;
+		} else {
+			if (!appendinverse(&tsol[r], list))
 				goto appendsolution_error_buffer;
 
-			strl = writemoves(tsol[r].npremoves, tsol[r].premoves,
-			    list->size - list->used, list->buf + list->used);
-			if (strl < 0)
-				goto appendsolution_error_buffer;
-			list->used += strl;
+			if (tsol[r].nmoves > 0 && tsol[r].npremoves > 0)
+				if (!appendchar(list, ' '))
+					return false;
 
-			if (!appendchar(list, ')'))
+			if (!appendnormal(&tsol[r], list))
 				goto appendsolution_error_buffer;
 		}
 

@@ -17,7 +17,8 @@ int64_t readmoves(const char *, size_t n, uint8_t [n]);
 void solution_moves_reset(solution_moves_t [static 1]);
 bool solution_list_init(solution_list_t [static 1], size_t n, char [n]);
 int64_t appendsolution(const solution_moves_t [static 1],
-    const solution_settings_t [static 1], solution_list_t [static 1]);
+    const solution_settings_t [static 1], solution_list_t [static 1], bool,
+    const char *);
 
 void run(void) {
 	int i, ntrans;
@@ -49,7 +50,7 @@ void run(void) {
 		settings.tmask |= UINT64_C(1) << (uint64_t)readtrans(str);
 	}
 
-	appendsolution(&moves, &settings, &list);
+	appendsolution(&moves, &settings, &list, false, "Test");
 
 	printf("%s", list.buf);
 	printf("Number of solutions: %" PRIu64 "\n", list.nsols);
