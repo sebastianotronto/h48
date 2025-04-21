@@ -17,6 +17,9 @@
         invertco(compose(compose(TRANS_CUBE_ ## T, c), \
         TRANS_CUBE_ ## T ## _INVERSE))
 
+STATIC uint8_t readtrans(const char [static NISSY_SIZE_TRANSFORMATION]);
+STATIC void writetrans(uint8_t, char [static NISSY_SIZE_TRANSFORMATION]);
+
 STATIC cube_t transform_edges(cube_t, uint8_t);
 STATIC cube_t transform_corners(cube_t, uint8_t);
 STATIC cube_t transform(cube_t, uint8_t);
@@ -24,6 +27,28 @@ STATIC cube_t applytrans(cube_t, const char *);
 STATIC_INLINE uint8_t inverse_trans(uint8_t);
 STATIC uint8_t transform_move(uint8_t, uint8_t);
 STATIC uint64_t symmetry_mask(cube_t);
+
+STATIC uint8_t
+readtrans(const char buf[static NISSY_SIZE_TRANSFORMATION])
+{
+	uint8_t t;
+
+	for (t = 0; t < NTRANS; t++)
+		if (!strncmp(buf, transstr[t], 11))
+			return t;
+
+	return UINT8_ERROR;
+}
+
+STATIC void
+writetrans(uint8_t t, char buf[static NISSY_SIZE_TRANSFORMATION])
+{
+	if (t >= 48)
+		memcpy(buf, "error trans", 11);
+	else
+		memcpy(buf, transstr[t], 11);
+	buf[11] = '\0';
+}
 
 STATIC cube_t
 transform_edges(cube_t c, uint8_t t)
