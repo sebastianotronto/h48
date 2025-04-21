@@ -1,6 +1,6 @@
 #include "../test.h"
 
-size_t gendata_cocsep(void *, uint64_t *, cube_t *);
+size_t gendata_cocsep(unsigned char *, uint64_t *, cube_t *);
 int64_t coord_h48(cube_t, const uint32_t *, uint8_t);
 cube_t invcoord_h48(int64_t, const cube_t *, uint8_t);
 cube_t transform(cube_t, uint8_t);
@@ -10,14 +10,14 @@ void run(void) {
 	int i;
 	bool found;
 	uint8_t h, t;
-	char buf[2000000];
+	unsigned char buf[2000000];
 	uint32_t *cocsepdata;
 	uint64_t selfsim[COCSEP_CLASSES];
 	int64_t c, cc;
 	cube_t cube, invc, rep[COCSEP_CLASSES];
 
 	gendata_cocsep(buf, selfsim, rep);
-	cocsepdata = (uint32_t *)((char *)buf + INFOSIZE);
+	cocsepdata = (uint32_t *)(buf + INFOSIZE);
 
 	i = 1;
 	h = 11;

@@ -7,19 +7,19 @@
  */
 #include "../test.h"
 
-size_t gendata_cocsep(void *, uint64_t *, cube_t *);
+size_t gendata_cocsep(unsigned char *, uint64_t *, cube_t *);
 int64_t coord_cocsep(cube_t);
 
 void run(void) {
 	char str[STRLENMAX];
-	char buf[2000000];
+	unsigned char buf[2000000];
 	uint32_t *cocsepdata, data;
 	int64_t coord, coclass;
 	uint64_t selfsim[COCSEP_CLASSES], sim, t;
 	cube_t cube, rep[COCSEP_CLASSES];
 
 	gendata_cocsep(buf, selfsim, rep);
-	cocsepdata = (uint32_t *)((char *)buf + INFOSIZE);
+	cocsepdata = (uint32_t *)(buf + INFOSIZE);
 
 	/* All cases in the same test so we do not generate data many times */
 

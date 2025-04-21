@@ -1,4 +1,4 @@
-STATIC size_t gendata_cocsep(char *, uint64_t *, cube_t *);
+STATIC size_t gendata_cocsep(unsigned char *, uint64_t *, cube_t *);
 STATIC uint32_t gendata_cocsep_dfs(cocsep_dfs_arg_t [static 1]);
 STATIC void getdistribution_cocsep(
     const uint32_t [static COCSEP_TABLESIZE], uint64_t [static 21]);
@@ -13,7 +13,7 @@ STATIC_INLINE int8_t get_h48_cdata(
 
 STATIC size_t
 gendata_cocsep(
-	char *buf,
+	unsigned char *buf,
 	uint64_t *selfsim,
 	cube_t *rep
 )

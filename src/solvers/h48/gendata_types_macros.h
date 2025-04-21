@@ -55,7 +55,7 @@ typedef struct {
 	uint8_t maxdepth;
 	uint16_t *n;
 	uint32_t *buf32;
-	uint8_t *visited;
+	unsigned char *visited;
 	uint64_t *selfsim;
 	cube_t *rep;
 } cocsep_dfs_arg_t;
@@ -67,8 +67,8 @@ typedef struct {
 	uint8_t maxdepth;
 	tableinfo_t info;
 	uint64_t buf_size;
-	void *buf;
-	void *h48buf;
+	unsigned char *buf;
+	_Atomic unsigned char *h48buf;
 	uint32_t *cocsepdata;
 	uint64_t selfsim[COCSEP_CLASSES];
 	cube_t crep[COCSEP_CLASSES];
@@ -85,7 +85,7 @@ typedef struct {
 typedef struct {
 	uint8_t depth;
 	uint32_t *cocsepdata;
-	_Atomic uint8_t *table;
+	_Atomic unsigned char *table;
 	uint64_t *selfsim;
 	cube_t *crep;
 	uint64_t start;
@@ -100,7 +100,7 @@ typedef struct {
 	uint8_t base;
 	uint8_t shortdepth;
 	uint32_t *cocsepdata;
-	uint8_t *table;
+	unsigned char *table;
 	uint64_t *selfsim;
 	cube_t *crep;
 	h48map_t *shortcubes;
@@ -117,8 +117,8 @@ typedef struct {
 	uint8_t k;
 	uint32_t *cocsepdata;
 	uint64_t *selfsim;
-	uint8_t *table;
-	_Atomic uint8_t *table_atomic;
+	unsigned char *table;
+	_Atomic unsigned char *table_atomic;
 	pthread_mutex_t **table_mutex;
 } gendata_h48_mark_t;
 
@@ -127,5 +127,5 @@ typedef struct {
 	int64_t max;
 	uint8_t k;
 	uint64_t *distr;
-	const uint8_t *table;
+	const unsigned char *table;
 } getdistribution_h48_data_t;

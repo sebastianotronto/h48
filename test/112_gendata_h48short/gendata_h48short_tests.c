@@ -5,7 +5,7 @@
 void h48map_create(h48map_t [static 1], uint64_t, uint64_t);
 void h48map_destroy(h48map_t [static 1]);
 kvpair_t h48map_nextkvpair(h48map_t [static 1], uint64_t [static 1]);
-size_t gendata_cocsep(void *, uint64_t *, cube_t *);
+size_t gendata_cocsep(unsigned char *, uint64_t *, cube_t *);
 uint64_t gendata_h48short(gendata_h48short_arg_t [static 1]);
 
 char str[STRLENMAX];
@@ -25,7 +25,7 @@ uint64_t readl(void) {
 }
 
 void run(void) {
-	char buf[2000000];
+	unsigned char buf[2000000];
 	h48map_t map;
 	uint64_t i, j, capacity, randomizer, selfsim[COCSEP_CLASSES];
 	kvpair_t kv, b[MAXPOS];

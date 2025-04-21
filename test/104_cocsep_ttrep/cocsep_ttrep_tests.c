@@ -3,11 +3,11 @@
 uint8_t inverse_trans(uint8_t);
 cube_t transform_corners(cube_t, uint8_t);
 int64_t coord_cocsep(cube_t);
-size_t gendata_cocsep(void *, uint64_t *, cube_t *);
+size_t gendata_cocsep(unsigned char *, uint64_t *, cube_t *);
 
 void run(void) {
 	uint8_t t;
-	char buf[2000000];
+	unsigned char buf[2000000];
 	uint32_t *cocsepdata, tt;
 	uint64_t i, selfsim[COCSEP_CLASSES];
 	int64_t j, k, l;

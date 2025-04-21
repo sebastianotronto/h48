@@ -13,20 +13,20 @@ STATIC_INLINE bool gendata_h48k2_dfs_stop(
 STATIC void gendata_h48k2_dfs(h48k2_dfs_arg_t [static 1]);
 STATIC tableinfo_t makeinfo_h48k2(gendata_h48_arg_t [static 1]);
 STATIC void *getdistribution_h48_runthread(void *);
-STATIC void getdistribution_h48(const uint8_t *,
+STATIC void getdistribution_h48(const unsigned char *,
     uint64_t [static INFO_DISTRIBUTION_LEN], uint8_t, uint8_t);
 
-STATIC const uint32_t *get_cocsepdata_constptr(const void *);
-STATIC const uint8_t *get_h48data_constptr(const void *);
+STATIC const uint32_t *get_cocsepdata_constptr(const unsigned char *);
+STATIC const unsigned char *get_h48data_constptr(const unsigned char *);
 
-STATIC_INLINE uint8_t get_h48_pval(const uint8_t *, int64_t, uint8_t);
-STATIC_INLINE void set_h48_pval(uint8_t *, int64_t, uint8_t, uint8_t);
+STATIC_INLINE uint8_t get_h48_pval(const unsigned char *, int64_t, uint8_t);
+STATIC_INLINE void set_h48_pval(unsigned char *, int64_t, uint8_t, uint8_t);
 STATIC_INLINE uint8_t get_h48_pval_atomic(
-    _Atomic const uint8_t *, int64_t, uint8_t);
+    _Atomic const unsigned char *, int64_t, uint8_t);
 STATIC_INLINE void set_h48_pval_atomic(
-    _Atomic uint8_t *, int64_t, uint8_t, uint8_t);
+    _Atomic unsigned char *, int64_t, uint8_t, uint8_t);
 
-size_t gendata_h48_derive(uint8_t, const void *, void *);
+size_t gendata_h48_derive(uint8_t, const unsigned char *, unsigned char *);
 
 STATIC uint64_t
 gendata_h48short(gendata_h48short_arg_t arg[static 1])
@@ -67,7 +67,7 @@ gendata_h48(gendata_h48_arg_t arg[static 1])
 {
 	uint64_t size, cocsepsize, h48size, fallbacksize, fallback2size, of;
 	long long r;
-	void *cocsepdata_offset;
+	unsigned char *cocsepdata_offset;
 	tableinfo_t cocsepinfo, h48info, fallbackinfo;
 	gendata_h48_arg_t arg_h0k4;
 
@@ -95,9 +95,9 @@ gendata_h48(gendata_h48_arg_t arg[static 1])
 
 	gendata_cocsep(arg->buf, arg->selfsim, arg->crep);
 
-	cocsepdata_offset = (char *)arg->buf + INFOSIZE;
+	cocsepdata_offset = arg->buf + INFOSIZE;
 	arg->cocsepdata = (uint32_t *)cocsepdata_offset;
-	arg->h48buf = (char *)arg->buf + cocsepsize;
+	arg->h48buf = (_Atomic unsigned char*)arg->buf + cocsepsize;
 
 	arg->base = 99; /* TODO: set this somewhere else */
 
@@ -136,8 +136,8 @@ gendata_h48(gendata_h48_arg_t arg[static 1])
 		arg_h0k4.base = 0;
 		arg_h0k4.maxdepth = 20;
 		arg_h0k4.buf_size = arg->buf_size - h48size;
-		arg_h0k4.buf = (char *)arg->buf + cocsepsize + h48size;
-		arg_h0k4.h48buf = (char *)arg->h48buf + h48size;
+		arg_h0k4.buf = arg->buf + cocsepsize + h48size;
+		arg_h0k4.h48buf = arg->h48buf + h48size;
 
 		gendata_h48h0k4(&arg_h0k4);
 
@@ -145,7 +145,7 @@ gendata_h48(gendata_h48_arg_t arg[static 1])
 
 	/* Add eoesep fallback table */
 
-	gendata_eoesep((char *)arg->buf + (size - fallback2size), 20);
+	gendata_eoesep(arg->buf + (size - fallback2size), 20);
 
 	/* Update tableinfo with correct next values */
 
@@ -157,7 +157,7 @@ gendata_h48(gendata_h48_arg_t arg[static 1])
 	}
 	h48info.next = h48size;
 	r = writetableinfo(&h48info,
-	     arg->buf_size - cocsepsize, (char *)arg->buf + cocsepsize);
+	     arg->buf_size - cocsepsize, arg->buf + cocsepsize);
 	if (r != NISSY_OK) {
 		LOG("[H48 gendata] Error: could not write info "
 		    "for h48 table\n");
@@ -174,8 +174,8 @@ gendata_h48(gendata_h48_arg_t arg[static 1])
 
 		of = cocsepsize + h48size;
 		fallbackinfo.next = fallbacksize;
-		r = writetableinfo(&fallbackinfo,
-		    arg->buf_size - of, (char *)arg->buf + of);
+		r = writetableinfo(
+		    &fallbackinfo, arg->buf_size - of, arg->buf + of);
 		if (r != NISSY_OK) {
 			LOG("[H48 gendata] Error: could not write info for "
 			    "h48 fallback table\n");
@@ -189,7 +189,7 @@ gendata_h48(gendata_h48_arg_t arg[static 1])
 STATIC void
 gendata_h48h0k4(gendata_h48_arg_t arg[static 1])
 {
-	_Atomic uint8_t *table;
+	_Atomic unsigned char *table;
 	uint8_t val;
 	int64_t i, sc, done, d, h48max;
 	uint64_t t, tt, isize, cc, bufsize;
@@ -212,7 +212,7 @@ gendata_h48h0k4(gendata_h48_arg_t arg[static 1])
 		.next = 0,
 	};
 
-	table = (_Atomic uint8_t *)arg->h48buf + INFOSIZE;
+	table = arg->h48buf + INFOSIZE;
 	memset(table, 0xFF, H48_TABLESIZE(0, 4));
 
 	h48max = (int64_t)H48_COORDMAX(0);
@@ -261,7 +261,7 @@ gendata_h48h0k4(gendata_h48_arg_t arg[static 1])
 
 	arg->info.maxvalue = d - 1;
 	bufsize = arg->buf_size - COCSEP_FULLSIZE;
-	writetableinfo(&arg->info, bufsize, arg->h48buf);
+	writetableinfo(&arg->info, bufsize, (unsigned char *)arg->h48buf);
 }
 
 STATIC void *
@@ -374,7 +374,7 @@ gendata_h48k2(gendata_h48_arg_t arg[static 1])
 	};
 
 	uint8_t t;
-	uint8_t *table;
+	unsigned char *table;
 	int64_t j;
 	uint64_t i, ii, inext, count, bufsize;
 	h48map_t shortcubes;
@@ -383,7 +383,7 @@ gendata_h48k2(gendata_h48_arg_t arg[static 1])
 	pthread_t thread[THREADS];
 	pthread_mutex_t shortcubes_mutex, table_mutex[CHUNKS];
 
-	table = (uint8_t *)arg->h48buf + INFOSIZE;
+	table = (unsigned char *)arg->h48buf + INFOSIZE;
 	memset(table, 0xFF, H48_TABLESIZE(arg->h, arg->k));
 
 	LOG("[H48 gendata] Computing depth <=%" PRIu8 "\n", shortdepth)
@@ -439,7 +439,7 @@ gendata_h48k2(gendata_h48_arg_t arg[static 1])
 	}
 
 	bufsize = arg->buf_size - COCSEP_FULLSIZE;
-	writetableinfo(&arg->info, bufsize, arg->h48buf);
+	writetableinfo(&arg->info, bufsize, (unsigned char *)arg->h48buf);
 }
 
 STATIC void *
@@ -653,7 +653,7 @@ STATIC void *
 getdistribution_h48_runthread(void *arg)
 {
 	getdistribution_h48_data_t *data = (getdistribution_h48_data_t *)arg;
-	const uint8_t *table;
+	const unsigned char *table;
 	uint8_t j, k, m;
 	int64_t i;
 
@@ -671,7 +671,7 @@ getdistribution_h48_runthread(void *arg)
 
 STATIC void
 getdistribution_h48(
-	const uint8_t *table,
+	const unsigned char *table,
 	uint64_t distr[static INFO_DISTRIBUTION_LEN],
 	uint8_t h,
 	uint8_t k
@@ -708,50 +708,55 @@ getdistribution_h48(
 }
 
 STATIC const uint32_t *
-get_cocsepdata_constptr(const void *data)
+get_cocsepdata_constptr(const unsigned char *data)
 {
-	return (uint32_t *)((char *)data + INFOSIZE);
+	return (uint32_t *)(data + INFOSIZE);
 }
 
-STATIC const uint8_t *
-get_h48data_constptr(const void *data)
+STATIC const unsigned char *
+get_h48data_constptr(const unsigned char *data)
 {
-	return (uint8_t *)data + COCSEP_FULLSIZE + INFOSIZE;
+	return data + COCSEP_FULLSIZE + INFOSIZE;
 }
 
 STATIC_INLINE uint8_t
-get_h48_pval(const uint8_t *table, int64_t i, uint8_t k)
+get_h48_pval(const unsigned char *table, int64_t i, uint8_t k)
 {
 	return (table[H48_INDEX(i, k)] & H48_MASK(i, k)) >> H48_SHIFT(i, k);
 }
 
 STATIC_INLINE uint8_t
-get_h48_pval_atomic(_Atomic const uint8_t *table, int64_t i, uint8_t k)
+get_h48_pval_atomic(_Atomic const unsigned char *table, int64_t i, uint8_t k)
 {
 	return (table[H48_INDEX(i, k)] & H48_MASK(i, k)) >> H48_SHIFT(i, k);
 }
 
 STATIC_INLINE void
-set_h48_pval(uint8_t *table, int64_t i, uint8_t k, uint8_t val)
+set_h48_pval(unsigned char *table, int64_t i, uint8_t k, uint8_t val)
 {
 	table[H48_INDEX(i, k)] = (table[H48_INDEX(i, k)] & (~H48_MASK(i, k)))
 	    | (val << H48_SHIFT(i, k));
 }
 
 STATIC_INLINE void
-set_h48_pval_atomic(_Atomic uint8_t *table, int64_t i, uint8_t k, uint8_t val)
+set_h48_pval_atomic(
+	_Atomic unsigned char *table,
+	int64_t i,
+	uint8_t k,
+	uint8_t val
+)
 {
 	table[H48_INDEX(i, k)] = (table[H48_INDEX(i, k)] & (~H48_MASK(i, k)))
 	    | (val << H48_SHIFT(i, k));
 }
 
 size_t
-gendata_h48_derive(uint8_t h, const void *fulltable, void *buf)
+gendata_h48_derive(uint8_t h, const unsigned char *fulltable, unsigned char *buf)
 {
 	size_t cocsepsize, h48size;
 	uint8_t val_full, val_derive;
-	const uint8_t *h48full;
-	uint8_t *h48derive;
+	const unsigned char *h48full;
+	unsigned char *h48derive;
 	int64_t i, j, h48max;
 	uint64_t bufsize;
 	gendata_h48_arg_t arg;
@@ -770,14 +775,14 @@ gendata_h48_derive(uint8_t h, const void *fulltable, void *buf)
 	arg.k = fulltableinfo.bits;
 	arg.maxdepth = 20;
 	arg.buf = buf;
-	arg.cocsepdata = (uint32_t *)((char *)buf + INFOSIZE);
+	arg.cocsepdata = (uint32_t *)(buf + INFOSIZE);
 	arg.base = fulltableinfo.base;
 	arg.info = makeinfo_h48k2(&arg);
 
 	/* Technically this step is redundant, except that we
 	   need selfsim and crep */
 	cocsepsize = gendata_cocsep(buf, arg.selfsim, arg.crep);
-	arg.h48buf = (_Atomic uint8_t *)buf + cocsepsize;
+	arg.h48buf = (_Atomic unsigned char *)buf + cocsepsize;
 	h48size = H48_TABLESIZE(h, arg.k) + INFOSIZE;
 
 	if (buf == NULL)
@@ -798,8 +803,8 @@ gendata_h48_derive(uint8_t h, const void *fulltable, void *buf)
 		goto gendata_h48_derive_error;
 	}
 
-	h48full = (const uint8_t *)fulltable + cocsepsize + INFOSIZE;
-	h48derive = (uint8_t *)arg.h48buf + INFOSIZE;
+	h48full = fulltable + cocsepsize + INFOSIZE;
+	h48derive = (unsigned char *)arg.h48buf + INFOSIZE;
 	memset(h48derive, 0xFF, H48_TABLESIZE(h, arg.k));
 	memset(arg.info.distribution, 0,
 	    INFO_DISTRIBUTION_LEN * sizeof(uint64_t));
@@ -819,7 +824,8 @@ gendata_h48_derive(uint8_t h, const void *fulltable, void *buf)
 	getdistribution_h48(h48derive, arg.info.distribution, h, arg.k);
 
 	bufsize = arg.buf_size - COCSEP_FULLSIZE - INFOSIZE;
-	if (writetableinfo(&arg.info, bufsize, arg.h48buf) != NISSY_OK) {
+	if (writetableinfo(&arg.info, bufsize, (unsigned char *)arg.h48buf)
+	    != NISSY_OK) {
 		LOG("H48 derive gendata] Error: could not write info "
 		    "for table\n");
 		goto gendata_h48_derive_error;

@@ -23,10 +23,10 @@ The test does not generate the full table. For reference, these are the values:
 #define ISIZE 512
 #define FULLSIZE (ISIZE + (CL*1024) + (4*EMAX))
 
-char buf[FULLSIZE];
+unsigned char buf[FULLSIZE];
 
-size_t gendata_eoesep(char [static FULLSIZE], uint8_t);
-bool readtableinfo(uint64_t, const char *, tableinfo_t *);
+size_t gendata_eoesep(unsigned char [static FULLSIZE], uint8_t);
+bool readtableinfo(uint64_t, const unsigned char *, tableinfo_t *);
 
 void run(void) {
 	uint32_t i;

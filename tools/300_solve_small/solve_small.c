@@ -4,7 +4,7 @@
 
 char *solver;
 int64_t size = 0;
-char *buf;
+unsigned char *buf;
 
 char *scrambles[] = {
 	/* 12 optimal */

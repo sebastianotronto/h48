@@ -263,7 +263,8 @@ gendata(PyObject *self, PyObject *args)
 {
 	long long size, err;
 	const char *solver;
-	char *buf, dataid[NISSY_SIZE_DATAID];
+	char dataid[NISSY_SIZE_DATAID];
+	unsigned char *buf;
 
 	if (!PyArg_ParseTuple(args, "s", &solver))
 		return NULL;
@@ -279,7 +280,7 @@ gendata(PyObject *self, PyObject *args)
 	Py_END_ALLOW_THREADS
 
 	if (check_error(err))
-		return PyByteArray_FromStringAndSize(buf, size);
+		return PyByteArray_FromStringAndSize((char *)buf, size);
 	else
 		return NULL;
 }
@@ -303,7 +304,8 @@ checkdata(PyObject *self, PyObject *args)
 	if (!PyArg_ParseTuple(args, "Y", &data))
 		return NULL;
 
-	result = nissy_checkdata(data->ob_alloc, data->ob_bytes);
+	result = nissy_checkdata(
+	    data->ob_alloc, (unsigned char *)data->ob_bytes);
 
 	if (check_error(result))
 		return Py_True;
@@ -348,8 +350,9 @@ solve(PyObject *self, PyObject *args)
 
 	Py_BEGIN_ALLOW_THREADS
 	result = nissy_solve(cube, solver, nissflag, minmoves, maxmoves,
-	    maxsolutions, optimal, threads, data->ob_alloc, data->ob_bytes,
-	    MAX_SOLUTIONS_SIZE, solutions, stats);
+	    maxsolutions, optimal, threads, data->ob_alloc,
+	    (unsigned char *)data->ob_bytes, MAX_SOLUTIONS_SIZE, solutions,
+	    stats);
 	Py_END_ALLOW_THREADS
 
 	if(!check_error(result)) {

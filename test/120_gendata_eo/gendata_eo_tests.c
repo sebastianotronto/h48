@@ -15,10 +15,10 @@ Pruning table values (from nissy):
 #define ISIZE 512
 #define FULLSIZE (ISIZE + 1024)
 
-char buf[FULLSIZE];
+unsigned char buf[FULLSIZE];
 
-size_t gendata_coord_dispatch(const char *, void *);
-bool readtableinfo(uint64_t, const char *, tableinfo_t *);
+size_t gendata_coord_dispatch(const char *, unsigned char *);
+bool readtableinfo(uint64_t, const unsigned char *, tableinfo_t *);
 
 void run(void) {
 	uint32_t i;

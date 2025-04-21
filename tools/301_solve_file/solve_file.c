@@ -6,7 +6,7 @@
 
 char *solver;
 int64_t size = 0, N = 0;
-char *buf;
+unsigned char *buf;
 char scrambles[MAX_SCR][MAX_SCR_LEN];
 
 void run(void) {

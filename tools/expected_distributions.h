@@ -197,7 +197,7 @@ check_table(uint64_t *exp, tableinfo_t *info)
 }
 
 static bool
-check_cocsep(size_t data_size, const void *data)
+check_cocsep(size_t data_size, const unsigned char *data)
 {
 	tableinfo_t info;
 
@@ -219,7 +219,11 @@ unknown_h48(uint8_t h, uint8_t k)
 }
 
 STATIC bool
-check_distribution(const char *solver, size_t data_size, const void *data)
+check_distribution(
+	const char *solver,
+	size_t data_size,
+	const unsigned char *data
+)
 {
 	const char *str;
 	tableinfo_t info = {0};

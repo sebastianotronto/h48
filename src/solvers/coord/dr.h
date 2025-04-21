@@ -5,10 +5,10 @@ STATIC uint64_t coord_dreoesep_nosym(cube_t);
 STATIC cube_t invcoord_dreoesep_nosym(uint64_t);
 STATIC cube_t coordinate_dr_merge(cube_t, cube_t);
 
-STATIC uint64_t coordinate_dr_coord(cube_t, const void *);
-STATIC cube_t coordinate_dr_cube(uint64_t, const void *);
-STATIC bool coordinate_dr_isnasty(uint64_t, const void *);
-STATIC size_t coordinate_dr_gendata(void *);
+STATIC uint64_t coordinate_dr_coord(cube_t, const unsigned char *);
+STATIC cube_t coordinate_dr_cube(uint64_t, const unsigned char *);
+STATIC bool coordinate_dr_isnasty(uint64_t, const unsigned char *);
+STATIC size_t coordinate_dr_gendata(unsigned char *);
 
 STATIC bool is_eoco_solvable(cube_t);
 
@@ -81,25 +81,25 @@ coordinate_dr_merge(cube_t c1, cube_t c2)
 }
 
 STATIC uint64_t
-coordinate_dr_coord(cube_t cube, const void *data)
+coordinate_dr_coord(cube_t cube, const unsigned char *data)
 {
 	return coord_coord_generic(&coordinate_dr, cube, data);
 }
 
 STATIC cube_t
-coordinate_dr_cube(uint64_t i, const void *data)
+coordinate_dr_cube(uint64_t i, const unsigned char *data)
 {
 	return coord_cube_generic(&coordinate_dr, i, data);
 }
 
 STATIC bool
-coordinate_dr_isnasty(uint64_t i, const void *data)
+coordinate_dr_isnasty(uint64_t i, const unsigned char *data)
 {
 	return coord_isnasty_generic(&coordinate_dr, i, data);
 }
 
 STATIC size_t
-coordinate_dr_gendata(void *data)
+coordinate_dr_gendata(unsigned char *data)
 {
 	return coord_gendata_generic(&coordinate_dr, data);
 }

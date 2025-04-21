@@ -8,16 +8,16 @@ typedef struct {
 	uint8_t nissflag;
 	bool lastisnormal;
 	coord_t *coord;
-	const void *coord_data;
-	const uint8_t *ptable;
+	const unsigned char *coord_data;
+	const unsigned char *ptable;
 } dfsarg_solve_coord_t;
 
 STATIC int64_t solve_coord(cube_t, coord_t [static 1], uint8_t, uint8_t,
-    uint8_t, uint8_t, uint64_t, uint8_t, uint8_t, uint64_t, const void *,
-    size_t n, char [n]);
+    uint8_t, uint8_t, uint64_t, uint8_t, uint8_t, uint64_t,
+    const unsigned char *, size_t n, char [n]);
 STATIC int64_t solve_coord_dispatch(cube_t, const char *, uint8_t, uint8_t,
-    uint8_t, uint64_t, uint8_t, uint8_t, uint64_t, const void *, size_t n,
-    char [n]);
+    uint8_t, uint64_t, uint8_t, uint8_t, uint64_t, const unsigned char *,
+    size_t n, char [n]);
 STATIC bool coord_solution_admissible(const dfsarg_solve_coord_t [static 1]);
 STATIC bool solve_coord_dfs_stop(const dfsarg_solve_coord_t [static 1]);
 STATIC bool coord_continue_onnormal(const dfsarg_solve_coord_t [static 1]);
@@ -209,7 +209,7 @@ solve_coord_dispatch(
 	uint8_t optimal,
 	uint8_t threads,
 	uint64_t data_size,
-	const void *data,
+	const unsigned char *data,
 	size_t solutions_size,
 	char sols[solutions_size]
 )
@@ -248,7 +248,7 @@ solve_coord(
 	uint8_t optimal,
 	uint8_t threads,
 	uint64_t data_size,
-	const void *data,
+	const unsigned char *data,
 	size_t solutions_size,
 	char sols[solutions_size]
 )
@@ -257,8 +257,8 @@ solve_coord(
 	uint8_t t;
 	int64_t ndepth;
 	cube_t c;
-	const void *coord_data;
-	const uint8_t *ptable;
+	const unsigned char *coord_data;
+	const unsigned char *ptable;
 	dfsarg_solve_coord_t arg;
 	tableinfo_t info;
 	solution_moves_t solution_moves;
@@ -280,11 +280,11 @@ solve_coord(
 	if (info.type == TABLETYPE_PRUNING) {
 		/* Only the pruning table */
 		coord_data = NULL;
-		ptable = (uint8_t *)data + INFOSIZE;
+		ptable = data + INFOSIZE;
 	} else {
 		/* Coordinate has extra data */
-		coord_data = (uint8_t *)data + INFOSIZE;
-		ptable = (uint8_t *)data + info.next + INFOSIZE;
+		coord_data = data + INFOSIZE;
+		ptable = data + info.next + INFOSIZE;
 	}
 
 	solution_moves_reset(&solution_moves);

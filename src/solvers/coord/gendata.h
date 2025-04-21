@@ -1,21 +1,21 @@
-STATIC size_t gendata_coord(const coord_t [static 1], void *);
-STATIC int64_t gendata_coord_dispatch(const char *, void *);
+STATIC size_t gendata_coord(const coord_t [static 1], unsigned char *);
+STATIC int64_t gendata_coord_dispatch(const char *, unsigned char *);
 STATIC tableinfo_t genptable_coord(
-    const coord_t [static 1], const void *, uint8_t *);
+    const coord_t [static 1], const unsigned char *, unsigned char *);
 STATIC bool switch_to_fromnew(uint64_t, uint64_t, uint64_t);
-STATIC uint64_t genptable_coord_fillneighbors(
-    const coord_t [static 1], const void *, uint64_t, uint8_t, uint8_t *);
-STATIC uint64_t genptable_coord_fillfromnew(
-    const coord_t [static 1], const void *, uint64_t, uint8_t, uint8_t *);
-STATIC void getdistribution_coord(
-    const uint8_t *, const char *, uint64_t [static INFO_DISTRIBUTION_LEN]);
+STATIC uint64_t genptable_coord_fillneighbors(const coord_t [static 1],
+    const unsigned char *, uint64_t, uint8_t, unsigned char *);
+STATIC uint64_t genptable_coord_fillfromnew(const coord_t [static 1],
+    const unsigned char *, uint64_t, uint8_t, unsigned char *);
+STATIC void getdistribution_coord(const unsigned char *, const char *,
+    uint64_t [static INFO_DISTRIBUTION_LEN]);
 STATIC uint8_t get_coord_pval(
-    const coord_t [static 1], const uint8_t *, uint64_t);
+    const coord_t [static 1], const unsigned char *, uint64_t);
 STATIC void set_coord_pval(
-    const coord_t [static 1], uint8_t *, uint64_t, uint8_t);
+    const coord_t [static 1], unsigned char *, uint64_t, uint8_t);
 
 STATIC int64_t
-gendata_coord_dispatch(const char *coordstr, void *buf)
+gendata_coord_dispatch(const char *coordstr, unsigned char *buf)
 {
 	coord_t *coord;
 
@@ -30,14 +30,14 @@ gendata_coord_dispatch(const char *coordstr, void *buf)
 }
 
 STATIC size_t
-gendata_coord(const coord_t coord[static 1], void *buf)
+gendata_coord(const coord_t coord[static 1], unsigned char *buf)
 {
 	uint64_t coord_dsize, tablesize, ninfo;
-	void *pruningbuf, *coord_data;
-	uint8_t *table;
+	unsigned char *pruningbuf, *coord_data;
+	unsigned char *table;
 	tableinfo_t coord_data_info, pruning_info;
 
-	coord_data = buf == NULL ? NULL : ((uint8_t *)buf) + INFOSIZE;
+	coord_data = buf == NULL ? NULL : buf + INFOSIZE;
 	coord_dsize = coord->gendata(coord_data);
 	if (coord_dsize == SIZE_MAX)
 		goto gendata_coord_error;
@@ -69,12 +69,12 @@ gendata_coord(const coord_t coord[static 1], void *buf)
 
 		writetableinfo(&coord_data_info, INFOSIZE + coord_dsize, buf);
 
-		pruningbuf = ((uint8_t *)buf) + INFOSIZE + coord_dsize;
+		pruningbuf = buf + INFOSIZE + coord_dsize;
 	} else {
 		pruningbuf = buf;
 	}
 
-	table = ((uint8_t *)pruningbuf) + INFOSIZE;
+	table = pruningbuf + INFOSIZE;
 	pruning_info = genptable_coord(coord, coord_data, table);
 	writetableinfo(&pruning_info, INFOSIZE + tablesize, pruningbuf);
 
@@ -89,8 +89,8 @@ gendata_coord_error:
 STATIC tableinfo_t
 genptable_coord(
 	const coord_t coord[static 1],
-	const void *data,
-	uint8_t *table
+	const unsigned char *data,
+	unsigned char *table
 )
 {
 	uint64_t tablesize, i, d, tot, t, nm;
@@ -161,10 +161,10 @@ switch_to_fromnew(uint64_t done, uint64_t max, uint64_t nm)
 STATIC uint64_t
 genptable_coord_fillneighbors(
 	const coord_t coord[static 1],
-	const void *data,
+	const unsigned char *data,
 	uint64_t i, 
 	uint8_t d,
-	uint8_t *table
+	unsigned char *table
 )
 {
 	bool isnasty;
@@ -198,10 +198,10 @@ genptable_coord_fillneighbors(
 STATIC uint64_t
 genptable_coord_fillfromnew(
 	const coord_t coord[static 1],
-	const void *data,
+	const unsigned char *data,
 	uint64_t i,
 	uint8_t d,
-	uint8_t *table
+	unsigned char *table
 )
 {
 	bool found;
@@ -251,7 +251,7 @@ genptable_coord_fillfromnew(
 
 STATIC void
 getdistribution_coord(
-	const uint8_t *table,
+	const unsigned char *table,
 	const char *coord,
 	uint64_t distr[static INFO_DISTRIBUTION_LEN]
 )
@@ -274,7 +274,7 @@ getdistribution_coord(
 STATIC uint8_t
 get_coord_pval(
 	const coord_t coord[static 1],
-	const uint8_t *table,
+	const unsigned char *table,
 	uint64_t i
 )
 {
@@ -284,7 +284,7 @@ get_coord_pval(
 STATIC void
 set_coord_pval(
 	const coord_t coord[static 1],
-	uint8_t *table,
+	unsigned char *table,
 	uint64_t i,
 	uint8_t val
 )

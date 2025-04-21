@@ -1,7 +1,7 @@
 STATIC int64_t coord_eoesep_sym(cube_t, const uint32_t [static ESEP_MAX]);
 STATIC size_t gendata_esep_classes(
     uint32_t [static ESEP_MAX], uint16_t [static ESEP_CLASSES]);
-STATIC size_t gendata_eoesep(char *, uint8_t);
+STATIC size_t gendata_eoesep(unsigned char *, uint8_t);
 STATIC uint32_t gendata_eoesep_bfs(uint8_t, uint8_t [static EOESEP_BUF],
     uint32_t [static ESEP_MAX], uint16_t [static ESEP_CLASSES]);
 STATIC uint32_t gendata_eoesep_fromnew(uint8_t, uint8_t [static EOESEP_BUF],
@@ -14,7 +14,7 @@ STATIC bool gendata_eoesep_next(cube_t, uint8_t,
     uint8_t [static EOESEP_BUF], uint32_t [static ESEP_MAX]);
 STATIC uint8_t get_eoesep_pval(
     const uint8_t [static DIV_ROUND_UP(EOESEP_TABLESIZE, 2)], int64_t);
-STATIC uint8_t get_eoesep_pval_cube(const void *, cube_t);
+STATIC uint8_t get_eoesep_pval_cube(const unsigned char *, cube_t);
 STATIC void set_eoesep_pval(
     uint8_t [static DIV_ROUND_UP(EOESEP_TABLESIZE, 2)], int64_t, uint8_t);
 
@@ -67,9 +67,10 @@ gendata_esep_classes(
 }
 
 STATIC size_t
-gendata_eoesep(char *buf, uint8_t maxdepth)
+gendata_eoesep(unsigned char *buf, uint8_t maxdepth)
 {
-	uint8_t *buf8, d;
+	uint8_t d;
+	unsigned char *buf8;
 	uint16_t rep[ESEP_CLASSES];
 	uint32_t *esep_classes, done, level;
 	int64_t coord;
@@ -81,7 +82,7 @@ gendata_eoesep(char *buf, uint8_t maxdepth)
 	LOG("Computing eoesep data\n");
 	memset(buf, 0xFF, EOESEP_FULLSIZE);
 	esep_classes = (uint32_t *)(buf + INFOSIZE);
-	buf8 = (uint8_t *)(buf + INFOSIZE + 4*ESEP_MAX);
+	buf8 = buf + INFOSIZE + 4*ESEP_MAX;
 	gendata_esep_classes(esep_classes, rep);
 
 	info = (tableinfo_t) {
@@ -258,17 +259,13 @@ get_eoesep_pval(
 }
 
 STATIC uint8_t
-get_eoesep_pval_cube(const void *data, cube_t c)
+get_eoesep_pval_cube(const unsigned char *data, cube_t c)
 {
 	int64_t coord;
-	const uint8_t *table;
-	const uint32_t *esep_classes;
 
-	esep_classes = (const uint32_t *)data;
-	table = (const uint8_t *)data + 4*ESEP_MAX;
-	coord = coord_eoesep_sym(c, esep_classes);
+	coord = coord_eoesep_sym(c, (const uint32_t *)data);
 
-	return get_eoesep_pval(table, coord);
+	return get_eoesep_pval(data + 4*ESEP_MAX, coord);
 }
 
 STATIC void

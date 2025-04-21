@@ -5,8 +5,7 @@
 
 char *solver;
 int64_t size = 0;
-char *buf;
-
+unsigned char *buf;
 
 bool check_one(char *actual, char *expected) {
 	unsigned i;

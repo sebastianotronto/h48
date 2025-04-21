@@ -22,9 +22,9 @@ typedef struct {
 	uint8_t k;
 	uint8_t base;
 	const uint32_t *cocsepdata;
-	const uint8_t *h48data;
-	const uint8_t *h48data_fallback_h0k4;
-	const void *h48data_fallback_eoesep;
+	const unsigned char *h48data;
+	const unsigned char *h48data_fallback_h0k4;
+	const unsigned char *h48data_fallback_eoesep;
 	uint32_t movemask_normal;
 	uint32_t movemask_inverse;
 	int64_t nodes_visited;
@@ -53,7 +53,7 @@ STATIC int64_t solve_h48_maketasks(
 STATIC void *solve_h48_runthread(void *);
 STATIC int64_t solve_h48_dfs(dfsarg_solve_h48_t [static 1]);
 STATIC int64_t solve_h48(cube_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t,
-    uint64_t, const void *, size_t n, char [n],
+    uint64_t, const unsigned char *, size_t n, char [n],
     long long [static NISSY_SIZE_SOLVE_STATS]);
 
 STATIC_INLINE bool
@@ -349,7 +349,7 @@ solve_h48(
 	uint8_t optimal,
 	uint8_t threads,
 	uint64_t data_size,
-	const void *data,
+	const unsigned char *data,
 	size_t solutions_size,
 	char solutions[solutions_size],
 	long long stats[static NISSY_SIZE_SOLVE_STATS]
@@ -365,8 +365,8 @@ solve_h48(
 	int64_t nodes_visited, table_lookups, table_fallbacks;
 	tableinfo_t info, fbinfo, fbinfo2;
 	const uint32_t *cocsepdata;
-	const uint8_t *fallback, *h48data;
-	const void *fallback2;
+	const unsigned char *fallback, *h48data;
+	const unsigned char *fallback2;
 	solution_moves_t solution_moves[THREADS];
 	solution_settings_t settings;
 	solution_list_t sollist;
@@ -379,8 +379,8 @@ solve_h48(
 	if (readtableinfo_n(data_size, data, 2, &info) != NISSY_OK)
 		goto solve_h48_error_data;
 
-	cocsepdata = (uint32_t *)((char *)data + INFOSIZE);
-	h48data = (uint8_t *)data + COCSEP_FULLSIZE + INFOSIZE;
+	cocsepdata = (uint32_t *)(data + INFOSIZE);
+	h48data = data + COCSEP_FULLSIZE + INFOSIZE;
 
 	/* Read fallback table(s) */
 	fallback = NULL;

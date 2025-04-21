@@ -1,6 +1,6 @@
 #include "../test.h"
 
-size_t gendata_cocsep(void *, uint64_t *, cube_t *);
+size_t gendata_cocsep(unsigned char *, uint64_t *, cube_t *);
 int64_t coord_cocsep(cube_t);
 
 int bcount(uint64_t x) {
@@ -15,7 +15,7 @@ int bcount(uint64_t x) {
 }
 
 void run(void) {
-	char buf[2000000];
+	unsigned char buf[2000000];
 	int size[65], tot, j;
 	uint64_t i, selfsim[COCSEP_CLASSES], sim;
 	cube_t rep[COCSEP_CLASSES];

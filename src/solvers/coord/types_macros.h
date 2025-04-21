@@ -16,10 +16,10 @@
 
 typedef struct {
 	const char name[255];
-	uint64_t (*coord)(cube_t, const void *);
-	cube_t (*cube)(uint64_t, const void *);
-	bool (*isnasty)(uint64_t, const void *);
-	size_t (*gendata)(void *);
+	uint64_t (*coord)(cube_t, const unsigned char *);
+	cube_t (*cube)(uint64_t, const unsigned char *);
+	bool (*isnasty)(uint64_t, const unsigned char *);
+	size_t (*gendata)(unsigned char *);
 	uint64_t max;
 	uint32_t moves_mask;
 	uint64_t trans_mask;

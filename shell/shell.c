@@ -360,7 +360,8 @@ gendata_exec(args_t *args)
 {
 	int i;
 	FILE *file;
-	char *buf, path[MAX_PATH_LENGTH], dataid[NISSY_SIZE_DATAID];
+	char path[MAX_PATH_LENGTH], dataid[NISSY_SIZE_DATAID];
+	unsigned char *buf;
 	int64_t ret, size;
 	size_t written;
 
@@ -427,7 +428,8 @@ solve_exec(args_t *args)
 	int i;
 	uint8_t nissflag;
 	FILE *file;
-	char *buf, solutions[SOLUTIONS_BUFFER_SIZE], path[MAX_PATH_LENGTH];
+	char solutions[SOLUTIONS_BUFFER_SIZE], path[MAX_PATH_LENGTH];
+	unsigned char *buf;
 	char dataid[NISSY_SIZE_DATAID];
 	long long stats[NISSY_SIZE_SOLVE_STATS];
 	int64_t ret, gendata_ret, size;

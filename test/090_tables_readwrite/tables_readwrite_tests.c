@@ -1,7 +1,7 @@
 #include "../test.h"
 
-bool readtableinfo(uint64_t, const char *, tableinfo_t *);
-bool writetableinfo(const tableinfo_t *, uint64_t, char *);
+bool readtableinfo(uint64_t, const unsigned char *, tableinfo_t *);
+bool writetableinfo(const tableinfo_t *, uint64_t, unsigned char *);
 
 uint64_t readn(void) {
 	char str[STRLENMAX];
@@ -66,7 +66,7 @@ void test_writeinfo(tableinfo_t info) {
 }
 
 void run(void) {
-	char buf[INFOSIZE];
+	unsigned char buf[INFOSIZE];
 	tableinfo_t expected, actual;
 
 	expected = test_readinfo();

@@ -18,11 +18,12 @@ extern "C" {
 	long long nissy_getcube(long long, long long, long long, long long,
 	    const char *, char *);
 	long long nissy_solverinfo(const char *, char *);
-	long long nissy_gendata(const char *, unsigned long long, char *);
-	long long nissy_checkdata(unsigned long long, const char *);
+	long long nissy_gendata(const char *, unsigned long long,
+	    unsigned char *);
+	long long nissy_checkdata(unsigned long long, const unsigned char *);
 	long long nissy_solve(const char *, const char *, unsigned, unsigned,
 	    unsigned, unsigned, unsigned, unsigned, unsigned long long,
-	    const char *, unsigned, char *, long long *);
+	    const unsigned char *, unsigned, char *, long long *);
 	long long nissy_countmoves(const char *);
 	long long nissy_setlogger(void (*)(const char *, void *), void *);
 }
@@ -156,7 +157,7 @@ namespace nissy {
 	{
 		data.resize(size);
 		auto err = nissy_gendata(name.c_str(),
-		    size, reinterpret_cast<char *>(data.data()));
+		    size, reinterpret_cast<unsigned char *>(data.data()));
 		return error{err};
 	}
 
@@ -169,7 +170,7 @@ namespace nissy {
 	error solver::check_data()
 	{
 		auto err_value = nissy_checkdata(data.size(),
-		    reinterpret_cast<const char *>(data.data()));
+		    reinterpret_cast<const unsigned char *>(data.data()));
 		error err{err_value};
 		data_checked = err.ok();
 		return err;
@@ -199,7 +200,7 @@ namespace nissy {
 		auto err = nissy_solve(cube.to_string().c_str(),
 		    name.c_str(), niss.value, minmoves, maxmoves, maxsols,
 		    optimal, threads, data.size(),
-		    reinterpret_cast<const char *>(data.data()), len,
+		    reinterpret_cast<const unsigned char *>(data.data()), len,
 		    csols.data(), result.stats.data());
 		result.err = error{err};
 

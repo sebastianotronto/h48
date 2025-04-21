@@ -329,7 +329,7 @@ long long
 nissy_gendata(
 	const char *solver,
 	unsigned long long data_size,
-	char data[data_size]
+	unsigned char data[data_size]
 );
 
 /*
@@ -347,7 +347,7 @@ Return values:
 long long
 nissy_checkdata(
 	unsigned long long data_size,
-	const char data[data_size]
+	const unsigned char data[data_size]
 );
 
 /*
@@ -395,7 +395,7 @@ nissy_solve(
 	unsigned optimal,
 	unsigned threads,
 	unsigned long long data_size,
-	const char data[data_size],
+	const unsigned char data[data_size],
 	unsigned sols_size,
 	char sols[sols_size],
 	long long stats[static NISSY_SIZE_SOLVE_STATS]

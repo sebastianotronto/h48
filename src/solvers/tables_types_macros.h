@@ -1,4 +1,4 @@
-#define OFFSET(B, K)             (((char *)B) + K)
+#define OFFSET(B, K)             (((unsigned char *)B) + K)
 
 #define INFOSIZE                 INT64_C(512)
 #define INFO_SOLVER_STRLEN       INT64_C(100)

@@ -1,7 +1,7 @@
-STATIC uint64_t coordinate_eo_coord(cube_t, const void *);
-STATIC cube_t coordinate_eo_cube(uint64_t, const void *);
-STATIC bool coordinate_eo_isnasty(uint64_t, const void *);
-STATIC size_t coordinate_eo_gendata(void *);
+STATIC uint64_t coordinate_eo_coord(cube_t, const unsigned char *);
+STATIC cube_t coordinate_eo_cube(uint64_t, const unsigned char *);
+STATIC bool coordinate_eo_isnasty(uint64_t, const unsigned char *);
+STATIC size_t coordinate_eo_gendata(unsigned char *);
 STATIC bool is_eo_even(cube_t);
 
 STATIC coord_t coordinate_eo = {
@@ -24,13 +24,13 @@ STATIC coord_t coordinate_eo = {
 };
 
 STATIC uint64_t
-coordinate_eo_coord(cube_t c, const void *data)
+coordinate_eo_coord(cube_t c, const unsigned char *data)
 {
 	return (uint64_t)coord_eo(c);
 }
 
 STATIC cube_t
-coordinate_eo_cube(uint64_t c, const void *data)
+coordinate_eo_cube(uint64_t c, const unsigned char *data)
 {
 	cube_t cube = SOLVED_CUBE;
 	set_eo(&cube, (int64_t)c);
@@ -38,13 +38,13 @@ coordinate_eo_cube(uint64_t c, const void *data)
 }
 
 STATIC bool
-coordinate_eo_isnasty(uint64_t c, const void *data)
+coordinate_eo_isnasty(uint64_t c, const unsigned char *data)
 {
 	return false;
 }
 
 STATIC size_t
-coordinate_eo_gendata(void *data)
+coordinate_eo_gendata(unsigned char *data)
 {
 	return 0;
 }

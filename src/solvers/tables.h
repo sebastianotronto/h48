@@ -1,13 +1,14 @@
-STATIC uint64_t read_unaligned_u64(const char [static sizeof(uint64_t)]);
-STATIC void write_unaligned_u64(char [static sizeof(uint64_t)], uint64_t);
-STATIC int64_t readtableinfo(size_t n, const char [n], tableinfo_t [static 1]);
+STATIC uint64_t read_unaligned_u64(const unsigned char [static sizeof(uint64_t)]);
+STATIC void write_unaligned_u64(unsigned char [static sizeof(uint64_t)], uint64_t);
+STATIC int64_t readtableinfo(
+    size_t n, const unsigned char [n], tableinfo_t [static 1]);
 STATIC int64_t readtableinfo_n(
-    size_t n, const char [n], uint8_t, tableinfo_t [static 1]);
+    size_t n, const unsigned char [n], uint8_t, tableinfo_t [static 1]);
 STATIC int64_t writetableinfo(
-    const tableinfo_t [static 1], size_t n, char [n]);
+    const tableinfo_t [static 1], size_t n, unsigned char [n]);
 
 STATIC uint64_t
-read_unaligned_u64(const char buf[static sizeof(uint64_t)])
+read_unaligned_u64(const unsigned char buf[static sizeof(uint64_t)])
 {
 	uint64_t ret;
 
@@ -17,7 +18,7 @@ read_unaligned_u64(const char buf[static sizeof(uint64_t)])
 }
 
 STATIC void
-write_unaligned_u64(char buf[static sizeof(uint64_t)], uint64_t x)
+write_unaligned_u64(unsigned char buf[static sizeof(uint64_t)], uint64_t x)
 {
 	memcpy(buf, &x, sizeof(uint64_t));
 }
@@ -25,7 +26,7 @@ write_unaligned_u64(char buf[static sizeof(uint64_t)], uint64_t x)
 STATIC int64_t
 readtableinfo(
 	size_t buf_size,
-	const char buf[buf_size],
+	const unsigned char buf[buf_size],
 	tableinfo_t info[static 1]
 )
 {
@@ -69,7 +70,7 @@ readtableinfo(
 STATIC int64_t
 readtableinfo_n(
 	size_t buf_size,
-	const char buf[buf_size],
+	const unsigned char buf[buf_size],
 	uint8_t n,
 	tableinfo_t info[static 1]
 )
@@ -87,12 +88,12 @@ STATIC int64_t
 writetableinfo(
 	const tableinfo_t info[static 1],
 	size_t data_size,
-	char buf[data_size]
+	unsigned char buf[data_size]
 )
 {
 	size_t i;
 	bool end;
-	char *c;
+	unsigned char *c;
 
 	if (data_size < info->fullsize) {
 		LOG("Error writing table: buffer size is too small "
@@ -125,10 +126,10 @@ writetableinfo(
 			*c = 0;
 	}
 
-	*(uint8_t *)OFFSET(buf, INFO_OFFSET_H48H) = info->h48h;
-	*(uint8_t *)OFFSET(buf, INFO_OFFSET_BITS) = info->bits;
-	*(uint8_t *)OFFSET(buf, INFO_OFFSET_BASE) = info->base;
-	*(uint8_t *)OFFSET(buf, INFO_OFFSET_MAXVALUE) = info->maxvalue;
+	*OFFSET(buf, INFO_OFFSET_H48H) = (unsigned char)info->h48h;
+	*OFFSET(buf, INFO_OFFSET_BITS) = (unsigned char)info->bits;
+	*OFFSET(buf, INFO_OFFSET_BASE) = (unsigned char)info->base;
+	*OFFSET(buf, INFO_OFFSET_MAXVALUE) = (unsigned char)info->maxvalue;
 
 	return NISSY_OK;
 }

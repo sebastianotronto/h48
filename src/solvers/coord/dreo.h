@@ -4,10 +4,10 @@ STATIC uint64_t coord_dresep_nosym(cube_t);
 STATIC cube_t invcoord_dresep_nosym(uint64_t);
 STATIC cube_t coordinate_dreo_merge(cube_t, cube_t);
 
-STATIC uint64_t coordinate_dreo_coord(cube_t, const void *);
-STATIC cube_t coordinate_dreo_cube(uint64_t, const void *);
-STATIC bool coordinate_dreo_isnasty(uint64_t, const void *);
-STATIC size_t coordinate_dreo_gendata(void *);
+STATIC uint64_t coordinate_dreo_coord(cube_t, const unsigned char *);
+STATIC cube_t coordinate_dreo_cube(uint64_t, const unsigned char *);
+STATIC bool coordinate_dreo_isnasty(uint64_t, const unsigned char *);
+STATIC size_t coordinate_dreo_gendata(unsigned char *);
 
 STATIC bool is_dreo_solvable(cube_t);
 
@@ -63,25 +63,25 @@ coordinate_dreo_merge(cube_t c1, cube_t c2)
 }
 
 STATIC uint64_t
-coordinate_dreo_coord(cube_t cube, const void *data)
+coordinate_dreo_coord(cube_t cube, const unsigned char *data)
 {
 	return coord_coord_generic(&coordinate_dreo, cube, data);
 }
 
 STATIC cube_t
-coordinate_dreo_cube(uint64_t i, const void *data)
+coordinate_dreo_cube(uint64_t i, const unsigned char *data)
 {
 	return coord_cube_generic(&coordinate_dreo, i, data);
 }
 
 STATIC bool
-coordinate_dreo_isnasty(uint64_t i, const void *data)
+coordinate_dreo_isnasty(uint64_t i, const unsigned char *data)
 {
 	return coord_isnasty_generic(&coordinate_dreo, i, data);
 }
 
 STATIC size_t
-coordinate_dreo_gendata(void *data)
+coordinate_dreo_gendata(unsigned char *data)
 {
 	return coord_gendata_generic(&coordinate_dreo, data);
 }

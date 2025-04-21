@@ -14,14 +14,14 @@
 
 long long parse_h48_solver(
     const char *, uint8_t [static 1], uint8_t [static 1]);
-STATIC bool checkdata(const char *, const tableinfo_t [static 1]);
+STATIC bool checkdata(const unsigned char *, const tableinfo_t [static 1]);
 STATIC bool distribution_equal(const uint64_t [static INFO_DISTRIBUTION_LEN],
     const uint64_t [static INFO_DISTRIBUTION_LEN], uint8_t);
 STATIC long long write_result(cube_t, char [static NISSY_SIZE_B32]);
 STATIC size_t my_strnlen(const char *, size_t); 
 STATIC long long nissy_dataid(const char *, char [static NISSY_SIZE_DATAID]);
 STATIC long long nissy_gendata_unsafe(
-    const char *, unsigned long long, char *);
+    const char *, unsigned long long, unsigned char *);
 
 #define GETCUBE_OPTIONS(S, F) { .option = S, .fix = F }
 struct {
@@ -66,7 +66,7 @@ parse_h48_solver_error:
 }
 
 STATIC bool
-checkdata(const char *buf, const tableinfo_t info[static 1])
+checkdata(const unsigned char *buf, const tableinfo_t info[static 1])
 {
 	uint64_t distr[INFO_DISTRIBUTION_LEN];
 
@@ -78,10 +78,10 @@ checkdata(const char *buf, const tableinfo_t info[static 1])
 		getdistribution_cocsep(
 		    (uint32_t *)((char *)buf + INFOSIZE), distr);
 	} else if (!strncmp(info->solver, "h48", 3)) {
-		getdistribution_h48((uint8_t *)buf + INFOSIZE, distr,
+		getdistribution_h48(buf + INFOSIZE, distr,
 		    info->h48h, info->bits);
 	} else if (!strncmp(info->solver, "coordinate solver for ", 22)) {
-		getdistribution_coord((uint8_t *)buf + INFOSIZE,
+		getdistribution_coord(buf + INFOSIZE,
 		    info->solver + 22, distr);
 	} else if (!strncmp(info->solver, "eoesep data for h48", 19)) {
 		return true;
@@ -366,7 +366,7 @@ nissy_getcube(
 long long
 nissy_datainfo(
         uint64_t data_size,
-	const char data[data_size]
+	const unsigned char data[data_size]
 )
 {
 	uint8_t i;
@@ -405,8 +405,7 @@ nissy_datainfo(
 	}
 
 	if (info.next != 0)
-		return nissy_datainfo(
-		    data_size - info.next, (char *)data + info.next);
+		return nissy_datainfo(data_size - info.next, data + info.next);
 
 	LOG("\n---------\n");
 
@@ -452,7 +451,7 @@ long long
 nissy_gendata(
 	const char *solver,
 	unsigned long long data_size,
-	char data[data_size]
+	unsigned char data[data_size]
 )
 {
 	return nissy_gendata_unsafe(solver, data_size, data);
@@ -462,7 +461,7 @@ STATIC long long
 nissy_gendata_unsafe(
 	const char *solver,
 	unsigned long long data_size,
-	char *data
+	unsigned char *data
 )
 {
 	long long parse_ret;
@@ -497,10 +496,9 @@ nissy_gendata_unsafe(
 long long
 nissy_checkdata(
 	unsigned long long data_size,
-	const char data[data_size]
+	const unsigned char data[data_size]
 )
 {
-	char *buf;
 	tableinfo_t info;
 	int64_t err;
 
@@ -509,7 +507,7 @@ nissy_checkdata(
 		return NISSY_ERROR_DATA;
 	}
 
-	for (buf = (char *)data;
+	for (const unsigned char *buf = data;
 	     (err = readtableinfo(data_size, buf, &info)) == NISSY_OK;
 	     buf += info.next, data_size -= info.next)
 	{
@@ -537,7 +535,7 @@ nissy_solve(
 	unsigned optimal,
 	unsigned threads,
 	unsigned long long data_size,
-	const char data[data_size],
+	const unsigned char data[data_size],
 	unsigned sols_size,
 	char sols[sols_size],
 	long long stats[static NISSY_SIZE_SOLVE_STATS]

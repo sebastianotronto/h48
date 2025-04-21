@@ -5,15 +5,15 @@
 #define TGROUP  UINT64_C(4278190335)
 
 cube_t transform(cube_t, uint8_t);
-uint64_t coordinate_dr_coord(cube_t, const void *);
-cube_t coordinate_dr_cube(uint64_t, const void *);
-uint64_t coordinate_dr_gendata(void *);
+uint64_t coordinate_dr_coord(cube_t, const unsigned char *);
+cube_t coordinate_dr_cube(uint64_t, const unsigned char *);
+uint64_t coordinate_dr_gendata(unsigned char *);
 
 void run(void) {
 	bool found;
 	uint64_t t;
 	char str[STRLENMAX];
-	void *data;
+	unsigned char *data;
 	size_t size;
 	cube_t cube;
 	uint64_t coord, coord2;

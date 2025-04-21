@@ -5,7 +5,7 @@
 int nsol;
 char *solver;
 int64_t size = 0;
-char *buf;
+unsigned char *buf;
 
 char *scrambles[] = {
 	"U2 D2 F2 B2 L2 R2",

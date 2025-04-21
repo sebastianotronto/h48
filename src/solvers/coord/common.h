@@ -1,25 +1,29 @@
 STATIC uint64_t coord_coord_generic(
-    const coord_t [static 1], cube_t, const void *);
+    const coord_t [static 1], cube_t, const unsigned char *);
 STATIC cube_t coord_cube_generic(
-    const coord_t [static 1], uint64_t, const void *);
+    const coord_t [static 1], uint64_t, const unsigned char *);
 STATIC bool coord_isnasty_generic(
-    const coord_t [static 1], uint64_t, const void *);
-STATIC size_t coord_gendata_generic(const coord_t [static 1], void *);
+    const coord_t [static 1], uint64_t, const unsigned char *);
+STATIC size_t coord_gendata_generic(const coord_t [static 1], unsigned char *);
 
 STATIC void append_coord_name(const coord_t [static 1], char *);
 STATIC bool solution_lastqt_cw(const solution_moves_t [static 1]);
-STATIC bool coord_can_switch(
-    const coord_t [static 1], const void *, size_t n, const uint8_t [n]);
+STATIC bool coord_can_switch(const coord_t [static 1], const unsigned char *,
+    size_t n, const uint8_t [n]);
 
 STATIC uint64_t
-coord_coord_generic(const coord_t coord[static 1], cube_t c, const void *data)
+coord_coord_generic(
+	const coord_t coord[static 1],
+	cube_t c,
+	const unsigned char *data
+)
 {
-	const char *datanoinfo;
+	const unsigned char *datanoinfo;
 	const uint32_t *data32;
 	uint32_t d;
 	cube_t tr;
 
-	datanoinfo = (const char *)data + INFOSIZE;
+	datanoinfo = data + INFOSIZE;
 	data32 = (const uint32_t *)datanoinfo;
 	d = data32[coord->sym.coord(c)];
 	tr = transform(c, COORD_TTREP(d));
@@ -28,13 +32,17 @@ coord_coord_generic(const coord_t coord[static 1], cube_t c, const void *data)
 }
 
 STATIC cube_t
-coord_cube_generic(const coord_t coord[static 1], uint64_t i, const void *data)
+coord_cube_generic(
+	const coord_t coord[static 1],
+	uint64_t i,
+	const unsigned char *data
+)
 {
-	const char *datanoinfo;
+	const unsigned char *datanoinfo;
 	const uint32_t *rep32;
 	cube_t c;
 
-	datanoinfo = (const char *)data + INFOSIZE;
+	datanoinfo = data + INFOSIZE;
 	rep32 = (const uint32_t *)(datanoinfo + 4 * (size_t)coord->sym.max);
 	c = coord->sym.cube(rep32[i / coord->sym.max2]);
 
@@ -45,14 +53,14 @@ STATIC bool
 coord_isnasty_generic(
 	const coord_t coord[static 1],
 	uint64_t i,
-	const void *data
+	const unsigned char *data
 )
 {
-	const char *datanoinfo;
+	const unsigned char *datanoinfo;
 	const uint32_t *classttrep, *rep32;
 	uint32_t r;
 
-	datanoinfo = (const char *)data + INFOSIZE;
+	datanoinfo = data + INFOSIZE;
 	classttrep = (const uint32_t *)datanoinfo;
 	rep32 = (const uint32_t *)(datanoinfo + 4 * (size_t)coord->sym.max);
 	r = rep32[i / coord->sym.max2];
@@ -63,11 +71,11 @@ coord_isnasty_generic(
 STATIC size_t
 coord_gendata_generic(
 	const coord_t coord[static 1],
-	void *data
+	unsigned char *data
 )
 {
 	uint64_t i, j, n, t, nasty;
-	char *datanoinfo;
+	unsigned char *datanoinfo;
 	uint32_t *classttrep, *rep;
 	size_t coord_datasize;
 	cube_t c;
@@ -78,7 +86,7 @@ coord_gendata_generic(
 	if (data == NULL)
 		return coord_datasize;
 
-	datanoinfo = (char *)data + INFOSIZE;
+	datanoinfo = data + INFOSIZE;
 	classttrep = (uint32_t *)datanoinfo;
 	rep = classttrep + coord->sym.max;
 	memset(data, 0xFF, coord_datasize);
@@ -154,7 +162,7 @@ solution_lastqt_cw(const solution_moves_t s[static 1])
 STATIC bool
 coord_can_switch(
 	const coord_t coord[static 1],
-	const void *data,
+	const unsigned char *data,
 	size_t n,
 	const uint8_t moves[n]
 )
