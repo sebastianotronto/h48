@@ -45,7 +45,7 @@ void run(void) {
 	int i;
 	int64_t n;
 	long long stats[NISSY_SIZE_SOLVE_STATS];
-	char sol[SOL_BUFFER_LEN], cube[22];
+	char sol[SOL_BUFFER_LEN], cube[NISSY_SIZE_CUBE];
 
 	for (i = 0; s[i].scramble[0]; i++) {
 		printf("\n%d. %s\n", i, s[i].scramble);

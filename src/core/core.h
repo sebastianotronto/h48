@@ -1,5 +1,4 @@
 #include "constant_cubes.h"
 #include "cube.h"
-#include "io_formats.h"
 #include "moves.h"
 #include "transform.h"

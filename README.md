@@ -129,27 +129,24 @@ Then you can for example get a cube from a sequence of moves:
 
 ```
 $ ./run frommoves -moves "R' U' F"
-JLQWSVUH=ZLCUABGIVTKH
+JLQWSVUH=ZLCUABGIVTKH=A
 ```
 
-Or you can get a random cube
+The cube format is meant to be easy to copy-paste and read for the
+software, but not necessarily intuitive for the user. See below for a
+detaileed description.
+
+You can also get a random cube
 
 ```
 $ ./run randomcube
-WDSQREVX=VBKYDUCJXWAb
-```
-
-If you don't like this format, you can convert it:
-
-```
-$ ./run convert -fin B32 -fout H48 -cubestr "WDSQREVX=VBKYDUCJXWAb"
-UL1 UB0 BL0 FR1 DF0 UR1 DB0 FL0 DR1 DL1 UF0 BR1 DFR2 DBR0 DFL2 UFR2 UBL2 UFL0 UBR2 DBL2
+WDSQREVX=VBKYDUCJXWAb=A
 ```
 
 To solve a cube you can use:
 
 ```
-$ ./run solve -solver h48h0k4 -n 1 -M 4 -cube "JLQWSVUH=ZLCUABGIVTKH"
+$ ./run solve -solver h48h0k4 -n 1 -M 4 -cube "JLQWSVUH=ZLCUABGIVTKH=A"
 F' U' R
 ```
 
@@ -244,8 +241,8 @@ $ python                                  # In the main folder
 From here you can call the library functions directly, for example:
 
 ```
->>> nissy.compose("NEORSQLH=ZFCYUAGLHTKB", "NEORSQLH=ZFCYUAGLHTKB")
-'ASTUGFBH=DACXEZGBLIKF'
+>>> nissy.compose('NEORSQLH=ZFCYUAGLHTKB=A', 'NEORSQLH=ZFCYUAGLHTKB=A')
+'ASTUGFBH=DACXEZGBLIKF=A'
 ```
 
 The `python/examples` folder contains some examples, that you
@@ -261,94 +258,50 @@ with the comments in nissy.h for more details.
 
 NOTE: Support for the Python module is still rudimentary.
 
-## Cube formats
-
-The cube is represented as a string in one of the following formats,
-all explained below:
-
-* H48
-* LST
-* B32 (the default)
-
-In all of the formats, the permutation of the center pieces is not
-stored. This means that the cube is assumed to be in a fixed orientation.
-
-More formats will become available in the future.
-
-### Cube format: H48
-
-In the H48 format, each edge is represented by two letters denoting the
-sides it belongs to and one number denoting its orientation (0 oriented, 1
-mis-oriented). Similarly, each corner is represented by three letters and
-a number (0 oriented, 1 twisted clockwise, 2 twisted counter-clockwise).
-
-The solved cube looks like this:
-
-```
-UF0 UB0 DB0 DF0 UR0 UL0 DL0 DR0 FR0 FL0 BL0 BR0 UFR0 UBL0 DFL0 DBR0 UFL0 UBR0 DFR0 DBL0
-```
-
-The cube after the move F looks like this:
-
-```
-FL1 UB0 DB0 FR1 UR0 UL0 DL0 DR0 UF1 DF1 BL0 BR0 UFL1 UBL0 DFR1 DBR0 DFL2 UBR0 UFR2 DBL0
-```
-
-Whitespace (including newlines) between pieces is ignored when reading the
-cube. A single whitespace character is added between pieces when writing.
-
-You can find more examples of this format in the utils/cubes folder.
-
-## Cube format: LST
-
-In the LST format, a cube is represented by a comma-separated list of
-integers.  Each piece is represented by an (unsigned) 8-bit integer. The 4
-least-significant bits determine which piece it is, the other 4 determine
-the orientation.
-
-Edges are numbered as follows (see also constants.h):
-
-UF=0 UB=1 DB=2 DF=3 UR=4 UL=5 DL=6 DR=7 FR=8 FL=9 BL=10 BR=11
-
-Corners are numbered as follows:
-
-UFR=0 UBL=1 DFL=2 DBR=3 UFL=4 UBR=5 DFR=6 DBL=7
-
-The orientation of the edges is with respect to F/B, the orientation of
-corners is with respect to U/D.
-
-In this format, the solved cube looks like this:
-
-```
-0, 1, 2, 3, 4, 5, 6, 7, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
-```
-
-The cube after the move F looks like this:
-
-```
-36, 1, 38, 3, 66, 5, 64, 7, 25, 1, 2, 24, 4, 5, 6, 7, 16, 19, 10, 11
-```
-
-### Cube format: B32
+## Cube format
 
 This format is a "base 32" encoding of the cube. It is not meant to be
 human-readable, but it is compact while still being plain text. Each
 piece, including the orientation value, is encoded as a number from 0
 to 31, and this number is then converted to an uppercase letter (0-26)
-or to a lowercase letter (27-31). Edges and corners are separated by a
-single = character.
+or to a lowercase letter (27-31).
+
+The format looks like this:
+
+```
+cccccccc=eeeeeeeeeeee=r
+```
+
+Where the first 8 characters represent the corner, the 12 characters
+after the first 12 represent the edges and the last character represents
+the orientation of the cube with respect to the base orientation.
+
+Edges are numbered as follows (see also constants.h):
+
+```
+UF=0 UB=1 DB=2 DF=3 UR=4 UL=5 DL=6 DR=7 FR=8 FL=9 BL=10 BR=11
+```
+
+Corners are numbered as follows:
+
+```
+UFR=0 UBL=1 DFL=2 DBR=3 UFL=4 UBR=5 DFR=6 DBL=7
+```
+
+At the moment, the only orientation supported is the standard one, as wide
+moves, rotations and slice moves are not supported.
 
 In this format, the solved cube looks like this:
 
 ```
-ABCDEFGH=ABCDEFGHIJKL
+ABCDEFGH=ABCDEFGHIJKL=A
 ```
 
 The cube after the move F looks like this:
 
 ```
-MBODSFQH=ZBCYEFGHQTKL
+MBODSFQH=ZBCYEFGHQTKL=A
 ```
 
-A cube in B32 format is always 21 characters long (22 if the terminating
+A cube in B32 format is always 23 characters long (24 if the terminating
 null character is included).

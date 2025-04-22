@@ -25,7 +25,7 @@ void run(void) {
 	int i;
 	int64_t n;
 	long long stats[NISSY_SIZE_SOLVE_STATS];
-	char sol[SOL_BUFFER_LEN], cube[22];
+	char sol[SOL_BUFFER_LEN], cube[NISSY_SIZE_CUBE];
 
 	printf("Solved the following scrambles:\n\n");
 	for (i = 0; scrambles[i] != NULL; i++) {

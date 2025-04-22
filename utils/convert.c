@@ -1,3 +1,9 @@
+/*
+This file contains code related to cube format conversion that used to
+be in src/core.  It is to be adapted into a standalone tool for cube
+format conversion.
+*/
+
 STATIC cube_t readcube(const char *, const char *);
 STATIC int64_t writecube(const char *, cube_t, size_t n, char [n]);
 STATIC void log_available_formats(void);

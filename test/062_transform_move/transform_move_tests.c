@@ -24,6 +24,6 @@ void run(void) {
 	for (i = 0; i < n; i++)
 		cube = move(cube, transform_move(moves[i], t));
 
-	writecube("H48", cube, STRLENMAX, cubestr);
+	writecube(cube, STRLENMAX, cubestr);
 	printf("%s\n", cubestr);
 }

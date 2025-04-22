@@ -12,7 +12,7 @@ char scrambles[MAX_SCR][MAX_SCR_LEN];
 void run(void) {
 	int64_t i, nsols;
 	long long stats[NISSY_SIZE_SOLVE_STATS];
-	char sol[SOL_BUFFER_LEN], cube[22];
+	char sol[SOL_BUFFER_LEN], cube[NISSY_SIZE_CUBE];
 
 	printf("Solved the following scrambles:\n\n");
 	for (i = 0; i < N; i++) {

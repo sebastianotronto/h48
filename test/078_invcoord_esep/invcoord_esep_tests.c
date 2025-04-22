@@ -9,7 +9,7 @@ void run(void) {
 	int64_t i;
 
 	fgets(str, STRLENMAX, stdin);
-	cube = readcube("H48", str);
+	cube = readcube(str);
 
 	i = coord_esep(cube);
 	cube = invcoord_esep(i);

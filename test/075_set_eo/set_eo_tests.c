@@ -11,7 +11,7 @@ void run(void) {
 	int64_t eo;
 
 	fgets(str, STRLENMAX, stdin);
-	cube = readcube("H48", str);
+	cube = readcube(str);
 	fgets(str, STRLENMAX, stdin);
 	eo = atoi(str);
 
@@ -30,7 +30,7 @@ void run(void) {
 		fprintf(stderr, "\n");
 		printf("Setting EO resulted in inconsistent cube\n");
 	} else {
-		writecube("H48", cube, NISSY_SIZE_H48, str);
+		writecube(cube, NISSY_SIZE_CUBE, str);
 		printf("%s\n", str);
 	}
 }

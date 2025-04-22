@@ -13,7 +13,7 @@ void run(void) {
 		while (*aux != '\n')
 			aux++;
 
-	cube = readcube("H48", str);
+	cube = readcube(str);
 	pieces(&cube, corner, edge);
 
 	for (i = 0; i < 8; i++)

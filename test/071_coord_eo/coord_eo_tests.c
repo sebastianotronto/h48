@@ -8,7 +8,7 @@ void run(void) {
 	int64_t result;
 
 	fgets(str, STRLENMAX, stdin);
-	cube = readcube("H48", str);
+	cube = readcube(str);
 
 	result = coord_eo(cube);
 

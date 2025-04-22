@@ -174,3 +174,181 @@ getcube(int64_t ep, int64_t eo, int64_t cp, int64_t co)
 
 	return cubefromarray(carr, earr);
 }
+
+
+/******************************************************************************/
+
+STATIC cube_t readcube(const char *);
+STATIC int64_t writecube(cube_t, size_t n, char [n]);
+STATIC uint8_t readco(const char *);
+STATIC uint8_t readcp(const char *);
+STATIC uint8_t readeo(const char *);
+STATIC uint8_t readep(const char *);
+
+STATIC uint8_t b32toedge(char);
+STATIC uint8_t b32tocorner(char);
+STATIC char edgetob32(uint8_t);
+STATIC char cornertob32(uint8_t);
+
+STATIC uint8_t
+readco(const char *str)
+{
+	if (*str == '0')
+		return 0;
+	if (*str == '1')
+		return CTWIST_CW;
+	if (*str == '2')
+		return CTWIST_CCW;
+
+	LOG("Error reading CO\n");
+	return UINT8_ERROR;
+}
+
+STATIC uint8_t
+readcp(const char *str)
+{
+	uint8_t c;
+
+	for (c = 0; c < 8; c++)
+		if (!strncmp(str, cornerstr[c], 3) ||
+		    !strncmp(str, cornerstralt[c], 3))
+			return c;
+
+	LOG("Error reading CP\n");
+	return UINT8_ERROR;
+}
+
+STATIC uint8_t
+readeo(const char *str)
+{
+	if (*str == '0')
+		return 0;
+	if (*str == '1')
+		return EFLIP;
+
+	LOG("Error reading EO\n");
+	return UINT8_ERROR;
+}
+
+STATIC uint8_t
+readep(const char *str)
+{
+	uint8_t e;
+
+	for (e = 0; e < 12; e++)
+		if (!strncmp(str, edgestr[e], 2))
+			return e;
+
+	LOG("Error reading EP\n");
+	return UINT8_ERROR;
+}
+
+STATIC cube_t
+readcube(const char *buf)
+{
+	int i;
+	uint8_t c[8], e[12];
+
+	for (i = 0; i < 8; i++) {
+		c[i] = b32tocorner(buf[i]);
+		if (c[i] == UINT8_ERROR) {
+			LOG("Error reading corner %d ", i);
+			if (buf[i] == 0) {
+				LOG("(string terminated early)\n");
+			} else {
+				LOG("(char '%c')\n", buf[i]);
+			}
+			return ZERO_CUBE;
+		}
+	}
+
+	if (buf[8] != '=') {
+		LOG("Error reading separator: a single '=' "
+		    "must be used to separate edges and corners\n");
+		return ZERO_CUBE;
+	}
+
+	for (i = 0; i < 12; i++) {
+		e[i] = b32toedge(buf[i+9]);
+		if (e[i] == UINT8_ERROR) {
+			LOG("Error reading edge %d ", i);
+			if (buf[i+9] == 0) {
+				LOG("(string terminated early)\n");
+			} else {
+				LOG("(char '%c')\n", buf[i+9]);
+			}
+			return ZERO_CUBE;
+		}
+	}
+
+	return cubefromarray(c, e);
+}
+
+STATIC int64_t
+writecube(cube_t cube, size_t buf_size, char buf[buf_size])
+{
+	int i;
+	uint8_t corner[8], edge[12];
+
+	if (buf_size < NISSY_SIZE_CUBE) {
+		LOG("Cannot write cube: buffer size must be at least %u "
+		    "bytes, but the provided one is %zu bytes.\n",
+		    NISSY_SIZE_CUBE, buf_size);
+		return NISSY_ERROR_BUFFER_SIZE;
+	}
+
+	pieces(&cube, corner, edge);
+
+	for (i = 0; i < 8; i++)
+		buf[i] = cornertob32(corner[i]);
+
+	buf[8] = '=';
+
+	for (i = 0; i < 12; i++)
+		buf[i+9] = edgetob32(edge[i]);
+
+/* TODO */
+	buf[21] = '=';
+	buf[22] = 'A';
+	buf[23] = '\0';
+
+	return NISSY_OK;
+}
+
+STATIC uint8_t
+b32toedge(char c)
+{
+	if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'f')))
+		return UINT8_ERROR;
+
+	return c <= 'Z' ? (uint8_t)(c - 'A') : (uint8_t)(c - 'a') + 26;
+}
+
+STATIC uint8_t
+b32tocorner(char c) {
+	uint8_t val;
+
+	if (!((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'f')))
+		return UINT8_ERROR;
+
+	val = c <= 'Z' ? (uint8_t)(c - 'A') : (uint8_t)(c - 'a') + 26;
+
+	return (val & 7) | ((val & 24) << 2);
+}
+
+STATIC char
+edgetob32(uint8_t edge)
+{
+	return edge < 26 ? 'A' + (char)edge : 'a' + (char)(edge - 26);
+}
+
+STATIC char
+cornertob32(uint8_t corner)
+{
+	uint8_t val;
+
+	val = (corner & 7) | ((corner & 96) >> 2);
+
+	return val < 26 ? 'A' + (char)val : 'a' + (char)(val - 26);
+}
+/******************************************************************************/

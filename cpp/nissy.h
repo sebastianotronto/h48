@@ -38,7 +38,6 @@ namespace nissy {
 		static const error UNSOLVABLE_CUBE;
 		static const error INVALID_MOVES;
 		static const error INVALID_TRANS;
-		static const error INVALID_FORMAT;
 		static const error INVALID_SOLVER;
 		static const error NULL_POINTER;
 		static const error BUFFER_SIZE;
@@ -55,13 +54,9 @@ namespace nissy {
 		void invert();
 		void compose(const cube&);
 		std::string to_string() const;
-		std::variant<std::string, error> to_string(
-		    const std::string& format) const;
 
 		static std::variant<cube, error> from_string(
 		    const std::string&);
-		static std::variant<cube, error> from_string(
-		    const std::string& str, const std::string& format);
 		static std::variant<cube, error> get(
 		    long long ep, long long eo, long long cp, long long co);
 		static std::variant<cube, error> get(
@@ -69,7 +64,7 @@ namespace nissy {
 		    const std::string& options);
 
 	private:
-		std::string m_b32{"ABCDEFGH=ABCDEFGHIJKL"};
+		std::string m_str{"ABCDEFGH=ABCDEFGHIJKL=A"};
 	};
 
 	class solver {

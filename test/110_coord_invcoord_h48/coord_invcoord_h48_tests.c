@@ -22,7 +22,7 @@ void run(void) {
 	i = 1;
 	h = 11;
 	while (fgets(str, STRLENMAX, stdin) != NULL) {
-		cube = readcube("H48", str);
+		cube = readcube(str);
 		c = coord_h48(cube, cocsepdata, h);
 		invc = invcoord_h48(c, rep, h);
 		for (t = 0, found = false; t < 48; t++) {

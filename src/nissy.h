@@ -2,12 +2,11 @@
 This is libnissy (temporarily also known as h48), a Rubik's cube library.
 
 All the functions return 0 or a positive integer in case of success and
-a negative integer in case of error, unless otherwise specified. See at
-the bottom of this file for the list of error codes and their meaning.
+a negative integer in case of error, unless otherwise specified. See
+below for the list of error codes and their meaning.
 
-All cube arguments are in B32 formats, unless otherwise specified.
-Other available formats are H48 and SRC. See README.md for more info on
-these formats.
+Cubes are passed as strings in the cccccccc=eeeeeeeeeeee=r format,
+see the README.md file for more information.
 
 Accepted moves are U, D, R, L, F and B, optionally followed by a 2,
 a ' or a 3.
@@ -21,9 +20,7 @@ for example 'rotation UF' or 'mirrored BL'.
 /* Constants *****************************************************************/
 
 /* Some constants for size for I/O buffers */
-#define NISSY_SIZE_B32            22U
-#define NISSY_SIZE_H48            88U
-#define NISSY_SIZE_CUBE_MAX       NISSY_SIZE_H48
+#define NISSY_SIZE_CUBE           24U
 #define NISSY_SIZE_TRANSFORMATION 12U
 #define NISSY_SIZE_SOLVE_STATS    10U
 #define NISSY_SIZE_DATAID         255U
@@ -37,8 +34,8 @@ for example 'rotation UF' or 'mirrored BL'.
 #define NISSY_NISSFLAG_ALL \
     (NISSY_NISSFLAG_NORMAL | NISSY_NISSFLAG_INVERSE | NISSY_NISSFLAG_MIXED)
 
-/* The solved cube in B32 format */
-#define NISSY_SOLVED_CUBE "ABCDEFGH=ABCDEFGHIJKL"
+/* The solved cube */
+#define NISSY_SOLVED_CUBE "ABCDEFGH=ABCDEFGHIJKL=A"
 
 /* Error codes ***************************************************************/
 
@@ -58,8 +55,7 @@ provided an unsolvable cube as input.
 
 /*
 The value NISSY_ERROR_INVALID_CUBE means that the provided cube is
-invalid. It could be written in an unknown format, or in a format
-different from what specified, or simply ill-formed.
+invalid. It could be written in an unknown format, or be ill-formed.
 */
 #define NISSY_ERROR_INVALID_CUBE -10LL
 
@@ -83,12 +79,6 @@ The value NISSY_ERROR_INVALID_TRANS means that the given transformation
 is invalid.
 */
 #define NISSY_ERROR_INVALID_TRANS -30LL
-
-/*
-The value NISSY_ERROR_INVALID_FORMAT means that the given format is
-not known.
-*/
-#define NISSY_ERROR_INVALID_FORMAT -40LL
 
 /*
 The value NISSY_ERROR_INVALID_SOLVER means that the given solver is
@@ -139,10 +129,10 @@ of this kind to sebastiano@tronto.net. Thanks!
 Apply the secod argument as a permutation on the first argument.
 
 Parameters:
-   cube        - The first cube, in B32 format.
-   permutation - The second cube, in B32 format. This cube is treated as a
-                 permutation and "applied" to the first cube.
-   result      - The return parameter for the resulting cube, in B32 format.
+   cube        - The first cube.
+   permutation - The second cub. This cube is treated as a permutation and
+                 "applied" to the first cube.
+   result      - The return parameter for the resulting cube.
 
 Return values:
    NISSY_OK                  - The cubes were composed succesfully.
@@ -155,17 +145,17 @@ Return values:
 */
 long long
 nissy_compose(
-	const char cube[static NISSY_SIZE_B32],
-	const char permutation[static NISSY_SIZE_B32],
-	char result[static NISSY_SIZE_B32]
+	const char cube[static NISSY_SIZE_CUBE],
+	const char permutation[static NISSY_SIZE_CUBE],
+	char result[static NISSY_SIZE_CUBE]
 );
 
 /*
 Compute the inverse of the given cube.
 
 Parameters:
-   cube   - The cube to be inverted, in B32 format.
-   result - The return parameter for the resulting cube, in B32 format.
+   cube   - The cube to be inverted.
+   result - The return parameter for the resulting cube.
 
 Return values:
    NISSY_OK                  - The cube was inverted succesfully.
@@ -177,17 +167,17 @@ Return values:
 */
 long long
 nissy_inverse(
-	const char cube[static NISSY_SIZE_B32],
-	char result[static NISSY_SIZE_B32]
+	const char cube[static NISSY_SIZE_CUBE],
+	char result[static NISSY_SIZE_CUBE]
 );
 
 /*
 Apply the given sequence of moves on the given cube.
 
 Parameters:
-   cube   - The cube to move, in B32 format.
+   cube   - The cube to move.
    moves  - The moves to apply to the cube. Must be a NULL-terminated string.
-   result - The return parameter for the resulting cube, in B32 format.
+   result - The return parameter for the resulting cube.
 
 Return values:
    NISSY_OK                  - The moves were applied succesfully.
@@ -200,18 +190,18 @@ Return values:
 */
 long long
 nissy_applymoves(
-	const char cube[static NISSY_SIZE_B32],
+	const char cube[static NISSY_SIZE_CUBE],
 	const char *moves,
-	char result[static NISSY_SIZE_B32]
+	char result[static NISSY_SIZE_CUBE]
 );
 
 /*
 Apply the single given transformation to the given cube.
 
 Parameters:
-   cube           - The cube to be transformed, in B32 format.
-   transformation - The transformation in (rotation|mirrored) xy format.
-   result         - The return parameter for the resulting cube, in B32 format.
+   cube           - The cube to be transformed.
+   transformation - The transformation in "(rotation|mirrored) __" format.
+   result         - The return parameter for the resulting cube.
 
 Return values:
    NISSY_OK                  - The transformation was performed succesfully.
@@ -222,37 +212,9 @@ Return values:
 */
 long long
 nissy_applytrans(
-	const char cube[static NISSY_SIZE_B32],
+	const char cube[static NISSY_SIZE_CUBE],
 	const char transformation[static NISSY_SIZE_TRANSFORMATION],
-	char result[static NISSY_SIZE_B32]
-);
-
-/*
-Convert the given cube between the two given formats.
-
-Parameters:
-   format_in   - The input format.
-   format_out  - The output format.
-   cube_string - The cube, in format_in format.
-   result_size - The allocated size of the result array.
-   result      - Return parameter for the cube in format_out format.
-
-Return values:
-   NISSY_OK                   - The conversion was performed succesfully.
-   NISSY_ERROR_BUFFER_SIZE    - The given buffer is too small for the result.
-   NISSY_ERROR_INVALID_CUBE   - The given cube is invalid.
-   NISSY_ERROR_INVALID_FORMAT - At least one of the given formats is invalid.
-   NISSY_ERROR_UNKNOWN        - An unknown error occurred.
-   NISSY_ERROR_NULL_POINTER   - At least one of 'format_in', 'format_out' or
-                                'cube_string' arguments is NULL.
-*/
-long long
-nissy_convert(
-	const char *format_in,
-	const char *format_out,
-	const char *cube_string,
-	unsigned result_size,
-	char result[result_size]
+	char result[static NISSY_SIZE_CUBE]
 );
 
 /*
@@ -267,7 +229,7 @@ Parameters:
    cp      - The corner permutation, 0 <= cp <= 40320 (8!)
    co      - The corner orientation, 0 <= co <= 2187 (3^7)
    options - Other options.
-   result  - The return parameter for the resulting cube, in B32 format.
+   result  - The return parameter for the resulting cube.
 
 Return values:
    NISSY_OK                 - The cube was generated succesfully.
@@ -281,7 +243,7 @@ nissy_getcube(
 	long long cp,
 	long long co,
 	const char *options,
-	char result[static NISSY_SIZE_B32]
+	char result[static NISSY_SIZE_CUBE]
 );
 
 /*
@@ -354,7 +316,7 @@ nissy_checkdata(
 Solve the given cube using the given solver and options.
 
 Parameters:
-   cube      - The cube to solver, in B32 format.
+   cube      - The cube to solver.
    solver    - The name of the solver.
    nissflag  - The flags for NISS (linear, inverse, mixed, or combinations).
    minmoves  - The minimum number of moves for a solution.
@@ -386,7 +348,7 @@ Return values:
 */
 long long
 nissy_solve(
-	const char cube[static NISSY_SIZE_B32],
+	const char cube[static NISSY_SIZE_CUBE],
 	const char *solver, 
 	unsigned nissflag,
 	unsigned minmoves,
