@@ -24,24 +24,63 @@ STATIC int64_t binomial[12][12] = {
 	{1, 11, 55, 165, 330, 462, 462, 330, 165, 55, 11, 1},
 };
 
-#define MOVE_U  UINT8_C(0)
-#define MOVE_U2 UINT8_C(1)
-#define MOVE_U3 UINT8_C(2)
-#define MOVE_D  UINT8_C(3)
-#define MOVE_D2 UINT8_C(4)
-#define MOVE_D3 UINT8_C(5)
-#define MOVE_R  UINT8_C(6)
-#define MOVE_R2 UINT8_C(7)
-#define MOVE_R3 UINT8_C(8)
-#define MOVE_L  UINT8_C(9)
-#define MOVE_L2 UINT8_C(10)
-#define MOVE_L3 UINT8_C(11)
-#define MOVE_F  UINT8_C(12)
-#define MOVE_F2 UINT8_C(13)
-#define MOVE_F3 UINT8_C(14)
-#define MOVE_B  UINT8_C(15)
-#define MOVE_B2 UINT8_C(16)
-#define MOVE_B3 UINT8_C(17)
+#define MOVE_U   UINT8_C(0)
+#define MOVE_U2  UINT8_C(1)
+#define MOVE_U3  UINT8_C(2)
+#define MOVE_D   UINT8_C(3)
+#define MOVE_D2  UINT8_C(4)
+#define MOVE_D3  UINT8_C(5)
+#define MOVE_R   UINT8_C(6)
+#define MOVE_R2  UINT8_C(7)
+#define MOVE_R3  UINT8_C(8)
+#define MOVE_L   UINT8_C(9)
+#define MOVE_L2  UINT8_C(10)
+#define MOVE_L3  UINT8_C(11)
+#define MOVE_F   UINT8_C(12)
+#define MOVE_F2  UINT8_C(13)
+#define MOVE_F3  UINT8_C(14)
+#define MOVE_B   UINT8_C(15)
+#define MOVE_B2  UINT8_C(16)
+#define MOVE_B3  UINT8_C(17)
+
+#define MOVE_Uw  UINT8_C(18)
+#define MOVE_Uw2 UINT8_C(19)
+#define MOVE_Uw3 UINT8_C(20)
+#define MOVE_Dw  UINT8_C(21)
+#define MOVE_Dw2 UINT8_C(22)
+#define MOVE_Dw3 UINT8_C(23)
+#define MOVE_Rw  UINT8_C(24)
+#define MOVE_Rw2 UINT8_C(25)
+#define MOVE_Rw3 UINT8_C(26)
+#define MOVE_Lw  UINT8_C(27)
+#define MOVE_Lw2 UINT8_C(28)
+#define MOVE_Lw3 UINT8_C(29)
+#define MOVE_Fw  UINT8_C(30)
+#define MOVE_Fw2 UINT8_C(31)
+#define MOVE_Fw3 UINT8_C(32)
+#define MOVE_Bw  UINT8_C(33)
+#define MOVE_Bw2 UINT8_C(34)
+#define MOVE_Bw3 UINT8_C(35)
+
+#define MOVE_M   UINT8_C(36)
+#define MOVE_M2  UINT8_C(37)
+#define MOVE_M3  UINT8_C(38)
+#define MOVE_S   UINT8_C(39)
+#define MOVE_S2  UINT8_C(40)
+#define MOVE_S3  UINT8_C(41)
+#define MOVE_E   UINT8_C(42)
+#define MOVE_E2  UINT8_C(43)
+#define MOVE_E3  UINT8_C(44)
+
+#define MOVE_x   UINT8_C(45)
+#define MOVE_x2  UINT8_C(46)
+#define MOVE_x3  UINT8_C(47)
+#define MOVE_y   UINT8_C(48)
+#define MOVE_y2  UINT8_C(49)
+#define MOVE_y3  UINT8_C(50)
+#define MOVE_z   UINT8_C(51)
+#define MOVE_z2  UINT8_C(52)
+#define MOVE_z3  UINT8_C(53)
 
 #define TRANS_UFr UINT8_C(0)
 #define TRANS_ULr UINT8_C(1)
@@ -97,8 +136,9 @@ STATIC int64_t binomial[12][12] = {
 #define AXIS_RL   UINT8_C(1)
 #define AXIS_FB   UINT8_C(2)
 
-#define NMOVES  (1+MOVE_B3)
-#define NTRANS  (1+TRANS_BLm)
+#define NMOVES           (1+MOVE_B3)
+#define NMOVES_EXTENDED  (1+MOVE_z3)
+#define NTRANS           (1+TRANS_BLm)
 
 #define MM_ALLMOVES    UINT32_C(0x3FFFF)
 #define MM_NOHALFTURNS UINT32_C(0x2DB6D)
@@ -230,6 +270,45 @@ STATIC const char *movestr[] = {
 	[MOVE_B]  = "B",
 	[MOVE_B2] = "B2",
 	[MOVE_B3] = "B'",
+
+	[MOVE_Uw]  = "Uw",
+	[MOVE_Uw2] = "Uw2",
+	[MOVE_Uw3] = "Uw'",
+	[MOVE_Dw]  = "Dw",
+	[MOVE_Dw2] = "Dw2",
+	[MOVE_Dw3] = "Dw'",
+	[MOVE_Rw]  = "Rw",
+	[MOVE_Rw2] = "Rw2",
+	[MOVE_Rw3] = "Rw'",
+	[MOVE_Lw]  = "Lw",
+	[MOVE_Lw2] = "Lw2",
+	[MOVE_Lw3] = "Lw'",
+	[MOVE_Fw]  = "Fw",
+	[MOVE_Fw2] = "Fw2",
+	[MOVE_Fw3] = "Fw'",
+	[MOVE_Bw]  = "Bw",
+	[MOVE_Bw2] = "Bw2",
+	[MOVE_Bw3] = "Bw'",
+
+	[MOVE_M]  = "M",
+	[MOVE_M2] = "M2",
+	[MOVE_M3] = "M'",
+	[MOVE_S]  = "S",
+	[MOVE_S2] = "S2",
+	[MOVE_S3] = "S'",
+	[MOVE_E]  = "E",
+	[MOVE_E2] = "E2",
+	[MOVE_E3] = "E'",
+
+	[MOVE_x]  = "x",
+	[MOVE_x2] = "x2",
+	[MOVE_x3] = "x'",
+	[MOVE_y]  = "y",
+	[MOVE_y2] = "y2",
+	[MOVE_y3] = "y'",
+	[MOVE_z]  = "z",
+	[MOVE_z2] = "z2",
+	[MOVE_z3] = "z'",
 };
 
 STATIC const char *transstr[] = {
