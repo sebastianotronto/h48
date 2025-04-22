@@ -142,47 +142,6 @@ my_strnlen(const char *str, size_t maxlen)
 }
 
 long long
-nissy_compose(
-	const char cube[static NISSY_SIZE_CUBE],
-	const char permutation[static NISSY_SIZE_CUBE],
-	char result[static NISSY_SIZE_CUBE]
-)
-{
-	cube_t c, p, res;
-	long long err;
-
-	c = readcube(cube);
-
-	if (!isconsistent(c)) {
-		LOG("[compose] Error: the given cube is invalid\n");
-		err = NISSY_ERROR_INVALID_CUBE;
-		goto nissy_compose_error;
-	}
-
-	p = readcube(permutation);
-
-	if (!isconsistent(p)) {
-		LOG("[compose] Error: given permutation is invalid\n");
-		err = NISSY_ERROR_INVALID_CUBE;
-		goto nissy_compose_error;
-	}
-
-	res = compose(c, p);
-
-	if (!isconsistent(res)) {
-		LOG("[compose] Unknown error: resulting cube is invalid\n");
-		err = NISSY_ERROR_UNKNOWN;
-		goto nissy_compose_error;
-	}
-
-	return write_result(res, result);
-
-nissy_compose_error:
-	writecube(ZERO_CUBE, NISSY_SIZE_CUBE, result);
-	return err;
-}
-
-long long
 nissy_inverse(
 	const char cube[static NISSY_SIZE_CUBE],
 	char result[static NISSY_SIZE_CUBE]

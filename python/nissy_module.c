@@ -61,32 +61,6 @@ long_result(long long result)
 	return PyLong_FromLong(result);
 }
 
-
-PyDoc_STRVAR(compose_doc,
-"compose(cube, permutation)\n"
-"--\n\n"
-"Apply 'permutation' on 'cube'.\n"
-"\n"
-"Parameters:\n"
-"  - cube: a cube\n"
-"  - permutation: another cube\n"
-"\n"
-"Returns: the resulting cube string\n"
-);
-static PyObject *
-compose(PyObject *self, PyObject *args)
-{
-	long long err;
-	const char *cube, *permutation;
-	char result[NISSY_SIZE_CUBE];
-
-	if (!PyArg_ParseTuple(args, "ss", &cube, &permutation))
-		return NULL;
-
-	err = nissy_compose(cube, permutation, result);
-	return string_result(err, result);
-}
-
 PyDoc_STRVAR(inverse_doc,
 "inverse(cube)\n"
 "--\n\n"
@@ -368,7 +342,6 @@ countmoves(PyObject *self, PyObject *args)
 }
 
 static PyMethodDef nissy_methods[] = {
-	{ "compose", compose, METH_VARARGS, compose_doc },
 	{ "inverse", inverse, METH_VARARGS, inverse_doc },
 	{ "applymoves", applymoves, METH_VARARGS, applymoves_doc },
 	{ "applytrans", applytrans, METH_VARARGS, applytrans_doc },

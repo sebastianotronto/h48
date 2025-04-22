@@ -126,31 +126,6 @@ of this kind to sebastiano@tronto.net. Thanks!
 /* Library functions *********************************************************/
 
 /*
-Apply the secod argument as a permutation on the first argument.
-
-Parameters:
-   cube        - The first cube.
-   permutation - The second cub. This cube is treated as a permutation and
-                 "applied" to the first cube.
-   result      - The return parameter for the resulting cube.
-
-Return values:
-   NISSY_OK                  - The cubes were composed succesfully.
-   NISSY_WARNING_UNSOLVABLE  - The resulting cube is not solvable. This is
-                               either because at least on of the given cubes
-                               was not solvable, or due to an unknown internal
-                               error.
-   NISSY_ERROR_INVALID_CUBE  - At least one of the given cubes is invalid.
-   NISSY_ERROR_UNKNOWN       - An unknown error occurred.
-*/
-long long
-nissy_compose(
-	const char cube[static NISSY_SIZE_CUBE],
-	const char permutation[static NISSY_SIZE_CUBE],
-	char result[static NISSY_SIZE_CUBE]
-);
-
-/*
 Compute the inverse of the given cube.
 
 Parameters:

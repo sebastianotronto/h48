@@ -9,7 +9,6 @@ TODO: add more documentation (here and in README.md)
 #include <fstream>
 
 extern "C" {
-	long long nissy_compose(const char *, const char *, char *);
 	long long nissy_inverse(const char *, char *);
 	long long nissy_applymoves(const char *, const char *, char *);
 	long long nissy_applytrans(const char *, const char *, char *);
@@ -84,14 +83,6 @@ namespace nissy {
 	{
 		char result[size::CUBE];
 		nissy_inverse(m_str.c_str(), result);
-		m_str = result;
-	}
-
-	void cube::compose(const cube& other)
-	{
-		char result[size::CUBE];
-		nissy_compose(
-		    m_str.c_str(), other.to_string().c_str(), result);
 		m_str = result;
 	}
 

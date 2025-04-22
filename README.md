@@ -241,8 +241,8 @@ $ python                                  # In the main folder
 From here you can call the library functions directly, for example:
 
 ```
->>> nissy.compose('NEORSQLH=ZFCYUAGLHTKB=A', 'NEORSQLH=ZFCYUAGLHTKB=A')
-'ASTUGFBH=DACXEZGBLIKF=A'
+>>> nissy.applymoves('ABCDEFGH=ABCDEFGHIJKL=A', "R U R' U'")
+'WFCDERQH=AECDIFGHBJKL=A'
 ```
 
 The `python/examples` folder contains some examples, that you

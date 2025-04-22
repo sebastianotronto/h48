@@ -15,7 +15,6 @@
 #define MAX_PATH_LENGTH       UINT64_C(10000)
 
 #define FLAG_CUBE         "-cube"
-#define FLAG_PERM         "-perm"
 #define FLAG_COMMAND      "-command"
 #define FLAG_STR_CUBE     "-cubestr"
 #define FLAG_MOVES        "-moves"
@@ -37,7 +36,6 @@
 typedef struct {
 	int command_index;
 	char cube[NISSY_SIZE_CUBE];
-	char cube_perm[NISSY_SIZE_CUBE];
 	char *str_command;
 	char *str_cube;
 	char *str_moves;
@@ -51,7 +49,6 @@ typedef struct {
 	unsigned threads;
 } args_t;
 
-static int64_t compose_exec(args_t *);
 static int64_t inverse_exec(args_t *);
 static int64_t applymoves_exec(args_t *);
 static int64_t applytrans_exec(args_t *);
@@ -69,7 +66,6 @@ static bool parse_uint(const char *, unsigned *);
 static uint8_t parse_nisstype(const char *);
 
 static bool set_cube(int, char **, args_t *);
-static bool set_cube_perm(int, char **, args_t *);
 static bool set_str_command(int, char **, args_t *);
 static bool set_str_cube(int, char **, args_t *);
 static bool set_str_moves(int, char **, args_t *);
@@ -92,7 +88,6 @@ struct {
 	bool (*set)(int, char **, args_t *);
 } options[] = {
 	OPTION(FLAG_CUBE, 1, set_cube),
-	OPTION(FLAG_PERM, 1, set_cube_perm),
 	OPTION(FLAG_COMMAND, 1, set_str_command),
 	OPTION(FLAG_STR_CUBE, 1, set_str_cube),
 	OPTION(FLAG_MOVES, 1, set_str_moves),
@@ -115,12 +110,6 @@ struct {
 	int64_t (*exec)(args_t *);
 } commands[] = {
 /* TODO: add synopsis and description here */
-	COMMAND(
-		"compose",
-		"compose " FLAG_CUBE " CUBE " FLAG_PERM " PERM",
-		"Apply on CUBE the permutation defined by PERM.",
-		compose_exec
-	),
 	COMMAND(
 		"inverse",
 		"inverse " FLAG_CUBE " CUBE ",
@@ -219,19 +208,6 @@ rand64(void)
 
 	for (i = 0, ret = 0; i < 64; i++)
 		ret |= (uint64_t)(rand() % 2) << i;
-
-	return ret;
-}
-
-static int64_t
-compose_exec(args_t *args)
-{
-	char result[NISSY_SIZE_CUBE];
-	int64_t ret;
-
-	ret = nissy_compose(args->cube, args->cube_perm, result);
-	if (ret == NISSY_OK || ret == NISSY_WARNING_UNSOLVABLE)
-		printf("%s\n", result);
 
 	return ret;
 }
@@ -531,7 +507,6 @@ parse_args(int argc, char **argv, args_t *args)
 	*args = (args_t) {
 		.command_index = -1,
 		.cube = "",
-		.cube_perm = "",
 		.str_cube = "",
 		.str_moves = "",
 		.str_trans = "",
@@ -625,15 +600,6 @@ set_cube(int argc, char **argv, args_t *args)
 {
 	memcpy(args->cube, argv[0], NISSY_SIZE_CUBE);
 	args->cube[21] = 0;
-
-	return true;
-}
-
-static bool
-set_cube_perm(int argc, char **argv, args_t *args)
-{
-	memcpy(args->cube_perm, argv[0], NISSY_SIZE_CUBE);
-	args->cube_perm[21] = 0;
 
 	return true;
 }

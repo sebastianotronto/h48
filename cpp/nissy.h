@@ -52,7 +52,6 @@ namespace nissy {
 		error move(const std::string&);
 		error transform(const std::string&);
 		void invert();
-		void compose(const cube&);
 		std::string to_string() const;
 
 		static std::variant<cube, error> from_string(
