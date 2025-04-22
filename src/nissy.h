@@ -2,14 +2,14 @@
 This is libnissy (temporarily also known as h48), a Rubik's cube library.
 
 All the functions return 0 or a positive integer in case of success and
-a negative integer in case of error, unless otherwise specified. See at
-the bottom of this file for the list of error codes and their meaning.
+a negative integer in case of error, unless otherwise specified. See
+below for the list of error codes and their meaning.
 
-TODO: explain cube format
+Cubes are passed as strings in the cccccccc=eeeeeeeeeeee=r format,
+see the README.md file for more information.
 
 Accepted moves are U, D, R, L, F and B, optionally followed by a 2,
 a ' or a 3.
-TODO update when we accept also wide moves, slices and rotations
 
 A transformation must be given in the format
     (rotation|mirrored) (2 letters)

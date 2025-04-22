@@ -134,7 +134,7 @@ inverse(cube_t c)
 	vp = _mm256_andnot_si256(ORIENT_AVX2, vi);
 	ret = _mm256_or_si256(vp, vo);
 	ret = _mm256_and_si256(ret, USED_AVX2);
-	
+
 	return invertco(ret);
 }
 
