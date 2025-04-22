@@ -45,7 +45,7 @@ void run(void) {
 		if (!found) {
 			printf("Error: invcoord of %" PRId64 " returns %"
 			    PRId64 " with cube:\n", coord, coord2);
-			writecube("H48", cube, STRLENMAX, str);
+			writecube(cube, STRLENMAX, str);
 			printf("%s\n", str);
 			goto cleanup;
 		}

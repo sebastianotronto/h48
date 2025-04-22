@@ -23,7 +23,7 @@ void run(void) {
 	} else if (!isconsistent(cube)) {
 		printf("Inconsistent cube\n");
 	} else {
-		writecube("H48", cube, NISSY_SIZE_H48, str);
+		writecube(cube, NISSY_SIZE_CUBE, str);
 		printf("%s\n", str);
 	}
 }

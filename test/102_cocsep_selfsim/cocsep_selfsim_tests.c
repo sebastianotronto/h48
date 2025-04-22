@@ -24,7 +24,7 @@ void run(void) {
 	/* All cases in the same test so we do not generate data many times */
 
 	while (fgets(str, STRLENMAX, stdin) != NULL) {
-		cube = readcube("H48", str);
+		cube = readcube(str);
 		coord = coord_cocsep(cube);
 		data = cocsepdata[coord];
 		coclass = (data & (0xFFFU << 16)) >> 16;

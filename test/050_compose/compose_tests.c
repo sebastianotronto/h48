@@ -7,9 +7,9 @@ void run(void) {
 	cube_t c1, c2, c3;
 
 	fgets(str, STRLENMAX, stdin);
-	c1 = readcube("H48", str);
+	c1 = readcube(str);
 	fgets(str, STRLENMAX, stdin);
-	c2 = readcube("H48", str);
+	c2 = readcube(str);
 
 	c3 = compose(c1, c2);
 
@@ -18,7 +18,7 @@ void run(void) {
 	} else if (!issolvable(c3)) {
 		printf("Composed cube is not solvable\n");
 	} else {
-		writecube("H48", c3, NISSY_SIZE_H48, str);
+		writecube(c3, NISSY_SIZE_CUBE, str);
 		printf("%s\n", str);
 	}
 }

@@ -119,7 +119,7 @@ distribution_equal(
 STATIC long long
 write_result(cube_t cube, char result[static NISSY_SIZE_CUBE])
 {
-	writecube("B32", cube, NISSY_SIZE_CUBE, result);
+	writecube(cube, NISSY_SIZE_CUBE, result);
 
 	if (!issolvable(cube)) {
 		LOG("Warning: resulting cube is not solvable\n");
@@ -151,7 +151,7 @@ nissy_compose(
 	cube_t c, p, res;
 	long long err;
 
-	c = readcube("B32", cube);
+	c = readcube(cube);
 
 	if (!isconsistent(c)) {
 		LOG("[compose] Error: the given cube is invalid\n");
@@ -159,7 +159,7 @@ nissy_compose(
 		goto nissy_compose_error;
 	}
 
-	p = readcube("B32", permutation);
+	p = readcube(permutation);
 
 	if (!isconsistent(p)) {
 		LOG("[compose] Error: given permutation is invalid\n");
@@ -178,7 +178,7 @@ nissy_compose(
 	return write_result(res, result);
 
 nissy_compose_error:
-	writecube("B32", ZERO_CUBE, NISSY_SIZE_CUBE, result);
+	writecube(ZERO_CUBE, NISSY_SIZE_CUBE, result);
 	return err;
 }
 
@@ -191,7 +191,7 @@ nissy_inverse(
 	cube_t c, res;
 	long long err;
 
-	c = readcube("B32", cube);
+	c = readcube(cube);
 
 	if (iserror(c)) {
 		LOG("[inverse] Error: the given cube is invalid\n");
@@ -210,7 +210,7 @@ nissy_inverse(
 	return write_result(res, result);
 
 nissy_inverse_error:
-	writecube("B32", ZERO_CUBE, NISSY_SIZE_CUBE, result);
+	writecube(ZERO_CUBE, NISSY_SIZE_CUBE, result);
 	return err;
 }
 
@@ -230,7 +230,7 @@ nissy_applymoves(
 		goto nissy_applymoves_error;
 	}
 
-	c = readcube("B32", cube);
+	c = readcube(cube);
 
 	if (!isconsistent(c)) {
 		LOG("[applymoves] Error: given cube is invalid\n");
@@ -249,7 +249,7 @@ nissy_applymoves(
 	return write_result(res, result);
 
 nissy_applymoves_error:
-	writecube("B32", ZERO_CUBE, NISSY_SIZE_CUBE, result);
+	writecube(ZERO_CUBE, NISSY_SIZE_CUBE, result);
 	return err;
 }
 
@@ -263,7 +263,7 @@ nissy_applytrans(
 	cube_t c, res;
 	long long err;
 
-	c = readcube("B32", cube);
+	c = readcube(cube);
 
 	if (!isconsistent(c)) {
 		LOG("[applytrans] Error: given cube is invalid\n");
@@ -282,7 +282,7 @@ nissy_applytrans(
 	return write_result(res, result);
 
 nissy_applytrans_error:
-	writecube("B32", ZERO_CUBE, NISSY_SIZE_CUBE, result);
+	writecube(ZERO_CUBE, NISSY_SIZE_CUBE, result);
 	return err;
 }
 
@@ -507,7 +507,7 @@ nissy_solve(
 		return NISSY_ERROR_NULL_POINTER;
 	}
 
-	c = readcube_B32(cube);
+	c = readcube(cube);
 
 	if (!isconsistent(c)) {
 		LOG("[solve] Error: cube is invalid\n");

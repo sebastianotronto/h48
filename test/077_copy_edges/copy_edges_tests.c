@@ -7,10 +7,10 @@ void run(void) {
 	cube_t c1, c2;
 
 	fgets(str, STRLENMAX, stdin);
-	c1 = readcube("H48", str);
+	c1 = readcube(str);
 
 	fgets(str, STRLENMAX, stdin);
-	c2 = readcube("H48", str);
+	c2 = readcube(str);
 
 	copy_edges(&c1, c2);
 
@@ -19,7 +19,7 @@ void run(void) {
 	} else if (!isconsistent(c1)) {
 		printf("Setting EO resulted in inconsistent cube\n");
 	} else {
-		writecube("H48", c1, NISSY_SIZE_H48, str);
+		writecube(c1, NISSY_SIZE_CUBE, str);
 		printf("%s\n", str);
 	}
 }

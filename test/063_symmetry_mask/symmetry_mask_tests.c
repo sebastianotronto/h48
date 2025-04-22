@@ -8,7 +8,7 @@ void run(void) {
 	cube_t cube;
 
 	fgets(str, STRLENMAX, stdin);
-	cube = readcube("H48", str);
+	cube = readcube(str);
 	result = symmetry_mask(cube); 
 
 	for (i = 0; i < 48; result >>= 1, i++)

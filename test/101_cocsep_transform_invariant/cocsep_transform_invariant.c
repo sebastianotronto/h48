@@ -14,7 +14,7 @@ void run(void) {
 	cube_t cube, transd, rep[COCSEP_CLASSES];
 
 	fgets(str, STRLENMAX, stdin);
-	cube = readcube("H48", str);
+	cube = readcube(str);
 
 	gendata_cocsep(buf, selfsim, rep);
 	cocsepdata = (uint32_t *)((char *)buf + INFOSIZE);

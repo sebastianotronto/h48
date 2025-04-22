@@ -178,32 +178,17 @@ getcube(int64_t ep, int64_t eo, int64_t cp, int64_t co)
 
 /******************************************************************************/
 
-STATIC cube_t readcube(const char *, const char *);
-STATIC int64_t writecube(const char *, cube_t, size_t n, char [n]);
+STATIC cube_t readcube(const char *);
+STATIC int64_t writecube(cube_t, size_t n, char [n]);
 STATIC uint8_t readco(const char *);
 STATIC uint8_t readcp(const char *);
 STATIC uint8_t readeo(const char *);
 STATIC uint8_t readep(const char *);
 
-STATIC cube_t readcube_B32(const char *);
-STATIC int64_t writecube_B32(cube_t, size_t n, char [n]);
-
 STATIC uint8_t b32toedge(char);
 STATIC uint8_t b32tocorner(char);
 STATIC char edgetob32(uint8_t);
 STATIC char cornertob32(uint8_t);
-
-STATIC cube_t
-readcube(const char *format, const char *buf)
-{
-	return readcube_B32(buf);
-}
-
-STATIC int64_t
-writecube(const char *format, cube_t cube, size_t buf_size, char buf[buf_size])
-{
-	return writecube_B32(cube, buf_size, buf);
-}
 
 STATIC uint8_t
 readco(const char *str)
@@ -259,7 +244,7 @@ readep(const char *str)
 }
 
 STATIC cube_t
-readcube_B32(const char *buf)
+readcube(const char *buf)
 {
 	int i;
 	uint8_t c[8], e[12];
@@ -267,7 +252,7 @@ readcube_B32(const char *buf)
 	for (i = 0; i < 8; i++) {
 		c[i] = b32tocorner(buf[i]);
 		if (c[i] == UINT8_ERROR) {
-			LOG("Error reading B32 corner %d ", i);
+			LOG("Error reading corner %d ", i);
 			if (buf[i] == 0) {
 				LOG("(string terminated early)\n");
 			} else {
@@ -278,7 +263,7 @@ readcube_B32(const char *buf)
 	}
 
 	if (buf[8] != '=') {
-		LOG("Error reading B32 separator: a single '=' "
+		LOG("Error reading separator: a single '=' "
 		    "must be used to separate edges and corners\n");
 		return ZERO_CUBE;
 	}
@@ -286,7 +271,7 @@ readcube_B32(const char *buf)
 	for (i = 0; i < 12; i++) {
 		e[i] = b32toedge(buf[i+9]);
 		if (e[i] == UINT8_ERROR) {
-			LOG("Error reading B32 edge %d ", i);
+			LOG("Error reading edge %d ", i);
 			if (buf[i+9] == 0) {
 				LOG("(string terminated early)\n");
 			} else {
@@ -300,7 +285,7 @@ readcube_B32(const char *buf)
 }
 
 STATIC int64_t
-writecube_B32(cube_t cube, size_t buf_size, char buf[buf_size])
+writecube(cube_t cube, size_t buf_size, char buf[buf_size])
 {
 	int i;
 	uint8_t corner[8], edge[12];
@@ -322,7 +307,10 @@ writecube_B32(cube_t cube, size_t buf_size, char buf[buf_size])
 	for (i = 0; i < 12; i++)
 		buf[i+9] = edgetob32(edge[i]);
 
-	buf[21] = '\0';
+/* TODO */
+	buf[21] = '=';
+	buf[22] = 'A';
+	buf[23] = '\0';
 
 	return NISSY_OK;
 }

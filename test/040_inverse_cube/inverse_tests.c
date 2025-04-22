@@ -7,7 +7,7 @@ void run(void) {
 	cube_t cube, inv;
 
 	fgets(str, STRLENMAX, stdin);
-	cube = readcube("H48", str);
+	cube = readcube(str);
 	inv = inverse(cube);
 
 	if (iserror(inv)) {
@@ -15,7 +15,7 @@ void run(void) {
 	} else if (!issolvable(inv)) {
 		printf("Inverted cube is not solvable\n");
 	} else {
-		writecube("H48", inv, NISSY_SIZE_H48, str);
+		writecube(inv, NISSY_SIZE_CUBE, str);
 		printf("%s\n", str);
 	}
 }
