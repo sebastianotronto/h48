@@ -282,14 +282,30 @@ Edges are numbered as follows (see also constants.h):
 UF=0 UB=1 DB=2 DF=3 UR=4 UL=5 DL=6 DR=7 FR=8 FL=9 BL=10 BR=11
 ```
 
+If the edge is misoriented with respect to the F/B axis, the value
+is increased by 16.
+
 Corners are numbered as follows:
 
 ```
 UFR=0 UBL=1 DFL=2 DBR=3 UFL=4 UBR=5 DFR=6 DBL=7
 ```
 
-At the moment, the only orientation supported is the standard one, as wide
-moves, rotations and slice moves are not supported.
+If the corner is twisted clockwise with respect to the U/D
+axis orientation, the value is increased by 8. If it is twisted
+counter-clowsie, the value is increased by 16.
+
+The orientations of the cube are numbered as follows, where e.g. "RB"
+means that the R face in on top and the B face is on front:
+
+```
+UF=0  UR=1  UB=2  UL=3
+DF=4  DR=5  DB=6  DL=7
+RF=8  RD=9  RB=10 RU=11
+LF=12 LD=13 LB=14 LU=15
+FD=16 FR=17 FU=18 FL=19
+BD=20 BR=21 BU=22 BL=23
+```
 
 In this format, the solved cube looks like this:
 
@@ -297,10 +313,10 @@ In this format, the solved cube looks like this:
 ABCDEFGH=ABCDEFGHIJKL=A
 ```
 
-The cube after the move F looks like this:
+The cube after the move Fw looks like this:
 
 ```
-MBODSFQH=ZBCYEFGHQTKL=A
+ANCPETGR=AbaDEFGHIJRS=L
 ```
 
 A cube in B32 format is always 23 characters long (24 if the terminating

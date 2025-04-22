@@ -1,3 +1,17 @@
+#define EOSHIFT     UINT8_C(4)
+#define COSHIFT     UINT8_C(5)
+
+#define PBITS       UINT8_C(0xF)
+#define ESEPBIT_1   UINT8_C(0x4)
+#define ESEPBIT_2   UINT8_C(0x8)
+#define CSEPBIT     UINT8_C(0x4)
+#define EOBIT       UINT8_C(0x10)
+#define COBITS      UINT8_C(0xF0)
+#define COBITS_2    UINT8_C(0x60)
+#define CTWIST_CW   UINT8_C(0x20)
+#define CTWIST_CCW  UINT8_C(0x40)
+#define EFLIP       UINT8_C(0x10)
+
 STATIC_INLINE int popcount_u32(uint32_t);
 
 STATIC void pieces(cube_t [static 1], uint8_t [static 8], uint8_t [static 12]);

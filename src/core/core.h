@@ -1,5 +1,5 @@
 #include "core_types.h"
-#include "constant_cubes.h"
+#include "constants.h"
 #include "cube.h"
 #include "moves.h"
 #include "transform.h"

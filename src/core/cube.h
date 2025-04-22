@@ -1,7 +1,3 @@
-#define ZERO_ORIENTED_CUBE ((oriented_cube_t) {0})
-#define SOLVED_ORIENTED_CUBE \
-    ((oriented_cube_t) { .cube = SOLVED_CUBE, .orientation = 0 })
-
 STATIC oriented_cube_t solvedcube(void);
 STATIC cube_t cubefromarray(uint8_t [static 8], uint8_t [static 12]);
 STATIC bool isconsistent(oriented_cube_t);
