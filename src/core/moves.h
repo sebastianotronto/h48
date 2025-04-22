@@ -36,6 +36,10 @@ STATIC oriented_cube_t applymoves(oriented_cube_t, const char *);
 			LOG("Unknown move: %c\n", *VAR_B); \
 			return RET_ERROR; \
 		} \
+		if (*(VAR_B+1) == 'w') { \
+			VAR_MOVE_NOMOD += 18; \
+			VAR_B++; \
+		} \
 		if ((VAR_MOD = readmodifier(*(VAR_B+1))) != 0) \
 			VAR_B++; \
 		ARG_MOVE = VAR_MOVE_NOMOD + VAR_MOD; \
@@ -58,6 +62,18 @@ readmove(char c)
 		return MOVE_F;
 	case 'B':
 		return MOVE_B;
+	case 'M':
+		return MOVE_M;
+	case 'S':
+		return MOVE_S;
+	case 'E':
+		return MOVE_E;
+	case 'x':
+		return MOVE_x;
+	case 'y':
+		return MOVE_y;
+	case 'z':
+		return MOVE_z;
 	default:
 		return UINT8_ERROR;
 	}
