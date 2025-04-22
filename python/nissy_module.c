@@ -4,7 +4,6 @@
 
 #include "../src/nissy.h"
 
-#define MAX_CUBE_STR_LEN 1024 /* Update when adding formats */
 #define MAX_SOLUTIONS_SIZE 250000
 
 static bool
@@ -24,7 +23,6 @@ check_error(long long err)
 	case NISSY_ERROR_UNSOLVABLE_CUBE: /* Fallthrough */
 	case NISSY_ERROR_INVALID_MOVES:
 	case NISSY_ERROR_INVALID_TRANS:
-	case NISSY_ERROR_INVALID_FORMAT:
 	case NISSY_ERROR_INVALID_SOLVER:
 	case NISSY_ERROR_NULL_POINTER:
 	case NISSY_ERROR_BUFFER_SIZE:
@@ -70,17 +68,17 @@ PyDoc_STRVAR(compose_doc,
 "Apply 'permutation' on 'cube'.\n"
 "\n"
 "Parameters:\n"
-"  - cube: a cube in B32 format\n"
-"  - permutation: another cube in B32 format\n"
+"  - cube: a cube\n"
+"  - permutation: another cube\n"
 "\n"
-"Returns: the resulting cube string in B32 format\n"
+"Returns: the resulting cube string\n"
 );
 static PyObject *
 compose(PyObject *self, PyObject *args)
 {
 	long long err;
 	const char *cube, *permutation;
-	char result[NISSY_SIZE_B32];
+	char result[NISSY_SIZE_CUBE];
 
 	if (!PyArg_ParseTuple(args, "ss", &cube, &permutation))
 		return NULL;
@@ -95,16 +93,16 @@ PyDoc_STRVAR(inverse_doc,
 "Invert 'cube'.\n"
 "\n"
 "Parameters:\n"
-"  - cube: a cube in B32 format\n"
+"  - cube: a cube in\n"
 "\n"
-"Returns: the inverse cube in B32 format\n"
+"Returns: the inverse cube\n"
 );
 static PyObject *
 inverse(PyObject *self, PyObject *args)
 {
 	long long err;
 	const char *cube;
-	char result[NISSY_SIZE_B32];
+	char result[NISSY_SIZE_CUBE];
 
 	if (!PyArg_ParseTuple(args, "s", &cube))
 		return NULL;
@@ -119,17 +117,17 @@ PyDoc_STRVAR(applymoves_doc,
 "Apply 'moves' to 'cube'.\n"
 "\n"
 "Parameters:\n"
-"  - cube: a cube in B32 format\n"
+"  - cube: a cube in\n"
 "  - moves: the moves to apply on the cube\n"
 "\n"
-"Returns: the resulting cube in B32 format\n"
+"Returns: the resulting cube\n"
 );
 static PyObject *
 applymoves(PyObject *self, PyObject *args)
 {
 	long long err;
 	const char *cube, *moves;
-	char result[NISSY_SIZE_B32];
+	char result[NISSY_SIZE_CUBE];
 
 	if (!PyArg_ParseTuple(args, "ss", &cube, &moves))
 		return NULL;
@@ -144,50 +142,24 @@ PyDoc_STRVAR(applytrans_doc,
 "Apply 'transformation' to 'cube'.\n"
 "\n"
 "Parameters:\n"
-"  - cube: a cube in B32 format\n"
+"  - cube: a cube\n"
 "  - transformation: the transformation to apply on the cube, formatted as\n"
 "    (rotation|mirrored) (2 letters)\n"
 "    for example 'mirrored ur' or 'rotation lf'\n"
 "\n"
-"Returns: the resulting cube in B32 format\n"
+"Returns: the resulting cube\n"
 );
 static PyObject *
 applytrans(PyObject *self, PyObject *args)
 {
 	long long err;
 	const char *cube, *trans;
-	char result[NISSY_SIZE_B32];
+	char result[NISSY_SIZE_CUBE];
 
 	if (!PyArg_ParseTuple(args, "ss", &cube, &trans))
 		return NULL;
 
 	err = nissy_applytrans(cube, trans, result);
-	return string_result(err, result);
-}
-
-PyDoc_STRVAR(convert_doc,
-"convert(fin, fout, cube)\n"
-"--\n\n"
-"Convert 'cube' from format 'fin' to format 'fout'.\n"
-"\n"
-"Parameters:\n"
-"  - fin: the format in which 'cube' is given\n"
-"  - fout: the format to which 'cube' has to be converted\n"
-"  - cube: a cube in B32 format\n"
-"\n"
-"Returns: 'cube' in 'fout' format\n"
-);
-static PyObject *
-convert(PyObject *self, PyObject *args)
-{
-	long long err;
-	const char *fin, *fout, *cube;
-	char result[MAX_CUBE_STR_LEN];
-
-	if (!PyArg_ParseTuple(args, "sss", &fin, &fout, &cube))
-		return NULL;
-
-	err = nissy_convert(fin, fout, cube, MAX_CUBE_STR_LEN, result);
 	return string_result(err, result);
 }
 
@@ -210,7 +182,7 @@ getcube(PyObject *self, PyObject *args)
 {
 	long long ep, eo, cp, co, err;
 	const char *options;
-	char result[NISSY_SIZE_B32];
+	char result[NISSY_SIZE_CUBE];
 
 	if (!PyArg_ParseTuple(args, "LLLLs", &ep, &eo, &cp, &co, &options))
 		return NULL;
@@ -321,7 +293,7 @@ PyDoc_STRVAR(solve_doc,
 "See the documentation for libnissy (in nissy.h) for details.\n"
 "\n"
 "Parameters:\n"
-"  - cube: a cube in B32 format\n"
+"  - cube: a cube\n"
 "  - solver: the solver to use\n"
 "  - minmoves: the minimum number of moves to use\n"
 "  - maxmoves: the maximum number of moves to use\n"
@@ -400,7 +372,6 @@ static PyMethodDef nissy_methods[] = {
 	{ "inverse", inverse, METH_VARARGS, inverse_doc },
 	{ "applymoves", applymoves, METH_VARARGS, applymoves_doc },
 	{ "applytrans", applytrans, METH_VARARGS, applytrans_doc },
-	{ "convert", convert, METH_VARARGS, convert_doc },
 	{ "getcube", getcube, METH_VARARGS, getcube_doc },
 	{ "solverinfo", solverinfo, METH_VARARGS, solverinfo_doc },
 	{ "gendata", gendata, METH_VARARGS, gendata_doc },

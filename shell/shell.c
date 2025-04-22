@@ -18,9 +18,6 @@
 #define FLAG_PERM         "-perm"
 #define FLAG_COMMAND      "-command"
 #define FLAG_STR_CUBE     "-cubestr"
-#define FLAG_FORMAT       "-format"
-#define FLAG_FORMAT_IN    "-fin"
-#define FLAG_FORMAT_OUT   "-fout"
 #define FLAG_MOVES        "-moves"
 #define FLAG_TRANS        "-trans"
 #define FLAG_SOLVER       "-solver"
@@ -31,23 +28,18 @@
 #define FLAG_MAXSOLUTIONS "-n"
 #define FLAG_THREADS      "-t"
 
-#define INFO_CUBEFORMAT(cube) cube " must be given in B32 format."
 #define INFO_MOVESFORMAT "The accepted moves are U, D, R, L, F and B, " \
     "optionally followed by a 2, a ' or a 3."
 #define INFO_TRANSFORMAT "The transformation must be given in the format " \
     "(rotation|mirrored) (2 letters), for exmple " \
     "'rotation UF' or 'mirrored BL'."
-#define INFO_FORMATS "The available formats are H48, B32 and SRC."
 
 typedef struct {
 	int command_index;
-	char cube[22];
-	char cube_perm[22];
+	char cube[NISSY_SIZE_CUBE];
+	char cube_perm[NISSY_SIZE_CUBE];
 	char *str_command;
 	char *str_cube;
-	char *str_format;
-	char *str_format_in;
-	char *str_format_out;
 	char *str_moves;
 	char *str_trans;
 	char *str_solver;
@@ -64,7 +56,6 @@ static int64_t inverse_exec(args_t *);
 static int64_t applymoves_exec(args_t *);
 static int64_t applytrans_exec(args_t *);
 static int64_t frommoves_exec(args_t *);
-static int64_t convert_exec(args_t *);
 static int64_t randomcube_exec(args_t *);
 static int64_t solverinfo_exec(args_t *);
 static int64_t gendata_exec(args_t *);
@@ -81,9 +72,6 @@ static bool set_cube(int, char **, args_t *);
 static bool set_cube_perm(int, char **, args_t *);
 static bool set_str_command(int, char **, args_t *);
 static bool set_str_cube(int, char **, args_t *);
-static bool set_str_format(int, char **, args_t *);
-static bool set_str_format_in(int, char **, args_t *);
-static bool set_str_format_out(int, char **, args_t *);
 static bool set_str_moves(int, char **, args_t *);
 static bool set_str_trans(int, char **, args_t *);
 static bool set_str_solver(int, char **, args_t *);
@@ -107,9 +95,6 @@ struct {
 	OPTION(FLAG_PERM, 1, set_cube_perm),
 	OPTION(FLAG_COMMAND, 1, set_str_command),
 	OPTION(FLAG_STR_CUBE, 1, set_str_cube),
-	OPTION(FLAG_FORMAT, 1, set_str_format),
-	OPTION(FLAG_FORMAT_IN, 1, set_str_format_in),
-	OPTION(FLAG_FORMAT_OUT, 1, set_str_format_out),
 	OPTION(FLAG_MOVES, 1, set_str_moves),
 	OPTION(FLAG_TRANS, 1, set_str_trans),
 	OPTION(FLAG_SOLVER, 1, set_str_solver),
@@ -133,29 +118,27 @@ struct {
 	COMMAND(
 		"compose",
 		"compose " FLAG_CUBE " CUBE " FLAG_PERM " PERM",
-		"Apply on CUBE the permutation defined by PERM. "
-		INFO_CUBEFORMAT("CUBE and PERM"),
+		"Apply on CUBE the permutation defined by PERM.",
 		compose_exec
 	),
 	COMMAND(
 		"inverse",
 		"inverse " FLAG_CUBE " CUBE ",
-		"Compute the inverse of the given CUBE. "
-		INFO_CUBEFORMAT("CUBE"),
+		"Compute the inverse of the given CUBE.",
 		inverse_exec
 	),
 	COMMAND(
 		"applymoves",
 		"applymoves " FLAG_CUBE " CUBE " FLAG_MOVES " MOVES",
 		"Apply the given MOVES to the given CUBE. "
-		INFO_CUBEFORMAT("CUBE") " " INFO_MOVESFORMAT,
+		INFO_MOVESFORMAT,
 		applymoves_exec
 	),
 	COMMAND(
 		"applytrans",
 		"applytrans " FLAG_CUBE " CUBE " FLAG_TRANS " TRANS",
 		"Apply the single transformation TRANS to the given CUBE. "
-		INFO_CUBEFORMAT("CUBE") " " INFO_TRANSFORMAT,
+		INFO_TRANSFORMAT,
 		applytrans_exec
 	),
 	COMMAND(
@@ -166,19 +149,9 @@ struct {
 		frommoves_exec
 	),
 	COMMAND(
-		"convert",
-		"convert " FLAG_STR_CUBE " CUBESTR "
-		FLAG_FORMAT_IN " FORMAT_IN " FLAG_FORMAT_OUT " FORMAT_OUT",
-		"Convert the cube described by CUBESTR from FORMAT_IN to "
-		"FORMAT_OUT."
-		INFO_FORMATS " "
-		"CUBESTR must be a valid cube in the FORMAT_IN format.",
-		convert_exec
-	),
-	COMMAND(
 		"randomcube",
 		"randomcube",
-		"Returns a random cube in B32 format.",
+		"Returns a random.",
 		randomcube_exec
 	),
 	COMMAND(
@@ -202,8 +175,7 @@ struct {
 		FLAG_CUBE " CUBE"
 		FLAG_THREADS " T",
 		"Solve the given CUBE using SOLVER, "
-		"using at least n and at most N moves, and T threads. "
-		INFO_CUBEFORMAT("CUBE"),
+		"using at least n and at most N moves, and T threads.",
 		solve_exec
 	),
 	COMMAND(
@@ -254,7 +226,7 @@ rand64(void)
 static int64_t
 compose_exec(args_t *args)
 {
-	char result[22];
+	char result[NISSY_SIZE_CUBE];
 	int64_t ret;
 
 	ret = nissy_compose(args->cube, args->cube_perm, result);
@@ -267,7 +239,7 @@ compose_exec(args_t *args)
 static int64_t
 inverse_exec(args_t *args)
 {
-	char result[22];
+	char result[NISSY_SIZE_CUBE];
 	int64_t ret;
 
 	ret = nissy_inverse(args->cube, result);
@@ -280,7 +252,7 @@ inverse_exec(args_t *args)
 static int64_t
 applymoves_exec(args_t *args)
 {
-	char result[22];
+	char result[NISSY_SIZE_CUBE];
 	int64_t ret;
 
 	ret = nissy_applymoves(args->cube, args->str_moves, result);
@@ -293,7 +265,7 @@ applymoves_exec(args_t *args)
 static int64_t
 applytrans_exec(args_t *args)
 {
-	char result[22];
+	char result[NISSY_SIZE_CUBE];
 	int64_t ret;
 
 	ret = nissy_applytrans(args->cube, args->str_trans, result);
@@ -308,20 +280,6 @@ frommoves_exec(args_t *args)
 {
 	sprintf(args->cube, NISSY_SOLVED_CUBE);
 	return applymoves_exec(args);
-}
-
-static int64_t
-convert_exec(args_t *args)
-{
-	char result[PRINTCUBE_BUFFER_SIZE];
-	int64_t ret;
-
-	ret = nissy_convert(args->str_format_in, args->str_format_out,
-	    args->str_cube, PRINTCUBE_BUFFER_SIZE, result);
-	if (ret == NISSY_OK || ret == NISSY_WARNING_UNSOLVABLE)
-		printf("%s\n", result);
-
-	return ret;
 }
 
 static int64_t
@@ -575,9 +533,6 @@ parse_args(int argc, char **argv, args_t *args)
 		.cube = "",
 		.cube_perm = "",
 		.str_cube = "",
-		.str_format = "",
-		.str_format_in = "",
-		.str_format_out = "",
 		.str_moves = "",
 		.str_trans = "",
 		.str_solver = "",
@@ -668,7 +623,7 @@ parse_nisstype(const char *arg)
 static bool
 set_cube(int argc, char **argv, args_t *args)
 {
-	memcpy(args->cube, argv[0], 22);
+	memcpy(args->cube, argv[0], NISSY_SIZE_CUBE);
 	args->cube[21] = 0;
 
 	return true;
@@ -677,7 +632,7 @@ set_cube(int argc, char **argv, args_t *args)
 static bool
 set_cube_perm(int argc, char **argv, args_t *args)
 {
-	memcpy(args->cube_perm, argv[0], 22);
+	memcpy(args->cube_perm, argv[0], NISSY_SIZE_CUBE);
 	args->cube_perm[21] = 0;
 
 	return true;
@@ -695,30 +650,6 @@ static bool
 set_str_cube(int argc, char **argv, args_t *args)
 {
 	args->str_cube = argv[0];
-
-	return true;
-}
-
-static bool
-set_str_format(int argc, char **argv, args_t *args)
-{
-	args->str_format = argv[0];
-
-	return true;
-}
-
-static bool
-set_str_format_in(int argc, char **argv, args_t *args)
-{
-	args->str_format_in = argv[0];
-
-	return true;
-}
-
-static bool
-set_str_format_out(int argc, char **argv, args_t *args)
-{
-	args->str_format_out = argv[0];
 
 	return true;
 }

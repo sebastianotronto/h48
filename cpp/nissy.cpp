@@ -13,8 +13,6 @@ extern "C" {
 	long long nissy_inverse(const char *, char *);
 	long long nissy_applymoves(const char *, const char *, char *);
 	long long nissy_applytrans(const char *, const char *, char *);
-	long long nissy_convert(const char *, const char *, const char *,
-	    unsigned, char *);
 	long long nissy_getcube(long long, long long, long long, long long,
 	    const char *, char *);
 	long long nissy_solverinfo(const char *, char *);
@@ -43,7 +41,6 @@ namespace nissy {
 	const error error::UNSOLVABLE_CUBE{-11};
 	const error error::INVALID_MOVES{-20};
 	const error error::INVALID_TRANS{-30};
-	const error error::INVALID_FORMAT{-40};
 	const error error::INVALID_SOLVER{-50};
 	const error error::NULL_POINTER{-60};
 	const error error::BUFFER_SIZE{-61};
@@ -52,9 +49,7 @@ namespace nissy {
 	const error error::UNKNOWN{-999};
 
 	namespace size {
-		constexpr size_t B32 = 22;
-		constexpr size_t H48 = 88;
-		constexpr size_t CUBE_MAX = H48;
+		constexpr size_t CUBE = 22;
 		constexpr size_t TRANSFORMATION = 12;
 		constexpr size_t DATAID = 255;
 	}
@@ -65,71 +60,54 @@ namespace nissy {
 
 	error cube::move(const std::string& moves)
 	{
-		char result[size::B32];
+		char result[size::CUBE];
 		long long err = nissy_applymoves(
-		    m_b32.c_str(), moves.c_str(), result);
+		    m_str.c_str(), moves.c_str(), result);
 		if (err < 0)
 			return error{err};
-		m_b32 = result;
+		m_str = result;
 		return error::OK;
 	}
 
 	error cube::transform(const std::string& trans)
 	{
-		char result[size::B32];
+		char result[size::CUBE];
 		long long err = nissy_applytrans(
-		    m_b32.c_str(), trans.c_str(), result);
+		    m_str.c_str(), trans.c_str(), result);
 		if (err < 0)
 			return error{err};
-		m_b32 = result;
+		m_str = result;
 		return error::OK;
 	}
 
 	void cube::invert()
 	{
-		char result[size::B32];
-		nissy_inverse(m_b32.c_str(), result);
-		m_b32 = result;
+		char result[size::CUBE];
+		nissy_inverse(m_str.c_str(), result);
+		m_str = result;
 	}
 
 	void cube::compose(const cube& other)
 	{
-		char result[size::B32];
+		char result[size::CUBE];
 		nissy_compose(
-		    m_b32.c_str(), other.to_string().c_str(), result);
-		m_b32 = result;
+		    m_str.c_str(), other.to_string().c_str(), result);
+		m_str = result;
 	}
 
-	std::string cube::to_string() const { return m_b32; }
-
-	std::variant<std::string, error>
-	cube::to_string(const std::string& format) const
-	{
-		char result[size::CUBE_MAX];
-		auto err = nissy_convert("B32", format.c_str(),
-		    m_b32.c_str(), size::CUBE_MAX, result);
-		if (err < 0)
-			return error{err};
-		else
-			return result;
-	}
+	std::string cube::to_string() const { return m_str; }
 
 	std::variant<cube, error>
 	cube::from_string(const std::string& str)
 	{
-		return from_string(str, "B32");
-	}
-
-	std::variant<cube, error>
-	cube::from_string(const std::string& str, const std::string& format)
-	{
-		char result[size::B32];
-		cube c;
-		auto err = nissy_convert(format.c_str(),
-		    "B32", c.m_b32.c_str(), size::B32, result);
+		/* Check that the cube is valid by making a single move */
+		char result[size::CUBE];
+		auto err = nissy_applymoves(str.c_str(), "U", result);
 		if (err < 0)
 			return error{err};
-		c.m_b32 = result;
+
+		cube c;
+		c.m_str = str;
 		return c;
 	}
 
@@ -143,13 +121,13 @@ namespace nissy {
 	cube::get(long long ep, long long eo, long long cp, long long co,
 	    const std::string& options)
 	{
-		char result[size::B32];
+		char result[size::CUBE];
 		cube c;
 		auto err = nissy_getcube(
 		    ep, eo, cp, co, options.c_str(), result);
 		if (err < 0)
 			return error{err};
-		c.m_b32 = result;
+		c.m_str = result;
 		return c;
 	}
 

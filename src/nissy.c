@@ -17,7 +17,7 @@ long long parse_h48_solver(
 STATIC bool checkdata(const unsigned char *, const tableinfo_t [static 1]);
 STATIC bool distribution_equal(const uint64_t [static INFO_DISTRIBUTION_LEN],
     const uint64_t [static INFO_DISTRIBUTION_LEN], uint8_t);
-STATIC long long write_result(cube_t, char [static NISSY_SIZE_B32]);
+STATIC long long write_result(cube_t, char [static NISSY_SIZE_CUBE]);
 STATIC size_t my_strnlen(const char *, size_t); 
 STATIC long long nissy_dataid(const char *, char [static NISSY_SIZE_DATAID]);
 STATIC long long nissy_gendata_unsafe(
@@ -117,9 +117,9 @@ distribution_equal(
 }
 
 STATIC long long
-write_result(cube_t cube, char result[static NISSY_SIZE_B32])
+write_result(cube_t cube, char result[static NISSY_SIZE_CUBE])
 {
-	writecube("B32", cube, NISSY_SIZE_B32, result);
+	writecube("B32", cube, NISSY_SIZE_CUBE, result);
 
 	if (!issolvable(cube)) {
 		LOG("Warning: resulting cube is not solvable\n");
@@ -143,9 +143,9 @@ my_strnlen(const char *str, size_t maxlen)
 
 long long
 nissy_compose(
-	const char cube[static NISSY_SIZE_B32],
-	const char permutation[static NISSY_SIZE_B32],
-	char result[static NISSY_SIZE_B32]
+	const char cube[static NISSY_SIZE_CUBE],
+	const char permutation[static NISSY_SIZE_CUBE],
+	char result[static NISSY_SIZE_CUBE]
 )
 {
 	cube_t c, p, res;
@@ -178,14 +178,14 @@ nissy_compose(
 	return write_result(res, result);
 
 nissy_compose_error:
-	writecube("B32", ZERO_CUBE, NISSY_SIZE_B32, result);
+	writecube("B32", ZERO_CUBE, NISSY_SIZE_CUBE, result);
 	return err;
 }
 
 long long
 nissy_inverse(
-	const char cube[static NISSY_SIZE_B32],
-	char result[static NISSY_SIZE_B32]
+	const char cube[static NISSY_SIZE_CUBE],
+	char result[static NISSY_SIZE_CUBE]
 )
 {
 	cube_t c, res;
@@ -210,15 +210,15 @@ nissy_inverse(
 	return write_result(res, result);
 
 nissy_inverse_error:
-	writecube("B32", ZERO_CUBE, NISSY_SIZE_B32, result);
+	writecube("B32", ZERO_CUBE, NISSY_SIZE_CUBE, result);
 	return err;
 }
 
 long long
 nissy_applymoves(
-	const char cube[static NISSY_SIZE_B32],
+	const char cube[static NISSY_SIZE_CUBE],
 	const char *moves,
-	char result[static NISSY_SIZE_B32]
+	char result[static NISSY_SIZE_CUBE]
 )
 {
 	cube_t c, res;
@@ -249,15 +249,15 @@ nissy_applymoves(
 	return write_result(res, result);
 
 nissy_applymoves_error:
-	writecube("B32", ZERO_CUBE, NISSY_SIZE_B32, result);
+	writecube("B32", ZERO_CUBE, NISSY_SIZE_CUBE, result);
 	return err;
 }
 
 long long
 nissy_applytrans(
-	const char cube[static NISSY_SIZE_B32],
+	const char cube[static NISSY_SIZE_CUBE],
 	const char transformation[static NISSY_SIZE_TRANSFORMATION],
-	char result[static NISSY_SIZE_B32]
+	char result[static NISSY_SIZE_CUBE]
 )
 {
 	cube_t c, res;
@@ -282,51 +282,7 @@ nissy_applytrans(
 	return write_result(res, result);
 
 nissy_applytrans_error:
-	writecube("B32", ZERO_CUBE, NISSY_SIZE_B32, result);
-	return err;
-}
-
-long long
-nissy_convert(
-	const char *format_in,
-	const char *format_out,
-	const char *cube_string,
-        unsigned result_size,
-	char result[result_size]
-)
-{
-	cube_t c;
-	long long err;
-
-	if (format_in == NULL) {
-		LOG("[convert] Error: 'format_in' argument is NULL\n");
-		err = NISSY_ERROR_NULL_POINTER;
-		goto nissy_convert_error;
-	}
-
-	if (format_out == NULL) {
-		LOG("[convert] Error: 'format_out' argument is NULL\n");
-		err = NISSY_ERROR_NULL_POINTER;
-		goto nissy_convert_error;
-	}
-
-	if (cube_string == NULL) {
-		LOG("[convert] Error: 'cube_string' argument is NULL\n");
-		err = NISSY_ERROR_NULL_POINTER;
-		goto nissy_convert_error;
-	}
-
-	c = readcube(format_in, cube_string);
-
-	if (!isconsistent(c)) {
-		err = NISSY_ERROR_INVALID_CUBE;
-		goto nissy_convert_error;
-	}
-
-	return writecube(format_out, c, result_size, result);
-
-nissy_convert_error:
-	result[0] = '\0';
+	writecube("B32", ZERO_CUBE, NISSY_SIZE_CUBE, result);
 	return err;
 }
 
@@ -337,7 +293,7 @@ nissy_getcube(
 	long long cp,
 	long long co,
 	const char *options,
-	char result[static NISSY_SIZE_B32]
+	char result[static NISSY_SIZE_CUBE]
 )
 {
 	int i;
@@ -526,7 +482,7 @@ nissy_checkdata(
 
 long long
 nissy_solve(
-	const char cube[static NISSY_SIZE_B32],
+	const char cube[static NISSY_SIZE_CUBE],
 	const char *solver, 
 	unsigned nissflag,
 	unsigned minmoves,
