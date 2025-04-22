@@ -2,13 +2,13 @@
 
 uint8_t readtrans(char [static NISSY_SIZE_TRANSFORMATION]);
 uint8_t inverse_trans(uint8_t);
-cube_t applymoves(cube_t, char *);
-cube_t applytrans(cube_t, char *);
+oriented_cube_t applymoves(oriented_cube_t, char *);
+oriented_cube_t applytrans(oriented_cube_t, char *);
 extern char *transstr[];
 
 void run(void) {
 	uint8_t t, tinv;
-	cube_t cube;
+	oriented_cube_t cube;
 
 	for (t = 0; t < 48; t++) {
 		cube = solvedcube();

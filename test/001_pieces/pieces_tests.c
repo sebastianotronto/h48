@@ -6,7 +6,7 @@ void run(void) {
 	int i;
 	uint8_t corner[8], edge[12];
 	char str[STRLENMAX], *aux;
-	cube_t cube;
+	oriented_cube_t cube;
 
         aux = str;
 	while (fgets(aux, STRLENMAX, stdin) != NULL)
@@ -14,7 +14,7 @@ void run(void) {
 			aux++;
 
 	cube = readcube(str);
-	pieces(&cube, corner, edge);
+	pieces(&cube.cube, corner, edge);
 
 	for (i = 0; i < 8; i++)
 		printf("%" PRIu8 " ", corner[i]);

@@ -23,7 +23,7 @@ STATIC void writetrans(uint8_t, char [static NISSY_SIZE_TRANSFORMATION]);
 STATIC cube_t transform_edges(cube_t, uint8_t);
 STATIC cube_t transform_corners(cube_t, uint8_t);
 STATIC cube_t transform(cube_t, uint8_t);
-STATIC cube_t applytrans(cube_t, const char *);
+STATIC oriented_cube_t applytrans(oriented_cube_t, const char *);
 STATIC_INLINE uint8_t inverse_trans(uint8_t);
 STATIC uint8_t transform_move(uint8_t, uint8_t);
 STATIC uint64_t symmetry_mask(cube_t);
@@ -367,12 +367,12 @@ transform(cube_t c, uint8_t t)
 	}
 }
 
-STATIC cube_t
-applytrans(cube_t cube, const char *buf)
+STATIC oriented_cube_t
+applytrans(oriented_cube_t cube, const char *buf)
 {
 	uint8_t t;
 
-	DBG_ASSERT(isconsistent(cube), ZERO_CUBE,
+	DBG_ASSERT(isconsistent(cube), ZERO_ORIENTED_CUBE,
 	    "transformation error: inconsistent cube\n");
 
 	t = readtrans(buf);
@@ -380,7 +380,10 @@ applytrans(cube_t cube, const char *buf)
 	if (t == UINT8_ERROR)
 		LOG("Unknown transformation: %s\n", buf);
 
-	return transform(cube, t);
+	return (oriented_cube_t){
+		.cube = transform(cube.cube, t),
+		.orientation = cube.orientation
+	};
 }
 
 STATIC_INLINE uint8_t

@@ -4,11 +4,14 @@ cube_t inverse(cube_t);
 
 void run(void) {
 	char str[STRLENMAX];
-	cube_t cube, inv;
+	oriented_cube_t cube, inv;
 
 	fgets(str, STRLENMAX, stdin);
 	cube = readcube(str);
-	inv = inverse(cube);
+	inv = (oriented_cube_t) {
+		.cube = inverse(cube.cube),
+		.orientation = cube.orientation
+	};
 
 	if (iserror(inv)) {
 		printf("Error inverting cube\n");

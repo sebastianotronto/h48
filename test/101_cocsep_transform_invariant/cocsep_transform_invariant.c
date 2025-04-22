@@ -11,7 +11,8 @@ void run(void) {
 	uint64_t selfsim[COCSEP_CLASSES];
 	int64_t coord, tcoord;
 	char str[STRLENMAX];
-	cube_t cube, transd, rep[COCSEP_CLASSES];
+	oriented_cube_t cube;
+	cube_t rep[COCSEP_CLASSES], transd;
 
 	fgets(str, STRLENMAX, stdin);
 	cube = readcube(str);
@@ -19,9 +20,9 @@ void run(void) {
 	gendata_cocsep(buf, selfsim, rep);
 	cocsepdata = (uint32_t *)((char *)buf + INFOSIZE);
 
-	coord = (int64_t)COCLASS(cocsepdata[coord_cocsep(cube)]);
+	coord = (int64_t)COCLASS(cocsepdata[coord_cocsep(cube.cube)]);
 	for (t = 0; t < 48; t++) {
-		transd = transform(cube, t);
+		transd = transform(cube.cube, t);
 		tcoord = (int64_t)COCLASS(cocsepdata[coord_cocsep(transd)]);
 		if (coord != tcoord)
 			printf("Error: expected %" PRId64

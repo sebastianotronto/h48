@@ -16,7 +16,8 @@ void run(void) {
 	uint32_t *cocsepdata, data;
 	int64_t coord, coclass;
 	uint64_t selfsim[COCSEP_CLASSES], sim, t;
-	cube_t cube, rep[COCSEP_CLASSES];
+	oriented_cube_t cube;
+	cube_t rep[COCSEP_CLASSES];
 
 	gendata_cocsep(buf, selfsim, rep);
 	cocsepdata = (uint32_t *)(buf + INFOSIZE);
@@ -25,7 +26,7 @@ void run(void) {
 
 	while (fgets(str, STRLENMAX, stdin) != NULL) {
 		cube = readcube(str);
-		coord = coord_cocsep(cube);
+		coord = coord_cocsep(cube.cube);
 		data = cocsepdata[coord];
 		coclass = (data & (0xFFFU << 16)) >> 16;
 		sim = selfsim[coclass];

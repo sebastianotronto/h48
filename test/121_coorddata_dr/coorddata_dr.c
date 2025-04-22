@@ -16,6 +16,7 @@ void run(void) {
 	unsigned char *data;
 	size_t size;
 	cube_t cube;
+	oriented_cube_t oc;
 	uint64_t coord, coord2;
 
 	size = coordinate_dr_gendata(NULL);
@@ -25,7 +26,8 @@ void run(void) {
 	for (coord = 0; coord < BOUND; coord++) {
 		cube = coordinate_dr_cube(coord, data);
 
-		if (!isconsistent(cube)) {
+		oc = (oriented_cube_t) { .cube = cube, .orientation = 0 };
+		if (!isconsistent(oc)) {
 			printf("Error: invcoord of %" PRId64
 			    " is not consistent\n", coord);
 			goto cleanup;
@@ -43,9 +45,10 @@ void run(void) {
 		}
 
 		if (!found) {
+			oc = (oriented_cube_t){.cube = cube, .orientation = 0};
 			printf("Error: invcoord of %" PRId64 " returns %"
 			    PRId64 " with cube:\n", coord, coord2);
-			writecube(cube, STRLENMAX, str);
+			writecube(oc, STRLENMAX, str);
 			printf("%s\n", str);
 			goto cleanup;
 		}

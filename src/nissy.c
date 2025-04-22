@@ -17,7 +17,7 @@ long long parse_h48_solver(
 STATIC bool checkdata(const unsigned char *, const tableinfo_t [static 1]);
 STATIC bool distribution_equal(const uint64_t [static INFO_DISTRIBUTION_LEN],
     const uint64_t [static INFO_DISTRIBUTION_LEN], uint8_t);
-STATIC long long write_result(cube_t, char [static NISSY_SIZE_CUBE]);
+STATIC long long write_result(oriented_cube_t, char [static NISSY_SIZE_CUBE]);
 STATIC size_t my_strnlen(const char *, size_t); 
 STATIC long long nissy_dataid(const char *, char [static NISSY_SIZE_DATAID]);
 STATIC long long nissy_gendata_unsafe(
@@ -117,7 +117,7 @@ distribution_equal(
 }
 
 STATIC long long
-write_result(cube_t cube, char result[static NISSY_SIZE_CUBE])
+write_result(oriented_cube_t cube, char result[static NISSY_SIZE_CUBE])
 {
 	writecube(cube, NISSY_SIZE_CUBE, result);
 
@@ -147,7 +147,7 @@ nissy_inverse(
 	char result[static NISSY_SIZE_CUBE]
 )
 {
-	cube_t c, res;
+	oriented_cube_t c, res;
 	long long err;
 
 	c = readcube(cube);
@@ -158,7 +158,10 @@ nissy_inverse(
 		goto nissy_inverse_error;
 	}
 
-	res = inverse(c);
+	res = (oriented_cube_t) {
+		.cube = inverse(c.cube),
+		.orientation = c.orientation
+	};
 
 	if (!isconsistent(res)) {
 		LOG("[inverse] Unknown error: inverted cube is invalid\n");
@@ -169,7 +172,7 @@ nissy_inverse(
 	return write_result(res, result);
 
 nissy_inverse_error:
-	writecube(ZERO_CUBE, NISSY_SIZE_CUBE, result);
+	writecube(ZERO_ORIENTED_CUBE, NISSY_SIZE_CUBE, result);
 	return err;
 }
 
@@ -180,7 +183,7 @@ nissy_applymoves(
 	char result[static NISSY_SIZE_CUBE]
 )
 {
-	cube_t c, res;
+	oriented_cube_t c, res;
 	long long err;
 
 	if (moves == NULL) {
@@ -208,7 +211,7 @@ nissy_applymoves(
 	return write_result(res, result);
 
 nissy_applymoves_error:
-	writecube(ZERO_CUBE, NISSY_SIZE_CUBE, result);
+	writecube(ZERO_ORIENTED_CUBE, NISSY_SIZE_CUBE, result);
 	return err;
 }
 
@@ -219,7 +222,7 @@ nissy_applytrans(
 	char result[static NISSY_SIZE_CUBE]
 )
 {
-	cube_t c, res;
+	oriented_cube_t c, res;
 	long long err;
 
 	c = readcube(cube);
@@ -241,7 +244,7 @@ nissy_applytrans(
 	return write_result(res, result);
 
 nissy_applytrans_error:
-	writecube(ZERO_CUBE, NISSY_SIZE_CUBE, result);
+	writecube(ZERO_ORIENTED_CUBE, NISSY_SIZE_CUBE, result);
 	return err;
 }
 
@@ -269,13 +272,14 @@ nissy_getcube(
 
 	c = getcube(ep, eo, cp, co);
 
-	if (!isconsistent(c)) {
+	if (!isconsistent((oriented_cube_t){ .cube = c, .orientation = 0 })) {
 		LOG("[getcube] Error: could not get cube with ep=%lld, "
 		    "eo=%lld, cp=%lld, co=%lld.\n", ep, eo, cp, co);
 		return NISSY_ERROR_OPTIONS;
 	}
 
-	return write_result(c, result);
+/* TODO: should support orientation */
+	return write_result((oriented_cube_t){.cube = c, .orientation = 0}, result);
 }
 
 long long
@@ -456,6 +460,7 @@ nissy_solve(
 	long long stats[static NISSY_SIZE_SOLVE_STATS]
 )
 {
+	oriented_cube_t oc;
 	cube_t c;
 	long long parse_ret;
 	uint8_t h, k;
@@ -466,14 +471,17 @@ nissy_solve(
 		return NISSY_ERROR_NULL_POINTER;
 	}
 
-	c = readcube(cube);
+	oc = readcube(cube);
+	c = oc.cube;
 
-	if (!isconsistent(c)) {
+/* TODO: solve should handle oriented cubes */
+
+	if (!isconsistent(oc)) {
 		LOG("[solve] Error: cube is invalid\n");
 		return NISSY_ERROR_INVALID_CUBE;
 	}
 
-	if (!issolvable(c)) {
+	if (!issolvable((oriented_cube_t){ .cube = c, .orientation = 0})) {
 /* TODO: this is step-dependent */
 		LOG("[solve] Error: cube is not solvable\n");
 		return NISSY_ERROR_UNSOLVABLE_CUBE;

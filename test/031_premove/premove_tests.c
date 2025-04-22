@@ -7,14 +7,14 @@ cube_t premove(cube_t, uint8_t);
 void run(void) {
 	char movestr[STRLENMAX], cubestr[STRLENMAX];
 	uint8_t move;
-	cube_t cube;
+	oriented_cube_t cube;
 
 	fgets(movestr, STRLENMAX, stdin);
 	move = readmove(movestr[0]) + readmodifier(movestr[1]);
 	fgets(cubestr, STRLENMAX, stdin);
 	cube = readcube(cubestr);
 
-	cube = premove(cube, move);
+	cube.cube = premove(cube.cube, move);
 
 	if (iserror(cube)) {
 		printf("Error moving cube\n");

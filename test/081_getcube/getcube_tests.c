@@ -4,7 +4,7 @@ cube_t getcube(int64_t, int64_t, int64_t, int64_t);
 
 void run(void) {
 	char str[STRLENMAX];
-	cube_t cube;
+	oriented_cube_t cube;
 	int64_t ep, eo, cp, co;
 
 	fgets(str, STRLENMAX, stdin);
@@ -16,7 +16,10 @@ void run(void) {
 	fgets(str, STRLENMAX, stdin);
 	co = atoll(str);
 
-	cube = getcube(ep, eo, cp, co);
+	cube = (oriented_cube_t) {
+		.cube = getcube(ep, eo, cp, co),
+		.orientation = 0
+	};
 
 	if (iserror(cube)) {
 		printf("Error cube\n");

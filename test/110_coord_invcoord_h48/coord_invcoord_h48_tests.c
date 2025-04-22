@@ -14,7 +14,8 @@ void run(void) {
 	uint32_t *cocsepdata;
 	uint64_t selfsim[COCSEP_CLASSES];
 	int64_t c, cc;
-	cube_t cube, invc, rep[COCSEP_CLASSES];
+	oriented_cube_t cube;
+	cube_t invc, rep[COCSEP_CLASSES];
 
 	gendata_cocsep(buf, selfsim, rep);
 	cocsepdata = (uint32_t *)(buf + INFOSIZE);
@@ -23,11 +24,11 @@ void run(void) {
 	h = 11;
 	while (fgets(str, STRLENMAX, stdin) != NULL) {
 		cube = readcube(str);
-		c = coord_h48(cube, cocsepdata, h);
+		c = coord_h48(cube.cube, cocsepdata, h);
 		invc = invcoord_h48(c, rep, h);
 		for (t = 0, found = false; t < 48; t++) {
-			cube = transform(invc, t);
-			cc = coord_h48(cube, cocsepdata, h);
+			cube.cube = transform(invc, t);
+			cc = coord_h48(cube.cube, cocsepdata, h);
 			found = found || cc == c;
 		}
 		printf("%d %s\n", i, found ? "ok" : "ERROR");

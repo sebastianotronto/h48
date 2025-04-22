@@ -1,3 +1,4 @@
+#include "core_types.h"
 #include "constant_cubes.h"
 #include "cube.h"
 #include "moves.h"

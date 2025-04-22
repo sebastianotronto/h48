@@ -6,7 +6,7 @@ void pieces(cube_t *, uint8_t [static 8], uint8_t [static 12]);
 
 void run(void) {
 	char str[STRLENMAX];
-	cube_t cube;
+	oriented_cube_t cube;
 	uint8_t edge[12], corner[8];
 	int64_t eo;
 
@@ -15,12 +15,12 @@ void run(void) {
 	fgets(str, STRLENMAX, stdin);
 	eo = atoi(str);
 
-	set_eo(&cube, eo);
+	set_eo(&cube.cube, eo);
 
 	if (iserror(cube)) {
 		printf("Error setting EO\n");
 	} else if (!isconsistent(cube)) {
-		pieces(&cube, corner, edge);
+		pieces(&cube.cube, corner, edge);
 		fprintf(stderr, "edges: ");
 		for (int i = 0; i < 12; i++)
 			fprintf(stderr, "%d ", edge[i]);

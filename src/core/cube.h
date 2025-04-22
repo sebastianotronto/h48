@@ -1,17 +1,33 @@
-STATIC cube_t solvedcube(void);
+#define ZERO_ORIENTED_CUBE ((oriented_cube_t) {0})
+#define SOLVED_ORIENTED_CUBE \
+    ((oriented_cube_t) { .cube = SOLVED_CUBE, .orientation = 0 })
+
+STATIC oriented_cube_t solvedcube(void);
 STATIC cube_t cubefromarray(uint8_t [static 8], uint8_t [static 12]);
-STATIC bool isconsistent(cube_t);
-STATIC bool issolvable(cube_t);
-STATIC bool issolved(cube_t);
-STATIC bool iserror(cube_t);
+STATIC bool isconsistent(oriented_cube_t);
+STATIC bool issolvable(oriented_cube_t);
+STATIC bool issolved(oriented_cube_t);
+STATIC bool iserror(oriented_cube_t);
 STATIC void getcube_fix(long long *, long long *, long long *, long long *);
 STATIC cube_t getcube(int64_t, int64_t, int64_t, int64_t);
 
-/* This is used only in tests, use SOLVED_CUBE directly everywhere else */
-STATIC cube_t
+STATIC oriented_cube_t readcube(const char *);
+STATIC int64_t writecube(oriented_cube_t, size_t n, char [n]);
+STATIC uint8_t readco(const char *);
+STATIC uint8_t readcp(const char *);
+STATIC uint8_t readeo(const char *);
+STATIC uint8_t readep(const char *);
+
+STATIC uint8_t b32toedge(char);
+STATIC uint8_t b32tocorner(char);
+STATIC char edgetob32(uint8_t);
+STATIC char cornertob32(uint8_t);
+
+/* This is used only in tests, use SOLVED_ORIENTED_CUBE everywhere else */
+STATIC oriented_cube_t
 solvedcube(void)
 {
-	return SOLVED_CUBE;
+	return SOLVED_ORIENTED_CUBE;
 }
 
 STATIC cube_t
@@ -24,12 +40,12 @@ cubefromarray(uint8_t c[static 8], uint8_t e[static 12])
 }
 
 STATIC bool
-isconsistent(cube_t cube)
+isconsistent(oriented_cube_t cube)
 {
 	uint8_t i, p, e, piece, corner[8], edge[12];
 	bool found[12];
 
-	pieces(&cube, corner, edge);
+	pieces(&cube.cube, corner, edge);
 
 	for (i = 0; i < 12; i++)
 		found[i] = false;
@@ -63,25 +79,29 @@ isconsistent(cube_t cube)
 		if (!found[i])
 			goto inconsistent_cp;
 
+	if (cube.orientation >= 24)
+		goto inconsistent_orientation;
+
 	return true;
 
 inconsistent_ep:
 inconsistent_cp:
 inconsistent_eo:
 inconsistent_co:
-	/* We used to do more logging here, hence the 4 different labels */
+inconsistent_orientation:
+	/* We used to do more logging here, hence the different labels */
 	return false;
 }
 
 STATIC bool
-issolvable(cube_t cube)
+issolvable(oriented_cube_t cube)
 {
 	uint8_t i, eo, co, piece, edge[12], corner[8], ep[12], cp[8];
 
 	DBG_ASSERT(isconsistent(cube), false,
 	    "issolvable: cube is inconsistent\n");
 
-	pieces(&cube, corner, edge);
+	pieces(&cube.cube, corner, edge);
 	for (i = 0; i < 12; i++)
 		ep[i] = edge[i] & PBITS;
 	for (i = 0; i < 8; i++)
@@ -120,15 +140,15 @@ issolvable_co:
 }
 
 bool
-issolved(cube_t cube)
+issolved(oriented_cube_t cube)
 {
-	return equal(cube, SOLVED_CUBE);
+	return equal(cube.cube, SOLVED_CUBE);
 }
 
 bool
-iserror(cube_t cube)
+iserror(oriented_cube_t cube)
 {
-	return equal(cube, ZERO_CUBE);
+	return equal(cube.cube, ZERO_CUBE);
 }
 
 STATIC void
@@ -174,21 +194,6 @@ getcube(int64_t ep, int64_t eo, int64_t cp, int64_t co)
 
 	return cubefromarray(carr, earr);
 }
-
-
-/******************************************************************************/
-
-STATIC cube_t readcube(const char *);
-STATIC int64_t writecube(cube_t, size_t n, char [n]);
-STATIC uint8_t readco(const char *);
-STATIC uint8_t readcp(const char *);
-STATIC uint8_t readeo(const char *);
-STATIC uint8_t readep(const char *);
-
-STATIC uint8_t b32toedge(char);
-STATIC uint8_t b32tocorner(char);
-STATIC char edgetob32(uint8_t);
-STATIC char cornertob32(uint8_t);
 
 STATIC uint8_t
 readco(const char *str)
@@ -243,11 +248,11 @@ readep(const char *str)
 	return UINT8_ERROR;
 }
 
-STATIC cube_t
+STATIC oriented_cube_t
 readcube(const char *buf)
 {
 	int i;
-	uint8_t c[8], e[12];
+	uint8_t c[8], e[12], orientation;
 
 	for (i = 0; i < 8; i++) {
 		c[i] = b32tocorner(buf[i]);
@@ -258,14 +263,14 @@ readcube(const char *buf)
 			} else {
 				LOG("(char '%c')\n", buf[i]);
 			}
-			return ZERO_CUBE;
+			return ZERO_ORIENTED_CUBE;
 		}
 	}
 
 	if (buf[8] != '=') {
 		LOG("Error reading separator: a single '=' "
 		    "must be used to separate edges and corners\n");
-		return ZERO_CUBE;
+		return ZERO_ORIENTED_CUBE;
 	}
 
 	for (i = 0; i < 12; i++) {
@@ -277,15 +282,25 @@ readcube(const char *buf)
 			} else {
 				LOG("(char '%c')\n", buf[i+9]);
 			}
-			return ZERO_CUBE;
+			return ZERO_ORIENTED_CUBE;
 		}
 	}
 
-	return cubefromarray(c, e);
+	orientation = (uint8_t)(buf[22] - 'A');
+	if (orientation >= 24) {
+		LOG("Error reading orientation: impossible value %" PRIu8
+		    " (%c)\n", orientation, buf[22]);
+		return ZERO_ORIENTED_CUBE;
+	}
+
+	return (oriented_cube_t) {
+		.cube = cubefromarray(c, e),
+		.orientation = orientation
+	};
 }
 
 STATIC int64_t
-writecube(cube_t cube, size_t buf_size, char buf[buf_size])
+writecube(oriented_cube_t cube, size_t buf_size, char buf[buf_size])
 {
 	int i;
 	uint8_t corner[8], edge[12];
@@ -297,7 +312,7 @@ writecube(cube_t cube, size_t buf_size, char buf[buf_size])
 		return NISSY_ERROR_BUFFER_SIZE;
 	}
 
-	pieces(&cube, corner, edge);
+	pieces(&cube.cube, corner, edge);
 
 	for (i = 0; i < 8; i++)
 		buf[i] = cornertob32(corner[i]);
@@ -307,9 +322,8 @@ writecube(cube_t cube, size_t buf_size, char buf[buf_size])
 	for (i = 0; i < 12; i++)
 		buf[i+9] = edgetob32(edge[i]);
 
-/* TODO */
 	buf[21] = '=';
-	buf[22] = 'A';
+	buf[22] = (char)cube.orientation + 'A';
 	buf[23] = '\0';
 
 	return NISSY_OK;
@@ -351,4 +365,3 @@ cornertob32(uint8_t corner)
 
 	return val < 26 ? 'A' + (char)val : 'a' + (char)(val - 26);
 }
-/******************************************************************************/

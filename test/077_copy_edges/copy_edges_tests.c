@@ -4,7 +4,7 @@ void copy_edges(cube_t *, cube_t);
 
 void run(void) {
 	char str[STRLENMAX];
-	cube_t c1, c2;
+	oriented_cube_t c1, c2;
 
 	fgets(str, STRLENMAX, stdin);
 	c1 = readcube(str);
@@ -12,7 +12,7 @@ void run(void) {
 	fgets(str, STRLENMAX, stdin);
 	c2 = readcube(str);
 
-	copy_edges(&c1, c2);
+	copy_edges(&c1.cube, c2.cube);
 
 	if (iserror(c1)) {
 		printf("Error setting EO\n");

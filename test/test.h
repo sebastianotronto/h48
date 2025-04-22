@@ -10,6 +10,7 @@
 
 #include "../src/nissy.h"
 #include "../src/arch/arch.h"
+#include "../src/core/core_types.h"
 #include "../src/solvers/solutions_types_macros.h"
 #include "../src/solvers/tables_types_macros.h"
 #include "../src/solvers/h48/coordinate_types_macros.h"
@@ -20,13 +21,13 @@
 #define STRLENMAX 10000
 
 /* Basic functions used in most tests */
-cube_t solvedcube(void);
-bool iserror(cube_t);
-bool isconsistent(cube_t);
-bool issolvable(cube_t);
-bool issolved(cube_t);
-cube_t readcube(char *);
-int64_t writecube(cube_t, size_t n, char [n]);
+oriented_cube_t solvedcube(void);
+bool iserror(oriented_cube_t);
+bool isconsistent(oriented_cube_t);
+bool issolvable(oriented_cube_t);
+bool issolved(oriented_cube_t);
+oriented_cube_t readcube(char *);
+int64_t writecube(oriented_cube_t, size_t n, char [n]);
 
 /* Test function to be implemented by all tests */
 void run(void);

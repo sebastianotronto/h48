@@ -2,7 +2,7 @@
 
 void run(void) {
 	char str[STRLENMAX], *aux;
-	cube_t cube;
+	oriented_cube_t cube;
 
 	aux = str;
 	while (fgets(aux, STRLENMAX, stdin) != NULL)

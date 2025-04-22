@@ -1,10 +1,10 @@
 #include "../test.h"
 
-cube_t applymoves(cube_t, char *);
+oriented_cube_t applymoves(oriented_cube_t, char *);
 
 void run(void) {
 	char movestr[STRLENMAX], cubestr[STRLENMAX];
-	cube_t cube;
+	oriented_cube_t cube;
 
 	fgets(movestr, STRLENMAX, stdin);
 	fgets(cubestr, STRLENMAX, stdin);

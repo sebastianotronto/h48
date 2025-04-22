@@ -155,7 +155,7 @@ solve_h48_dfs(dfsarg_solve_h48_t arg[static 1])
 	bool ulbi, ulbn;
 	cube_t backup_cube, backup_inverse;
 
-	if (issolved(arg->cube)) {
+	if (equal(arg->cube, SOLVED_CUBE)) {
 		nm = arg->solution_moves->nmoves
 		    + arg->solution_moves->npremoves;
 		if (arg->target_depth != nm)
@@ -282,7 +282,7 @@ solve_h48_maketasks(
 	cube_t backup_cube;
 	solution_moves_t moves;
 
-	if (issolved(maketasks_arg->cube)) {
+	if (equal(maketasks_arg->cube, SOLVED_CUBE)) {
 		if (maketasks_arg->nmoves > maketasks_arg->maxmoves ||
 		    maketasks_arg->nmoves < maketasks_arg->minmoves ||
 		    solutions_done(solve_arg->solution_list,

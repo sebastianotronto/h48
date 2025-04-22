@@ -21,7 +21,7 @@ STATIC uint8_t inverse_move(uint8_t);
 STATIC void sortparallel_moves(size_t n, uint8_t [n]);
 STATIC bool are_lastmoves_singlecw(size_t n, const uint8_t [n]);
 
-STATIC cube_t applymoves(cube_t, const char *);
+STATIC oriented_cube_t applymoves(oriented_cube_t, const char *);
 
 #define FOREACH_READMOVE(ARG_BUF, ARG_MOVE, ARG_C, ARG_MAX, \
 	RET_ERROR, ARG_ACTION) \
@@ -319,17 +319,17 @@ are_lastmoves_singlecw(size_t n, const uint8_t moves[n])
 	return isbase(moves[n-1]) && (!two || isbase(moves[n-2]));
 }
 
-STATIC cube_t
-applymoves(cube_t cube, const char *buf)
+STATIC oriented_cube_t
+applymoves(oriented_cube_t cube, const char *buf)
 {
 	int c;
 	uint8_t m;
 
-	DBG_ASSERT(isconsistent(cube), ZERO_CUBE,
+	DBG_ASSERT(isconsistent(cube), ZERO_ORIENTED_CUBE,
 	    "move error: inconsistent cube\n");
 
-	FOREACH_READMOVE(buf, m, c, -1, ZERO_CUBE,
-		cube = move(cube, m);
+	FOREACH_READMOVE(buf, m, c, -1, ZERO_ORIENTED_CUBE,
+		cube.cube = move(cube.cube, m);
 	)
 
 	return cube;
