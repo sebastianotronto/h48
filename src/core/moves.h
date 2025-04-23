@@ -33,11 +33,28 @@ STATIC oriented_cube_t applymoves(oriented_cube_t, const char *);
 	RET_ERROR, ARG_ACTION) \
 	const char *VAR_B; \
 	uint8_t VAR_MOVE_NOMOD, VAR_MOD; \
+	bool VAR_IN_PARENTHESES = false; \
 	for (VAR_B = ARG_BUF, ARG_C = 0; *VAR_B != '\0'; VAR_B++, ARG_C++) { \
 		while (*VAR_B == ' ' || *VAR_B == '\t' || *VAR_B == '\n') \
 			VAR_B++; \
 		if (*VAR_B == '\0' || ARG_C == ARG_MAX) \
 			break; \
+		if (*VAR_B == '(') { \
+			if (VAR_IN_PARENTHESES) { \
+				LOG("Nested parentheses in move sequence\n"); \
+				return RET_ERROR; \
+			} \
+			VAR_IN_PARENTHESES = true; \
+			continue; \
+		} \
+		if (*VAR_B == ')') { \
+			if (!VAR_IN_PARENTHESES) { \
+				LOG("Mismatched ')' in move sequence\n"); \
+				return RET_ERROR; \
+			} \
+			VAR_IN_PARENTHESES = false; \
+			continue; \
+		} \
 		if ((VAR_MOVE_NOMOD = readmove(*VAR_B)) == UINT8_ERROR) { \
 			LOG("Unknown move: %c\n", *VAR_B); \
 			return RET_ERROR; \
@@ -103,6 +120,7 @@ readmodifier(char c)
 STATIC int64_t
 readmoves(const char *buf, size_t n, uint8_t ret[n])
 {
+// TODO: modify to accept NISS
 	uint8_t m;
 	uint64_t c;
 
@@ -170,6 +188,8 @@ writemoves_error:
 STATIC_INLINE bool
 allowednextmove(uint8_t m1, uint8_t m2)
 {
+// TODO: adjust allowedmask
+// TODO: movemask is now 64 bits
 	return allowedmask[movebase(m1)] & (UINT32_C(1) << m2);
 }
 
@@ -194,9 +214,6 @@ movebase(uint8_t move)
 STATIC_INLINE uint8_t
 moveaxis(uint8_t move)
 {
-	if (move > MOVE_B3)
-		return UINT8_ERROR;
-
 	return move / 6;
 }
 
@@ -209,6 +226,8 @@ isbase(uint8_t move)
 STATIC_INLINE bool
 parallel(uint8_t m1, uint8_t m2)
 {
+// TODO add unit tests
+//TODO fix the logic (maybe use moveaxis(movefollow)), then remove comment
 	return moveaxis(m1) == moveaxis(m2);
 }
 
@@ -303,7 +322,7 @@ move(cube_t c, uint8_t m)
 	case MOVE_B3:
 		return MOVE(B3, c);
 	default:
-		LOG("move error: unknown move %" PRIu8 "\n", m);
+		LOG("move error: %" PRIu8 " is not a basic move\n", m);
 		return ZERO_CUBE;
 	}
 }
@@ -313,10 +332,14 @@ transform_move(uint8_t m, uint8_t t)
 {
 	uint8_t a, base, modifier;
 
-	a = moveaxis(m);
-	if (a == UINT8_ERROR)
+	if (m > MOVE_B3) {
+		LOG("transform_move: attempting to transform %s, but "
+		    "transofrmations are only supported for basic moves\n",
+		    movestr[m]);
 		return UINT8_ERROR;
+	}
 
+	a = moveaxis(m);
 	base = trans_move_table[t][a];
 	if (movebase(m) != 2 * a)
 		base = moveopposite(base);
@@ -405,6 +428,7 @@ inverse_move(uint8_t m)
 STATIC void
 sortparallel_moves(size_t n, uint8_t moves[n])
 {
+// TODO: fix for wide moves...
 	uint8_t i;
 
 	if (n < 2)
