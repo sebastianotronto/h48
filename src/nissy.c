@@ -26,7 +26,8 @@ STATIC long long nissy_gendata_unsafe(
 #define GETCUBE_OPTIONS(S, F) { .option = S, .fix = F }
 struct {
 	char *option;
-	void (*fix)(long long *, long long *, long long *, long long *);
+	void (*fix)(long long *, long long *,
+	    long long *, long long *, long long *);
 } getcube_options[] = {
 	GETCUBE_OPTIONS("fix", getcube_fix),
 	GETCUBE_OPTIONS(NULL, NULL)
@@ -254,12 +255,13 @@ nissy_getcube(
 	long long eo,
 	long long cp,
 	long long co,
+	long long orient,
 	const char *options,
 	char result[static NISSY_SIZE_CUBE]
 )
 {
 	int i;
-	cube_t c;
+	oriented_cube_t oc;
 
 	if (options == NULL) {
 		LOG("[getcube] Error: 'options' argument is NULL\n");
@@ -268,18 +270,19 @@ nissy_getcube(
 
 	for (i = 0; getcube_options[i].option != NULL; i++)
 		if (!strcmp(options, getcube_options[i].option))
-			getcube_options[i].fix(&ep, &eo, &cp, &co);
+			getcube_options[i].fix(&ep, &eo, &cp, &co, &orient);
 
-	c = getcube(ep, eo, cp, co);
+	oc.cube = getcube(ep, eo, cp, co);
+	oc.orientation = orient;
 
-	if (!isconsistent((oriented_cube_t){ .cube = c, .orientation = 0 })) {
+	if (!isconsistent(oc)) {
 		LOG("[getcube] Error: could not get cube with ep=%lld, "
-		    "eo=%lld, cp=%lld, co=%lld.\n", ep, eo, cp, co);
+		    "eo=%lld, cp=%lld, co=%lld, orient=%lld.\n",
+		    ep, eo, cp, co, orient);
 		return NISSY_ERROR_OPTIONS;
 	}
 
-/* TODO: should support orientation */
-	return write_result((oriented_cube_t){.cube = c, .orientation = 0}, result);
+	return write_result(oc, result);
 }
 
 long long

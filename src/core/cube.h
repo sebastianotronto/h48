@@ -4,7 +4,8 @@ STATIC bool isconsistent(oriented_cube_t);
 STATIC bool issolvable(oriented_cube_t);
 STATIC bool issolved(oriented_cube_t);
 STATIC bool iserror(oriented_cube_t);
-STATIC void getcube_fix(long long *, long long *, long long *, long long *);
+STATIC void getcube_fix(long long *, long long *,
+    long long *, long long *, long long *);
 STATIC cube_t getcube(int64_t, int64_t, int64_t, int64_t);
 
 STATIC oriented_cube_t readcube(const char *);
@@ -148,7 +149,13 @@ iserror(oriented_cube_t cube)
 }
 
 STATIC void
-getcube_fix(long long *ep, long long *eo, long long *cp, long long *co)
+getcube_fix(
+	long long *ep,
+	long long *eo,
+	long long *cp,
+	long long *co,
+	long long *orien
+)
 {
 	uint8_t e[12], c[8], coarr[8];
 
@@ -156,6 +163,7 @@ getcube_fix(long long *ep, long long *eo, long long *cp, long long *co)
 	*eo = (*eo % POW_2_11 + POW_2_11) % POW_2_11;
 	*cp = (*cp % FACT_8 + FACT_8) % FACT_8;
 	*co = (*cp % POW_3_7 + POW_3_7) % POW_3_7;
+	*orien = (*orien % 24 + 24) % 24;
 
 	indextoperm(*ep, 12, e);
 	indextoperm(*cp, 8, c);

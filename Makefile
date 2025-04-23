@@ -42,9 +42,6 @@ debugshell: debugnissy.o
 	mkdir -p tables
 	${CC} ${MACROS} ${DBGFLAGS} -o debugrun debugnissy.o shell/shell.c
 
-shelltest: debugshell
-	./shell/test.sh
-
 python: nissy.o
 	${CC} ${CFLAGS} -shared ${PYTHON3_INCLUDES} -o nissy_python_module.so \
 		nissy.o python/nissy_module.c
@@ -55,4 +52,4 @@ qt: nissy.o
 	cd qt/build && make
 	cp qt/build/appnissyqt ./nissyqt
 
-.PHONY: all clean test tool debugtool shell debugshell shelltest python qt
+.PHONY: all clean test tool debugtool shell debugshell python qt

@@ -13,7 +13,7 @@ extern "C" {
 	long long nissy_applymoves(const char *, const char *, char *);
 	long long nissy_applytrans(const char *, const char *, char *);
 	long long nissy_getcube(long long, long long, long long, long long,
-	    const char *, char *);
+	    long long, const char *, char *);
 	long long nissy_solverinfo(const char *, char *);
 	long long nissy_gendata(const char *, unsigned long long,
 	    unsigned char *);
@@ -103,19 +103,20 @@ namespace nissy {
 	}
 
 	std::variant<cube, error>
-	cube::get(long long ep, long long eo, long long cp, long long co)
+	cube::get(long long ep, long long eo,
+	    long long cp, long long co, long long orien)
 	{
-		return get(ep, eo, cp, co, "fix");
+		return get(ep, eo, cp, co, orien, "fix");
 	}
 
 	std::variant<cube, error>
 	cube::get(long long ep, long long eo, long long cp, long long co,
-	    const std::string& options)
+	    long long orient, const std::string& options)
 	{
 		char result[size::CUBE];
 		cube c;
-		auto err = nissy_getcube(
-		    ep, eo, cp, co, options.c_str(), result);
+		auto err = nissy_getcube(ep, eo, cp, co, orient,
+		    options.c_str(), result);
 		if (err < 0)
 			return error{err};
 		c.m_str = result;

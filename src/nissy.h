@@ -200,10 +200,11 @@ range will be adjusted before using it. The option "fix" also fixes parity and
 orientation issues, resulting always in a solvable cube.
 
 Parameters:
-   ep      - The edge permutation, 0 <= ep <= 479001600 (12!)
-   eo      - The edge orientation, 0 <= eo <= 2047 (2^11)
-   cp      - The corner permutation, 0 <= cp <= 40320 (8!)
-   co      - The corner orientation, 0 <= co <= 2187 (3^7)
+   ep      - The edge permutation, 0 <= ep < 479001600 (12!)
+   eo      - The edge orientation, 0 <= eo < 2047 (2^11)
+   cp      - The corner permutation, 0 <= cp < 40320 (8!)
+   co      - The corner orientation, 0 <= co < 2187 (3^7)
+   orient  - The orientation of the cube, 0 <= orient < 24
    options - Other options.
    result  - The return parameter for the resulting cube.
 
@@ -218,6 +219,7 @@ nissy_getcube(
 	long long eo,
 	long long cp,
 	long long co,
+	long long orient,
 	const char *options,
 	char result[static NISSY_SIZE_CUBE]
 );

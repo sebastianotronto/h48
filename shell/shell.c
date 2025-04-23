@@ -268,7 +268,7 @@ randomcube_exec(args_t *args)
 	eo = rand64();
 	cp = rand64();
 	co = rand64();
-	ret = nissy_getcube(ep, eo, cp, co, "fix", result);
+	ret = nissy_getcube(ep, eo, cp, co, 0, "fix", result);
 	if (ret == NISSY_OK || ret == NISSY_WARNING_UNSOLVABLE)
 		printf("%s\n", result);
 

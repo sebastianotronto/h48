@@ -138,7 +138,7 @@ applytrans(PyObject *self, PyObject *args)
 }
 
 PyDoc_STRVAR(getcube_doc,
-"getcube(ep, eo, cp, co, options)\n"
+"getcube(ep, eo, cp, co, orientation, options)\n"
 "--\n\n"
 "Constructs the cube from the given coordinates and options\n"
 "\n"
@@ -147,6 +147,7 @@ PyDoc_STRVAR(getcube_doc,
 "  - eo: the edge orientation coordinate\n"
 "  - cp: the corner permutation coordinate\n"
 "  - co: the corner orientation coordinate\n"
+"  - orientation: the orientation of the cube\n"
 "  - options: a string, for example \"fix\"\n"
 "\n"
 "Returns: the cube constructed from the given coordinates\n"
@@ -154,14 +155,15 @@ PyDoc_STRVAR(getcube_doc,
 static PyObject *
 getcube(PyObject *self, PyObject *args)
 {
-	long long ep, eo, cp, co, err;
+	long long ep, eo, cp, co, or, err;
 	const char *options;
 	char result[NISSY_SIZE_CUBE];
 
-	if (!PyArg_ParseTuple(args, "LLLLs", &ep, &eo, &cp, &co, &options))
+	if (!PyArg_ParseTuple(
+	    args, "LLLLLs", &ep, &eo, &cp, &co, &or, &options))
 		return NULL;
 
-	err = nissy_getcube(ep, eo, cp, co, options, result);
+	err = nissy_getcube(ep, eo, cp, co, or, options, result);
 	return string_result(err, result);
 }
 

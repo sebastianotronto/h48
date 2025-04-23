@@ -56,10 +56,10 @@ namespace nissy {
 
 		static std::variant<cube, error> from_string(
 		    const std::string&);
-		static std::variant<cube, error> get(
-		    long long ep, long long eo, long long cp, long long co);
-		static std::variant<cube, error> get(
-		    long long ep, long long eo, long long cp, long long co,
+		static std::variant<cube, error> get(long long ep,
+		    long long eo, long long cp, long long co, long long orien);
+		static std::variant<cube, error> get(long long ep,
+		    long long eo, long long cp, long long co, long long orien,
 		    const std::string& options);
 
 	private:
