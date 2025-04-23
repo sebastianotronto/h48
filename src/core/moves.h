@@ -14,8 +14,13 @@ STATIC_INLINE uint8_t movebase(uint8_t);
 STATIC_INLINE uint8_t moveaxis(uint8_t);
 STATIC_INLINE bool isbase(uint8_t);
 STATIC_INLINE bool parallel(uint8_t, uint8_t);
+STATIC_INLINE uint8_t moveopposite(uint8_t);
+STATIC_INLINE uint8_t reorient_move(uint8_t, uint8_t);
+STATIC_INLINE uint8_t movefollow(uint8_t);
+STATIC uint8_t transform_move(uint8_t, uint8_t);
 
 STATIC cube_t move(cube_t, uint8_t);
+STATIC oriented_cube_t move_extended(oriented_cube_t, uint8_t);
 STATIC cube_t premove(cube_t, uint8_t);
 STATIC uint8_t inverse_move(uint8_t);
 STATIC void sortparallel_moves(size_t n, uint8_t [n]);
@@ -112,14 +117,14 @@ countmoves(const char *buf)
 {
 	uint8_t m;
 	uint64_t c;
+	int64_t count;
 
+	count = 0;
 	FOREACH_READMOVE(buf, m, c, INT_MAX, NISSY_ERROR_INVALID_MOVES,
-		{}
+		count += m <= MOVE_Bw3 ? 1 : (m <= MOVE_E3 ? 2 : 0);
 	)
 
-	(void)m; /* Ignore "variable set but not used" warning */
-
-	return (int64_t)c;
+	return count;
 }
 
 STATIC int64_t
@@ -188,6 +193,9 @@ movebase(uint8_t move)
 STATIC_INLINE uint8_t
 moveaxis(uint8_t move)
 {
+	if (move > MOVE_B3)
+		return UINT8_ERROR;
+
 	return move / 6;
 }
 
@@ -207,6 +215,44 @@ STATIC_INLINE uint8_t
 moveopposite(uint8_t move)
 {
 	return movebase(move) == 2 * moveaxis(move) ? move + 3 : move - 3;
+}
+
+STATIC_INLINE uint8_t
+reorient_move(uint8_t m, uint8_t or)
+{
+	return transform_move(m, orientation_trans[or]);
+}
+
+/* This is currently unused, but it may turn out to be useful at some point */
+STATIC_INLINE uint8_t
+movefollow(uint8_t move)
+{
+	uint8_t b, m;
+
+	if (move <= MOVE_B3)
+		return move;
+
+	if (move <= MOVE_Bw3)
+		return move - MOVE_Uw;
+
+	b = UINT8_C(3) * (move / UINT8_C(3));
+	m = move - b;
+	switch (b) {
+	case MOVE_M:
+		return MOVE_L + m;
+	case MOVE_S:
+		return MOVE_F + m;
+	case MOVE_E:
+		return MOVE_D + m;
+	case MOVE_x:
+		return MOVE_R + m;
+	case MOVE_y:
+		return MOVE_U + m;
+	case MOVE_z:
+		return MOVE_F + m;
+	default:
+		return UINT8_ERROR;
+	}
 }
 
 STATIC cube_t
@@ -253,6 +299,47 @@ move(cube_t c, uint8_t m)
 		LOG("move error: unknown move %" PRIu8 "\n", m);
 		return ZERO_CUBE;
 	}
+}
+
+STATIC uint8_t
+transform_move(uint8_t m, uint8_t t)
+{
+	uint8_t a, base, modifier;
+
+	a = moveaxis(m);
+	if (a == UINT8_ERROR)
+		return UINT8_ERROR;
+
+	base = trans_move_table[t][a];
+	if (movebase(m) != 2 * a)
+		base = moveopposite(base);
+
+	modifier = m % 3;
+	if (t >= TRANS_UFm)
+		modifier = 2 - modifier;
+
+	return base + modifier;
+}
+
+STATIC oriented_cube_t
+move_extended(oriented_cube_t c, uint8_t m)
+{
+	int i;
+	equivalent_moves_t eqm;
+	oriented_cube_t ret;
+
+	eqm = equivalent_moves_table[m];
+	ret = c;
+
+	for (i = 0; eqm.move[i] != UINT8_MAX; i++)
+		ret.cube = move(
+		    ret.cube, reorient_move(eqm.move[i], ret.orientation));
+
+	for (i = 0; eqm.rotation[i] != UINT8_MAX; i++)
+		ret.orientation = orientation_transition_table[
+		    ret.orientation][eqm.rotation[i]];
+
+	return ret;
 }
 
 /* Applies the INVERSE of m BEFORE the scramble corresponding to c */
@@ -345,7 +432,7 @@ applymoves(oriented_cube_t cube, const char *buf)
 	    "move error: inconsistent cube\n");
 
 	FOREACH_READMOVE(buf, m, c, -1, ZERO_ORIENTED_CUBE,
-		cube.cube = move(cube.cube, m);
+		cube = move_extended(cube, m);
 	)
 
 	return cube;

@@ -5,7 +5,7 @@
 cube_t applytrans(cube_t, const char *);
 uint8_t transform_move(uint8_t, uint8_t);
 int64_t readmoves(const char *, size_t n, uint8_t [n]);
-cube_t move(cube_t, uint8_t);
+oriented_cube_t move_extended(oriented_cube_t, uint8_t);
 oriented_cube_t applymoves(oriented_cube_t, const char *);
 uint8_t readtrans(const char[static NISSY_SIZE_TRANSFORMATION]);
 
@@ -22,7 +22,7 @@ void run(void) {
 	n = readmoves(movestr, MAXMOVES, moves);
 	t = readtrans(transtr);
 	for (i = 0; i < n; i++)
-		cube.cube = move(cube.cube, transform_move(moves[i], t));
+		cube = move_extended(cube, transform_move(moves[i], t));
 
 	writecube(cube, STRLENMAX, cubestr);
 	printf("%s\n", cubestr);

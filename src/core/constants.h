@@ -580,7 +580,7 @@ STATIC const char *transstr[] = {
 	[TRANS_BLm] = "mirrored BL",
 };
 
-static uint8_t inverse_trans_table[] = {
+STATIC uint8_t inverse_trans_table[] = {
 	[TRANS_UFr] = TRANS_UFr,
 	[TRANS_UFm] = TRANS_UFm,
 	[TRANS_ULr] = TRANS_URr,
@@ -631,7 +631,7 @@ static uint8_t inverse_trans_table[] = {
 	[TRANS_BLm] = TRANS_LDm,
 };
 
-static uint8_t trans_move_table[][3] = {
+STATIC uint8_t trans_move_table[][3] = {
 	[TRANS_UFr] = { MOVE_U, MOVE_R, MOVE_F },
 	[TRANS_UFm] = { MOVE_U, MOVE_L, MOVE_F },
 	[TRANS_ULr] = { MOVE_U, MOVE_F, MOVE_L },
@@ -682,7 +682,7 @@ static uint8_t trans_move_table[][3] = {
 	[TRANS_BLm] = { MOVE_B, MOVE_U, MOVE_R },
 };
 
-static uint8_t orientation_transition_table[][3] = {
+STATIC uint8_t orientation_transition_table[][3] = {
 	[ORIENTATION_UF] = { ORIENTATION_FD, ORIENTATION_UR, ORIENTATION_LF },
 	[ORIENTATION_UR] = { ORIENTATION_RD, ORIENTATION_UB, ORIENTATION_FR },
 	[ORIENTATION_UB] = { ORIENTATION_BD, ORIENTATION_UL, ORIENTATION_RB },
@@ -709,26 +709,94 @@ static uint8_t orientation_transition_table[][3] = {
 	[ORIENTATION_BL] = { ORIENTATION_LF, ORIENTATION_BD, ORIENTATION_DL },
 };
 
-static struct {
-	uint8_t moves[3];
-	uint8_t rotations[6];
-} equivalent_move_table[] = {
-	[MOVE_U]   = { { MOVE_U,  UINT8_MAX }, {UINT8_MAX} },
-	[MOVE_U2]  = { { MOVE_U2, UINT8_MAX }, {UINT8_MAX} },
-	[MOVE_U3]  = { { MOVE_U3, UINT8_MAX }, {UINT8_MAX} },
-	[MOVE_D]   = { { MOVE_D,  UINT8_MAX }, {UINT8_MAX} },
-	[MOVE_D2]  = { { MOVE_D2, UINT8_MAX }, {UINT8_MAX} },
-	[MOVE_D3]  = { { MOVE_D3, UINT8_MAX }, {UINT8_MAX} },
-	[MOVE_R]   = { { MOVE_R,  UINT8_MAX }, {UINT8_MAX} },
-	[MOVE_R2]  = { { MOVE_R2, UINT8_MAX }, {UINT8_MAX} },
-	[MOVE_R3]  = { { MOVE_R3, UINT8_MAX }, {UINT8_MAX} },
-	[MOVE_L]   = { { MOVE_L,  UINT8_MAX }, {UINT8_MAX} },
-	[MOVE_L2]  = { { MOVE_L2, UINT8_MAX }, {UINT8_MAX} },
-	[MOVE_L3]  = { { MOVE_L3, UINT8_MAX }, {UINT8_MAX} },
-	[MOVE_F]   = { { MOVE_F,  UINT8_MAX }, {UINT8_MAX} },
-	[MOVE_F2]  = { { MOVE_F2, UINT8_MAX }, {UINT8_MAX} },
-	[MOVE_F3]  = { { MOVE_F3, UINT8_MAX }, {UINT8_MAX} },
-	[MOVE_B]   = { { MOVE_B,  UINT8_MAX }, {UINT8_MAX} },
-	[MOVE_B2]  = { { MOVE_B2, UINT8_MAX }, {UINT8_MAX} },
-	[MOVE_B3]  = { { MOVE_B3, UINT8_MAX }, {UINT8_MAX} },
+STATIC uint8_t orientation_trans[] = {
+	[ORIENTATION_UF] = TRANS_UFr,
+	[ORIENTATION_UR] = TRANS_URr,
+	[ORIENTATION_UB] = TRANS_UBr,
+	[ORIENTATION_UL] = TRANS_ULr,
+	[ORIENTATION_DF] = TRANS_DFr,
+	[ORIENTATION_DR] = TRANS_DRr,
+	[ORIENTATION_DB] = TRANS_DBr,
+	[ORIENTATION_DL] = TRANS_DLr,
+	[ORIENTATION_RF] = TRANS_RFr,
+	[ORIENTATION_RD] = TRANS_RDr,
+	[ORIENTATION_RB] = TRANS_RBr,
+	[ORIENTATION_RU] = TRANS_RUr,
+	[ORIENTATION_LF] = TRANS_LFr,
+	[ORIENTATION_LD] = TRANS_LDr,
+	[ORIENTATION_LB] = TRANS_LBr,
+	[ORIENTATION_LU] = TRANS_LUr,
+	[ORIENTATION_FD] = TRANS_FDr,
+	[ORIENTATION_FR] = TRANS_FRr,
+	[ORIENTATION_FU] = TRANS_FUr,
+	[ORIENTATION_FL] = TRANS_FLr,
+	[ORIENTATION_BD] = TRANS_BDr,
+	[ORIENTATION_BR] = TRANS_BRr,
+	[ORIENTATION_BU] = TRANS_BUr,
+	[ORIENTATION_BL] = TRANS_BLr,
+};
+
+typedef struct {
+	uint8_t move[3];
+	uint8_t rotation[4];
+} equivalent_moves_t;
+
+STATIC equivalent_moves_t equivalent_moves_table[] = {
+	[MOVE_U]   = {{MOVE_U,  UINT8_MAX}, {UINT8_MAX}},
+	[MOVE_U2]  = {{MOVE_U2, UINT8_MAX}, {UINT8_MAX}},
+	[MOVE_U3]  = {{MOVE_U3, UINT8_MAX}, {UINT8_MAX}},
+	[MOVE_D]   = {{MOVE_D,  UINT8_MAX}, {UINT8_MAX}},
+	[MOVE_D2]  = {{MOVE_D2, UINT8_MAX}, {UINT8_MAX}},
+	[MOVE_D3]  = {{MOVE_D3, UINT8_MAX}, {UINT8_MAX}},
+	[MOVE_R]   = {{MOVE_R,  UINT8_MAX}, {UINT8_MAX}},
+	[MOVE_R2]  = {{MOVE_R2, UINT8_MAX}, {UINT8_MAX}},
+	[MOVE_R3]  = {{MOVE_R3, UINT8_MAX}, {UINT8_MAX}},
+	[MOVE_L]   = {{MOVE_L,  UINT8_MAX}, {UINT8_MAX}},
+	[MOVE_L2]  = {{MOVE_L2, UINT8_MAX}, {UINT8_MAX}},
+	[MOVE_L3]  = {{MOVE_L3, UINT8_MAX}, {UINT8_MAX}},
+	[MOVE_F]   = {{MOVE_F,  UINT8_MAX}, {UINT8_MAX}},
+	[MOVE_F2]  = {{MOVE_F2, UINT8_MAX}, {UINT8_MAX}},
+	[MOVE_F3]  = {{MOVE_F3, UINT8_MAX}, {UINT8_MAX}},
+	[MOVE_B]   = {{MOVE_B,  UINT8_MAX}, {UINT8_MAX}},
+	[MOVE_B2]  = {{MOVE_B2, UINT8_MAX}, {UINT8_MAX}},
+	[MOVE_B3]  = {{MOVE_B3, UINT8_MAX}, {UINT8_MAX}},
+
+	[MOVE_Uw]  = {{MOVE_D,  UINT8_MAX}, {1, UINT8_MAX}},
+	[MOVE_Uw2] = {{MOVE_D2, UINT8_MAX}, {1, 1, UINT8_MAX}},
+	[MOVE_Uw3] = {{MOVE_D3, UINT8_MAX}, {1, 1, 1, UINT8_MAX}},
+	[MOVE_Dw]  = {{MOVE_U,  UINT8_MAX}, {1, 1, 1, UINT8_MAX}},
+	[MOVE_Dw2] = {{MOVE_U2, UINT8_MAX}, {1, 1, UINT8_MAX}},
+	[MOVE_Dw3] = {{MOVE_U3, UINT8_MAX}, {1, UINT8_MAX}},
+	[MOVE_Rw]  = {{MOVE_L,  UINT8_MAX}, {0, UINT8_MAX}},
+	[MOVE_Rw2] = {{MOVE_L2, UINT8_MAX}, {0, 0, UINT8_MAX}},
+	[MOVE_Rw3] = {{MOVE_L3, UINT8_MAX}, {0, 0, 0, UINT8_MAX}},
+	[MOVE_Lw]  = {{MOVE_R,  UINT8_MAX}, {0, 0, 0, UINT8_MAX}},
+	[MOVE_Lw2] = {{MOVE_R2, UINT8_MAX}, {0, 0, UINT8_MAX}},
+	[MOVE_Lw3] = {{MOVE_R3, UINT8_MAX}, {0, UINT8_MAX}},
+	[MOVE_Fw]  = {{MOVE_B,  UINT8_MAX}, {2, UINT8_MAX}},
+	[MOVE_Fw2] = {{MOVE_B2, UINT8_MAX}, {2, 2, UINT8_MAX}},
+	[MOVE_Fw3] = {{MOVE_B3, UINT8_MAX}, {2, 2, 2, UINT8_MAX}},
+	[MOVE_Bw]  = {{MOVE_F,  UINT8_MAX}, {2, 2, 2, UINT8_MAX}},
+	[MOVE_Bw2] = {{MOVE_F2, UINT8_MAX}, {2, 2, UINT8_MAX}},
+	[MOVE_Bw3] = {{MOVE_F3, UINT8_MAX}, {2, UINT8_MAX}},
+	
+	[MOVE_M]   = {{MOVE_R,  MOVE_L3, UINT8_MAX}, {0, 0, 0, UINT8_MAX}},
+	[MOVE_M2]  = {{MOVE_R2, MOVE_L2, UINT8_MAX}, {0, 0, UINT8_MAX}},
+	[MOVE_M3]  = {{MOVE_R3, MOVE_L,  UINT8_MAX}, {0, UINT8_MAX}},
+	[MOVE_S]   = {{MOVE_F3, MOVE_B,  UINT8_MAX}, {2, UINT8_MAX}},
+	[MOVE_S2]  = {{MOVE_F2, MOVE_B2, UINT8_MAX}, {2, 2, UINT8_MAX}},
+	[MOVE_S3]  = {{MOVE_F,  MOVE_B3, UINT8_MAX}, {2, 2, 2, UINT8_MAX}},
+	[MOVE_E]   = {{MOVE_U,  MOVE_D3, UINT8_MAX}, {1, 1, 1, UINT8_MAX}},
+	[MOVE_E2]  = {{MOVE_U2, MOVE_D2, UINT8_MAX}, {1, 1, UINT8_MAX}},
+	[MOVE_E3]  = {{MOVE_U3, MOVE_D,  UINT8_MAX}, {1, UINT8_MAX}},
+
+	[MOVE_x]   = {{UINT8_MAX}, {0, UINT8_MAX}},
+	[MOVE_x2]  = {{UINT8_MAX}, {0, 0, UINT8_MAX}},
+	[MOVE_x3]  = {{UINT8_MAX}, {0, 0, 0, UINT8_MAX}},
+	[MOVE_y]   = {{UINT8_MAX}, {1, UINT8_MAX}},
+	[MOVE_y2]  = {{UINT8_MAX}, {1, 1, UINT8_MAX}},
+	[MOVE_y3]  = {{UINT8_MAX}, {1, 1, 1, UINT8_MAX}},
+	[MOVE_z]   = {{UINT8_MAX}, {2, UINT8_MAX}},
+	[MOVE_z2]  = {{UINT8_MAX}, {2, 2, UINT8_MAX}},
+	[MOVE_z3]  = {{UINT8_MAX}, {2, 2, 2, UINT8_MAX}},
 };
