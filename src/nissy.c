@@ -461,7 +461,6 @@ nissy_solve(
 )
 {
 	oriented_cube_t oc;
-	cube_t c;
 	long long parse_ret;
 	uint8_t h, k;
 	int t;
@@ -472,19 +471,12 @@ nissy_solve(
 	}
 
 	oc = readcube(cube);
-	c = oc.cube;
 
 /* TODO: solve should handle oriented cubes */
 
 	if (!isconsistent(oc)) {
 		LOG("[solve] Error: cube is invalid\n");
 		return NISSY_ERROR_INVALID_CUBE;
-	}
-
-	if (!issolvable((oriented_cube_t){ .cube = c, .orientation = 0})) {
-/* TODO: this is step-dependent */
-		LOG("[solve] Error: cube is not solvable\n");
-		return NISSY_ERROR_UNSOLVABLE_CUBE;
 	}
 
 /* TODO: checks for minmoves, maxmoves, nissflag */
@@ -509,10 +501,10 @@ nissy_solve(
 		parse_ret = parse_h48_solver(solver, &h, &k);
 		if (parse_ret != NISSY_OK)
 			return parse_ret;
-		return solve_h48(c, minmoves, maxmoves, maxsols,
+		return solve_h48(oc, minmoves, maxmoves, maxsols,
 		    optimal, t, data_size, data, sols_size, sols, stats);
 	} else if (!strncmp(solver, "coord_", 6)) {
-		return solve_coord_dispatch(c, solver + 6, nissflag,
+		return solve_coord_dispatch(oc, solver + 6, nissflag,
 		    minmoves, maxmoves, maxsols, optimal, t, data_size, data,
 		    sols_size, sols);
 	} else {

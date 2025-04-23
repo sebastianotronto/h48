@@ -16,6 +16,7 @@ STATIC_INLINE bool isbase(uint8_t);
 STATIC_INLINE bool parallel(uint8_t, uint8_t);
 STATIC_INLINE uint8_t moveopposite(uint8_t);
 STATIC_INLINE uint8_t reorient_move(uint8_t, uint8_t);
+STATIC_INLINE uint8_t inverse_reorient_move(uint8_t, uint8_t);
 STATIC_INLINE uint8_t movefollow(uint8_t);
 STATIC uint8_t transform_move(uint8_t, uint8_t);
 
@@ -221,6 +222,12 @@ STATIC_INLINE uint8_t
 reorient_move(uint8_t m, uint8_t or)
 {
 	return transform_move(m, orientation_trans[or]);
+}
+
+STATIC_INLINE uint8_t
+inverse_reorient_move(uint8_t m, uint8_t or)
+{
+	return transform_move(m, inverse_trans_table[orientation_trans[or]]);
 }
 
 /* This is currently unused, but it may turn out to be useful at some point */

@@ -13,6 +13,7 @@ typedef struct {
 	uint8_t maxmoves;
 	uint64_t maxsolutions;
 	uint8_t optimal;
+	uint8_t orientation;
 } solution_settings_t;
 
 typedef struct {

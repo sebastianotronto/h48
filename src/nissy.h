@@ -8,8 +8,9 @@ below for the list of error codes and their meaning.
 Cubes are passed as strings in the cccccccc=eeeeeeeeeeee=r format,
 see the README.md file for more information.
 
-Accepted moves are U, D, R, L, F and B, optionally followed by a 2,
-a ' or a 3.
+Accepted moves are any of the following:
+U, D, R, L, F, B, Uw, Dw, Rw, Lw, Fw, Bw, M, S, E, x, y, z
+optionally followed by a 2, a ' or a 3.
 
 A transformation must be given in the format
     (rotation|mirrored) (2 letters)

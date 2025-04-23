@@ -12,12 +12,12 @@ typedef struct {
 	const unsigned char *ptable;
 } dfsarg_solve_coord_t;
 
-STATIC int64_t solve_coord(cube_t, coord_t [static 1], uint8_t, uint8_t,
+STATIC int64_t solve_coord(oriented_cube_t, coord_t [static 1], uint8_t,
+    uint8_t, uint8_t, uint8_t, uint64_t, uint8_t, uint8_t, uint64_t,
+    const unsigned char *, size_t n, char [n]);
+STATIC int64_t solve_coord_dispatch(oriented_cube_t, const char *, uint8_t,
     uint8_t, uint8_t, uint64_t, uint8_t, uint8_t, uint64_t,
     const unsigned char *, size_t n, char [n]);
-STATIC int64_t solve_coord_dispatch(cube_t, const char *, uint8_t, uint8_t,
-    uint8_t, uint64_t, uint8_t, uint8_t, uint64_t, const unsigned char *,
-    size_t n, char [n]);
 STATIC bool coord_solution_admissible(const dfsarg_solve_coord_t [static 1]);
 STATIC bool solve_coord_dfs_stop(const dfsarg_solve_coord_t [static 1]);
 STATIC bool coord_continue_onnormal(const dfsarg_solve_coord_t [static 1]);
@@ -200,7 +200,7 @@ solve_coord_dfs(dfsarg_solve_coord_t arg[static 1])
 
 STATIC int64_t
 solve_coord_dispatch(
-	cube_t cube,
+	oriented_cube_t oc,
 	const char *coord_and_axis,
 	uint8_t nissflag,
 	uint8_t minmoves,
@@ -231,14 +231,14 @@ solve_coord_dispatch(
 		return NISSY_ERROR_INVALID_SOLVER;
 	}
 
-	return solve_coord(cube, coord, axis, nissflag, minmoves, maxmoves,
+	return solve_coord(oc, coord, axis, nissflag, minmoves, maxmoves,
 	    maxsolutions, optimal, threads, data_size, data,
 	    solutions_size, sols);
 }
 
 STATIC int64_t
 solve_coord(
-	cube_t cube,
+	oriented_cube_t oc,
 	coord_t coord [static 1],
 	uint8_t axis,
 	uint8_t nissflag,
@@ -266,7 +266,7 @@ solve_coord(
 	solution_list_t solution_list;
 
 	t = coord->axistrans[axis];
-	c = transform(cube, t);
+	c = transform(oc.cube, t);
 
 	if (!coord->is_solvable(c))
 		goto solve_coord_error_unsolvable;
@@ -295,6 +295,7 @@ solve_coord(
 		.maxmoves = maxmoves,
 		.maxsolutions = maxsolutions,
 		.optimal = optimal,
+		.orientation = oc.orientation,
 	};
 
 	arg = (dfsarg_solve_coord_t) {

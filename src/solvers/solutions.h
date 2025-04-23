@@ -1,5 +1,6 @@
 STATIC void solution_moves_reset(solution_moves_t [static 1]);
-STATIC void solution_moves_transform(solution_moves_t [static 1], uint8_t t);
+STATIC void solution_moves_transform(solution_moves_t [static 1], uint8_t);
+STATIC void solution_moves_reorient(solution_moves_t [static 1], uint8_t);
 STATIC bool solution_list_init(
     solution_list_t [static 1], size_t n, char [n]);
 STATIC bool solution_moves_equal(
@@ -33,6 +34,20 @@ solution_moves_transform(solution_moves_t moves[static 1], uint8_t t)
 
 	for (i = 0; i < moves->npremoves; i++)
 		moves->premoves[i] = transform_move(moves->premoves[i], t);
+}
+
+STATIC void
+solution_moves_reorient(solution_moves_t moves[static 1], uint8_t or)
+{
+	uint8_t i;
+
+	for (i = 0; i < moves->nmoves; i++)
+		moves->moves[i] =
+		    inverse_reorient_move(moves->moves[i], or);
+
+	for (i = 0; i < moves->npremoves; i++)
+		moves->premoves[i] =
+		    inverse_reorient_move(moves->premoves[i], or);
 }
 
 STATIC bool
@@ -187,6 +202,7 @@ appendsolution(
 				continue;
 		}
 		solution_moves_transform(&tsol[r], t);
+		solution_moves_reorient(&tsol[r], settings->orientation);
 		sortparallel_moves(tsol[r].nmoves, tsol[r].moves);
 		sortparallel_moves(tsol[r].npremoves, tsol[r].premoves);
 

@@ -52,8 +52,8 @@ STATIC int64_t solve_h48_maketasks(
     solve_h48_task_t [static STARTING_CUBES], int [static 1]);
 STATIC void *solve_h48_runthread(void *);
 STATIC int64_t solve_h48_dfs(dfsarg_solve_h48_t [static 1]);
-STATIC int64_t solve_h48(cube_t, uint8_t, uint8_t, uint8_t, uint8_t, uint8_t,
-    uint64_t, const unsigned char *, size_t n, char [n],
+STATIC int64_t solve_h48(oriented_cube_t, uint8_t, uint8_t, uint8_t, uint8_t,
+    uint8_t, uint64_t, const unsigned char *, size_t n, char [n],
     long long [static NISSY_SIZE_SOLVE_STATS]);
 
 STATIC_INLINE bool
@@ -342,7 +342,7 @@ solve_h48_maketasks(
 
 STATIC int64_t
 solve_h48(
-	cube_t cube,
+	oriented_cube_t oc,
 	uint8_t minmoves,
 	uint8_t maxmoves,
 	uint8_t maxsolutions,
@@ -407,17 +407,18 @@ solve_h48(
 	fallback2 = h48data + offset;
 
 	settings = (solution_settings_t) {
-		.tmask = symmetry_mask(cube),
+		.tmask = symmetry_mask(oc.cube),
 		.unniss = true,
 		.maxmoves = maxmoves,
 		.maxsolutions = maxsolutions,
 		.optimal = optimal,
+		.orientation = oc.orientation,
 	};
 
 	for (i = 0; i < threads; i++) {
 		arg[i] = (dfsarg_solve_h48_t) {
-			.start_cube = cube,
-			.cube = cube,
+			.start_cube = oc.cube,
+			.cube = oc.cube,
 			.h = info.h48h,
 			.k = info.bits,
 			.base = info.base,
@@ -441,7 +442,7 @@ solve_h48(
 	pthread_mutex_init(&solutions_mutex, NULL);
 
 	maketasks_arg = (dfsarg_solve_h48_maketasks_t) {
-		.cube = cube,
+		.cube = oc.cube,
 		.nmoves = 0,
 		.minmoves = minmoves,
 		.maxmoves = maxmoves,
