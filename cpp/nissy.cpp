@@ -179,7 +179,8 @@ namespace nissy {
 
 		std::string_view strsols(csols.data());
 		for (auto r : strsols | std::views::split('\n'))
-			if (r.begin() != r.end())
+			if (r.begin() != r.end() ||
+			    r.begin() == strsols.begin())
 				result.solutions.push_back(
 				    std::string{r.begin(), r.end()});
 
