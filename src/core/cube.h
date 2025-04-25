@@ -1,4 +1,3 @@
-STATIC oriented_cube_t solvedcube(void);
 STATIC cube_t cubefromarray(uint8_t [static 8], uint8_t [static 12]);
 STATIC bool isconsistent(oriented_cube_t);
 STATIC bool issolvable(oriented_cube_t);
@@ -19,13 +18,6 @@ STATIC uint8_t b32toedge(char);
 STATIC uint8_t b32tocorner(char);
 STATIC char edgetob32(uint8_t);
 STATIC char cornertob32(uint8_t);
-
-/* This is used only in tests, use SOLVED_ORIENTED_CUBE everywhere else */
-STATIC oriented_cube_t
-solvedcube(void)
-{
-	return SOLVED_ORIENTED_CUBE;
-}
 
 STATIC cube_t
 cubefromarray(uint8_t c[static 8], uint8_t e[static 12])

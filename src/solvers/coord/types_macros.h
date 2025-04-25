@@ -21,7 +21,7 @@ typedef struct {
 	bool (*isnasty)(uint64_t, const unsigned char *);
 	size_t (*gendata)(unsigned char *);
 	uint64_t max;
-	uint32_t moves_mask;
+	uint64_t moves_mask;
 	uint64_t trans_mask;
 	uint8_t axistrans[3];
 	bool (*is_admissible)(const solution_moves_t[static 1]);

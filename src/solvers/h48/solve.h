@@ -25,8 +25,8 @@ typedef struct {
 	const unsigned char *h48data;
 	const unsigned char *h48data_fallback_h0k4;
 	const unsigned char *h48data_fallback_eoesep;
-	uint32_t movemask_normal;
-	uint32_t movemask_inverse;
+	uint64_t movemask_normal;
+	uint64_t movemask_inverse;
 	int64_t nodes_visited;
 	int64_t table_fallbacks;
 	int64_t table_lookups;
@@ -72,7 +72,7 @@ solve_h48_stop(dfsarg_solve_h48_t arg[static 1])
 	        arg->solution_settings->optimal)
 		return true;
 
-	arg->movemask_normal = arg->movemask_inverse = MM_ALLMOVES;
+	arg->movemask_normal = arg->movemask_inverse = MM18_ALLMOVES;
 	arg->nodes_visited++;
 
 	/* Preliminary probing using last computed bound, if possible */
@@ -113,7 +113,7 @@ solve_h48_stop(dfsarg_solve_h48_t arg[static 1])
 	if (arg->lb_inverse > target)
 		return true;
 	nh = arg->lb_inverse == target;
-	arg->movemask_normal = nh * MM_NOHALFTURNS + (1-nh) * MM_ALLMOVES;
+	arg->movemask_normal = nh * MM18_NOHALFTURNS + (1-nh) * MM18_ALLMOVES;
 
 	/* Normal probing */
 
@@ -141,7 +141,7 @@ solve_h48_stop(dfsarg_solve_h48_t arg[static 1])
 	if (arg->lb_normal > target)
 		return true;
 	nh = arg->lb_normal == target;
-	arg->movemask_inverse = nh * MM_NOHALFTURNS + (1-nh) * MM_ALLMOVES;
+	arg->movemask_inverse = nh * MM18_NOHALFTURNS + (1-nh) * MM18_ALLMOVES;
 
 	return false;
 }
@@ -151,7 +151,7 @@ solve_h48_dfs(dfsarg_solve_h48_t arg[static 1])
 {
 	int64_t ret, n;
 	uint8_t m, nm, lbn, lbi;
-	uint32_t mm_normal, mm_inverse;
+	uint64_t mm_normal, mm_inverse;
 	bool ulbi, ulbn;
 	cube_t backup_cube, backup_inverse;
 
@@ -191,7 +191,7 @@ solve_h48_dfs(dfsarg_solve_h48_t arg[static 1])
 	if (popcount_u32(mm_normal) <= popcount_u32(mm_inverse)) {
 		arg->solution_moves->nmoves++;
 		for (m = 0; m < 18; m++) {
-			if (!(mm_normal & (UINT32_C(1) << (uint32_t)m)))
+			if (!(mm_normal & MM_SINGLE(m)))
 				continue;
 			arg->solution_moves->moves[
 			    arg->solution_moves->nmoves-1] = m;
@@ -209,7 +209,7 @@ solve_h48_dfs(dfsarg_solve_h48_t arg[static 1])
 	} else {
 		arg->solution_moves->npremoves++;
 		for (m = 0; m < 18; m++) {
-			if(!(mm_inverse & (UINT32_C(1) << (uint32_t)m)))
+			if(!(mm_inverse & MM_SINGLE(m)))
 				continue;
 			arg->solution_moves->premoves[
 			    arg->solution_moves->npremoves-1] = m;
@@ -258,8 +258,8 @@ solve_h48_runthread(void *arg)
 		dfsarg->lb_inverse = 0;
 		dfsarg->use_lb_normal = false;
 		dfsarg->use_lb_inverse = false;
-		dfsarg->movemask_normal = MM_ALLMOVES;
-		dfsarg->movemask_inverse = MM_ALLMOVES;
+		dfsarg->movemask_normal = MM18_ALLMOVES;
+		dfsarg->movemask_inverse = MM18_ALLMOVES;
 
 		solve_h48_dfs(dfsarg);
 	}
@@ -278,7 +278,7 @@ solve_h48_maketasks(
 	int r;
 	int64_t appret;
 	uint8_t m, t;
-	uint32_t mm;
+	uint64_t mm;
 	cube_t backup_cube;
 	solution_moves_t moves;
 
@@ -308,7 +308,7 @@ solve_h48_maketasks(
 	}
 
 	if (maketasks_arg->nmoves == 0) {
-		mm = MM_ALLMOVES;
+		mm = MM18_ALLMOVES;
 	} else {
 		m = maketasks_arg->moves[maketasks_arg->nmoves-1];
 		mm = allowedmask[movebase(m)];
@@ -317,7 +317,7 @@ solve_h48_maketasks(
 	maketasks_arg->nmoves++;
 	backup_cube = maketasks_arg->cube;
 	for (m = 0; m < 18; m++) {
-		if (!(mm & (1 << m)))
+		if (!(mm & MM_SINGLE(m)))
 			continue;
 		maketasks_arg->moves[maketasks_arg->nmoves-1] = m;
 		maketasks_arg->cube = move(backup_cube, m);
@@ -330,9 +330,8 @@ solve_h48_maketasks(
 		if (maketasks_arg->nmoves == 1)
 			for (t = 0; t < NTRANS; t++)
 				if (solve_arg->solution_settings->tmask &
-				    (UINT64_C(1) << (uint64_t)t))
-					mm &= ~(UINT32_C(1) <<
-					    (uint32_t)transform_move(m, t));
+				    TM_SINGLE(t))
+					mm &= ~MM_SINGLE(transform_move(m, t));
 	}
 	maketasks_arg->nmoves--;
 	maketasks_arg->cube = backup_cube;

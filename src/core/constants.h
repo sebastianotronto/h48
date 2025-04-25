@@ -348,22 +348,22 @@
 #define NMOVES_EXTENDED  (1+MOVE_z3)
 #define NTRANS           (1+TRANS_BLm)
 
-#define MM_ALLMOVES    UINT32_C(0x3FFFF)
-#define MM_NOHALFTURNS UINT32_C(0x2DB6D)
-#define MM_SINGLE(m)   (UINT32_C(1) << (uint32_t)(m))
-#define MM_FACE(m)     (UINT32_C(7) << (uint32_t)(m))
-#define MM_EO          (\
-    MM_FACE(MOVE_U) | MM_FACE(MOVE_D) |\
-    MM_FACE(MOVE_R) | MM_FACE(MOVE_L) |\
+#define MM_SINGLE(m)     (UINT64_C(1) << (uint64_t)(m))
+#define MM18_ALLMOVES    UINT64_C(0x3FFFF)
+#define MM18_NOHALFTURNS UINT64_C(0x2DB6D)
+#define MM18_FACE(m)     (UINT64_C(7) << (uint64_t)(m))
+#define MM18_EO          (\
+    MM18_FACE(MOVE_U) | MM18_FACE(MOVE_D) |\
+    MM18_FACE(MOVE_R) | MM18_FACE(MOVE_L) |\
     MM_SINGLE(MOVE_F2) | MM_SINGLE(MOVE_B2))
-#define MM_DR          (\
-    MM_FACE(MOVE_U) | MM_FACE(MOVE_D) |\
+#define MM18_DR          (\
+    MM18_FACE(MOVE_U) | MM18_FACE(MOVE_D) |\
     MM_SINGLE(MOVE_R2) | MM_SINGLE(MOVE_L2) |\
     MM_SINGLE(MOVE_F2) | MM_SINGLE(MOVE_B2))
-#define MM_HTR (MM_ALLMOVES & ~MM_NOHALFTURNS)
+#define MM18_HTR (MM18_ALLMOVES & ~MM18_NOHALFTURNS)
 
-#define TM_ALLTRANS    UINT64_C(0xFFFFFFFFFFFF)
 #define TM_SINGLE(t)   (UINT64_C(1) << (uint64_t)(t))
+#define TM_ALLTRANS    UINT64_C(0xFFFFFFFFFFFF)
 #define TM_UDRLFIX     (\
     TM_SINGLE(TRANS_UFr) | TM_SINGLE(TRANS_UBr) | TM_SINGLE(TRANS_UFm) | \
     TM_SINGLE(TRANS_UBm) | TM_SINGLE(TRANS_DFr) | TM_SINGLE(TRANS_DBr) | \
@@ -423,13 +423,26 @@
 #define ORIENTATION_BU UINT8_C(22)
 #define ORIENTATION_BL UINT8_C(23)
 
-STATIC const uint32_t allowedmask[] = {
-	UINT32_C(0x3FFF8),
-	UINT32_C(0x3FFC0),
-	UINT32_C(0x3FE3F),
-	UINT32_C(0x3F03F),
-	UINT32_C(0x38FFF),
-	UINT32_C(0x00FFF)
+/* This is only meant to work for the 18 base moves, for now */
+STATIC const uint64_t allowedmask[] = {
+	[MOVE_U  / 3] = UINT64_C(0x3FFF8),
+	[MOVE_D  / 3] = UINT64_C(0x3FFC0),
+	[MOVE_R  / 3] = UINT64_C(0x3FE3F),
+	[MOVE_L  / 3] = UINT64_C(0x3F03F),
+	[MOVE_F  / 3] = UINT64_C(0x38FFF),
+	[MOVE_B  / 3] = UINT64_C(0x00FFF),
+	[MOVE_Uw / 3] = 0,
+	[MOVE_Dw / 3] = 0,
+	[MOVE_Rw / 3] = 0,
+	[MOVE_Lw / 3] = 0,
+	[MOVE_Fw / 3] = 0,
+	[MOVE_Bw / 3] = 0,
+	[MOVE_M  / 3] = 0,
+	[MOVE_S  / 3] = 0,
+	[MOVE_E  / 3] = 0,
+	[MOVE_x  / 3] = 0,
+	[MOVE_y  / 3] = 0,
+	[MOVE_z  / 3] = 0,
 };
 
 STATIC const char *cornerstr[] = {
@@ -680,6 +693,33 @@ STATIC uint8_t trans_move_table[][3] = {
 	[TRANS_BDm] = { MOVE_B, MOVE_R, MOVE_D },
 	[TRANS_BLr] = { MOVE_B, MOVE_U, MOVE_L },
 	[TRANS_BLm] = { MOVE_B, MOVE_U, MOVE_R },
+};
+
+STATIC uint8_t orientation_moves[][3] = {
+	[ORIENTATION_UF] = { UINT8_MAX },
+	[ORIENTATION_UR] = { MOVE_y, UINT8_MAX },
+	[ORIENTATION_UB] = { MOVE_y2, UINT8_MAX },
+	[ORIENTATION_UL] = { MOVE_y3, UINT8_MAX },
+	[ORIENTATION_DF] = { MOVE_z2, UINT8_MAX },
+	[ORIENTATION_DR] = { MOVE_y, MOVE_z2, UINT8_MAX },
+	[ORIENTATION_DB] = { MOVE_y2, MOVE_z2, UINT8_MAX },
+	[ORIENTATION_DL] = { MOVE_y3, MOVE_z2, UINT8_MAX },
+	[ORIENTATION_RF] = { MOVE_z3, UINT8_MAX },
+	[ORIENTATION_RD] = { MOVE_z3, MOVE_y, UINT8_MAX },
+	[ORIENTATION_RB] = { MOVE_z3, MOVE_y2, UINT8_MAX },
+	[ORIENTATION_RU] = { MOVE_z3, MOVE_y3, UINT8_MAX },
+	[ORIENTATION_LF] = { MOVE_z, UINT8_MAX },
+	[ORIENTATION_LD] = { MOVE_z, MOVE_y3, UINT8_MAX },
+	[ORIENTATION_LB] = { MOVE_z, MOVE_y2, UINT8_MAX },
+	[ORIENTATION_LU] = { MOVE_z, MOVE_y, UINT8_MAX },
+	[ORIENTATION_FD] = { MOVE_x, UINT8_MAX },
+	[ORIENTATION_FR] = { MOVE_x, MOVE_y, UINT8_MAX },
+	[ORIENTATION_FU] = { MOVE_x, MOVE_y2, UINT8_MAX },
+	[ORIENTATION_FL] = { MOVE_x, MOVE_y3, UINT8_MAX },
+	[ORIENTATION_BD] = { MOVE_x3, MOVE_y2, UINT8_MAX },
+	[ORIENTATION_BR] = { MOVE_x3, MOVE_y, UINT8_MAX },
+	[ORIENTATION_BU] = { MOVE_x3, UINT8_MAX },
+	[ORIENTATION_BL] = { MOVE_x3, MOVE_y3, UINT8_MAX },
 };
 
 STATIC uint8_t orientation_transition_table[][3] = {

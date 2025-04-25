@@ -2,7 +2,8 @@
 #define PREMOVE(M, c) compose(MOVE_CUBE_ ## M, c)
 
 STATIC uint8_t readmove(char);
-STATIC int64_t readmoves(const char *, size_t n, uint8_t [n]);
+STATIC int64_t readmoves(const char *,
+    size_t n, size_t m, uint64_t *, uint64_t *, uint8_t [n], uint8_t [m]);
 STATIC int64_t countmoves(const char *);
 STATIC uint8_t readmodifier(char);
 STATIC int64_t writemoves(size_t n, const uint8_t [n], size_t m, char [m]);
@@ -21,13 +22,10 @@ STATIC_INLINE uint8_t movefollow(uint8_t);
 STATIC uint8_t transform_move(uint8_t, uint8_t);
 
 STATIC cube_t move(cube_t, uint8_t);
-STATIC oriented_cube_t move_extended(oriented_cube_t, uint8_t);
 STATIC cube_t premove(cube_t, uint8_t);
 STATIC uint8_t inverse_move(uint8_t);
 STATIC void sortparallel_moves(size_t n, uint8_t [n]);
 STATIC bool are_lastmoves_singlecw(size_t n, const uint8_t [n]);
-
-STATIC oriented_cube_t applymoves(oriented_cube_t, const char *);
 
 #define FOREACH_READMOVE(ARG_BUF, ARG_MOVE, ARG_C, ARG_MAX, \
 	RET_ERROR, ARG_ACTION) \
@@ -118,14 +116,34 @@ readmodifier(char c)
 }
 
 STATIC int64_t
-readmoves(const char *buf, size_t n, uint8_t ret[n])
+readmoves(
+	const char *buf,
+	size_t nsize,
+	size_t invsize,
+	uint64_t *n,
+	uint64_t *i,
+	uint8_t normal[nsize],
+	uint8_t inverse[invsize]
+)
 {
-// TODO: modify to accept NISS
 	uint8_t m;
 	uint64_t c;
 
-	FOREACH_READMOVE(buf, m, c, n, NISSY_ERROR_INVALID_MOVES,
-		ret[c] = m;
+	*n = *i = 0;
+	FOREACH_READMOVE(buf, m, c, nsize+invsize, NISSY_ERROR_INVALID_MOVES,
+		if (!VAR_IN_PARENTHESES) {
+			if (*n >= nsize-1) {
+				LOG("Error in readmoves: normal buffer\n");
+				return NISSY_ERROR_BUFFER_SIZE;
+			}
+			normal[(*n)++] = m;
+		} else {
+			if (*i >= invsize-1) {
+				LOG("Error in readmoves: inverse buffer\n");
+				return NISSY_ERROR_BUFFER_SIZE;
+			}
+			inverse[(*i)++] = m;
+		}
 	)
 
 	return (int64_t)c;
@@ -188,9 +206,7 @@ writemoves_error:
 STATIC_INLINE bool
 allowednextmove(uint8_t m1, uint8_t m2)
 {
-// TODO: adjust allowedmask
-// TODO: movemask is now 64 bits
-	return allowedmask[movebase(m1)] & (UINT32_C(1) << m2);
+	return allowedmask[movebase(m1)] & MM_SINGLE(m2);
 }
 
 STATIC bool
@@ -226,9 +242,7 @@ isbase(uint8_t move)
 STATIC_INLINE bool
 parallel(uint8_t m1, uint8_t m2)
 {
-// TODO add unit tests
-//TODO fix the logic (maybe use moveaxis(movefollow)), then remove comment
-	return moveaxis(m1) == moveaxis(m2);
+	return moveaxis(movefollow(m1)) == moveaxis(movefollow(m2));
 }
 
 STATIC_INLINE uint8_t
@@ -249,7 +263,6 @@ inverse_reorient_move(uint8_t m, uint8_t or)
 	return transform_move(m, inverse_trans_table[orientation_trans[or]]);
 }
 
-/* This is currently unused, but it may turn out to be useful at some point */
 STATIC_INLINE uint8_t
 movefollow(uint8_t move)
 {
@@ -351,27 +364,6 @@ transform_move(uint8_t m, uint8_t t)
 	return base + modifier;
 }
 
-STATIC oriented_cube_t
-move_extended(oriented_cube_t c, uint8_t m)
-{
-	int i;
-	equivalent_moves_t eqm;
-	oriented_cube_t ret;
-
-	eqm = equivalent_moves_table[m];
-	ret = c;
-
-	for (i = 0; eqm.move[i] != UINT8_MAX; i++)
-		ret.cube = move(
-		    ret.cube, reorient_move(eqm.move[i], ret.orientation));
-
-	for (i = 0; eqm.rotation[i] != UINT8_MAX; i++)
-		ret.orientation = orientation_transition_table[
-		    ret.orientation][eqm.rotation[i]];
-
-	return ret;
-}
-
 /* Applies the INVERSE of m BEFORE the scramble corresponding to c */
 STATIC cube_t
 premove(cube_t c, uint8_t m)
@@ -428,15 +420,13 @@ inverse_move(uint8_t m)
 STATIC void
 sortparallel_moves(size_t n, uint8_t moves[n])
 {
-// TODO: fix for wide moves...
 	uint8_t i;
 
 	if (n < 2)
 		return;
 
 	for (i = 0; i < n-1; i++)
-		if (moveaxis(moves[i]) == moveaxis(moves[i+1]) &&
-		    movebase(moves[i]) == movebase(moves[i+1]) + 1)
+		if (parallel(moves[i], moves[i+1]) && moves[i] > moves[i+1])
 			SWAP(moves[i], moves[i+1]);
 }
 
@@ -451,20 +441,4 @@ are_lastmoves_singlecw(size_t n, const uint8_t moves[n])
 	two = n > 1 && parallel(moves[n-1], moves[n-2]);
 
 	return isbase(moves[n-1]) && (!two || isbase(moves[n-2]));
-}
-
-STATIC oriented_cube_t
-applymoves(oriented_cube_t cube, const char *buf)
-{
-	int c;
-	uint8_t m;
-
-	DBG_ASSERT(isconsistent(cube), ZERO_ORIENTED_CUBE,
-	    "move error: inconsistent cube\n");
-
-	FOREACH_READMOVE(buf, m, c, -1, ZERO_ORIENTED_CUBE,
-		cube = move_extended(cube, m);
-	)
-
-	return cube;
 }

@@ -2,19 +2,25 @@
 
 extern char *movestr[];
 
-int64_t readmoves(const char *, size_t n, uint8_t [n]);
+int64_t readmoves(const char *, size_t n, size_t m,
+    uint64_t *, uint64_t *, uint8_t [n], uint8_t [m]);
 uint8_t inverse_move(uint8_t);
 
 void run(void) {
+	uint64_t inv, nor;
+	int64_t tot;
 	uint8_t moves[2];
 
 	char moves_string[STRLENMAX];
 
 	fgets(moves_string, STRLENMAX, stdin);
-	if (readmoves(moves_string, 2, moves) != 1) {
-		printf("Test error: cannot read moves\n");
+	tot = readmoves(moves_string, 2, 0, &nor, &inv, moves, NULL);
+	if (nor != 1 || tot != 1) {
+		printf("Test error reading moves\n");
 		return;
 	}
+
+fprintf(stderr, "Read move %" PRIu8 " = %s\n", moves[0], movestr[moves[0]]);
 
 	printf("%s\n", movestr[inverse_move(moves[0])]);
 }
