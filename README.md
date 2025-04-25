@@ -1,16 +1,15 @@
-# H48: prototype for a new optimal solver and nissy backend
+# The engine of Nissy, including the H48 optimal solver
 
 **Warning**: this library is work in progress, breaking changes can
 happen without notice.
 
-H48 is an experimental Rubik's cube solver. The main goal is experimenting
-with various optimal solving methods and pruning tables, with
-[nxopt](https://github.com/rokicki/cube20src/blob/master/nxopt.md) and
-[vcube](https://github.com/Voltara/vcube) as inspiration and benchmark
-reference.
+This repository contains the core functionality for future versions of
+[nissy](https://nissy.tronto.net).
 
-In the future this project may evolve as a new "back-end" for the classic
-[nissy](https://github.com/sebastianotronto/nissy-classic).
+H48 is an experimental Rubik's cube solver. It is heavily inspired by
+[nxopt](https://github.com/rokicki/cube20src/blob/master/nxopt.md) and
+[vcube](https://github.com/Voltara/vcube), but it uses a different set
+of pruning tables that were developed independently.
 
 ## Building
 
