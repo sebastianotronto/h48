@@ -9,8 +9,6 @@ utils/.DS_Store
 perf.data
 perf.data.old
 run
-nissyqt
-qt/build
 debugrun
 shell/lasttest.out
 shell/lasttest.err

@@ -21,7 +21,7 @@ wasmnissy.o:
 	${EMCC} ${MACROS} ${WASMFLAGS} -c -o wasmnissy.o src/nissy.c
 
 clean:
-	rm -rf *.out *.o *.s *.so run debugrun nissyqt qt/build
+	rm -rf *.out *.o *.s *.so run debugrun
 
 test: debugnissy.o
 	CC="${CC} ${MACROS} ${DBGFLAGS}" OBJ=debugnissy.o ./test/test.sh
@@ -52,4 +52,4 @@ qt: nissy.o
 	cd qt/build && make
 	cp qt/build/appnissyqt ./nissyqt
 
-.PHONY: all clean test tool debugtool shell debugshell python qt
+.PHONY: all clean test tool debugtool shell debugshell python
