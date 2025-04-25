@@ -65,6 +65,10 @@ STATIC bool are_lastmoves_singlecw(size_t n, const uint8_t [n]);
 			VAR_B++; \
 		ARG_MOVE = VAR_MOVE_NOMOD + VAR_MOD; \
 		ARG_ACTION \
+	} \
+	if (VAR_IN_PARENTHESES) { \
+		LOG("Mismatched '(' in move sequence\n"); \
+		return RET_ERROR; \
 	}
 
 STATIC uint8_t
