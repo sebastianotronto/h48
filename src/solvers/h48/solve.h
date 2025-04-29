@@ -35,6 +35,10 @@ typedef struct {
 	solve_h48_task_t *tasks;
 	int thread_id;
 	pthread_mutex_t *solutions_mutex;
+	int (*poll_status)(void *);
+	void *poll_status_data;
+	_Atomic bool cancelled;
+	_Atomic bool cantsleep;
 } dfsarg_solve_h48_t;
 
 typedef struct {
@@ -50,11 +54,12 @@ STATIC_INLINE bool solve_h48_stop(dfsarg_solve_h48_t [static 1]);
 STATIC int64_t solve_h48_maketasks(
     dfsarg_solve_h48_t [static 1], dfsarg_solve_h48_maketasks_t [static 1],
     solve_h48_task_t [static STARTING_CUBES], int [static 1]);
+STATIC bool solve_h48_runthread_continue(dfsarg_solve_h48_t *);
 STATIC void *solve_h48_runthread(void *);
 STATIC int64_t solve_h48_dfs(dfsarg_solve_h48_t [static 1]);
 STATIC int64_t solve_h48(oriented_cube_t, uint8_t, uint8_t, uint8_t, uint8_t,
     uint8_t, uint64_t, const unsigned char *, size_t n, char [n],
-    long long [static NISSY_SIZE_SOLVE_STATS]);
+    long long [static NISSY_SIZE_SOLVE_STATS], int (*)(void *), void *);
 
 STATIC_INLINE bool
 solve_h48_stop(dfsarg_solve_h48_t arg[static 1])
@@ -232,16 +237,42 @@ solve_h48_dfs(dfsarg_solve_h48_t arg[static 1])
 	return ret;
 }
 
+STATIC bool
+solve_h48_runthread_continue(dfsarg_solve_h48_t *arg)
+{
+	int status;
+
+	for (status = NISSY_STATUS_PAUSE; status == NISSY_STATUS_PAUSE; ) {
+		status = arg->poll_status == NULL ? NISSY_STATUS_RUN :
+		    arg->poll_status(arg->poll_status_data);
+		msleep(500);
+	}
+
+	return status == NISSY_STATUS_RUN;
+}
+
 STATIC void *
 solve_h48_runthread(void *arg)
 {
-	int i, j;
+	int i, j, status;
 	solve_h48_task_t task;
 	dfsarg_solve_h48_t *dfsarg;
 
 	dfsarg = (dfsarg_solve_h48_t *)arg;
 
 	for (i = dfsarg->thread_id; i < dfsarg->ntasks; i += dfsarg->threads) {
+		status = dfsarg->poll_status == NULL ? NISSY_STATUS_RUN :
+		    dfsarg->poll_status(dfsarg->poll_status_data);
+		switch (status) {
+		case NISSY_STATUS_STOP:
+			goto solve_h48_runthread_cancel;
+		case NISSY_STATUS_PAUSE:
+			if (!NISSY_CANSLEEP)
+				goto solve_h48_runthread_cantsleep;
+			if (!solve_h48_runthread_continue(dfsarg))
+				goto solve_h48_runthread_cancel;
+		}
+
 		task = dfsarg->tasks[i];
 
 		solution_moves_reset(dfsarg->solution_moves);
@@ -264,6 +295,12 @@ solve_h48_runthread(void *arg)
 		solve_h48_dfs(dfsarg);
 	}
 
+	return NULL;
+
+solve_h48_runthread_cantsleep:
+	dfsarg->cantsleep = true;
+solve_h48_runthread_cancel:
+	dfsarg->cancelled = true;
 	return NULL;
 }
 
@@ -351,9 +388,12 @@ solve_h48(
 	const unsigned char *data,
 	size_t solutions_size,
 	char solutions[solutions_size],
-	long long stats[static NISSY_SIZE_SOLVE_STATS]
+	long long stats[static NISSY_SIZE_SOLVE_STATS],
+	int (*poll_status)(void *),
+	void *poll_status_data
 )
 {
+	bool anycancelled, anycantsleep;
 	int i, ntasks, eoesep_table_index;
 	int8_t d;
 	dfsarg_solve_h48_t arg[THREADS];
@@ -434,6 +474,10 @@ solve_h48(
 			.threads = threads,
 			.thread_id = i,
 			.solutions_mutex = &solutions_mutex,
+			.poll_status = poll_status,
+			.poll_status_data = poll_status_data,
+			.cancelled = false,
+			.cantsleep = false,
 		};
 
 	}
@@ -460,9 +504,10 @@ solve_h48(
 
 	LOG("[H48 solve] Prepared %d tasks\n", ntasks);
 
+	anycancelled = anycantsleep = false;
 	for (
 	    d = MAX(minmoves, STARTING_MOVES + 1);
-	    !solutions_done(&sollist, &settings, d);
+	    !(solutions_done(&sollist, &settings, d) || anycancelled);
 	    d++
 	) {
 		if (d >= 15)
@@ -474,8 +519,22 @@ solve_h48(
 			pthread_create(
 			    &thread[i], NULL, solve_h48_runthread, &arg[i]);
 		}
-		for (i = 0; i < threads; i++)
+		for (i = 0; i < threads; i++) {
 			pthread_join(thread[i], NULL);
+			anycancelled = anycancelled || arg[i].cancelled;
+			anycantsleep = anycantsleep || arg[i].cantsleep;
+		}
+	}
+
+	if (anycantsleep) {
+		LOG("[H48 solve] Received pause request, but this feature is "
+		    "not available on this system. "
+		    "Taking it as a stop request.\n");
+	}
+
+	if (anycancelled) {
+		LOG("[H48 solve] Received stop request, ending solution "
+		    "search early.\n");
 	}
 
 solve_h48_done:

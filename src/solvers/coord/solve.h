@@ -14,10 +14,10 @@ typedef struct {
 
 STATIC int64_t solve_coord(oriented_cube_t, coord_t [static 1], uint8_t,
     uint8_t, uint8_t, uint8_t, uint64_t, uint8_t, uint8_t, uint64_t,
-    const unsigned char *, size_t n, char [n]);
+    const unsigned char *, size_t n, char [n], int (*)(void *), void *);
 STATIC int64_t solve_coord_dispatch(oriented_cube_t, const char *, uint8_t,
     uint8_t, uint8_t, uint64_t, uint8_t, uint8_t, uint64_t,
-    const unsigned char *, size_t n, char [n]);
+    const unsigned char *, size_t n, char [n], int (*)(void *), void *);
 STATIC bool coord_solution_admissible(const dfsarg_solve_coord_t [static 1]);
 STATIC bool solve_coord_dfs_stop(const dfsarg_solve_coord_t [static 1]);
 STATIC bool coord_continue_onnormal(const dfsarg_solve_coord_t [static 1]);
@@ -211,7 +211,9 @@ solve_coord_dispatch(
 	uint64_t data_size,
 	const unsigned char *data,
 	size_t solutions_size,
-	char sols[solutions_size]
+	char sols[solutions_size],
+	int (*poll_status)(void *),
+	void *poll_status_data
 )
 {
 	coord_t *coord;
@@ -233,7 +235,7 @@ solve_coord_dispatch(
 
 	return solve_coord(oc, coord, axis, nissflag, minmoves, maxmoves,
 	    maxsolutions, optimal, threads, data_size, data,
-	    solutions_size, sols);
+	    solutions_size, sols, poll_status, poll_status_data);
 }
 
 STATIC int64_t
@@ -250,7 +252,9 @@ solve_coord(
 	uint64_t data_size,
 	const unsigned char *data,
 	size_t solutions_size,
-	char sols[solutions_size]
+	char sols[solutions_size],
+	int (*poll_status)(void *),
+	void *poll_status_data
 )
 {
 	int8_t d;

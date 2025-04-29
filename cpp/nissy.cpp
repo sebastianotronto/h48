@@ -20,7 +20,8 @@ extern "C" {
 	long long nissy_checkdata(unsigned long long, const unsigned char *);
 	long long nissy_solve(const char *, const char *, unsigned, unsigned,
 	    unsigned, unsigned, unsigned, unsigned, unsigned long long,
-	    const unsigned char *, unsigned, char *, long long *);
+	    const unsigned char *, unsigned, char *, long long *,
+	    int (*)(void *), void *);
 	long long nissy_countmoves(const char *);
 	long long nissy_setlogger(void (*)(const char *, void *), void *);
 }
@@ -46,6 +47,10 @@ namespace nissy {
 	const error error::DATA{-70};
 	const error error::OPTIONS{-80};
 	const error error::UNKNOWN{-999};
+
+	const status status::run{0};
+	const status status::stop{1};
+	const status status::pause{2};
 
 	namespace size {
 		constexpr size_t CUBE = 22;
@@ -154,7 +159,8 @@ namespace nissy {
 	solver::solve_result
 	solver::solve(const cube& cube, nissflag niss, unsigned minmoves,
 	    unsigned maxmoves, unsigned maxsols, unsigned optimal,
-	    unsigned threads)
+	    unsigned threads, int (*poll_status)(void *),
+	    void *poll_status_data)
 	{
 		solver::solve_result result;
 
@@ -171,7 +177,8 @@ namespace nissy {
 		    name.c_str(), niss.value, minmoves, maxmoves, maxsols,
 		    optimal, threads, data.size(),
 		    reinterpret_cast<const unsigned char *>(data.data()), len,
-		    csols.data(), result.stats.data());
+		    csols.data(), result.stats.data(), poll_status,
+		    poll_status_data);
 		result.err = error{err};
 
 		if (err < 0)

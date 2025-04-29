@@ -30,7 +30,8 @@ void run(void) {
 			continue;
 		}
 		n = nissy_solve(cube, solver, NISSY_NISSFLAG_NORMAL,
-		    0, 20, nsol, -1, 0, size, buf, SOL_BUFFER_LEN, sol, stats);
+		    0, 20, nsol, -1, 0, size, buf, SOL_BUFFER_LEN, sol, stats,
+		    NULL, NULL);
 		if (n == 0)
 			printf("No solution found\n");
 		else

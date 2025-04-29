@@ -46,6 +46,15 @@ namespace nissy {
 		static const error UNKNOWN;
 	};
 
+	class status {
+	public:
+		int value;
+
+		static const status run;
+		static const status stop;
+		static const status pause;
+	};
+
 	class cube {
 	public:
 		cube();
@@ -86,7 +95,8 @@ namespace nissy {
 		void unload_data();
 		solve_result solve(const cube&, nissflag, unsigned minmoves,
 		    unsigned maxmoves, unsigned maxsols, unsigned optimal,
-		    unsigned threads);
+		    unsigned threads, int (*poll_status)(void *),
+		    void *poll_status_data);
 
 		static std::variant<solver, error> get(const std::string&);
 	private:

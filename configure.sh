@@ -85,6 +85,7 @@ validatethreads
 validatearch
 
 STD="-std=c11"
+POSIX="-D_POSIX_C_SOURCE=199309L"
 WFLAGS="-pedantic -Wall -Wextra"
 WNOFLAGS="-Wno-unused-parameter -Wno-unused-function -Wno-unknown-pragmas"
 WNOFLAGS="$WNOFLAGS -Wno-unused-command-line-argument"
@@ -99,8 +100,8 @@ if [ -n "$SANITIZE" ]; then
 fi
 LIBS="-lpthread"
 
-CFLAGS="$STD $LIBS $WFLAGS $WNOFLAGS $AVX -O3 -fPIC -D$ARCH"
-DBGFLAGS="$STD $LIBS $WFLAGS $WNOFLAGS $SAN $AVX -g3 -DDEBUG -fPIC -D$ARCH"
+CFLAGS="$STD $POSIX $LIBS $WFLAGS $WNOFLAGS $AVX -O3 -fPIC -D$ARCH"
+DBGFLAGS="$STD $POSIX $LIBS $WFLAGS $WNOFLAGS $SAN $AVX -g3 -DDEBUG -fPIC -D$ARCH"
 WASMFLAGS="$STD $LIBS $WFLAGS $WNOFLAGS -O3 -fPIC"
 MACROS="-DTHREADS=$THREADS"
 

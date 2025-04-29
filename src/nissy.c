@@ -460,7 +460,9 @@ nissy_solve(
 	const unsigned char data[data_size],
 	unsigned sols_size,
 	char sols[sols_size],
-	long long stats[static NISSY_SIZE_SOLVE_STATS]
+	long long stats[static NISSY_SIZE_SOLVE_STATS],
+	int (*poll_status)(void *),
+	void *poll_status_data
 )
 {
 	oriented_cube_t oc;
@@ -475,14 +477,23 @@ nissy_solve(
 
 	oc = readcube(cube);
 
-/* TODO: solve should handle oriented cubes */
-
 	if (!isconsistent(oc)) {
 		LOG("[solve] Error: cube is invalid\n");
 		return NISSY_ERROR_INVALID_CUBE;
 	}
 
-/* TODO: checks for minmoves, maxmoves, nissflag */
+	if (maxmoves > 20) {
+		LOG("[solve] 'maxmoves' larger than 20 not supported yet, "
+		    "setting it to 20\n");
+		maxmoves = 20;
+	}
+
+	if (minmoves > maxmoves) {
+		LOG("[solve] value provided for 'minmoves' (%u) is larger "
+		    "than that provided for 'maxmoves' (%u), setting "
+		    "'minmoves' to %u\n", minmoves, maxmoves, maxmoves);
+		minmoves = maxmoves;
+	}
 
 	if (maxsols == 0) {
 		LOG("[solve] 'maxsols' is 0, returning no solution\n");
@@ -505,11 +516,12 @@ nissy_solve(
 		if (parse_ret != NISSY_OK)
 			return parse_ret;
 		return solve_h48(oc, minmoves, maxmoves, maxsols,
-		    optimal, t, data_size, data, sols_size, sols, stats);
+		    optimal, t, data_size, data, sols_size, sols, stats,
+		    poll_status, poll_status_data);
 	} else if (!strncmp(solver, "coord_", 6)) {
 		return solve_coord_dispatch(oc, solver + 6, nissflag,
 		    minmoves, maxmoves, maxsols, optimal, t, data_size, data,
-		    sols_size, sols);
+		    sols_size, sols, poll_status, poll_status_data);
 	} else {
 		LOG("[solve] Error: unknown solver '%s'\n", solver);
 		return NISSY_ERROR_INVALID_SOLVER;

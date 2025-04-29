@@ -68,7 +68,7 @@ int main() {
 
 	// Solve
 	auto solve_result = h48h3k2.solve(c, nissy::nissflag::NORMAL,
-	    0, maxmoves, 1, 20, 8);
+	    0, maxmoves, 1, 20, 8, NULL, NULL);
 
 	// Write the result
 	if (!solve_result.err.ok()) {

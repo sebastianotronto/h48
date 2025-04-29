@@ -37,6 +37,11 @@ for example 'rotation UF' or 'mirrored BL'.
 #define NISSY_NISSFLAG_ALL \
     (NISSY_NISSFLAG_NORMAL | NISSY_NISSFLAG_INVERSE | NISSY_NISSFLAG_MIXED)
 
+/* Status for stopping / pausing / resuming a solver */
+#define NISSY_STATUS_RUN    0
+#define NISSY_STATUS_STOP   1
+#define NISSY_STATUS_PAUSE  2
+
 /* The solved cube */
 #define NISSY_SOLVED_CUBE "ABCDEFGH=ABCDEFGHIJKL=A"
 
@@ -296,24 +301,32 @@ nissy_checkdata(
 Solve the given cube using the given solver and options.
 
 Parameters:
-   cube      - The cube to solver.
-   solver    - The name of the solver.
-   nissflag  - The flags for NISS (linear, inverse, mixed, or combinations).
-   minmoves  - The minimum number of moves for a solution.
-   maxmoves  - The maximum number of moves for a solution.
-   maxsols   - The maximum number of solutions.
-   optimal   - The maximum number of moves above the optimal solution length.
-   threads   - The number of threads to use. Must be less than or equalt to
-               the value of the compile-time constant THREADS. If set to 0,
-               the default value THREADS will be used.
-   data_size - The size of the data buffer.
-   data      - The data for the solver. Can be computed with gendata.
-               This buffer must have 8-byte alignment.
-   sols_size - The size of the solutions buffer.
-   sols      - The return parameter for the solutions. The solutions are
-               separated by a '\n' (newline) and a '\0' (NULL character)
-               terminates the list.
-   stats     - An array to store some statistics about the solve.
+   cube             - The cube to solver.
+   solver           - The name of the solver.
+   nissflag         - The flags for NISS (linear, inverse, mixed, or
+                      combinations; see the constants at the top of this file).
+   minmoves         - The minimum number of moves for a solution.
+   maxmoves         - The maximum number of moves for a solution.
+   maxsols          - The maximum number of solutions.
+   optimal          - The maximum number of moves above the optimal solution.
+   threads          - The number of threads to use. Must be less than or equal
+                      to the value of the compile-time constant THREADS. If set
+                      to 0, the default value THREADS will be used.
+   data_size        - The size of the data buffer.
+   data             - The data for the solver. Can be computed with gendata.
+                      This buffer must have 8-byte alignment.
+   sols_size        - The size of the solutions buffer.
+   sols             - The return parameter for the solutions. The solutions are
+                      separated by a '\n' (newline) and a '\0' (NULL character)
+                      terminates the list.
+   stats            - An array to store some statistics about the solve.
+   poll_status      - A callback function that should return the current
+                      requested status for the solver (e.g. run, stop, pause,
+                      resume; see the constants at the top of this file). The
+                      way this status is polled and honored is solver-specific.
+                      If this parameter is NULL, the status will always assumed
+                      to be "run".
+   poll_status_data - Auxiliary data for the poll_status callback function.
 
 Return values:
    NISSY_OK                    - Cube solved succesfully.
@@ -340,7 +353,9 @@ nissy_solve(
 	const unsigned char data[data_size],
 	unsigned sols_size,
 	char sols[sols_size],
-	long long stats[static NISSY_SIZE_SOLVE_STATS]
+	long long stats[static NISSY_SIZE_SOLVE_STATS],
+	int (*poll_status)(void *),
+	void *poll_status_data
 );
 
 /*

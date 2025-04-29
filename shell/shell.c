@@ -435,7 +435,7 @@ solve_exec(args_t *args)
 	ret = nissy_solve(
 	    args->cube, args->str_solver, nissflag, args->minmoves,
 	    args->maxmoves, args->maxsolutions, args->optimal, args->threads,
-	    size, buf, SOLUTIONS_BUFFER_SIZE, solutions, stats);
+	    size, buf, SOLUTIONS_BUFFER_SIZE, solutions, stats, NULL, NULL);
 
 	free(buf);
 
