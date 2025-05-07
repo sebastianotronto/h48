@@ -258,8 +258,10 @@ dotest() {
 }
 
 build_test() {
-	pattern="$1"
-	shift
+	if [ -n "$1" ]; then
+		pattern="$1"
+		shift
+	fi
 	debug="yes"
 	build_nissy
 	for t in test/*; do
@@ -273,12 +275,12 @@ tool_usage() {
 }
 
 build_tool() {
-	pattern="$1"
-	shift
-	if [ -z "$pattern" ]; then
+	if [ -z "$1" ]; then
 		tool_usage
 		exit 1
 	fi
+	pattern="$1"
+	shift
 
 	build_nissy
 
@@ -324,8 +326,12 @@ if [ "$1" = "-d" ]; then
 	shift
 fi
 
-target=${1:-"nissy"}
-shift
+target="$1"
+if [ -z "$target" ]; then
+	target="nissy"
+else
+	shift
+fi
 
 case "$target" in
 help|config|clean|\
