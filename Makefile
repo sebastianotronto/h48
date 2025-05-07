@@ -46,10 +46,4 @@ python: nissy.o
 	${CC} ${CFLAGS} -shared ${PYTHON3_INCLUDES} -o nissy_python_module.so \
 		nissy.o python/nissy_module.c
 
-qt: nissy.o
-	mkdir -p qt/build
-	cd qt && cmake . -B build
-	cd qt/build && make
-	cp qt/build/appnissyqt ./nissyqt
-
 .PHONY: all clean test tool debugtool shell debugshell python

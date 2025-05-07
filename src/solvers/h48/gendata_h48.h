@@ -1,4 +1,4 @@
-STATIC uint64_t genddfggta_h48short(gendata_h48short_arg_t [static 1]);
+STATIC uint64_t gendata_h48short(gendata_h48short_arg_t [static 1]);
 STATIC int64_t gendata_h48(gendata_h48_arg_t [static 1]);
 STATIC void gendata_h48h0k4(gendata_h48_arg_t [static 1]);
 STATIC void gendata_h48k2(gendata_h48_arg_t [static 1]);
