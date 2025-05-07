@@ -17,6 +17,8 @@ test/*/runtest
 test/.DS_Store
 test/run
 test/run.DSYM
+runtest
+runtool
 tools/.DS_Store
 run.DSYM
 run.core

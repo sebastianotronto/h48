@@ -1,0 +1,341 @@
+#!/bin/sh
+
+# Build system for nissy, run './build help' for info on how to use this.
+
+# The variables below can be used to personalize the build system. For example,
+# to compile with clang instead of the default cc one can use:
+#
+#   CC=clang ./build
+# 
+# Each variable also has a counterpart that starts with NISSY_BUILD_*. These
+# other variables can be set, for example, in your shell configuration file
+# to change the default build options. They are still overwritten by the values
+# of the non-NISSY_BUILD_* variables, if set.
+# For example, on a system that supports the addressed and undefined behavior
+# sanitizers, one can set
+#
+#   export NISSY_BUILD_SANITIZE="address,undefined"
+#
+# so that these sanitizers will be enabled when building nissy in debug mode.
+# If later the same user wants to build a debug version without sanitizers,
+# they may use
+#
+#   SANITIZE="" ./build debug
+#
+# And the empty string value will take precedence.
+
+# Specify the compiler to use.
+# The default value is "cc".
+CC=${CC-${NISSY_BUILD_CC}}
+
+# Specify the compiler to use when building WASM target.
+# The default value is "emcc".
+EMCC=${EMCC-${NISSY_BUILD_EMCC}}
+
+# The maximum number of threads to use for multi-threaded operations.
+# This is also used as default value in case an operation allows
+# specifying how many threads to use.
+# The number n must be between 1 and 128.
+# The default value is 16.
+# (TODO: in the future this will be determined base on the system).
+THREADS=${THREADS-${NISSY_BUILD_THREADS}}
+
+# You can use this variable to build for a different architecture, for example
+# if you want to cross-compile or to use the portable version.
+# The value must be one of "AVX2", "NEON", "PORTABLE". If the value is not
+# specified, the script will automatically detect the best architecture for the
+# system. The architecture "PORTABLE" will work on any system.
+ARCH=${ARCH-${NISSY_BUILD_ARCH}}
+
+# SANITIZE="option1,option2,..." adds the options "-fsanitize=option1",
+# "-fsanitize=option2", ... to the C compiler command in debug mode.
+# By default none is used because these options are not available on all
+# systems. It is advisable to set the NISSY_BUILD_SANITIZE options in your
+# shell's configuration file if your system does support them.
+SANITIZE=${SANITIZE-${NISSY_BUILD_SANITIZE}}
+
+# Optimization flags. By default, -O3 is used.
+OPTIMIZE=${OPTIMIZE-${NISSY_BUILD_OPTIMIZE}}
+
+detectthreads() {
+	# TODO: detect based on system
+	# Is 'getconf NPROCESSORD_ONLN' portable? Is it threads or cores?
+	echo "16"
+}
+
+greparch() {
+	$CC -march=native -dM -E - </dev/null 2>/dev/null | grep "$1"
+}
+
+detectarch() {
+	[ -n "$(greparch __AVX2__)" ] && detected="AVX2"
+	[ -n "$(greparch __ARM_NEON)" ] && detected="NEON"
+	[ -z "$detected" ] && detected="PORTABLE"
+
+	echo "$detected"
+}
+
+validatecc() {
+	if ! (command -v "$CC" >/dev/null 2>&1) ; then
+		echo "Error: compiler '$CC' not found"
+		exit 1
+	fi
+}
+
+validatethreads() {
+	if [ "$THREADS" -le 0 ] || [ "$THREADS" -gt 128 ]; then
+		echo "Error: number of threads must be between 1 and 128"
+		exit 1
+	fi
+}
+
+validatearch() {
+	case "$ARCH" in
+	AVX2|NEON|PORTABLE)
+		;;
+	"")
+		ARCH=$(detectarch)
+		echo "Selected architecture '$ARCH'"
+		;;
+	*)
+		echo "Error: architecture '$ARCH' not supported"
+		echo "Supported architectures: AVX2, NEON, PORTABLE"
+		exit 1
+		;;
+	esac
+}
+
+parsesanitize() {
+	# Use the user-specified comma-separated sanitizers
+	for opt in $(echo "$1" | tr ',' '\n'); do
+		printf -- '-fsanitize=%s ' "$opt"
+	done
+}
+
+# Set variables to default values if unset
+CC=${CC:-"cc"}
+EMCC=${EMCC:-"emcc"}
+THREADS=${THREADS:-"$(detectthreads)"}
+ARCH=${ARCH:-"$(detectarch)"}
+OPTIMIZE=${OPTIMIZE:-"-O3"}
+
+# Validate variales
+validatecc
+validatethreads
+validatearch
+
+CFLAGS="-std=c11 -fPIC -D_POSIX_C_SOURCE=199309L -lpthread"
+[ "$ARCH" = "AVX2" ] && CFLAGS="$CFLAGS -mavx2"
+WFLAGS="-pedantic -Wall -Wextra -Wno-unused-parameter -Wno-unused-function"
+OFLAGS="$OPTIMIZE"
+DFLAGS="-DDEBUG -g3 $(parsesanitize "$SANITIZE")"
+MFLAGS="-DTHREADS=$THREADS -D$ARCH"
+WASMCFLAGS="-std=c11 -fPIC -D_POSIX_C_SOURCE=199309L"
+WASMMFLAGS="-DTHREADS=$THREADS -DWASMSIMD"
+
+if (command -v "python3-config" >/dev/null 2>&1) ; then
+	PYTHON3_INCLUDES="$(python3-config --includes)"
+	PYTHON3="version $(echo "$PYTHON3_INCLUDES" | sed 's/.*3\./3./')"
+else
+	PYTHON3_INCLUDES=""
+	PYTHON3="Not found, Python shell won't be available"
+fi
+
+build_help() {
+	echo "Build system for nissy"
+	echo ""
+	echo "usage:"
+	echo "$0 TARGET         # build the given TARGET"
+	echo "$0                # same as '$0 nissy'"
+	echo "$0 test [PATTERN] # run unit tests (optionally matching PATTERN)
+	echo "$0 tool PATTERN   # run the tool matching PATTERN
+	echo ""
+	echo "targets:"
+	echo ""
+	echo "nissy       Build the nissy.o object file"
+	echo "lib         Build the static library libnissy.a"
+	echo "sharedlib   Build the shared library libnissy.so"
+	echo "python      Build the Python module for nissy"
+	echo "shell       Build a basic nissy shell (./run)"
+	echo "wasm        Build the WebAssembly module for nissy"
+	echo ""
+	echo "help        Show this help message"
+	echo "config      Show build configuration and exit"
+	echo "clean       Remove all build files"
+}
+
+build_config() {
+	echo "Compiler: $CC"
+	echo "Architecture: $ARCH"
+	echo "Max threads: $THREADS"
+	echo "Optimization options: $OFLAGS"
+	echo "Debug flags: $DFLAGS"
+	echo "WASM compiler: $EMCC"
+	echo "Python bindings: $PYTHON3"
+}
+
+run() {
+	echo "$@"
+	$@
+}
+
+odflags() {
+	if [ "$debug" = "yes" ]; then
+		echo "$DFLAGS"
+	else 
+		echo "$OFLAGS"
+	fi
+}
+
+build_clean() {
+	run rm -rf -- *.o *.so *.a run runtest runtool
+}
+
+build_nissy() {
+	run $CC $CFLAGS $WFLAGS $MFLAGS $(odflags) -c -o nissy.o src/nissy.c
+}
+
+build_lib() {
+	build_nissy
+	run ar rcs libnissy.a nissy.o
+}
+
+build_sharedlib() {
+	run $CC $CFLAGS $WFLAGS $MFLAGS $(odflags) -shared -c -o nissy.o \
+		src/nissy.c
+}
+
+build_shell() {
+	build_nissy
+	run $CC $CFLAGS $WFLAGS $(odflags) -o run nissy.o shell/shell.c
+}
+
+build_python() {
+	if [ -z "$PYTHON3_INCLUDES" ]; then
+		echo "Python3 development headers could not be located"
+		echo "Cannot build python module"
+		exit 1
+	fi
+	build_nissy
+	run $CC $CFLAGS $WFLAGS $PYTHON3_INCLUDES $(odflags) -shared \
+		-o nissy_pthon_module.so nissy.o python/nissy_module.c
+}
+
+build_wasm() {
+	run $EMCC $WASMCFLAGS $WFLAGS $WASMMFLAGS $(odflags) -c \
+		-o wasmnissy.o src/nissy.c
+}
+
+dotest() {
+	testout="test/last.out"
+	testerr="test/last.err"
+
+	# Verify that $t is a directory and it starts with three digits
+	if [ ! -d "$t" ] || ! (basename "$t" | grep -Eq '^[0-9]{3}'); then
+		return 0
+	fi
+
+	# Verify that the test is selected by the given pattern
+	if [ -n "$pattern" ] && ! (echo "$t" | grep -q "$pattern"); then
+		return 0
+	fi
+
+	$CC $CFLAGS $WFLAGS $DFLAGS $MFLAGS -o runtest "$t"/*.c nissy.o \
+		|| exit 1
+	for cin in "$t"/*.in; do
+		c="$(echo "$cin" | sed 's/\.in//')"
+		cout="$c.out"
+		printf '%s: ' "$c"
+		./runtest < "$cin" > "$testout" 2> "$testerr"
+		if diff "$cout" "$testout"; then
+			printf "OK\n"
+		else
+			printf "Test failed! stderr:\n"
+			cat "$testerr"
+			exit 1
+		fi
+	done
+}
+
+build_test() {
+	pattern="$1"
+	shift
+	debug="yes"
+	build_nissy
+	for t in test/*; do
+		dotest || exit 1
+	done
+	echo "All tests passed!"
+}
+
+tool_usage() {
+	echo "usage: ./build tool PATTERN"
+}
+
+build_tool() {
+	pattern="$1"
+	shift
+	if [ -z "$pattern" ]; then
+		tool_usage
+		exit 1
+	fi
+
+	build_nissy
+
+	# Select a single tool matched by the given pattern
+	for t in tools/*; do
+		if [ -d "$t" ] && (echo "$t" | grep -q "$pattern"); then
+			toolname="$(basename "$t" .c)"
+			break
+		fi
+	done
+	if [ -z "$toolname" ]; then
+		tool_usage
+		exit 1
+	fi
+
+	results="tools/results"
+	last="$results/last.out"
+	date="$(date + '%Y-%m-%d-%H-%M-%S')"
+	file="$results/$toolname-$date.txt"
+
+	$CC $CFLAGS $WFLAGS $MFLAGS $(odflags) -o runtool "$t"/*.c nissy.o \
+		|| exit 1
+
+	(
+		date +'%Y-%m-%d %H:%M'
+		echo ""
+		echo "=========== Running tool  ==========="
+		echo "tool name: $toolname"
+		echo ""
+		echo "======== nissy build command ========"
+		echo "$CC $CFLAGS $WFLAGS $MFLAGS $(odflags)"
+		echo ""
+		echo "======== tool build command  ========"
+		echo "$CC $CFLAGS $WFLAGS $MFLAGS $(odflags)"
+		echo ""
+		echo "============ tool output ============"
+		./runtool $@
+	) | tee "$file" "$last"
+}
+
+if [ "$1" = "-d" ]; then
+	debug="yes"
+	shift
+fi
+
+target=${1:-"nissy"}
+shift
+
+case "$target" in
+help|config|clean|\
+nissy|lib|sharedlib|shell|python|wasm|test|tool)
+	mkdir -p tables tools/results
+	(build_"$target" $@) || exit 1
+	exit 0
+	;;
+*)
+	echo "Target '$target' unavailable, run '$0 help' for info"
+	exit 1
+	;;
+esac
