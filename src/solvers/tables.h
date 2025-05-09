@@ -39,7 +39,7 @@ readtableinfo(
 
 	if (buf_size < INFOSIZE) {
 		LOG("Error reading table: buffer size is too small "
-		    "(given size %" PRIu64 " is smaller than INFOSIZE = %"
+		    "(given size %zu is smaller than INFOSIZE = %"
 		    PRId64 ")\n", buf_size, INFOSIZE);
 		return NISSY_ERROR_BUFFER_SIZE;
 	}
@@ -97,7 +97,7 @@ writetableinfo(
 
 	if (data_size < info->fullsize) {
 		LOG("Error writing table: buffer size is too small "
-		    "(given %" PRId64 " but table requires %" PRId64 ")\n",
+		    "(given %zu but table requires %" PRId64 ")\n",
 		    data_size, info->fullsize);
 		return NISSY_ERROR_BUFFER_SIZE;
 	}
