@@ -3,7 +3,7 @@
 #define BUF_SIZE 2000000
 
 size_t gendata_cocsep(unsigned char *, uint64_t *, cube_t *);
-bool readtableinfo(uint64_t, const unsigned char *, tableinfo_t *);
+int64_t readtableinfo(size_t, const unsigned char *, tableinfo_t *);
 
 void run(void) {
 	unsigned char buf[BUF_SIZE];

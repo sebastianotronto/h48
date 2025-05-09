@@ -17,8 +17,8 @@ Pruning table values (from nissy):
 
 unsigned char buf[FULLSIZE];
 
-size_t gendata_coord_dispatch(const char *, unsigned char *);
-bool readtableinfo(uint64_t, const unsigned char *, tableinfo_t *);
+int64_t gendata_coord_dispatch(const char *, unsigned char *);
+int64_t readtableinfo(size_t, const unsigned char *, tableinfo_t *);
 
 void run(void) {
 	uint32_t i;

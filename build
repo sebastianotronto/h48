@@ -119,7 +119,7 @@ parsesanitize() {
 # Set variables to default values if unset
 CC=${CC:-"cc"}
 EMCC=${EMCC:-"emcc"}
-NODE=${NODE:-"emcc"}
+NODE=${NODE:-"node"}
 THREADS=${THREADS:-"$(detectthreads)"}
 ARCH=${ARCH:-"$(detectarch)"}
 OPTIMIZE=${OPTIMIZE:-"-O3"}

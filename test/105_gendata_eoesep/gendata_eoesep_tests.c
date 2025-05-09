@@ -26,7 +26,7 @@ The test does not generate the full table. For reference, these are the values:
 unsigned char buf[FULLSIZE];
 
 size_t gendata_eoesep(unsigned char [static FULLSIZE], uint8_t);
-bool readtableinfo(uint64_t, const unsigned char *, tableinfo_t *);
+int64_t readtableinfo(size_t, const unsigned char *, tableinfo_t *);
 
 void run(void) {
 	uint32_t i;
@@ -40,7 +40,7 @@ void run(void) {
 	}
 
 	printf("%zu\n", result);
-	printf("Classes (ESEP only): %zu\n", info.classes);
+	printf("Classes (ESEP only): %" PRIu64 "\n", info.classes);
 	for (i = 0; i <= DEPTH; i++)
 		printf("%" PRIu32 ": %" PRIu64 "\n", i, info.distribution[i]);
 }

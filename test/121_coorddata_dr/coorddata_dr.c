@@ -7,7 +7,7 @@
 cube_t transform(cube_t, uint8_t);
 uint64_t coordinate_dr_coord(cube_t, const unsigned char *);
 cube_t coordinate_dr_cube(uint64_t, const unsigned char *);
-uint64_t coordinate_dr_gendata(unsigned char *);
+size_t coordinate_dr_gendata(unsigned char *);
 
 void run(void) {
 	bool found;
