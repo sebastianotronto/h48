@@ -18,6 +18,8 @@ test/.DS_Store
 test/run
 test/run.DSYM
 runtest
+runtest.js
+runtest.wasm
 runtool
 tools/.DS_Store
 run.DSYM

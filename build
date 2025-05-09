@@ -32,6 +32,10 @@ CC=${CC-${NISSY_BUILD_CC}}
 # The default value is "emcc".
 EMCC=${EMCC-${NISSY_BUILD_EMCC}}
 
+# Specify the nodejs command for running tests for the WASM target.
+# The default value is "node".
+NODE=${NODE-${NISSY_BUILD_NODE}}
+
 # The maximum number of threads to use for multi-threaded operations.
 # This is also used as default value in case an operation allows
 # specifying how many threads to use.
@@ -115,6 +119,7 @@ parsesanitize() {
 # Set variables to default values if unset
 CC=${CC:-"cc"}
 EMCC=${EMCC:-"emcc"}
+NODE=${NODE:-"emcc"}
 THREADS=${THREADS:-"$(detectthreads)"}
 ARCH=${ARCH:-"$(detectarch)"}
 OPTIMIZE=${OPTIMIZE:-"-O3"}
@@ -145,10 +150,11 @@ build_help() {
 	echo "Build system for nissy"
 	echo ""
 	echo "usage:"
-	echo "$0 TARGET         # build the given TARGET"
-	echo "$0                # same as '$0 nissy'"
-	echo "$0 test [PATTERN] # run unit tests (optionally matching PATTERN)
-	echo "$0 tool PATTERN   # run the tool matching PATTERN
+	echo "$0 TARGET             # build the given TARGET"
+	echo "$0                    # same as '$0 nissy'"
+	echo "$0 test [PATTERN]     # run unit tests (matching PATTERN)"
+	echo "$0 wasmtest [PATTERN] # same as test, but for WASM target"
+	echo "$0 tool PATTERN       # run the tool matching PATTERN"
 	echo ""
 	echo "targets:"
 	echo ""
@@ -171,6 +177,7 @@ build_config() {
 	echo "Optimization options: $OFLAGS"
 	echo "Debug flags: $DFLAGS"
 	echo "WASM compiler: $EMCC"
+	echo "nodejs executable: $NODE"
 	echo "Python bindings: $PYTHON3"
 }
 
@@ -223,7 +230,7 @@ build_python() {
 
 build_wasm() {
 	run $EMCC $WASMCFLAGS $WFLAGS $WASMMFLAGS $(odflags) -c \
-		-o wasmnissy.o src/nissy.c
+		-o nissy.o src/nissy.c
 }
 
 dotest() {
@@ -240,13 +247,12 @@ dotest() {
 		return 0
 	fi
 
-	$CC $CFLAGS $WFLAGS $DFLAGS $MFLAGS -o runtest "$t"/*.c nissy.o \
-		|| exit 1
+	$testbuild "$t"/*.c nissy.o || exit 1
 	for cin in "$t"/*.in; do
 		c="$(echo "$cin" | sed 's/\.in//')"
 		cout="$c.out"
 		printf '%s: ' "$c"
-		./runtest < "$cin" > "$testout" 2> "$testerr"
+		$testrun < "$cin" > "$testout" 2> "$testerr"
 		if diff "$cout" "$testout"; then
 			printf "OK\n"
 		else
@@ -257,17 +263,35 @@ dotest() {
 	done
 }
 
-build_test() {
+build_test_generic() {
 	if [ -n "$1" ]; then
 		pattern="$1"
 		shift
 	fi
 	debug="yes"
-	build_nissy
+	build_$obj
 	for t in test/*; do
 		dotest || exit 1
 	done
 	echo "All tests passed!"
+}
+
+build_test() {
+	obj="nissy"
+	testobj="runtest"
+	testbuild="$CC $CFLAGS $WFLAGS $DFLAGS $MFLAGS -o $testobj"
+	testrun="./$testobj"
+	build_test_generic $@
+	rm runtest
+}
+
+build_wasmtest() {
+	obj="wasm"
+	testobj="runtest.js"
+	testbuild="$EMCC $WASMCFLAGS $WFLAGS $WASMMFLAGS $DFLAGS -o $testobj"
+	testrun="$NODE $testobj"
+	build_test_generic $@
+	rm -f runtest.js runtest.wasm
 }
 
 tool_usage() {
@@ -275,14 +299,13 @@ tool_usage() {
 }
 
 build_tool() {
-	if [ -z "$1" ]; then
+	pattern="$1"
+
+	if [ -z "$pattern" ]; then
 		tool_usage
 		exit 1
 	fi
-	pattern="$1"
 	shift
-
-	build_nissy
 
 	# Select a single tool matched by the given pattern
 	for t in tools/*; do
@@ -292,13 +315,15 @@ build_tool() {
 		fi
 	done
 	if [ -z "$toolname" ]; then
-		tool_usage
+		echo "pattern '$pattern' does not match any tool"
 		exit 1
 	fi
 
+	build_nissy
+
 	results="tools/results"
 	last="$results/last.out"
-	date="$(date + '%Y-%m-%d-%H-%M-%S')"
+	date="$(date +'%Y-%m-%d-%H-%M-%S')"
 	file="$results/$toolname-$date.txt"
 
 	$CC $CFLAGS $WFLAGS $MFLAGS $(odflags) -o runtool "$t"/*.c nissy.o \
@@ -319,6 +344,7 @@ build_tool() {
 		echo "============ tool output ============"
 		./runtool $@
 	) | tee "$file" "$last"
+	rm -f runtool
 }
 
 if [ "$1" = "-d" ]; then
@@ -335,7 +361,7 @@ fi
 
 case "$target" in
 help|config|clean|\
-nissy|lib|sharedlib|shell|python|wasm|test|tool)
+nissy|lib|sharedlib|shell|python|wasm|test|wasmtest|tool)
 	mkdir -p tables tools/results
 	(build_"$target" $@) || exit 1
 	exit 0

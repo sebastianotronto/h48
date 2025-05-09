@@ -5,7 +5,7 @@ char *solver, *filename;
 
 static void
 run(void) {
-	long long int size, result;
+	long long int size, sizeread, result;
 	char dataid[NISSY_SIZE_DATAID];
 	unsigned char *buf;
 	FILE *f;
@@ -23,9 +23,9 @@ run(void) {
 	}
 
 	buf = malloc(size);
-	fread(buf, size, 1, f);
+	sizeread = fread(buf, size, 1, f);
 	fclose(f);
-	result = nissy_checkdata(size, buf);
+	result = sizeread == 1 && nissy_checkdata(size, buf);
 	free(buf);
 
 	printf("checkdata %s\n", result == 0 ? "succeeded" : "failed");

@@ -1,7 +1,7 @@
 #include "../test.h"
 
-bool readtableinfo(uint64_t, const unsigned char *, tableinfo_t *);
-bool writetableinfo(const tableinfo_t *, uint64_t, unsigned char *);
+int64_t readtableinfo(size_t, const unsigned char *, tableinfo_t *);
+int64_t writetableinfo(const tableinfo_t *, size_t, unsigned char *);
 
 uint64_t readn(void) {
 	char str[STRLENMAX];
